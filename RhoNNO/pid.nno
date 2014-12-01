@@ -1,0 +1,28 @@
+# Training of PIDSelectors with NNO
+
+#define the network topology
+xmlp 7 15 10 1
+transfer TR_FERMI
+momentum 0.2
+balance true
+plots true
+test 10000
+start 1
+stop 100
+
+#define the data source
+datapath ../Data
+networkpath ../Networks
+file PidTuple.root
+
+#set up the input layer (use branch names)
+tree PidTuple
+input mom:acos(theta):svt:emc:drc:dch:ifr:ifrExp:ifrAdd
+autoscale true
+
+#set up the output layer (use branch names)
+#Particles pid = {electron=1,muon,pion,kaon,proton}
+output abs(pid)==1
+
+#end of file
+		
