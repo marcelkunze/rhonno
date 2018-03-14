@@ -62,6 +62,37 @@ target_link_libraries (NetworkTrainer  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
 include(CTest)
 
 # Run Tests
-add_test (Teststrain strain)
-add_test (Testutrain utrain)
-add_test (testNetworkTrainer NetworkTrainer RhoNNO/pid.nno)
+add_test (Teststrain ${CMAKE_BINARY_DIR}/bin/strain)
+add_test (Testutrain ${CMAKE_BINARY_DIR}/bin/utrain)
+add_test (Testtrainer ${CMAKE_BINARY_DIR}/bin/NetworkTrainer ${CMAKE_BINARY_DIR}/pid.nno)
+file(WRITE ${CMAKE_BINARY_DIR}/pid.nno "
+# Training of PIDSelectors with NNO
+
+#define the network topology
+xmlp 7 15 10 1
+transfer TR_FERMI
+momentum 0.2
+balance true
+plots true
+test 10000
+start 1
+stop 100
+
+#define the data source
+#datapath ${CMAKE_SOURCE_DIR}/rhonno/Data
+#networkpath ${CMAKE_SOURCE_DIR}/rhonno/Networks
+datapath $RHO/Data
+networkpath $RHO/Networks
+file PidTuple.root
+
+#set up the input layer (use branch names)
+tree PidTuple
+input mom:acos(theta):svt:emc:drc:dch:ifr:ifrExp:ifrAdd
+autoscale true
+
+#set up the output layer (use branch names)
+#Particles pid = {electron=1,muon,pion,kaon,proton}
+output abs(pid)==1
+
+#end of file
+")
