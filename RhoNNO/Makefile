@@ -14,7 +14,7 @@ ROOTGLIBS     = $(shell root-config --glibs)
  
 # Linux with egcs
 CXX           = g++
-CXXFLAGS      = $(RHOARCH) -DANSISTREAM -fno-exceptions -fPIC -I..
+CXXFLAGS      = $(RHOARCH) -DANSISTREAM -fno-exceptions -fPIC -I.. -pthread -stdlib=libc++ -std=c++11 -m64
 LD            = g++
 LDFLAGS       = $(RHOARCH) -Wl,-rpath,/lib:$(LIBDIR):$(ROOTSYS)/lib
 SOFLAGS       = -shared
@@ -27,8 +27,11 @@ GLIBS         = $(ROOTGLIBS) -lEG -lProof -lTreePlayer -lThread
 include GNUmake-depend.mk
 
 strain:
-	$(CXX) -o $(RHO)/bin/strain -I$(RHO) -I$(ROOTSYS)/include $(LIBS) $(RHO)/lib/libRhoNNO.so strain.cxx
+	$(CXX) -pthread -stdlib=libc++ -std=c++11 -m64 -o $(RHO)/bin/strain -I$(RHO) -I$(ROOTSYS)/include $(LIBS) $(RHO)/lib/libRhoNNO.so strain.cxx
+
+utrain:
+	$(CXX) -pthread -stdlib=libc++ -std=c++11 -m64 -o $(RHO)/bin/utrain -I$(RHO) -I$(ROOTSYS)/include $(LIBS) $(RHO)/lib/libRhoNNO.so utrain.cxx
 
 NetworkTrainer:
-	$(CXX) -o $(RHO)/bin/NetworkTrainer -I$(RHO) -I$(ROOTSYS)/include $(LIBS) $(RHO)/lib/libRhoNNO.so NetworkTrainer.cxx
+	$(CXX) -pthread -stdlib=libc++ -std=c++11 -m64 -o $(RHO)/bin/NetworkTrainer -I$(RHO) -I$(ROOTSYS)/include $(LIBS) $(RHO)/lib/libRhoNNO.so NetworkTrainer.cxx
 
