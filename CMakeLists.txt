@@ -76,13 +76,11 @@ balance true
 plots true
 test 10000
 start 1
-stop 100
+stop 10
 
 #define the data source
-#datapath ${CMAKE_SOURCE_DIR}/rhonno/Data
-#networkpath ${CMAKE_SOURCE_DIR}/rhonno/Networks
-datapath $RHO/Data
-networkpath $RHO/Networks
+datapath ${CMAKE_SOURCE_DIR}/rhonno/Data
+networkpath ${CMAKE_SOURCE_DIR}/rhonno/Networks
 file PidTuple.root
 
 #set up the input layer (use branch names)
