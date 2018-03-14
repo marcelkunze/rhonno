@@ -13,11 +13,11 @@ ROOTLIBS      = $(shell root-config --libs)
 ROOTGLIBS     = $(shell root-config --glibs)
  
 # Linux with egcs
-CXX           = g++
+CXX           = c++
 CXXFLAGS      = $(RHOARCH) -DANSISTREAM -fno-exceptions -fPIC -I.. -pthread -stdlib=libc++ -std=c++11 -m64
-LD            = g++
+LD            = c++
 LDFLAGS       = $(RHOARCH) -Wl,-rpath,/lib:$(LIBDIR):$(ROOTSYS)/lib
-SOFLAGS       = -shared
+SOFLAGS       = -shared -rdynamic
 
 CXXFLAGS     += $(ROOTCFLAGS)
 LIBS          = $(ROOTLIBS) -lEG -lProof -lTreePlayer -lThread

@@ -36,7 +36,7 @@ $(PACKAGE)Cint.o : $(PACKAGE)Cint.cxx
 	@echo "-----$(PACKAGE)Cint.o---------"
 
 $(PACKAGE)Cint.cxx : $(ROOTCINTHDRS)
-	rootcint -f $@ -c  -I.. $^
+	rootcling -f $@ -c  -I.. $^
 	@echo "-----$(PACKAGE)Cint.cxx---------"
 
 # Static pattern rule for object file dependency on sources:
