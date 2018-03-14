@@ -20,22 +20,22 @@ ROOTGLIBS     = $(shell root-config --glibs)
 CXX           = c++
 CXXFLAGS      = -I$(RHO) -O2 -Wall -fPIC -pthread -std=c++11 -m64
 LD            = c++
-LDFLAGS       = -Wl,-rpath,/lib:$(LIBDIR):$(ROOTSYS)/lib
+LDFLAGS       = -Wl,-rpath,/lib:$(LIBDIR):$(shell root-config --libdir)
 SOFLAGS       = -shared
 
 CXXFLAGS     += $(ROOTCFLAGS)
-LIBS          = $(ROOTLIBS) -L$(LIBDIR) -lRhoNNO
+LIBS          = $(ROOTLIBS) -L$(LIBDIR) -lRhoNNO -lTreePlayer
 GLIBS         = $(ROOTGLIBS)
 
 # Get dependencies:
 include GNUmake-depend.mk
 
 strain:
-	$(CXX) -I$(RHO) -I$(ROOTSYS)/include -O2 -std=c++11 -m64 strain.cxx -o $(RHO)/bin/strain $(LDFLAGS) $(LIBS)
+	$(CXX) $(CXXFLAGS) strain.cxx -o $(RHO)/bin/strain $(LDFLAGS) $(LIBS)
 
 utrain:
-	$(CXX) -I$(RHO) -I$(ROOTSYS)/include -O2 -std=c++11 -m64 utrain.cxx -o $(RHO)/bin/utrain $(LDFLAGS) $(LIBS)
+	$(CXX) $(CXXFLAGS) utrain.cxx -o $(RHO)/bin/utrain $(LDFLAGS) $(LIBS)
 
 NetworkTrainer:
-	$(CXX) -I$(RHO) -I$(ROOTSYS)/include -O2 -std=c++11 -m64 NetworkTrainer.cxx -o $(RHO)/bin/NetworkTrainer $(LDFLAGS) $(LIBS)
+	$(CXX) $(CXXFLAGS) NetworkTrainer.cxx -o $(RHO)/bin/NetworkTrainer $(LDFLAGS) $(LIBS)
 

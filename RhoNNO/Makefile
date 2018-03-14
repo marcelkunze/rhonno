@@ -4,6 +4,10 @@
 
 # Define directory paths
 
+ifeq ($(RHO),)
+RHO = ..
+endif
+
 OBJDIR        = $(RHO)/tmp
 LIBDIR        = $(RHO)/lib
 BINDIR        = $(RHO)/bin
@@ -12,26 +16,26 @@ ROOTCFLAGS    = $(shell root-config --cflags)
 ROOTLIBS      = $(shell root-config --libs)
 ROOTGLIBS     = $(shell root-config --glibs)
  
-# Linux with egcs
+# Linux with gcc
 CXX           = c++
-CXXFLAGS      = $(RHOARCH) -DANSISTREAM -fno-exceptions -fPIC -I.. -pthread -stdlib=libc++ -std=c++11 -m64
+CXXFLAGS      = -I$(RHO) -O2 -Wall -fPIC -pthread -std=c++11 -m64
 LD            = c++
-LDFLAGS       = $(RHOARCH) -Wl,-rpath,/lib:$(LIBDIR):$(ROOTSYS)/lib
-SOFLAGS       = -shared -rdynamic
+LDFLAGS       = -Wl,-rpath,/lib:$(LIBDIR):$(shell root-config --libdir)
+SOFLAGS       = -shared
 
 CXXFLAGS     += $(ROOTCFLAGS)
-LIBS          = $(ROOTLIBS) -lEG -lProof -lTreePlayer -lThread
-GLIBS         = $(ROOTGLIBS) -lEG -lProof -lTreePlayer -lThread
+LIBS          = $(ROOTLIBS) -L$(LIBDIR) -lRhoNNO -lTreePlayer
+GLIBS         = $(ROOTGLIBS)
 
 # Get dependencies:
 include GNUmake-depend.mk
 
 strain:
-	$(CXX) -pthread -stdlib=libc++ -std=c++11 -m64 -o $(RHO)/bin/strain -I$(RHO) -I$(ROOTSYS)/include $(LIBS) $(RHO)/lib/libRhoNNO.so strain.cxx
+	$(CXX) $(CXXFLAGS) strain.cxx -o $(RHO)/bin/strain $(LDFLAGS) $(LIBS)
 
 utrain:
-	$(CXX) -pthread -stdlib=libc++ -std=c++11 -m64 -o $(RHO)/bin/utrain -I$(RHO) -I$(ROOTSYS)/include $(LIBS) $(RHO)/lib/libRhoNNO.so utrain.cxx
+	$(CXX) $(CXXFLAGS) utrain.cxx -o $(RHO)/bin/utrain $(LDFLAGS) $(LIBS)
 
 NetworkTrainer:
-	$(CXX) -pthread -stdlib=libc++ -std=c++11 -m64 -o $(RHO)/bin/NetworkTrainer -I$(RHO) -I$(ROOTSYS)/include $(LIBS) $(RHO)/lib/libRhoNNO.so NetworkTrainer.cxx
+	$(CXX) $(CXXFLAGS) NetworkTrainer.cxx -o $(RHO)/bin/NetworkTrainer $(LDFLAGS) $(LIBS)
 
