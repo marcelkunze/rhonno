@@ -161,7 +161,7 @@ void NetworkTrainer::SetupDataServer(const char* file)
     // Set up a server cache for training data
 
     Int_t i;
-    UInt_t j;
+    Int_t j;
 
     if (fAutoScale) {
 
@@ -352,7 +352,10 @@ Double_t NetworkTrainer::Train()
 	error = fNet->TrainEpoch(fTrainingServer);
 
 	// Save the networks after each epoch
-	fNet->Save((char*)Makename(epo , fNetworkPath, fNetworkFile));
+	TString network =  Makename(epo , fNetworkPath, fNetworkFile);
+	cout << "Saving: " << network << endl;
+	char * name = const_cast<char*> (network.Data());
+	fNet->Save(name);
 
 	// Adapt the learning rate, freeze network upon convergence
 	if (fModel == "xmlp") {
@@ -390,18 +393,17 @@ void NetworkTrainer::PrintOn()
 
 // Generate names with epoch number extension
 
-const char* NetworkTrainer::Makename(Int_t z, const char* fNetworkPath, const char* name){
+TString NetworkTrainer::Makename(Int_t z, TString fNetworkPath, TString name){
     
-    const char* extension = fModel;
-    
+    TString number = to_string(z);
     if (z<10)
-	sprintf((char*)name,"%sNNO000%d.%s",fNetworkPath,z,extension);
+	name = fNetworkPath + "NNO000" + number + "." + fModel;	
     else if (z<100)
-	sprintf((char*)name,"%sNNO00%d.%s",fNetworkPath,z,extension);
+	name = fNetworkPath + "NNO00" + number + "." + fModel;
     else if (z<1000)
-	sprintf((char*)name,"%sNNO0%d.%s",fNetworkPath,z,extension);
+	name = fNetworkPath + "NNO0" + number + "." + fModel;
     else
-	sprintf((char*)name,"%sNNO%d.%s",fNetworkPath,z,extension);
+	name = fNetworkPath + "NNO" + number + "." + fModel;
     
     return name;
 }
@@ -516,7 +518,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
 
 	else if (key == "networkpath") {
 	    s >> fNetworkPath;
-	    cout << "+networkpath " << fNetworkPath.Data() << endl;
+	    cout << "+networkpath " << fNetworkPath << endl;
 	    fNetworkPath += "/";
 	}
 
@@ -553,7 +555,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
 
 	else if (key == "inscale") {
 	    cout << "inscale: " << endl;
-	    for (UInt_t i=0;i<fInNodes;i++) {
+	    for (Int_t i=0;i<fInNodes;i++) {
 	      s >> fInScale[i];
 	      cout << "\t" <<  fInScale[i] << endl;
 	    }
@@ -562,7 +564,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
 
 	else if (key == "outscale") {
 	    cout << "outscale: " << endl;
-	    for (UInt_t i=0;i<fOutNodes;i++) {
+	    for (Int_t i=0;i<fOutNodes;i++) {
 	      s >> fOutScale[i];
 	      cout << "\t" <<  fOutScale[i] << endl;
 	    }
@@ -666,7 +668,7 @@ void NetworkTrainer::WriteSourceCode(const char *filename)
     f << "// " << fModel.Data() << " network trained with NNO NetworkTrainer at " << theTime.AsString() << endl;
     f << "// Input parameters  " << fInput.Data() << endl;
     f << "// Output parameters " << fOutput.Data() << endl;
-    int i;
+    Int_t i;
     f << "// Training files:" << endl;
     for (i=0;i<fAll.GetSize();i++) {
 	TString fileName = fDataPath + (((TObjString*)fAll.At(i))->GetString()).Data();

@@ -49,7 +49,7 @@ private:
     Int_t	fTrnMax,	// number of training vectors
 		fTstMax;	// number of test vectors
     TString	fModel;		// name of network model
-    UInt_t	fInNodes,	// size of input layer
+    Int_t	fInNodes,	// size of input layer
 		fHid1Nodes,	// size of first hidden layer
 		fHid2Nodes,	// size of second hidden layer
 		fOutNodes,	// size of output layer
@@ -87,8 +87,8 @@ public:
     Double_t	Test();
     void	PrintOn();
     void	SetDataPath(const char *path) { fDataPath = path;}
-    void	SetNetworkPath(const char *path) { fNetworkPath = path;}
-    const char* Makename(Int_t z, const char *fNetworkPath, const char* name);
+    void	SetNetworkPath(TString path) { fNetworkPath = path;}
+    TString     Makename(Int_t z,  TString fNetworkPath, TString name);
     void	AutoScale(Bool_t yesNo=kTRUE) { fAutoScale = yesNo; }
     void	BalanceSamples(Bool_t yesNo=kTRUE) { fBalance = yesNo; }
     void	ShowControlPlots(Bool_t yesNo=kTRUE) { fPlots = yesNo; }
