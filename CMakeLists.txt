@@ -63,7 +63,7 @@ include(CTest)
 
 # Run Tests
 add_test (Teststrain ${CMAKE_BINARY_DIR}/bin/strain)
-add_test (Testutrain ${CMAKE_BINARY_DIR}/bin/utrain)
+add_test (Testutrain ${CMAKE_BINARY_DIR}/bin/utrain ${CMAKE_SOURCE_DIR}/rhonno/Data/ppe.dat)
 add_test (Testtrainer ${CMAKE_BINARY_DIR}/bin/NetworkTrainer ${CMAKE_BINARY_DIR}/pid.nno)
 file(WRITE ${CMAKE_BINARY_DIR}/pid.nno "
 # Training of PIDSelectors with NNO
