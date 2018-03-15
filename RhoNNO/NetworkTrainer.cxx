@@ -42,7 +42,7 @@ int main(int argc,char* argv[])
     file =  file + trainer->GetModel() + ".cpp";
     trainer->WriteSourceCode(file);
     
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -83,11 +83,10 @@ int main(int argc,char* argv[])
 using namespace std;
 
 NetworkTrainer::NetworkTrainer(const char *file,Int_t se,Int_t ee)
-: fInNodes(NNODIMENSION), fHid1Nodes(10), fHid2Nodes(1), fOutNodes(1), fScale(1.0),
-  fCells(1000), fBalance(kFALSE), fPlots(kFALSE), fAutoScale(kFALSE),
-  fTransfer(TNeuralNetParameters::TR_FERMI), fTstMax(1000), fTrnMax(0),
-  fMomentum(0.0), fPidDataServer(0), fTrainingServer(0), fNet(0),
-  fVectorsEpoch(0)
+: fVectorsEpoch(0), fNet(0), fMomentum(0.0), fPidDataServer(0), fTrainingServer(0),
+  fTrnMax(0), fTstMax(1000), fInNodes(NNODIMENSION), fHid1Nodes(10), fHid2Nodes(1), fOutNodes(1),
+  fCells(1000), fBalance(kFALSE), fPlots(kFALSE), fScale(1.0), fAutoScale(kFALSE),
+  fTransfer(TNeuralNetParameters::TR_FERMI)
 {
     fStartEpoch = se;
     fStopEpoch = ee;
