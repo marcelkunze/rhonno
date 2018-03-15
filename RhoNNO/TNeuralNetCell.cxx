@@ -171,12 +171,12 @@ void TNeuralNetCell::CheckConnections(TNeuralNetCell* unit)
 
 //               -------------  FILE I/O  ----------------
 
-const char *f_id          = "\nunit number    %i\n";
-const char *f_fChi2       = "square deviation %le\n";
-const char *f_count       = "count            %le\n";
-const char *f_vector      = "vector\n";
-const char *f_connections = "\nconnections %i\n";
-const char *f_con_list    = "connected with ";
+#define f_id            "\nunit number    %i\n"
+#define f_fChi2         "square deviation %le\n"
+#define f_count         "count            %le\n"
+#define f_vector        "vector\n"
+#define f_connections   "\nconnections %i\n"
+#define f_con_list      "connected with "
 
 
 void TNeuralNetCell::WriteUnitText(FILE* file,TNeuralNetCell* unit,TNeuralNetParameters* B) 

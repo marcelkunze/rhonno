@@ -42,7 +42,7 @@ ClassImp(TSimpleNeuralNetPlotter)
 
 TSimpleNeuralNetPlotter::TSimpleNeuralNetPlotter(const char *name) 
   : VNeuralNetPlotter(name), 
-    fCanvas(0), fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0)
+    fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0), fCanvas(0)
 {
     fPlots = kFALSE; 
     fXtrn = new Double_t[NPMAX];

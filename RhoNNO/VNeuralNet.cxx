@@ -48,7 +48,7 @@ TNeuralNetParameters::TNeuralNetParameters()
 ClassImp(VNeuralNet)
 
 VNeuralNet::VNeuralNet() 
-  : TNamed("NNO","NNO"), fParm(), fPlotter(0), fOwnPlotter(kFALSE), fBalance(kFALSE)
+  : TNamed("NNO","NNO"), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
     fShouldSave = kFALSE; 
     fFile  = 0;
@@ -56,7 +56,7 @@ VNeuralNet::VNeuralNet()
 }
 
 VNeuralNet::VNeuralNet(const char* netID,Int_t innodes,Int_t outnodes,const char* netFile)
- : TNamed(netID,netID), fParm(), fPlotter(0), fOwnPlotter(kFALSE), fBalance(kFALSE) 
+ : TNamed(netID,netID), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
 #ifndef NNORAND
     gRandom->SetSeed(); // Randomize the numbers
@@ -76,7 +76,7 @@ VNeuralNet::VNeuralNet(const char* netID,Int_t innodes,Int_t outnodes,const char
 }
 
 VNeuralNet::VNeuralNet(const char* netFile)
- : TNamed(netFile,netFile), fParm(), fPlotter(0), fOwnPlotter(kFALSE), fBalance(kFALSE) 
+ : TNamed(netFile,netFile), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
     fFilename   = netFile;
     fShouldSave = kFALSE;
@@ -378,13 +378,13 @@ Double_t VNeuralNet::TrainEpoch(const char *file, Int_t nEpoch)
 	
 	while ( fread(in,sizeof(NNO_INTYPE),fParm.fInNodes,ftrn) ) {  // read inputvector
 	    fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftrn);      // read outputvector
-	    Double_t output = out[0];
+	    //Double_t output = out[0];
 
 	    error += Train(in,out);                // perform learnstep
 	    
 	    // compare network output with 'Out'
 	    Double_t *net = GetOutput();
-	    Double_t answer = net[0];
+	    //Double_t answer = net[0];
 	    for (int I=0;I<fParm.fOutNodes;++I) {
 		if ((net[I]>fParm.fThreshold && out[I]<=fParm.fThreshold) ||
 		    (net[I]<=fParm.fThreshold && out[I]>fParm.fThreshold) )
@@ -410,7 +410,7 @@ Double_t VNeuralNet::TrainEpoch(const char *file, Int_t nEpoch)
     
     fclose(ftrn);
 
-    delete in; delete out;
+    delete[] in; delete[] out;
 
     if (fShouldSave) Save(); // Store the net
     
@@ -444,7 +444,7 @@ Double_t VNeuralNet::TestEpoch(const char *file)
     
     fclose(ftst);
 
-    delete in; delete out;
+    delete[] in; delete[] out;
     
     return classError;
 }

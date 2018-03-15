@@ -212,7 +212,7 @@ Int_t main() {
 	  cout <<  testData << "\t(parity=ODD)  is classified " << answer[0] << endl;
     }
 	
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 
@@ -247,7 +247,7 @@ void NetworkTrainer::Train()
 
     TIter iter(&fNets);
     VNeuralNet *net;
-    while (net = (VNeuralNet *) iter.Next()) {
+    while ((net = (VNeuralNet *) iter.Next()) != NULL) {
 	if (PLOTS) net->SetupPlots();
 	for (int i=0;i<fEpoch;i++) {
 #ifdef READFILE

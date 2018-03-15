@@ -84,7 +84,7 @@ Double_t TNNK::Train(NNO_INTYPE* in,NNO_OUTTYPE* out)
     }
 
     fKernel->Forward();
-    Double_t error = fKernel->Error();
+    Double_t error = fKernel->Error1();
     fKernel->LearnBackward();
 
     // Copy over to base class
@@ -112,7 +112,7 @@ Double_t* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
     }
 
     fKernel->GoThrough();
-    Double_t error = fKernel->Error();
+    //Double_t error = fKernel->Error1();
 
     // Copy over to base class
     for (i=0;i<fParm.fOutNodes;i++) {
@@ -140,7 +140,7 @@ Double_t* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
 ClassImp(TNNKernel)
 
 TNNKernel::TNNKernel(Text_t *name, Int_t nInput, Text_t *hidden, Int_t nOutput):TNamed(name,"Neural Network"),
- fW(0), fNUnits(0), fArrayIn(0), fArrayOut(0), fEventsList(0), fValues(0), fTeach(0)
+ fValues(0), fNUnits(0), fW(0), fArrayOut(0), fTeach(0), fArrayIn(0), fEventsList(0)
 {
     // constructor
     AllocateVW(nInput,hidden,nOutput);
@@ -164,8 +164,8 @@ TNNKernel::TNNKernel(Text_t *name, Int_t nInput, Text_t *hidden, Int_t nOutput):
     
 }
 
-TNNKernel::TNNKernel() : fW(0), fNUnits(0), fArrayIn(0), fArrayOut(0), 
-                         fEventsList(0), fValues(0), fTeach(0)
+TNNKernel::TNNKernel() : fValues(0), fNUnits(0), fW(0),
+                         fArrayOut(0), fTeach(0), fArrayIn(0), fEventsList(0)
 {
     // constructor witn no parameter 
     fUseBiases=1.;
@@ -499,7 +499,7 @@ void TNNKernel::LearnBackward()
     }
 }
 
-Double_t TNNKernel::Error()
+Double_t TNNKernel::Error1()
 {
     // function to compute the errors between forward propagation and teaching.  
     // this error is = |teaching-computed| summed on NN outputs and divided by their number.  
@@ -569,7 +569,7 @@ Double_t TNNKernel::TrainOneCycle()
     {  
 	GetArrayEvt(fEventsList[i]); 
 	Forward();
-	error+=Error();
+	error+=Error1();
 	LearnBackward();
     }
     
