@@ -54,7 +54,7 @@ void TDataServe::Streamer(TBuffer &b)
     UInt_t i;
     
     if (b.IsReading()){
-	Version_t v=b.ReadVersion();
+	//Version_t v=b.ReadVersion();
 	TNamed::Streamer(b);
 	b >> fInvecLen;
 	b >> fOutvecLen;
@@ -102,38 +102,40 @@ TDataServe::TDataServe() :
 TNamed(),
 fInvecLen(0),
 fOutvecLen(0),
-fInvecScale(0),
-fOutvecScale(0),
 fMaxvecs(0),
-fNumvecs(0),
-fNumTrnvecs(0),
-fNumTstvecs(0),
-fData_OK(kFALSE),
 fInvecAr(0),
 fInvecMean(0),
+fInvecScale(0),
 fOutvecAr(0),
 fOutvecMean(0),
+fOutvecScale(0),
+fNumTrnvecs(0),
+fNumTstvecs(0),
+fNumvecs(0),
 fIndexTrn(0),
-fIndexTst(0)
+fIndexTst(0),
+fData_OK(kFALSE),
+fBalance(kFALSE)
 {}
 
-TDataServe::TDataServe(Text_t* name,Text_t* title,const UInt_t in,const  UInt_t out):
+TDataServe::TDataServe(TString name,TString title,const UInt_t in,const  UInt_t out):
+TNamed(name,title),
 fInvecLen(in),
 fOutvecLen(out),
-fInvecScale(0),
-fOutvecScale(0),
-TNamed(name,title),
 fMaxvecs(0),
-fNumvecs(0),
-fNumTrnvecs(0),
-fNumTstvecs(0),
-fData_OK(kFALSE),
 fInvecAr(0),
 fInvecMean(0),
+fInvecScale(0),
 fOutvecAr(0),
 fOutvecMean(0),
+fOutvecScale(0),
+fNumTrnvecs(0),
+fNumTstvecs(0),
+fNumvecs(0),
 fIndexTrn(0),
-fIndexTst(0)
+fIndexTst(0),
+fData_OK(kFALSE),
+fBalance(kFALSE)
 {
     // normal constructor
     // Parameters: name, title, inputvectorlength, outputvectorlength
@@ -255,7 +257,7 @@ void TDataServe::Init(const UInt_t tst)
     for (i=0; i<fNumTstvecs; i++) fIndexTst[i]=helpvec[fNumvecs-i-1];
     for (i=0; i<fNumTrnvecs; i++) fIndexTrn[i]=helpvec[i];
     fData_OK=kTRUE;
-    delete helpvec;
+    delete[] helpvec;
 }
 
 void TDataServe::DataRead(const char* name,
