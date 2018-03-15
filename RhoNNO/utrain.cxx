@@ -18,8 +18,16 @@ NNO_INTYPE In[2];
 
 #define MAXCELL 1000
 
-int main(void) { 
-    FILE* F=fopen("ppe.dat","r");
+int main(int argc, char* argv[]) { 
+    TString filename("ppe.dat");
+    if (argc > 1) filename = argv[1]; 
+
+    cout << "Reading input file: " << filename << endl;
+    FILE* F=fopen(filename,"r");
+    if (!F) {
+	cerr << "File does not exist!" << endl;
+	return EXIT_FAILURE;
+    }
     
     TGCS GCS( 2,       // 2 input nodes 
 	3,       // start with 3 cells 
@@ -46,5 +54,5 @@ int main(void) {
 	printf("epoch nr.: %i, cells: %i\n",EpC++,GCS.GetNumberOfCells());
     } 
     fclose(F);
-    return 0;
+    return EXIT_SUCCESS;
 } 
