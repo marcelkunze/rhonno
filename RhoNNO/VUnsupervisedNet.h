@@ -24,13 +24,14 @@ protected:
     TNeuralNetCellParameters fXB;  //Network parameters
 
 public:
-    VUnsupervisedNet()  : fXB(), VNeuralNet() {};
+    VUnsupervisedNet()  :  VNeuralNet(), fXB() {};
     VUnsupervisedNet(const char* netID,Int_t innodes,Int_t outnodes,const char* netFile) : 
-      fXB(), VNeuralNet(netID,innodes,outnodes,netFile) {}
+      VNeuralNet(netID,innodes,outnodes,netFile), fXB() {}
     VUnsupervisedNet(const char* netFile) : 
-      fXB(), VNeuralNet(netFile) {}
+      VNeuralNet(netFile), fXB() {}
     TNeuralNetCellParameters &GetParameters() { return fXB; }
     Int_t GetNumberOfCells() const { return fXB.fCells; }
+    const TNeuralNetCell* GetCell(UInt_t n) const { if (n<fXB.fCells) return &fU[n]; else return NULL;};
     virtual Int_t GetWinnerCell(NNO_INTYPE* in) = 0;
     virtual Long_t TrainEpoch (FILE* trainFile);  // returns number of records in LearnFile
     

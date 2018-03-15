@@ -91,7 +91,7 @@ private:
     };
     void LearnBackward();   // gradient retropropagation (updates of biases and weights)
     void Forward(); // do a simple forward propagation
-    Double_t Error();// compute the error between forward propagation and teaching
+    Double_t Error1();// compute the error between forward propagation and teaching
     Double_t ErrorO();// compute the error between forward propagation and teaching
     void FreeVW();  
     void AllocateVW(Int_t nInput, Text_t *hidden, Int_t nOutput);  

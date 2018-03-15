@@ -57,7 +57,7 @@ private:
     
 public:
     TDataServe();
-    TDataServe(Text_t* name,Text_t* title,const UInt_t,const UInt_t);			
+    TDataServe(TString name,TString title,const UInt_t,const UInt_t);			
     virtual ~TDataServe();
     void	MixTrn();
     void	Init(const UInt_t);				

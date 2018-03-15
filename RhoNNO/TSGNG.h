@@ -34,7 +34,7 @@ public:
 	Long_t insertStep,
 	Long_t deleteStep,
 	const char* netFile);
-    TSGNG(const char* netFile) : fXB(), VSupervisedNet(netFile) {ReadNet("SGNG");};
+    TSGNG(const char* netFile) : VSupervisedNet(netFile), fXB() {ReadNet("SGNG");};
     TSGNG(const TSGNG& sgng,const char* netFile); // copy constructor
     virtual ~TSGNG();                          //destructor of network  (File will be saved)
        
