@@ -39,3 +39,5 @@ utrain:
 NetworkTrainer:
 	$(CXX) $(CXXFLAGS) NetworkTrainer.cxx -o $(RHO)/bin/NetworkTrainer $(LDFLAGS) $(LIBS)
 
+NNOTracker:
+	$(CXX) $(CXXFLAGS) NNOTracker.cxx -o $(RHO)/bin/NNOTracker $(LDFLAGS) $(LIBS)
