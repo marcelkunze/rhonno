@@ -6,7 +6,13 @@
 // For further information see
 // http://www.ep1.ruhr-uni-bochum.de/~marcel/tutorial.html
 
-#include "TROOT.h"
+#include <TROOT.h>
+#include <TFile.h>
+#include <TNtuple.h>
+#include <TGraph2D.h>
+#include <TGraphDelaunay2D.h>
+#include <TCanvas.h>
+#include <TPad.h>
 #include "RhoNNO/TGCS.h"
 
 #include <iostream>
@@ -14,45 +20,89 @@ using namespace std;
 
 TROOT root("root","Unsupervised training test");
 
-NNO_INTYPE In[2];
+#define MAXCELL 100
+#define MAXEPOCH 200
 
-#define MAXCELL 1000
-
-int main(int argc, char* argv[]) { 
+int main(int argc, char* argv[]) {
     TString filename("ppe.dat");
-    if (argc > 1) filename = argv[1]; 
-
+    if (argc > 1) filename = argv[1];
+    
     cout << "Reading input file: " << filename << endl;
     FILE* F=fopen(filename,"r");
     if (!F) {
-	cerr << "File does not exist!" << endl;
-	return EXIT_FAILURE;
+        cerr << "File does not exist!" << endl;
+        return EXIT_FAILURE;
     }
     
-    TGCS GCS( 2,       // 2 input nodes 
-	3,       // start with 3 cells 
-	MAXCELL,   // stop on 100 cells 
-	0.2,       // Learnstep of Winner-Cell 
-	0.02,      // Learnstep of Neighbours 
-	0.002,     // a_win_count 
-	10,        // connectors
-	100,       // insert_step
-	500,       // delet_step 
-	"gcs.net"  // Network Filename is "gcs.net" 
-	); 
+    TFile *f = new TFile("utrain.root","RECREATE");
+    
+    TNtuple tup("Ntuple","PiPiEta Dalitzplot","m1:m2");
+    while (!feof(F)) {
+        float m1,m2;
+        fscanf(F,"%f %f",&m1,&m2);
+        tup.Fill(m1,m2);
+    }
+    fclose(F);
+    
+    long nentries = tup.GetEntries();
+    
+    cout << endl << "Training PiPiEta Dalitzplot with a GCS Network";
+    cout << endl << "Number of points:" << nentries << endl;
+    
+    TGCS net( 2,       // 2 input nodes
+             3,       // start with 3 cells
+             MAXCELL,   // stop on 100 cells
+             0.2,       // Learnstep of Winner-Cell
+             0.02,      // Learnstep of Neighbours
+             0.002,     // a_win_count
+             10,        // connectors
+             100,       // insert_step
+             1000,      // delete_step
+             "gcs.net"  // Network Filename is "gcs.net"
+             );
+    
     
     int EpC=0;
-    while (GCS.GetNumberOfCells()<MAXCELL) { 
-	while (!feof(F)) {
-	    int ip1,ip2;
-	    fscanf(F,"%d %d",&ip1,&ip2);
-	    In[0] = ip1;
-	    In[1] = ip2;
-	    GCS.Learnstep(In);             //perform a learnstep 
-	} 
-	rewind(F); //new epoch 
-	printf("epoch nr.: %i, cells: %i\n",EpC++,GCS.GetNumberOfCells());
-    } 
-    fclose(F);
+    while (EpC++<MAXEPOCH) {
+        for (int i=0;i<nentries;i++) {
+            tup.GetEvent(random()%nentries,1);
+            Float_t *x=tup.GetArgs();
+            net.Learnstep(x);
+        }
+        printf("epoch nr.: %i, cells: %i\n",EpC,net.GetNumberOfCells());
+    }
+    
+    // Fill a Graph
+    UInt_t numberCells = net.GetNumberOfCells();
+    TCanvas *c = new TCanvas("c","Graph2D example",-8000,-8000,8000,8000);
+    c->Divide(2,1);
+    TGraph2D *graph2d = new TGraph2D(numberCells);
+    graph2d->SetName("Graph2D");
+    graph2d->SetTitle("GCS: Voronoi Diagram");
+    
+    for (int i=0;i<numberCells;++i) {
+        const TNeuralNetCell *c = net.GetCell(i);
+        const Double_t *x = c->GetVector();
+        printf("\n Cell %d: (%f,%f) \n",i,x[0],x[1]);
+        graph2d->SetPoint(i,x[0],x[1],0.0);
+    }
+    
+    c->cd(1);
+    tup.SetMarkerSize(0.4);
+    tup.SetMarkerStyle(20);
+    tup.Draw("m1:m2");
+    c->Update();
+
+    c->cd(2);
+    net.Draw();
+    c->Update();
+
+    TGraphDelaunay2D *delaunay = new TGraphDelaunay2D(graph2d);
+    delaunay->FindAllTriangles();
+    delaunay->Write();
+    
+    c->Write();
+    f->Write();
+    
     return EXIT_SUCCESS;
-} 
+}
