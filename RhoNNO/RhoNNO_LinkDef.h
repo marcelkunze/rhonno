@@ -16,6 +16,7 @@
 #pragma link C++ class TPerceptron;
 #pragma link C++ class TGCS;
 #pragma link C++ class TGNG;
+#pragma link C++ class TGNGTracker;
 #pragma link C++ class TLVQ;
 #pragma link C++ class TFD;
 #pragma link C++ class TMLP;

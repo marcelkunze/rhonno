@@ -1,15 +1,15 @@
 #ifndef TNEURALNETCELL_H
 #define TNEURALNETCELL_H
 //////////////////////////////////////////////////////////////////////////
-//									//
-// Routines for Connected-Cell-Networks					//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
+//									                                    //
+// Routines for Connected-Cell-Networks					                //
+// Part of the Neural Network Objects package (NNO)			            //
+//									                                    //
+// Author List:								                            //
+// Johannes Steffens, Bochum University					                //
+// M.Kunze, Bochum University						                    //
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	    //
+//									                                    //
 //////////////////////////////////////////////////////////////////////////
 
 #include "TObject.h"
@@ -20,7 +20,7 @@ class TNeuralNetCellParameters : public TObject{
 public:
     TNeuralNetCellParameters();
     virtual ~TNeuralNetCellParameters() {}
-
+    
 private:
     Double_t fWinStep;	    //learnstep of winner
     Double_t fNeiStep;	    //learnstep of neighbour
@@ -43,12 +43,13 @@ private:
     Double_t fMainEdgeCount;
 public:
     ClassDef(TNeuralNetCellParameters,1)  // Parameters for unsupervised networks
-
+    
     friend class TNeuralNetCell;
     friend class VUnsupervisedNet;
     friend class TLVQ;
     friend class TGCS;
     friend class TGNG;
+    friend class TGNGTracker;
     friend class TSGCS;
     friend class TSGNG;
 };
@@ -103,12 +104,13 @@ public:
     static void ReadUnitText   (FILE* f,TNeuralNetCell* unit,TNeuralNetParameters* b);
     static void WriteUnitBinary(FILE* f,TNeuralNetCell* unit,TNeuralNetParameters* b);
     static void ReadUnitBinary (FILE* f,TNeuralNetCell* unit,TNeuralNetParameters* b);
-
+    
     ClassDef(TNeuralNetCell,1)  // Cell for unsupervised networks
-
+    
     friend class TGCS;
     friend class TSGCS;
     friend class TGNG;
+    friend class TGNGTracker;
     friend class TSGNG;
     friend class TLVQ;
 };
