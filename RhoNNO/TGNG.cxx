@@ -1,15 +1,15 @@
 //////////////////////////////////////////////////////////////////////////
-//									//
-// TGNG									//
-//									//
-// Implementation of the GROWING-NEURAL-GAS (GNG)			//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
+//									                                    //
+// TGNG									                                //
+//									                                    //
+// Implementation of the GROWING-NEURAL-GAS (GNG)			            //
+// Part of the Neural Network Objects package (NNO)			            //
+//									                                    //
+// Author List:								                            //
+// Johannes Steffens, Bochum University					                //
+// M.Kunze, Bochum University						                    //
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	    //
+//									                                    //
 //////////////////////////////////////////////////////////////////////////
 
 #include "TMath.h"
@@ -19,9 +19,9 @@
 ClassImp(TGNG)
 
 TGNG::TGNG(Int_t innodes,Int_t maxCells,Double_t winStep,Double_t neiStep,
-	   Double_t aWinCount,Double_t aEdgeCount,Double_t minCount,Int_t connectors,
-	   Long_t insertStep,Long_t deleteStep,const char* netFile)
-	   : VUnsupervisedNet("GNG",innodes,maxCells,netFile) 
+           Double_t aWinCount,Double_t aEdgeCount,Double_t minCount,Int_t connectors,
+           Long_t insertStep,Long_t deleteStep,const char* netFile)
+: VUnsupervisedNet("GNG",innodes,maxCells,netFile)
 {
     fXB.fCells        = 2;
     fXB.fWinStep      = winStep;
@@ -62,23 +62,23 @@ TGNG::~TGNG()
     TNeuralNetCell* up;
     Int_t I;
     for(up=fU;up<fUbound;++up) {
-	up->fCount*=fXB.fMainWinCount;
-	for (I=0;I<up->fNc;++I) up->fAge[I]*=fXB.fMainEdgeCount;
+        up->fCount*=fXB.fMainWinCount;
+        for (I=0;I<up->fNc;++I) up->fAge[I]*=fXB.fMainEdgeCount;
     }
     fXB.fMainWinCount=1;
     fXB.fMainEdgeCount=1;
     if (fFilename!="") if (fShouldSave) Save();
     if (fU!=0) {
-	Long_t I;
-	TNeuralNetCell* up = fU;
-	for (I=0;I<fParm.fOutNodes;++I) {
-	    delete[] up->fVector;
-	    delete[] up->fDiff;
-	    delete[] up->fC;
-	    delete[] up->fAge;
-	    ++up;
-	}
-	delete[] fU;
+        Long_t I;
+        TNeuralNetCell* up = fU;
+        for (I=0;I<fParm.fOutNodes;++I) {
+            delete[] up->fVector;
+            delete[] up->fDiff;
+            delete[] up->fC;
+            delete[] up->fAge;
+            ++up;
+        }
+        delete[] fU;
     }
 }
 
@@ -90,10 +90,10 @@ void TGNG::ReadBinary(void)
     TNeuralNetCell* up;
     Int_t I;
     for(up=fU;up<fUbound;++up) {
-	TNeuralNetCell::ReadUnitBinary(fFile,(TNeuralNetCell*)up,&fParm);
-	fread(up->fAge,sizeof(Double_t),fXB.fConnectors,fFile);
+        TNeuralNetCell::ReadUnitBinary(fFile,(TNeuralNetCell*)up,&fParm);
+        fread(up->fAge,sizeof(Double_t),fXB.fConnectors,fFile);
         freadvar(up->fClass);
-	for (I=0;I<up->fNc;++I) up->fC[I].fPtr = &fU[up->fC[I].fID];
+        for (I=0;I<up->fNc;++I) up->fC[I].fPtr = &fU[up->fC[I].fID];
     }
 }
 
@@ -119,11 +119,11 @@ void TGNG::ReadText(void)
     TNeuralNetCell* up;
     Int_t I;
     for(up=fU;up<fUbound;++up) {
-	TNeuralNetCell::ReadUnitText(fFile,(TNeuralNetCell*)up,&fParm);
-	fscanf(fFile,"\nedge count ");
-	for (I=0;I<up->fNc;++I) fscanf(fFile,"%le ",&up->fAge[I]);
-	fscanf(fFile,"\nclass            %i\n",&up->fClass);
-	for (I=0;I<up->fNc;++I) up->fC[I].fPtr=&fU[up->fC[I].fID];
+        TNeuralNetCell::ReadUnitText(fFile,(TNeuralNetCell*)up,&fParm);
+        fscanf(fFile,"\nedge count ");
+        for (I=0;I<up->fNc;++I) fscanf(fFile,"%le ",&up->fAge[I]);
+        fscanf(fFile,"\nclass            %i\n",&up->fClass);
+        for (I=0;I<up->fNc;++I) up->fC[I].fPtr=&fU[up->fC[I].fID];
     }
 }
 
@@ -132,9 +132,9 @@ void TGNG::WriteBinary(void)
     TNeuralNetCell* up;
     fwrite(&fXB,sizeof(TNeuralNetCellParameters),1,fFile);
     for(up=fU;up<fUbound;++up) {
-	TNeuralNetCell::WriteUnitBinary(fFile,(TNeuralNetCell*)up,&fParm);
-	fwrite(up->fAge,sizeof(Double_t),fXB.fConnectors,fFile);
-	fwritevar(up->fClass);
+        TNeuralNetCell::WriteUnitBinary(fFile,(TNeuralNetCell*)up,&fParm);
+        fwrite(up->fAge,sizeof(Double_t),fXB.fConnectors,fFile);
+        fwritevar(up->fClass);
     }
 }
 
@@ -158,10 +158,10 @@ void TGNG::WriteText(void)
     TNeuralNetCell* up;
     Int_t I;
     for(up=fU;up<fUbound;++up) {
-	TNeuralNetCell::WriteUnitText(fFile,(TNeuralNetCell*)up,&fParm);
-	fprintf(fFile,"\nedge count ");
-	for (I=0;I<up->fNc;++I) fprintf(fFile,"%le ",up->fAge[I]);
-	fprintf(fFile,"\nclass            %i\n",up->fClass);
+        TNeuralNetCell::WriteUnitText(fFile,(TNeuralNetCell*)up,&fParm);
+        fprintf(fFile,"\nedge count ");
+        for (I=0;I<up->fNc;++I) fprintf(fFile,"%le ",up->fAge[I]);
+        fprintf(fFile,"\nclass            %i\n",up->fClass);
     }
 }
 
@@ -172,14 +172,14 @@ void TGNG::AllocNet(void)
     Int_t I;
     TNeuralNetCell* up = fU;
     for (I=0;I<fParm.fOutNodes;++I) {
-	up->fVector    = new Double_t[fParm.fInNodes];  TestPointer(up->fVector);
-	up->fDiff      = new Double_t[fParm.fInNodes];  TestPointer(up->fDiff);
-	up->fC         = new connector[fXB.fConnectors]; TestPointer(up->fC);
-	up->fAge = new Double_t[fXB.fConnectors];  TestPointer(up->fAge);
-	up->fNc = 0;
-	up->fCount = 0;
-	up->fID = I;
-	++up;
+        up->fVector    = new Double_t[fParm.fInNodes];  TestPointer(up->fVector);
+        up->fDiff      = new Double_t[fParm.fInNodes];  TestPointer(up->fDiff);
+        up->fC         = new connector[fXB.fConnectors]; TestPointer(up->fC);
+        up->fAge = new Double_t[fXB.fConnectors];  TestPointer(up->fAge);
+        up->fNc = 0;
+        up->fCount = 0;
+        up->fID = I;
+        ++up;
     }
 }
 
@@ -188,8 +188,8 @@ void TGNG::InitNet(void)
     TNeuralNetCell* up;
     Int_t J;
     for(up=fU;up<fUbound;++up) {
-	for (J=0;J<fParm.fInNodes;++J) up->fVector[J]=Random();
-	up->fNc = 0;
+        for (J=0;J<fParm.fInNodes;++J) up->fVector[J]=Random();
+        up->fNc = 0;
     }
     
     for (J=0;J<fParm.fOutNodes;++J) fU[J].fClass=0;
@@ -211,16 +211,16 @@ void TGNG::CopyData(const TGNG& gng)
     fXB = gng.fXB;
     fUbound = &fU[fXB.fCells];
     for (I=0;I<fXB.fCells;++I) {
-	memcpy(thisup->fVector,fromup->fVector,sizeof(Double_t)*fParm.fInNodes);
-	thisup->fNc = fromup->fNc;
-	for (J=0;J<thisup->fNc;++J) {
+        memcpy(thisup->fVector,fromup->fVector,sizeof(Double_t)*fParm.fInNodes);
+        thisup->fNc = fromup->fNc;
+        for (J=0;J<thisup->fNc;++J) {
             thisup->fC[J].fPtr=&fU[((TNeuralNetCell*)(fromup->fC[J].fPtr))->fID];
             thisup->fAge[J]=fromup->fAge[J];
-	}
-	thisup->fCount = fromup->fCount;
-	thisup->fClass = fromup->fClass;
-	++thisup;
-	++fromup;
+        }
+        thisup->fCount = fromup->fCount;
+        thisup->fClass = fromup->fClass;
+        ++thisup;
+        ++fromup;
     }
 }
 
@@ -264,29 +264,29 @@ Int_t  TGNG::GetWinnerCell(NNO_INTYPE* in)
     TNeuralNetCell* up;
     J = 0;
     for(up=fU;up<fUbound;++up){
-	Double_t* v = up->fVector;
-	Double_t* d = up->fDiff;
-	NNO_INTYPE* i = in;
-	s_dist = 0.0;
-	for (I=0;I<fParm.fInNodes;++I) { 
-	    *d =*i++ - *v++; 
-	    s_dist+=*d * *d; 
-	    ++d;
-	}
-	
-	fOut[J++] = s_dist;
-	
-	if (s_dist<fMinDistSquare1) { 
-	    fMinDistSquare2 = fMinDistSquare1; 
-	    fUwin2 = fUwin1; 
-	    fMinDistSquare1 = s_dist; 
-	    fUwin1 = up; 
-	}
-	else if (s_dist<fMinDistSquare2) { 
-	    fMinDistSquare2 = s_dist; 
-	    fUwin2=up; 
-	}
-	
+        Double_t* v = up->fVector;
+        Double_t* d = up->fDiff;
+        NNO_INTYPE* i = in;
+        s_dist = 0.0;
+        for (I=0;I<fParm.fInNodes;++I) {
+            *d =*i++ - *v++;
+            s_dist+=*d * *d;
+            ++d;
+        }
+        
+        fOut[J++] = s_dist;
+        
+        if (s_dist<fMinDistSquare1) {
+            fMinDistSquare2 = fMinDistSquare1;
+            fUwin2 = fUwin1;
+            fMinDistSquare1 = s_dist;
+            fUwin1 = up;
+        }
+        else if (s_dist<fMinDistSquare2) {
+            fMinDistSquare2 = s_dist;
+            fUwin2=up;
+        }
+        
     }
     
     if (fPlotter) fPlotter->AddTestSample(fMinDistSquare1);
@@ -303,28 +303,28 @@ Double_t  TGNG::Train(NNO_INTYPE* in,NNO_OUTTYPE*)
     Double_t* dwin = fUwin1->fDiff;
     for (J=0;J<fParm.fInNodes;++J) *vwin++ += *dwin++ * fXB.fWinStep;
     for (I=0;I<fUwin1->fNc;++I) {
-	unei = (TNeuralNetCell*)fUwin1->fC[I].fPtr;
-	Double_t* v = unei->fVector;
-	Double_t* d = unei->fDiff;
-	for (J=0;J<fParm.fInNodes;++J) *v++ += *d++ * fXB.fNeiStep;
+        unei = (TNeuralNetCell*)fUwin1->fC[I].fPtr;
+        Double_t* v = unei->fVector;
+        Double_t* d = unei->fDiff;
+        for (J=0;J<fParm.fInNodes;++J) *v++ += *d++ * fXB.fNeiStep;
     }
     UpdateConnector(fUwin1,fUwin2); //update edge_count of connector; if Uwin1,Uwin2 are not connected, connect them
     fUwin1->fCount += fMinDistSquare1;
     fXB.fMainWinCount  *= (1.0 - fXB.fWinCount);
     fXB.fMainEdgeCount *= (1.0 - fXB.fEdgeCount);
     
-    if (fXB.fInsertStep>0) 
-	if (fXB.fInsertCount++==fXB.fInsertStep) {
-	    Insert(); 
-	    fXB.fInsertCount = 0;
-	}
-	
-    if (fXB.fDeleteStep>0) 
-	if (fXB.fDeleteCount++==fXB.fDeleteStep) {
-	    Prune(); 
-	    fXB.fDeleteCount = 0;
-	}
-	
+    if (fXB.fInsertStep>0)
+        if (fXB.fInsertCount++==fXB.fInsertStep) {
+            Insert();
+            fXB.fInsertCount = 0;
+        }
+    
+    if (fXB.fDeleteStep>0)
+        if (fXB.fDeleteCount++==fXB.fDeleteStep) {
+            Prune();
+            fXB.fDeleteCount = 0;
+        }
+    
     fShouldSave = kTRUE;
     
     return fUwin1->fID;
@@ -347,55 +347,55 @@ Int_t TGNG::Insert(void)
     if (fXB.fCells==fParm.fOutNodes) return 0; //break if there are no cells availiable
     //find cell with highest win_count
     Double_t win_count=-1;
-    for(up=fU;up<fUbound;++up) 
-	if (up->fCount>win_count) {
-	    win_count = up->fCount; 
-	    umax1 = up;
-	}
-	
-	//create new cell
-	unew = fUbound++;
-	++fXB.fCells;
-	unew->fNc = 0;
-	
-	if (umax1->fNc==0) { 
-	    Warningf(stdout,(char *)"CORRUPT NETWORK INTEGRITY! isolated cell found, please call developer"); 
-	    return 0; 
-	}
-	
-	//find neigbour to MaxCount with highest win_count
-	win_count=-1;
-	for (I=0;I<umax1->fNc;++I) 
-	    if (((TNeuralNetCell*)umax1->fC[I].fPtr)->fCount>win_count) { 
-		win_count = ((TNeuralNetCell*)umax1->fC[I].fPtr)->fCount; 
-		umax2=(TNeuralNetCell*)umax1->fC[I].fPtr; 
-	    }
-	    
-	    //connect new cell with common neighbours of umax1 and umax2
-	    for (I=0;I<umax1->fNc;++I) 
-		for (J=0;J<umax2->fNc;++J)
-		    if (umax1->fC[I].fPtr==umax2->fC[J].fPtr) 
-			Connect((TNeuralNetCell*)umax1->fC[I].fPtr,unew);
-		    
-		    Connect(unew,umax1);     //connect umax1 and unew
-		    Connect(unew,umax2);     //connect umax2 and unew
-		    TNeuralNetCell::Disconnect((TNeuralNetCell*)umax1,(TNeuralNetCell*)umax2);  //disconnect umax1 and umax2
-		    
-		    TNeuralNetCell::InitVector((TNeuralNetCell*)unew,(TNeuralNetCell*)umax1,(TNeuralNetCell*)umax2,&fParm);
-		    TNeuralNetCell::InitCount ((TNeuralNetCell*)unew);
-		    
-		    //transfom fMainWinCount, fMainEdgeCount
-		    for(up=fU;up<fUbound;++up) {
-			up->fCount *= fXB.fMainWinCount;
-			for (I=0;I<up->fNc;++I) up->fAge[I] *= fXB.fMainEdgeCount;
-		    }
-		    
-		    fXB.fMainWinCount  = 1;
-		    fXB.fMainEdgeCount = 1;
-		    
-		    for(up=fU;up<fUbound;++up) TNeuralNetCell::CheckConnections((TNeuralNetCell*)up);
-		    
-		    return 1;  //insertion was successful
+    for(up=fU;up<fUbound;++up)
+        if (up->fCount>win_count) {
+            win_count = up->fCount;
+            umax1 = up;
+        }
+    
+    //create new cell
+    unew = fUbound++;
+    ++fXB.fCells;
+    unew->fNc = 0;
+    
+    if (umax1->fNc==0) {
+        Warningf(stdout,(char *)"CORRUPT NETWORK INTEGRITY! isolated cell found, please call developer");
+        return 0;
+    }
+    
+    //find neigbour to MaxCount with highest win_count
+    win_count=-1;
+    for (I=0;I<umax1->fNc;++I)
+        if (((TNeuralNetCell*)umax1->fC[I].fPtr)->fCount>win_count) {
+            win_count = ((TNeuralNetCell*)umax1->fC[I].fPtr)->fCount;
+            umax2=(TNeuralNetCell*)umax1->fC[I].fPtr;
+        }
+    
+    //connect new cell with common neighbours of umax1 and umax2
+    for (I=0;I<umax1->fNc;++I)
+        for (J=0;J<umax2->fNc;++J)
+            if (umax1->fC[I].fPtr==umax2->fC[J].fPtr)
+                Connect((TNeuralNetCell*)umax1->fC[I].fPtr,unew);
+    
+    Connect(unew,umax1);     //connect umax1 and unew
+    Connect(unew,umax2);     //connect umax2 and unew
+    TNeuralNetCell::Disconnect((TNeuralNetCell*)umax1,(TNeuralNetCell*)umax2);  //disconnect umax1 and umax2
+    
+    TNeuralNetCell::InitVector((TNeuralNetCell*)unew,(TNeuralNetCell*)umax1,(TNeuralNetCell*)umax2,&fParm);
+    TNeuralNetCell::InitCount ((TNeuralNetCell*)unew);
+    
+    //transfom fMainWinCount, fMainEdgeCount
+    for(up=fU;up<fUbound;++up) {
+        up->fCount *= fXB.fMainWinCount;
+        for (I=0;I<up->fNc;++I) up->fAge[I] *= fXB.fMainEdgeCount;
+    }
+    
+    fXB.fMainWinCount  = 1;
+    fXB.fMainEdgeCount = 1;
+    
+    for(up=fU;up<fUbound;++up) TNeuralNetCell::CheckConnections((TNeuralNetCell*)up);
+    
+    return 1;  //insertion was successful
 }
 
 void TGNG::Prune(void) 
@@ -405,8 +405,8 @@ void TGNG::Prune(void)
     
     //transfom fMainWinCount, fMainEdgeCount
     for(up=fU;up<fUbound;++up) {
-	up->fCount*=fXB.fMainWinCount;
-	for (I=0;I<up->fNc;++I) up->fAge[I]*=fXB.fMainEdgeCount;
+        up->fCount*=fXB.fMainWinCount;
+        for (I=0;I<up->fNc;++I) up->fAge[I]*=fXB.fMainEdgeCount;
     }
     fXB.fMainWinCount  = 1;
     fXB.fMainEdgeCount = 1;
@@ -414,11 +414,11 @@ void TGNG::Prune(void)
     //remove all edges with edge_count<fMinCount
     for(up=fU;up<fUbound;++up) {
         I = 0;
-	while (I<up->fNc) {
-	    if (up->fAge[I]<fXB.fMinCount) {
-		if (!CondDisconnect(up,(TNeuralNetCell*)up->fC[I].fPtr)) ++I;
-	    } else ++I;
-	}
+        while (I<up->fNc) {
+            if (up->fAge[I]<fXB.fMinCount) {
+                if (!CondDisconnect(up,(TNeuralNetCell*)up->fC[I].fPtr)) ++I;
+            } else ++I;
+        }
     }
 }
 

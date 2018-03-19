@@ -449,29 +449,21 @@ void TGNGTracker::Prune(void)
     fXB.fMainWinCount  = 1;
     fXB.fMainEdgeCount = 1;
     
-    //remove all edges with fAge<fMinCount
+    //remove all edges with edge_count<fMinCount
     for(up=fU;up<fUbound;++up) {
         I = 0;
-        const Double_t *x0 = up->GetVector();
-        // double rx0 = sqrt(x0[0]*x0[0] + x0[1]*x0[1] + x0[2]*x0[2]); //Distance of cell to origin
         while (I<up->fNc) {
+            // Modification 2: Favor straight lines
             const TNeuralNetCell *c = GetCell(I);
-            const Double_t *xi = c->GetVector();
-            double x1[3]; // vector to neighbour
-            x1[0] = xi[0] - x0[0];
-            x1[1] = xi[1] - x0[1];
-            x1[2] = xi[2] - x0[2];
-            double rx1 = sqrt(x1[0]*x1[0] + x1[1]*x1[1] + x1[2]*x1[2]); // Disctance between cells
-            // Modification 2: punish long connections
-            // up->fAge[I] /= rx1;
-            // Modification 3: only accept structures with at least 3 cells
-            UInt_t numberConnections = up->GetNumberOfConnections();
-            if (numberConnections < 3) {
-                cout << "Remove cell " << I << endl;
-                up->fAge[I] = 0; // Mark for removal
-            }
-            else {
-                // Modification 4: punish small opening angles
+            UInt_t numberConnections = c->GetNumberOfConnections();
+            if (up!=c) { // Make sure we have different cells
+                const Double_t *x0 = up->GetVector();
+                const Double_t *xi = c->GetVector();
+                double x1[3]; // vector to neighbour
+                x1[0] = xi[0] - x0[0];
+                x1[1] = xi[1] - x0[1];
+                x1[2] = xi[2] - x0[2];
+                double rx1 = sqrt(x1[0]*x1[0] + x1[1]*x1[1] + x1[2]*x1[2]); // Disctance between cells
                 for (int j=0;j<numberConnections;j++) {
                     const TNeuralNetCell *u = c->GetConnectedCell(j);
                     const Double_t *xj = u->GetVector();
@@ -484,12 +476,14 @@ void TGNGTracker::Prune(void)
                     double penalty = 1. - cosine/(rx1*rx2); // punish small opening angles
                     up->fAge[I] *= penalty;
                     up->fAge[j] *= penalty;
-                    
                 }
             }
+            
             if (up->fAge[I]<fXB.fMinCount) {
                 if (!CondDisconnect(up,(TNeuralNetCell*)up->fC[I].fPtr)) ++I;
             } else ++I;
         }
+        
     }
+    
 }
