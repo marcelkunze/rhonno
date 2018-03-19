@@ -12,8 +12,8 @@
 #include <iostream>
 using namespace std;
 
-#define MAXEPOCH 200
-#define DELETESTEP 500
+#define MAXEPOCH 1000
+#define DELETESTEP 100
 
 // The user member function processes one event
 
@@ -83,12 +83,8 @@ int main(int argc, char* argv[]) {
     
     while (n++ < MAXEPOCH) {
         cout << endl << "Epoch: " << n << endl << "Cells:" << net.GetNumberOfCells() << endl;
-        // Perform training with all hits
-        for (int i=0;i<nhits;i++) {
-            hits.GetEvent(random()%nhits,1);
-            Float_t *x=hits.GetArgs();
-            net.Learnstep(x);
-        }
+        // Set the input data
+        net.TrainEpoch(&hits);
     }
     
     // Show the network

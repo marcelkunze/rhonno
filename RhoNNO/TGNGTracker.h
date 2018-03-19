@@ -16,6 +16,8 @@
 
 #include "RhoNNO/VUnsupervisedNet.h"
 
+class TNtuple;
+
 class TGNGTracker : public VUnsupervisedNet {
 public:
     TGNGTracker() {}
@@ -65,6 +67,9 @@ public:
     Int_t Insert(void);  // this function will be called automatically if insert_step>0
     void Prune(void);  // this function will be called automatically if delete_step>0
     
+    void SetHits(TNtuple* tuple) { fTuple = tuple; } // sets the input data
+    TNtuple* GetHits(void) const { return fTuple; } // gets the input data
+
     ClassDef(TGNGTracker,1)	// Unsupervised Growing Neural Gas
 };
 

@@ -12,9 +12,13 @@
 //									                                    //
 //////////////////////////////////////////////////////////////////////////
 
-#include "TMath.h"
+#include <TMath.h>
+#include <TNtuple.h>
 #include "RhoNNO/TGNGTracker.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
+
+#include <iostream>
+using namespace std;
 
 ClassImp(TGNGTracker)
 
@@ -339,10 +343,10 @@ void TGNGTracker::Deviation(void)
 Int_t TGNGTracker::Insert(void)
 {
     Int_t I,J;
-    TNeuralNetCell* up;
-    TNeuralNetCell* umax1;
-    TNeuralNetCell* umax2;
-    TNeuralNetCell* unew;
+    TNeuralNetCell* up=0;
+    TNeuralNetCell* umax1=0;
+    TNeuralNetCell* umax2=0;
+    TNeuralNetCell* unew=0;
     
     if (fXB.fCells==fParm.fOutNodes) return 0; //break if there are no cells availiable
     //find cell with highest win_count
@@ -395,6 +399,40 @@ Int_t TGNGTracker::Insert(void)
     
     for(up=fU;up<fUbound;++up) TNeuralNetCell::CheckConnections((TNeuralNetCell*)up);
     
+    // Modification 1: Look for next data point and move cells to there
+    
+    if (fTuple == 0) {
+        cout << "No ntuple set for training" << endl;
+        return 0; // No training data available, leave cell where it is
+    }
+    
+    double ux[3];
+    ux[0] = unew->fVector[0];
+    ux[1] = unew->fVector[1];
+    ux[2] = unew->fVector[2];
+    
+    int imin = 0;
+    double dmin = MAXFLOAT;
+    for (int i=0;i<fTuple->GetEntries();i++) {
+        double dx[3];
+        fTuple->GetEvent(i,1);
+        Float_t *x=fTuple->GetArgs();
+        dx[0] = ux[0]-x[0];
+        dx[1] = ux[1]-x[1];
+        dx[2] = ux[2]-x[2];
+        double d = sqrt(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
+        if (d < dmin) {
+            imin = i;
+            dmin = d;
+        }
+    }
+    
+    fTuple->GetEvent(imin,1);
+    Float_t *x=fTuple->GetArgs();
+    unew->fVector[0] = x[0];
+    unew->fVector[1] = x[1];
+    unew->fVector[2] = x[2];
+    
     return 1;  //insertion was successful
 }
 
@@ -411,14 +449,47 @@ void TGNGTracker::Prune(void)
     fXB.fMainWinCount  = 1;
     fXB.fMainEdgeCount = 1;
     
-    //remove all edges with edge_count<fMinCount
+    //remove all edges with fAge<fMinCount
     for(up=fU;up<fUbound;++up) {
         I = 0;
+        const Double_t *x0 = up->GetVector();
+        // double rx0 = sqrt(x0[0]*x0[0] + x0[1]*x0[1] + x0[2]*x0[2]); //Distance of cell to origin
         while (I<up->fNc) {
+            const TNeuralNetCell *c = GetCell(I);
+            const Double_t *xi = c->GetVector();
+            double x1[3]; // vector to neighbour
+            x1[0] = xi[0] - x0[0];
+            x1[1] = xi[1] - x0[1];
+            x1[2] = xi[2] - x0[2];
+            double rx1 = sqrt(x1[0]*x1[0] + x1[1]*x1[1] + x1[2]*x1[2]); // Disctance between cells
+            // Modification 2: punish long connections
+            // up->fAge[I] /= rx1;
+            // Modification 3: only accept structures with at least 3 cells
+            UInt_t numberConnections = up->GetNumberOfConnections();
+            if (numberConnections < 3) {
+                cout << "Remove cell " << I << endl;
+                up->fAge[I] = 0; // Mark for removal
+            }
+            else {
+                // Modification 4: punish small opening angles
+                for (int j=0;j<numberConnections;j++) {
+                    const TNeuralNetCell *u = c->GetConnectedCell(j);
+                    const Double_t *xj = u->GetVector();
+                    double x2[3];
+                    x2[0] = xj[0] - x0[0];
+                    x2[1] = xj[1] - x0[1];
+                    x2[2] = xj[2] - x0[2];
+                    double rx2 = sqrt(x2[0]*x2[0] + x2[1]*x2[1] + x2[2]*x2[2]);
+                    double cosine = x1[0]*x2[0] + x1[1]*x2[1] + x1[2]*x2[2];
+                    double penalty = 1. - cosine/(rx1*rx2); // punish small opening angles
+                    up->fAge[I] *= penalty;
+                    up->fAge[j] *= penalty;
+                    
+                }
+            }
             if (up->fAge[I]<fXB.fMinCount) {
                 if (!CondDisconnect(up,(TNeuralNetCell*)up->fC[I].fPtr)) ++I;
             } else ++I;
         }
     }
 }
-

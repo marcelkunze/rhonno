@@ -18,6 +18,7 @@
 #include <TView.h>
 #include <TPolyMarker3D.h>
 #include <TPolyLine3D.h>
+#include <TNtuple.h>
 
 #include <iostream>
 using namespace std;
@@ -39,6 +40,20 @@ Long_t  VUnsupervisedNet::TrainEpoch(FILE* file)
     }
     delete[] Buf;
     return records;
+}
+
+Long_t VUnsupervisedNet::TrainEpoch(TNtuple *tuple, Bool_t rand) {
+    fTuple = tuple;
+    if (fTuple == 0) return 0;
+    Long_t nhits = fTuple->GetEntries();
+    for (int i=0;i<nhits;i++) {
+        Long_t index = i;
+        if (rand) index = random()%nhits;
+        fTuple->GetEvent(index,1);
+        Float_t *x=fTuple->GetArgs();
+        Learnstep(x);
+    }
+    return nhits;
 }
 
 void VUnsupervisedNet::Draw (Option_t *option) {
