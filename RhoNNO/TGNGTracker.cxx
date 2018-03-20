@@ -1,16 +1,12 @@
-//////////////////////////////////////////////////////////////////////////
-//									                                    //
-// TGNGTracker									                        //
-//									                                    //
-// Implementation of the GROWING-NEURAL-GAS Trackfinder                 //
-// Part of the Neural Network Objects package (NNO)			            //
-//									                                    //
-// Author List:								                            //
-// Johannes Steffens, Bochum University					                //
-// M.Kunze, Heidelberg University						                //
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	    //
-//									                                    //
-//////////////////////////////////////////////////////////////////////////
+// TGNGTracker
+//
+// Implementation of the GROWING-NEURAL-GAS Trackfinder
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Heidelberg University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include <TMath.h>
 #include <TNtuple.h>
@@ -412,7 +408,7 @@ Int_t TGNGTracker::Insert(void)
     ux[2] = unew->fVector[2];
     
     int imin = 0;
-    double dmin = MAXFLOAT;
+    double dmin = DBL_MAX;
     for (int i=0;i<fTuple->GetEntries();i++) {
         double dx[3];
         fTuple->GetEvent(i,1);
