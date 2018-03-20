@@ -36,15 +36,15 @@ int main(int argc, char* argv[]) {
     
     TFile *f = new TFile("utrain.root","RECREATE");
     
-    TNtuple tup("Ntuple","PiPiEta Dalitzplot","m1:m2");
+    TNtuple tuple("Ntuple","PiPiEta Dalitzplot","m1:m2");
     while (!feof(F)) {
         float m1,m2;
         fscanf(F,"%f %f",&m1,&m2);
-        tup.Fill(m1,m2);
+        tuple.Fill(m1,m2);
     }
     fclose(F);
     
-    long nentries = tup.GetEntries();
+    long nentries = tuple.GetEntries();
     
     cout << endl << "Training PiPiEta Dalitzplot with a GCS Network";
     cout << endl << "Number of points:" << nentries << endl;
@@ -64,11 +64,7 @@ int main(int argc, char* argv[]) {
     
     int EpC=0;
     while (EpC++<MAXEPOCH) {
-        for (int i=0;i<nentries;i++) {
-            tup.GetEvent(random()%nentries,1);
-            Float_t *x=tup.GetArgs();
-            net.Learnstep(x);
-        }
+        net.TrainEpoch(&tuple);
         printf("epoch nr.: %i, cells: %i\n",EpC,net.GetNumberOfCells());
     }
     
@@ -88,9 +84,9 @@ int main(int argc, char* argv[]) {
     }
     
     c->cd(1);
-    tup.SetMarkerSize(0.4);
-    tup.SetMarkerStyle(20);
-    tup.Draw("m1:m2");
+    tuple.SetMarkerSize(0.4);
+    tuple.SetMarkerStyle(20);
+    tuple.Draw("m1:m2");
     c->Update();
 
     c->cd(2);

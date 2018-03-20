@@ -13,7 +13,7 @@
 using namespace std;
 
 #define MAXEPOCH 1000
-#define DELETESTEP 100
+#define DELETESTEP 500
 
 // The user member function processes one event
 
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     
     while(!feof(F)) {
         fscanf(F,"%lf %lf %lf",&x,&y,&z);
-        hits.Fill(x,y,z);
+        hits.Fill(x*0.01,y*0.01,z*0.01); // transform to meter
     }
     fclose(F);
     
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     p1->cd();
     // creating a view
     TView *view = TView::CreateView(1);
-    view->SetRange(-200,-200,-200,200,200,200);
+    view->SetRange(-2,-2,-2,2,2,2); // draw in a 2 meter cube
     // create a first PolyMarker3D
     TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
     for (int i=0;i<nhits;i++) {
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
     while (n++ < MAXEPOCH) {
         cout << endl << "Epoch: " << n << endl << "Cells:" << net.GetNumberOfCells() << endl;
         // Set the input data
-        net.TrainEpoch(&hits);
+        net.TrainEpoch(&hits, kFALSE);
     }
     
     // Show the network
