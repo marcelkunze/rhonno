@@ -69,7 +69,7 @@ void VUnsupervisedNet::Draw (Option_t *option) {
             cellmarker->SetPoint(i, x1[0], x1[1], 0.0);
         }
         cellmarker->SetMarkerSize(0.5);
-        cellmarker->SetMarkerColor(kCyan);
+        cellmarker->SetMarkerColor(kBlue);
         cellmarker->SetMarkerStyle(kFullDotLarge);
         cellmarker->Draw();
 
@@ -89,7 +89,7 @@ void VUnsupervisedNet::Draw (Option_t *option) {
             }
             // set attributes
             connector->SetLineWidth(1);
-            connector->SetLineColor(kBlue);
+            connector->SetLineColor(kRed);
             connector->Draw();
         }
     }

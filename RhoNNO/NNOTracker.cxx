@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     }
     // set marker size, color & style
     hitmarker->SetMarkerSize(1.0);
-    hitmarker->SetMarkerColor(kRed);
+    hitmarker->SetMarkerColor(kCyan);
     hitmarker->SetMarkerStyle(kStar);
     hitmarker->Draw();
     

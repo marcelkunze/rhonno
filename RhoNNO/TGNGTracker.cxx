@@ -476,7 +476,7 @@ void TGNGTracker::Prune(void)
             }
             
             if (up->fAge[I]<fXB.fMinCount)
-                if (CondDisconnect(up,(TNeuralNetCell*)up->fC[I].fPtr)) --I; // Remove the cell
+                if (CondDisconnect(up,(TNeuralNetCell*)up->fC[I].fPtr)) --I; // Remove the connection
             
             ++I;
         }
