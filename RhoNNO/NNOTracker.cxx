@@ -13,6 +13,7 @@
 using namespace std;
 
 #define MAXEPOCH 1000
+#define INSERTSTEP 10
 #define DELETESTEP 500
 
 // The user member function processes one event
@@ -47,6 +48,7 @@ int main(int argc, char* argv[]) {
     TCanvas *c1 = new TCanvas("c1","NNO Tracking: Neural Gas",200,10,700,500);
     // create a pad
     TPad *p1 = new TPad("p1","p1",0.05,0.02,0.95,0.82,46,3,1);
+    p1->SetFillColor(kBlack);
     p1->Draw();
     p1->cd();
     // creating a view
@@ -61,8 +63,8 @@ int main(int argc, char* argv[]) {
     }
     // set marker size, color & style
     hitmarker->SetMarkerSize(1.0);
-    hitmarker->SetMarkerColor(4);
-    hitmarker->SetMarkerStyle(2);
+    hitmarker->SetMarkerColor(kRed);
+    hitmarker->SetMarkerStyle(kStar);
     hitmarker->Draw();
     
     cout << endl << "Training Delphi TPC data with a GNG Network";
@@ -76,7 +78,7 @@ int main(int argc, char* argv[]) {
                     0.01,          // a_edge_count
                     0.1,           // min_count
                     3,             // connectors
-                    10,            // insert_step
+                    INSERTSTEP,    // insert_step
                     DELETESTEP,    // delete_step
                     "gng.net"      // Network Filename is "gng.net"
                     );

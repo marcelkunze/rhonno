@@ -314,13 +314,13 @@ Double_t  TGNG::Train(NNO_INTYPE* in,NNO_OUTTYPE*)
     fXB.fMainEdgeCount *= (1.0 - fXB.fEdgeCount);
     
     if (fXB.fInsertStep>0)
-        if (fXB.fInsertCount++==fXB.fInsertStep) {
+        if (++fXB.fInsertCount==fXB.fInsertStep) {
             Insert();
             fXB.fInsertCount = 0;
         }
     
     if (fXB.fDeleteStep>0)
-        if (fXB.fDeleteCount++==fXB.fDeleteStep) {
+        if (++fXB.fDeleteCount==fXB.fDeleteStep) {
             Prune();
             fXB.fDeleteCount = 0;
         }

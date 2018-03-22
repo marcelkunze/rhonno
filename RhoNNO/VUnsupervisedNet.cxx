@@ -1,17 +1,13 @@
-//////////////////////////////////////////////////////////////////////////
-//									                                    //
-// VUnsupervisedNet							                            //
-//									                                    //
-// Base classes for unsupervised learning				                //
-// Abstract base class of all unsupervised networks			            //
-// Part of the Neural Network Objects package (NNO)			            //
-//									                                    //
-// Author List:								                            //
-// Johannes Steffens, Bochum University					                //
-// M.Kunze, Bochum University						                    //
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	    //
-//									                                    //
-//////////////////////////////////////////////////////////////////////////
+// VUnsupervisedNet
+//
+// Base classes for unsupervised learning
+// Abstract base class of all unsupervised networks
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "RhoNNO/VUnsupervisedNet.h"
 #include <TCanvas.h>
@@ -73,8 +69,8 @@ void VUnsupervisedNet::Draw (Option_t *option) {
             cellmarker->SetPoint(i, x1[0], x1[1], 0.0);
         }
         cellmarker->SetMarkerSize(0.5);
-        cellmarker->SetMarkerColor(1);
-        cellmarker->SetMarkerStyle(8);
+        cellmarker->SetMarkerColor(kCyan);
+        cellmarker->SetMarkerStyle(kFullDotLarge);
         cellmarker->Draw();
 
         UInt_t numberConnections = c->GetNumberOfConnections();
@@ -93,7 +89,7 @@ void VUnsupervisedNet::Draw (Option_t *option) {
             }
             // set attributes
             connector->SetLineWidth(1);
-            connector->SetLineColor(1);
+            connector->SetLineColor(kBlue);
             connector->Draw();
         }
     }

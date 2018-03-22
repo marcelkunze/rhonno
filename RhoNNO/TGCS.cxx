@@ -250,14 +250,14 @@ Double_t TGCS::Train(NNO_INTYPE* in,NNO_OUTTYPE*)
     }
     
     if (fXB.fInsertStep>0) 
-	if (fXB.fInsertCount++==fXB.fInsertStep) 
+	if (++fXB.fInsertCount==fXB.fInsertStep)
 	{
 	    Insert(); 
 	    fXB.fInsertCount = 0;
 	}
 	
     if (fXB.fDeleteStep>0) 
-	if (fXB.fDeleteCount++==fXB.fDeleteStep) {
+	if (++fXB.fDeleteCount==fXB.fDeleteStep) {
 	    Prune(); 
 	    fXB.fDeleteCount = 0;
 	}
