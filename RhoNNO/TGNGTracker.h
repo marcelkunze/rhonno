@@ -1,18 +1,14 @@
 #ifndef TGNGTracker_H
 #define TGNGTracker_H
-//////////////////////////////////////////////////////////////////////////
-//									                                    //
-// TGNGTracker									                        //
-//									                                    //
-// Implementation of the GROWING-NEURAL-GAS Trackfinder			        //
-// Part of the Neural Network Objects package (NNO)			            //
-//									                                    //
-// Author List:								                            //
-// Johannes Steffens, Bochum University					                //
-// M.Kunze, Heidelberg University						                //
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	    //
-//									                                    //
-//////////////////////////////////////////////////////////////////////////
+// TGNGTracker
+//
+// Implementation of the GROWING-NEURAL-GAS Trackfinder
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Heidelberg University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "RhoNNO/VUnsupervisedNet.h"
 

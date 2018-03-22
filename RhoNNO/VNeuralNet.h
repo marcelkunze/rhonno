@@ -1,18 +1,14 @@
 #ifndef VNEURALNET_H
 #define VNEURALNET_H
-//////////////////////////////////////////////////////////////////////////
-//									//
-// VNeuralNet								//
-//									//
-// Base classes for unsupervised and supervised networks		//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// VNeuralNet
+//
+// Base classes for unsupervised and supervised networks
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TNamed.h"
 #include "TString.h"

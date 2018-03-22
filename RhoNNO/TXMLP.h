@@ -1,18 +1,14 @@
 #ifndef TXMLP_H
 #define TXMLP_H
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TXMLP								//
-//									//
-// Implementation of the Multi-Layer-Perceptron				//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TXMLP
+//
+// Implementation of the Multi-Layer-Perceptron
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "RhoNNO/VSupervisedNet.h"
 #include "RhoNNO/TPerceptron.h"

@@ -1,18 +1,14 @@
 #ifndef TGNG_H
 #define TGNG_H
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TGNG									//
-//									//
-// Implementation of the GROWING-NEURAL-GAS (GNG)			//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TGNG
+//
+// Implementation of the GROWING-NEURAL-GAS (GNG)
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "RhoNNO/VUnsupervisedNet.h"
 

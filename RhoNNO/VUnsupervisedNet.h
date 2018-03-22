@@ -1,19 +1,15 @@
 #ifndef VUNSUPERVISEDNET_H
 #define VUNSUPERVISEDNET_H
-//////////////////////////////////////////////////////////////////////////
-//									                                    //
-// VUnsupervisedNet							                            //
-//									                                    //
-// Base classes for unsupervised learning				                //
-// Abstract base class of all unsupervised networks			            //
-// Part of the Neural Network Objects package (NNO)			            //
-//									                                    //
-// Author List:								                            //
-// Johannes Steffens, Bochum University					                //
-// M.Kunze, Bochum University						                    //
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	    //
-//									                                    //
-//////////////////////////////////////////////////////////////////////////
+// VUnsupervisedNet
+//
+// Base classes for unsupervised learning
+// Abstract base class of all unsupervised networks
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include <TNtuple.h>
 

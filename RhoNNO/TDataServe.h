@@ -1,29 +1,24 @@
 #ifndef TDataServe_H
 #define TDataServe_H
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TDataServe								//
-//									//
-// A simple datastack for use with the Neural Network Objects (NNO)	//
-// It supports: - separate storing of train and testvectors		//
-//		- mixing of the trainvectors				//
-//		- deleting of bad vectors				//
-//		- reading data from TNtuple				//
-//									//
-// Usage: - Call the normal constructors				//
-//	  - Fill the TDataServe objects via				//
-//		- Putvec function					//
-//		- TNtuple_DataRead function				//
-//		- TNtuple_XDataRead function				//
-//	  - Call Init function						//
-//									//
-// Author List:								//
-// H.Schmücker, Bochum University					//
-// M.Kunze, Bochum University, Feb. 01					//
-// Copyright (C) 1999-2001, Ruhr-University Bochum.			//
-//									//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TDataServe
+//
+// A simple datastack for use with the Neural Network Objects (NNO)
+// It supports: - separate storing of train and testvectors
+//        - mixing of the trainvectors
+//        - deleting of bad vectors
+//        - reading data from TNtuple
+//
+// Usage: - Call the normal constructors
+//      - Fill the TDataServe objects via
+//        - Putvec function
+//        - TNtuple_DataRead function
+//        - TNtuple_XDataRead function
+//      - Call Init function
+//
+// Author List:
+// H.Schmuecker, Bochum University
+// M.Kunze, Bochum University, Feb. 01
+// Copyright (C) 1999-2001, Ruhr-University Bochum.
 
 #include <assert.h>
 #include "TNamed.h"

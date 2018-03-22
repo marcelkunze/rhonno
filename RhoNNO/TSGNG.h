@@ -1,18 +1,14 @@
 #ifndef TSGNG_H
 #define TSGNG_H
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TSGNG								//
-//									//
-// Implementation of the SUPERVISED-GROWING-NEURAL-GAS (SGNG)		//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TSGNG
+//
+// Implementation of the SUPERVISED-GROWING-NEURAL-GAS (SGNG)
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "RhoNNO/TNeuralNetCell.h"
 #include "RhoNNO/VSupervisedNet.h"

@@ -1,17 +1,14 @@
 #ifndef TNNK_H
 #define TNNK_H
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TNNK									//
-//									//
-// Interface to J.P Ernenwein's neural network kernel TNNKernel		//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// M.Kunze, Bochum University						//
-// (C) Copyright 2001, Ruhr-University Bochum.				//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TNNK
+//
+// Interface to J.P Ernenwein's neural network kernel TNNKernel
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "RhoNNO/VSupervisedNet.h"
 

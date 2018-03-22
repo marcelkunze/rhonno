@@ -1,18 +1,14 @@
 #ifndef TSGCS_H
 #define TSGCS_H
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TSGCS								//
-//									//
-// Implementation of the SUPERVISED-GROWING-CELL-STRUCTURE (SGCS)	//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TSGCS
+//
+// Implementation of the SUPERVISED-GROWING-CELL-STRUCTURE (SGCS)
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "RhoNNO/TNeuralNetCell.h"
 #include "RhoNNO/VSupervisedNet.h"
