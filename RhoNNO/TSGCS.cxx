@@ -1,16 +1,12 @@
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TSGCS								//
-//									//
-// Implementation of the SUPERVISED-GROWING-CELL-STRUCTURE (SGCS)	//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TSGCS
+//
+// Implementation of the SUPERVISED-GROWING-CELL-STRUCTURE (SGCS)
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TMath.h"
 #include "RhoNNO/TSGCS.h"
@@ -384,8 +380,8 @@ Int_t TSGCS::Insert(void)
 {
     Int_t I,J;
     TNeuralNetCell* up;
-    TNeuralNetCell* umax;
-    TNeuralNetCell* udst;
+    TNeuralNetCell* umax = nullptr;
+    TNeuralNetCell* udst = nullptr;
     TNeuralNetCell* unew;
     
     if (fXB.fCells == fXB.fMaxCells) return 0; //break if there are no cells availiable
@@ -459,7 +455,7 @@ Int_t TSGCS::Prune(void)
 {
     Int_t I,J;
     TNeuralNetCell* up;
-    TNeuralNetCell* umax;
+    TNeuralNetCell* umax = nullptr;
     TNeuralNetCell* unei;
     
     //find cell with maximal s_dev

@@ -1,16 +1,12 @@
-//////////////////////////////////////////////////////////////////////////
-//									                                    //
-// TGNG									                                //
-//									                                    //
-// Implementation of the GROWING-NEURAL-GAS (GNG)			            //
-// Part of the Neural Network Objects package (NNO)			            //
-//									                                    //
-// Author List:								                            //
-// Johannes Steffens, Bochum University					                //
-// M.Kunze, Bochum University						                    //
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	    //
-//									                                    //
-//////////////////////////////////////////////////////////////////////////
+// TGNG
+//
+// Implementation of the GROWING-NEURAL-GAS (GNG)
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TMath.h"
 #include "RhoNNO/TGNG.h"
@@ -339,10 +335,10 @@ void TGNG::Deviation(void)
 Int_t TGNG::Insert(void) 
 {
     Int_t I,J;
-    TNeuralNetCell* up;
-    TNeuralNetCell* umax1;
-    TNeuralNetCell* umax2;
-    TNeuralNetCell* unew;
+    TNeuralNetCell* up = nullptr;
+    TNeuralNetCell* umax1 = nullptr;
+    TNeuralNetCell* umax2 = nullptr;
+    TNeuralNetCell* unew = nullptr;
     
     if (fXB.fCells==fParm.fOutNodes) return 0; //break if there are no cells availiable
     //find cell with highest win_count

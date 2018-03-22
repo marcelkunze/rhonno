@@ -1,18 +1,14 @@
-//////////////////////////////////////////////////////////////////////////
-//									//
-// VNeuralNet								//
-//									//
-// Base classes for unsupervised and supervised networks		//
-// Partof the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// VNeuralNet
+//
+// Base classes for unsupervised and supervised networks
+// Partof the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-static const char* NNO_VERSION="1.3ROOT";
+static const char* NNO_VERSION="1.4ROOT";
 
 #include "TRandom.h"
 
@@ -261,7 +257,7 @@ void VNeuralNet::ShowPlots()
 
 Double_t VNeuralNet::TrainEpoch(TDataServe *server, Int_t nEpoch)
 {
-    double       error;			// squared error collector
+    double       error = 0.0;			// squared error collector
     unsigned int classError;		// classification Error
     unsigned int n;			// number of samples
 

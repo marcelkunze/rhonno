@@ -1,16 +1,12 @@
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TSGNG								//
-//									//
-// Implementation of the SUPERVISED-GROWING-NEURAL-GAS (SGNG)		//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TSGNG
+//
+// Implementation of the SUPERVISED-GROWING-NEURAL-GAS (SGNG)
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TMath.h"
 #include "RhoNNO/TSGNG.h"
@@ -436,10 +432,10 @@ Double_t TSGNG::Train(NNO_INTYPE* in,NNO_OUTTYPE* out)
 Int_t TSGNG::Insert(void) 
 {
     Int_t I,J;
-    TNeuralNetCell* up;
-    TNeuralNetCell* umax1;
-    TNeuralNetCell* umax2;
-    TNeuralNetCell* unew;
+    TNeuralNetCell* up = nullptr;
+    TNeuralNetCell* umax1 = nullptr;
+    TNeuralNetCell* umax2 = nullptr;
+    TNeuralNetCell* unew = nullptr;
     if (fXB.fCells==fXB.fMaxCells) return 0; //break if there are no cells availiable
     
     //find cell with highest err_count

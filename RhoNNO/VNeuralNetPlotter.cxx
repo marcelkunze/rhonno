@@ -1,16 +1,13 @@
-//////////////////////////////////////////////////////////////////////////
-//									//
-// VNeuralNetPlotter							//
-// TSimpleNeuralNetPlotter						//
-//									//
-// Base classes for network plotters					//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// M.Kunze, Bochum University						//
-// (C) Copyright Marcel Kunze 2001, Ruhr-University Bochum.		//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// VNeuralNetPlotter
+// TSimpleNeuralNetPlotter
+//
+// Base classes for network plotters
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TCanvas.h"
 #include "TFrame.h"

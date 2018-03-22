@@ -1,16 +1,12 @@
-//////////////////////////////////////////////////////////////////////////
-//									//
-// TGCS									//
-//									//
-// Implementation of the GROWING-CELL-STRUCTURE (GCS)			//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// Johannes Steffens, Bochum University					//
-// M.Kunze, Bochum University						//
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.	//
-//									//
-//////////////////////////////////////////////////////////////////////////
+// TGCS
+//
+// Implementation of the GROWING-CELL-STRUCTURE (GCS)
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// Johannes Steffens, Bochum University
+// M.Kunze, Bochum University
+// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TMath.h"
 #include "RhoNNO/TGCS.h"
@@ -277,10 +273,10 @@ void TGCS::Deviation(void)
 Int_t TGCS::Insert(void) 
 {
     Int_t I,J;
-    TNeuralNetCell* up;
-    TNeuralNetCell* umax;
-    TNeuralNetCell* udst;
-    TNeuralNetCell* unew;
+    TNeuralNetCell* up = nullptr;
+    TNeuralNetCell* umax = nullptr;
+    TNeuralNetCell* udst = nullptr;
+    TNeuralNetCell* unew = nullptr;
     
     if (fXB.fCells==fParm.fOutNodes) return 0; //break if there are no cells availiable
     //find cell with most win_count
@@ -346,9 +342,9 @@ void TGCS::Remove(TNeuralNetCell* urem)
 Int_t TGCS::Prune(void) 
 {
     Int_t I,J;
-    TNeuralNetCell* up;
-    TNeuralNetCell* umax;
-    TNeuralNetCell* unei;
+    TNeuralNetCell* up =  nullptr;
+    TNeuralNetCell* umax =  nullptr;;
+    TNeuralNetCell* unei =  nullptr;;
     
     //find cell with maximal fChi2
     Deviation();
