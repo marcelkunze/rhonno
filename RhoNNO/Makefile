@@ -11,6 +11,7 @@ endif
 OBJDIR        = $(RHO)/tmp
 LIBDIR        = $(RHO)/lib
 BINDIR        = $(RHO)/bin
+DATADIR       = $(RHO)/Data
 
 ROOTCFLAGS    = $(shell root-config --cflags)
 ROOTLIBS      = $(shell root-config --libs)
@@ -30,14 +31,30 @@ GLIBS         = $(ROOTGLIBS)
 # Get dependencies:
 include GNUmake-depend.mk
 
+all: strain utrain NetworkTrainer NNOTracker
+
+testall: teststrain testutrain testNetworkTrainer testNNOTracker
+
 strain:
 	$(CXX) $(CXXFLAGS) strain.cxx -o $(RHO)/bin/strain $(LDFLAGS) $(LIBS)
+
+teststrain: strain
+	. environment; $(BINDIR)/strain
 
 utrain:
 	$(CXX) $(CXXFLAGS) utrain.cxx -o $(RHO)/bin/utrain $(LDFLAGS) $(LIBS)
 
+testutrain: utrain
+	. environment; $(BINDIR)/utrain $(DATADIR)/ppe.dat
+
 NetworkTrainer:
 	$(CXX) $(CXXFLAGS) NetworkTrainer.cxx -o $(RHO)/bin/NetworkTrainer $(LDFLAGS) $(LIBS)
 
+testNetworkTrainer: NetworkTrainer
+	. environment; $(BINDIR)/NetworkTrainer pid.nno
+
 NNOTracker:
 	$(CXX) $(CXXFLAGS) NNOTracker.cxx -o $(RHO)/bin/NNOTracker $(LDFLAGS) $(LIBS)
+
+testNNOTracker: NNOTracker
+	. environment; $(BINDIR)/NNOTracker $(DATADIR)/event2
