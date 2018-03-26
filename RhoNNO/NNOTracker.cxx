@@ -12,9 +12,9 @@
 #include <iostream>
 using namespace std;
 
-#define MAXEPOCH 1000
-#define INSERTSTEP 10
-#define DELETESTEP 500
+#define MAXEPOCH 100
+#define INSERTSTEP 100
+#define DELETESTEP 50
 
 // The user member function processes one event
 
@@ -32,11 +32,11 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     
-    double x,y,z;
+    double X,Y,Z;
     
     while(!feof(F)) {
-        fscanf(F,"%lf %lf %lf",&x,&y,&z);
-        hits.Fill(x*0.01,y*0.01,z*0.01); // transform to meter
+        fscanf(F,"%lf %lf %lf",&X,&Y,&Z);
+        hits.Fill(X*0.01,Y*0.01,Z*0.01); // transform to meter
     }
     fclose(F);
     

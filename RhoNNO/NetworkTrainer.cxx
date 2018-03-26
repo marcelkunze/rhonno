@@ -1,17 +1,14 @@
-//////////////////////////////////////////////////////////////////////////
-//									                                    //
-// NetworkTrainer                                                       //
-// Part of the Neural Network Objects package (NNO)			            //
-//									                                    //
-// Author List:								                            //
-// M.Kunze, Bochum University						                    //
-// (C) Copyright M.Kunze 1997-2001, Ruhr-University Bochum.		        //
-//									                                    //
-// Usage: NetworkTrainer <file> <start> <end>				            //
-// file          = steering file					                    //
-// start         = epoch to start with (Default 1)			            //
-// end           = epoch to end with (Default 200)			            //
-//////////////////////////////////////////////////////////////////////////
+// NetworkTrainer
+// Part of the Neural Network Objects package (NNO)
+//
+// Author List:
+// M.Kunze, Bochum University
+// (C) Copyright M.Kunze 1997-2001, Ruhr-University Bochum.
+//
+// Usage: NetworkTrainer <file> <start> <end>
+// file          = steering file
+// start         = epoch to start with (Default 1)
+// end           = epoch to end with (Default 200)
 
 #include "TROOT.h"
 #include "TApplication.h"
@@ -44,17 +41,6 @@ int main(int argc,char* argv[])
     
     return EXIT_SUCCESS;
 }
-
-//////////////////////////////////////////////////////////////////////////
-//									//
-// NetworkTrainer							//
-// Part of the Neural Network Objects package (NNO)			//
-//									//
-// Author List:								//
-// M.Kunze, Bochum University						//
-// (C) Copyright M.Kunze 1997-2001, Ruhr-University Bochum.		//
-//									//
-//////////////////////////////////////////////////////////////////////////
 
 #include "NetworkTrainer.h"
 
@@ -392,17 +378,17 @@ void NetworkTrainer::PrintOn()
 
 // Generate names with epoch number extension
 
-TString NetworkTrainer::Makename(Int_t z, TString fNetworkPath, TString name){
+TString NetworkTrainer::Makename(Int_t z, TString networkPath, TString name){
     
     TString number = to_string(z);
     if (z<10)
-        name = fNetworkPath + "NNO000" + number + "." + fModel;
+        name = networkPath + "NNO000" + number + "." + fModel;
     else if (z<100)
-        name = fNetworkPath + "NNO00" + number + "." + fModel;
+        name = networkPath + "NNO00" + number + "." + fModel;
     else if (z<1000)
-        name = fNetworkPath + "NNO0" + number + "." + fModel;
+        name = networkPath + "NNO0" + number + "." + fModel;
     else
-        name = fNetworkPath + "NNO" + number + "." + fModel;
+        name = networkPath + "NNO" + number + "." + fModel;
     
     return name;
 }

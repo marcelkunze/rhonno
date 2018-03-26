@@ -77,8 +77,8 @@ int main(int argc, char* argv[]) {
     graph2d->SetTitle("GCS: Voronoi Diagram");
     
     for (int i=0;i<numberCells;++i) {
-        const TNeuralNetCell *c = net.GetCell(i);
-        const Double_t *x = c->GetVector();
+        const TNeuralNetCell *cell = net.GetCell(i);
+        const Double_t *x = cell->GetVector();
         printf("\n Cell %d: (%f,%f) \n",i,x[0],x[1]);
         graph2d->SetPoint(i,x[0],x[1],0.0);
     }
@@ -88,11 +88,11 @@ int main(int argc, char* argv[]) {
     tuple.SetMarkerStyle(20);
     tuple.Draw("m1:m2");
     c->Update();
-
+    
     c->cd(2);
     net.Draw();
     c->Update();
-
+    
     TGraphDelaunay2D *delaunay = new TGraphDelaunay2D(graph2d);
     delaunay->FindAllTriangles();
     delaunay->Write();
