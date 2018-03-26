@@ -17,10 +17,10 @@ ROOTCFLAGS    = $(shell root-config --cflags)
 ROOTLIBS      = $(shell root-config --libs)
 ROOTGLIBS     = $(shell root-config --glibs)
  
-# Linux with gcc
-CXX           = c++
+# Linux with clang
+CXX           = clang++
 CXXFLAGS      = -I$(RHO) -O2 -Wall -fPIC -pthread -std=c++11 -m64
-LD            = c++
+LD            = clang++
 LDFLAGS       = -Wl,-rpath,/lib:$(LIBDIR):$(shell root-config --libdir)
 SOFLAGS       = -shared
 
@@ -39,22 +39,22 @@ strain:
 	$(CXX) $(CXXFLAGS) strain.cxx -o $(RHO)/bin/strain $(LDFLAGS) $(LIBS)
 
 teststrain: strain
-	. environment; $(BINDIR)/strain
+	. $(PWD)/environment; $(BINDIR)/strain
 
 utrain:
 	$(CXX) $(CXXFLAGS) utrain.cxx -o $(RHO)/bin/utrain $(LDFLAGS) $(LIBS)
 
 testutrain: utrain
-	. environment; $(BINDIR)/utrain $(DATADIR)/ppe.dat
+	. $(PWD)/environment; $(BINDIR)/utrain $(DATADIR)/ppe.dat
 
 NetworkTrainer:
 	$(CXX) $(CXXFLAGS) NetworkTrainer.cxx -o $(RHO)/bin/NetworkTrainer $(LDFLAGS) $(LIBS)
 
 testNetworkTrainer: NetworkTrainer
-	. environment; $(BINDIR)/NetworkTrainer pid.nno
+	. $(PWD)/environment; $(BINDIR)/NetworkTrainer pid.nno
 
 NNOTracker:
 	$(CXX) $(CXXFLAGS) NNOTracker.cxx -o $(RHO)/bin/NNOTracker $(LDFLAGS) $(LIBS)
 
 testNNOTracker: NNOTracker
-	. environment; $(BINDIR)/NNOTracker $(DATADIR)/event2
+	. $(PWD)/environment; $(BINDIR)/NNOTracker $(DATADIR)/event2
