@@ -76,15 +76,15 @@ protected:
     
 public:
     TNeuralNetCell();
-    virtual ~TNeuralNetCell() {};
-    const Double_t *GetVector() const { return fVector; }
-    const Int_t     GetID() const { return fID; }
-    const Double_t  GetWinnerCount() const { return fCount; }
-    const Double_t *GetDifference() const { return fDiff; }
-    const connector *GetConnectors() const { return fC; }
-    const TNeuralNetCell *GetConnectedCell(UInt_t c) const { if (c<fNc) return (TNeuralNetCell *) (fC[c].fPtr); else return NULL;}
-    const Int_t     GetNumberOfConnections() const { return fNc; }
-    const Double_t  GetError() const { return fChi2; }
+    virtual ~TNeuralNetCell(void) {};
+    const Double_t *GetVector(void) const { return fVector; }
+    Int_t     GetID(void) const { return fID; }
+    Double_t  GetWinnerCount(void) const { return fCount; }
+    const Double_t *GetDifference(void) const { return fDiff; }
+    const connector *GetConnectors(void) const { return fC; }
+    const TNeuralNetCell *GetConnectedCell(Int_t c) const { if (c<fNc) return (TNeuralNetCell *) (fC[c].fPtr); else return NULL;}
+    Int_t     GetNumberOfConnections(void) const { return fNc; }
+    Double_t  GetError() const { return fChi2; }
     
     static void Disconnect(TNeuralNetCell* up1,TNeuralNetCell* up2);
     static void Connect   (TNeuralNetCell* up1,TNeuralNetCell* up2,TNeuralNetCellParameters* XB);

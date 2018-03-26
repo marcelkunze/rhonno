@@ -29,7 +29,7 @@ Long_t  VUnsupervisedNet::TrainEpoch(FILE* file)
     Long_t records = 0;
     rewind(file);
     while(!feof(file)) {
-        if (fread(Buf,sizeof(NNO_INTYPE),fParm.fInNodes,file)==fParm.fInNodes) {
+        if ((Int_t) fread(Buf,sizeof(NNO_INTYPE),fParm.fInNodes,file)==fParm.fInNodes) {
             Train(Buf);
             ++records;
         }
@@ -54,10 +54,10 @@ Long_t VUnsupervisedNet::TrainEpoch(TNtuple *tuple, Bool_t rand) {
 
 void VUnsupervisedNet::Draw (Option_t *option) {
     // Draw the network
-    UInt_t numberCells = GetNumberOfCells();
+    Int_t numberCells = GetNumberOfCells();
     TPolyMarker3D *cellmarker = new TPolyMarker3D(numberCells);
     
-    for (int i=0;i<numberCells;++i) {
+    for (Int_t i=0;i<numberCells;++i) {
         const TNeuralNetCell *c = GetCell(i);
         const Double_t *x1 = c->GetVector();
         // Draw the cell location X1
@@ -71,10 +71,10 @@ void VUnsupervisedNet::Draw (Option_t *option) {
         cellmarker->SetMarkerSize(0.5);
         cellmarker->SetMarkerColor(kBlue);
         cellmarker->SetMarkerStyle(kFullDotLarge);
-        cellmarker->Draw();
+        cellmarker->Draw(option);
 
-        UInt_t numberConnections = c->GetNumberOfConnections();
-        for (int j=0;j<numberConnections;j++) {
+        Int_t numberConnections = c->GetNumberOfConnections();
+        for (Int_t j=0;j<numberConnections;j++) {
             const TNeuralNetCell *u = c->GetConnectedCell(j);
             const Double_t *x2 = u->GetVector();
             // Draw the cell connections (X1->X2)
@@ -90,7 +90,7 @@ void VUnsupervisedNet::Draw (Option_t *option) {
             // set attributes
             connector->SetLineWidth(1);
             connector->SetLineColor(kRed);
-            connector->Draw();
+            connector->Draw(option);
         }
     }
     
@@ -99,16 +99,17 @@ void VUnsupervisedNet::Draw (Option_t *option) {
 void VUnsupervisedNet::Print (Option_t *option) const {
     // Print the network
     cout << endl << "Neural Network Object "<< fParm.fNetId << endl;
+    cout << option << endl;
     int dimension = fParm.fInNodes;
-    UInt_t numberCells = GetNumberOfCells();
-    for (int i=0;i<numberCells;++i) {
+    Int_t numberCells = GetNumberOfCells();
+    for (Int_t i=0;i<numberCells;++i) {
         const TNeuralNetCell *c = GetCell(i);
         const Double_t *x1 = c->GetVector();
         cout << "Cell " << i << ": X1(";
         for (int d=0;d<dimension-1;d++) cout << x1[d] << ",";
         cout << x1[dimension-1] << ")" << endl;
-        UInt_t numberConnections = c->GetNumberOfConnections();
-        for (int j=0;j<numberConnections;j++) {
+        Int_t numberConnections = c->GetNumberOfConnections();
+        for (Int_t j=0;j<numberConnections;j++) {
             const TNeuralNetCell *u = c->GetConnectedCell(j);
             const Double_t *x2 = u->GetVector();
             const Int_t id = u->GetID();

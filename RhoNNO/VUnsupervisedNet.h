@@ -30,7 +30,7 @@ public:
     VNeuralNet(netFile), fXB() {}
     TNeuralNetCellParameters &GetParameters() { return fXB; }
     Int_t GetNumberOfCells() const { return fXB.fCells; }
-    const TNeuralNetCell* GetCell(UInt_t n) const { if (n<fXB.fCells) return &fU[n]; else return NULL;};
+    const TNeuralNetCell* GetCell(Int_t n) const { if (n<fXB.fCells) return &fU[n]; else return NULL;};
     virtual Int_t GetWinnerCell(NNO_INTYPE* in) = 0;
     virtual Long_t TrainEpoch (FILE* trainFile);  // returns number of records in LearnFile
     virtual Long_t TrainEpoch (TNtuple *tuple, Bool_t random=kTRUE);    // learn the hits from the ntuple

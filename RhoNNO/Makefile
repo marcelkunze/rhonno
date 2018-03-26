@@ -19,7 +19,7 @@ ROOTGLIBS     = $(shell root-config --glibs)
  
 # Linux with clang
 CXX           = clang++
-CXXFLAGS      = -I$(RHO) -O2 -Wall -fPIC -pthread -std=c++11 -m64
+CXXFLAGS      = -I$(RHO) -O2 -Wall -fPIC -pthread -std=c++11 -m64 -Wunused-parameter -Wshadow
 LD            = clang++
 LDFLAGS       = -Wl,-rpath,/lib:$(LIBDIR):$(shell root-config --libdir)
 SOFLAGS       = -shared
