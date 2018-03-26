@@ -1,5 +1,12 @@
 export ROOTSYS=/Applications/root_v6.12.06
 export PATH=$PATH:$ROOTSYS/bin
+<<<<<<< HEAD
+export LD_LIBRARY_PATH=$ROOTSYS/lib:$LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=$ROOTSYS/lib:$DYLD_LIBRARY_PATH
+export RHO=$PWD/..
+
+=======
 export DYLD_LIBRARY_PATH=$ROOTSYS/lib:$DYLD_LIBRARY_PATH
 
 export RHO=/Users/marcel/workspace/rhonno
+>>>>>>> 8f0ffd8a857c60c166344a5513923826f7a04eaa
