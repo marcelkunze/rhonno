@@ -8,11 +8,12 @@
 #include <TNtuple.h>
 #include <TFile.h>
 #include "RhoNNO/TGNGTracker.h"
+#include "RhoNNO/TRadon.h"
 
 #include <iostream>
 using namespace std;
 
-#define MAXEPOCH 100
+#define MAXEPOCH 10
 #define INSERTSTEP 100
 #define DELETESTEP 50
 
@@ -92,6 +93,12 @@ int main(int argc, char* argv[]) {
     // Show the network
     net.Print();
     net.Draw();
+    
+    // Perform a Radon transformation from hit space to track parameter space
+    
+    TRadon r;
+    r.Transform(&hits);
+    r.Write();
     
     // TBD: Analyze the network
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
