@@ -7,6 +7,8 @@
 #include <math.h>
 #include <TNtuple.h>
 #include <TH2D.h>
+#include <TPolyMarker3D.h>
+#include <TPolyLine3D.h>
 #include "RhoNNO/TRadon.h"
 
 #include <string>
@@ -26,7 +28,7 @@ TRadon::TRadon() : Hlist(0)
 {
     nt1 = new TNtuple("RadonTransform","Radon Transform","kappa:phi:gamma:sigma:density:x:y:z");
     nt2 = new TNtuple("RadonCoordinates","Radon Coordinates","x:y:z");
- 
+    
     float gamma = 0.0;
     for (int i=0;i<25;i++,gamma+=DGAMMA) {
         string name = "Gamma=" + to_string(gamma);
@@ -50,8 +52,8 @@ TRadon::~TRadon() {
 TNtuple* TRadon::Transform(TNtuple *hits)
 {
     
-    float maxdensity=0,maxkappa=0,maxphi=0,maxgamma=0;
-    float kappa,gamma,phi,density,sigma,d;
+    double maxdensity=0,maxkappa=0,maxphi=0,maxgamma=0;
+    double kappa,gamma,phi,density,sigma,d;
     long k=0,g=0,p=0,i=0;
     
     
@@ -106,35 +108,35 @@ TNtuple* TRadon::Transform(TNtuple *hits)
     /*
      * Create a tuple with RADON coordinates
      */
-    GenerateTrack(nt2,30,0.0125,1./maxkappa,maxphi,maxgamma);
-
+    GenerateTrack(nt2,50,0.0125,1./maxkappa,maxphi,maxgamma);
+    
     return nt2;
 }
 
-float   TRadon::getEta_g(RADON *t)
+double   TRadon::getEta_g(RADON *t)
 {
-    float  sp,cp;
+    double  sp,cp;
     sp    = sin(t->phi);
     cp    = cos(t->phi);
     return sqrt((((t->kappa * t->x) + sp) * ((t->kappa * t->x) + sp)) + (((t->kappa * t->y) - cp) * ((t->kappa * t->y) - cp)));
 }
 
-float   TRadon::getTau_g(RADON *t)
+double   TRadon::getTau_g(RADON *t)
 {
-    float  sp,cp;
+    double  sp,cp;
     sp    = sin(t->phi);
     cp    = cos(t->phi);
     return signum(t->kappa) * atan(((t->y * sp) + (t->x * cp)) / ((1 / t->kappa) + (t->x * sp) - (t->y * cp)));
 }
 
-float   TRadon::getZ_g(RADON *t)
+double   TRadon::getZ_g(RADON *t)
 {
     return ((t->gamma * getTau_g(t)) - t->z);
 }
 
-float   TRadon::radon_hit_density(RADON *t)
+double   TRadon::radon_hit_density(RADON *t)
 {
-    float  eta_g,gamma,kappa,sigma,z_g,k2,s2,g2,factor, kappafunction,efunction,radon;
+    double  eta_g,gamma,kappa,sigma,z_g,k2,s2,g2,factor, kappafunction,efunction,radon;
     eta_g = getEta_g(t);
     gamma = t->gamma;
     kappa = t->kappa;
@@ -156,15 +158,37 @@ float   TRadon::radon_hit_density(RADON *t)
 /*
  * Create a tuple with Track coordinates
  */
-void TRadon::GenerateTrack(TNtuple *nt, int np, float delta, float radius, float phi, float gamma) {
-    float tau = delta;
+void TRadon::GenerateTrack(TNtuple *nt, int np, double delta, double radius, double phi, double gamma) {
+    double tau = delta;
     for (int i=0; i<np; i++,tau+=delta)
     {
         Float_t X[3];
-        X[0] = radius * ( sin(phi + (signum(radius) * tau)) - sin(phi));
-        X[1] = radius * (-cos(phi + (signum(radius) * tau)) + cos(phi));
+        X[0] = radius * ( sin(phi + tau) - sin(phi));
+        X[1] = radius * (-cos(phi + tau) + cos(phi));
         X[2] = gamma * tau;
         nt->Fill(X);
+        printf("\nHit #%d: %f %f %f",i,X[0],X[1],X[2]);
     }
 }
 
+void TRadon::Draw(Option_t *option) {
+    // Draw the best track
+    long ih = nt2->GetEntries();
+    TPolyMarker3D *hitmarker = new TPolyMarker3D(ih);
+    TPolyLine3D *connector = new TPolyLine3D(ih);
+    
+    for (Int_t i=0;i<ih-1;++i) {
+        nt2->GetEvent(i,1);
+        Float_t *x=nt2->GetArgs();
+        hitmarker->SetPoint(i, x[0], x[1], x[2]);
+        hitmarker->SetMarkerSize(0.5);
+        hitmarker->SetMarkerColor(kRed);
+        hitmarker->SetMarkerStyle(kFullDotLarge);
+        hitmarker->Draw(option);
+        connector->SetPoint(i, x[0], x[1], x[2]);
+        connector->SetLineWidth(1);
+        connector->SetLineColor(kRed);
+        connector->Draw(option);
+    }
+    
+}
