@@ -9,44 +9,30 @@
 #include <TH2D.h>
 #include "RhoNNO/TRadon.h"
 
+#include <string>
+#include <iostream>
+using namespace std;
+
 ClassImp(TRadon)
 
 TRadon::TRadon() : Hlist(0)
 {
-    nt1 = new TNtuple("Radon Transform","Radon Transform","kappa:phi:gamma:sigma:density:x:y:z");
-    nt2 = new TNtuple("Radon Coordinates","Radon Coordinates","x:y:z");
+    nt1 = new TNtuple("RadonTransform","Radon Transform","kappa:phi:gamma:sigma:density:x:y:z");
+    nt2 = new TNtuple("RadonCoordinates","Radon Coordinates","x:y:z");
 
-    Hlist.Add(new TH2D("Gamma=0","Radon density in r/Phi (Gamma=0)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=1","Radon density in r/Phi (Gamma=1)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=2","Radon density in r/Phi (Gamma=2)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=3","Radon density in r/Phi (Gamma=3)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=4","Radon density in r/Phi (Gamma=4)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=5","Radon density in r/Phi (Gamma=5)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=6","Radon density in r/Phi (Gamma=6)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=7","Radon density in r/Phi (Gamma=7)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=8","Radon density in r/Phi (Gamma=8)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=9","Radon density in r/Phi (Gamma=9)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=10","Radon density in r/Phi (Gamma=10)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=11","Radon density in r/Phi (Gamma=11)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=12","Radon density in r/Phi (Gamma=12)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=13","Radon density in r/Phi (Gamma=13)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=14","Radon density in r/Phi (Gamma=14)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=15","Radon density in r/Phi (Gamma=15)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=16","Radon density in r/Phi (Gamma=16)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=17","Radon density in r/Phi (Gamma=17)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=18","Radon density in r/Phi (Gamma=18)",40,0.0,4.,30,0.0,3.0));
-    Hlist.Add(new TH2D("Gamma=19","Radon density in r/Phi (Gamma=19)",40,0.0,4.,30,0.0,3.0));
+    for (int i=0;i<30;i++) {
+        string name = "Gamma=" + to_string(i);
+        string title = "Radon density in r/Phi " + name;
+        Hlist.Add(new TH2D(TString(name),TString(title),40,0.0,4.,30,0.0,3.0));
+    }
 }
 
 TRadon::~TRadon() {
-    delete nt1;
-    delete nt2;
-}
-
-void TRadon::Write() {
+    Hlist.Write();
     nt1->Write();
     nt2->Write();
-    Hlist.Write();
+    delete nt1;
+    delete nt2;
 }
 
 /*
@@ -64,7 +50,7 @@ TNtuple* TRadon::Transform(TNtuple *hits)
     long ih = hits->GetEntries();
     
     sigma = 0.001;
-    for (g=0,gamma=0.;g<15;g++,gamma+=1.) {
+    for (g=0,gamma=0.;g<30;g++,gamma+=1.) {
         for (k=0,kappa=0.25;k<20;k++,kappa+=0.25) {
             for (p=0,phi=0.;p<30;p++,phi+=M_PI/30.) {
                 for (i=0,density=0.0;i<ih;i++) {
@@ -98,7 +84,7 @@ TNtuple* TRadon::Transform(TNtuple *hits)
             }
         }
     }
-    printf("\nMax. Values g:%f k:%f p:%f : %f",maxgamma,maxkappa,maxphi,maxdensity);
+    printf("\nMax. Values g:%f k:%f p:%f : %f\n",maxgamma,maxkappa,maxphi,maxdensity);
     /*
      * Create a tuple with RADON coordinates
      */

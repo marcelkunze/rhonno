@@ -24,7 +24,6 @@ class TRadon : public TObject {
 public:
     TRadon();
     TNtuple* Transform(TNtuple *hits);
-    void Write(void);
     ~TRadon();
 private:
     float getEta_g(RADON *t);
