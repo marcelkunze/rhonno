@@ -31,9 +31,9 @@ GLIBS         = $(ROOTGLIBS)
 # Get dependencies:
 include GNUmake-depend.mk
 
-all: strain utrain NetworkTrainer NNOTracker
+all: strain utrain NetworkTrainer NNOTracker RadonTracker
 
-testall: teststrain testutrain testNetworkTrainer testNNOTracker
+testall: teststrain testutrain testNetworkTrainer testNNOTracker testRadonTracker
 
 strain:
 	$(CXX) $(CXXFLAGS) strain.cxx -o $(RHO)/bin/strain $(LDFLAGS) $(LIBS)
@@ -58,3 +58,10 @@ NNOTracker:
 
 testNNOTracker: NNOTracker
 	. $(PWD)/environment; $(BINDIR)/NNOTracker $(DATADIR)/event2
+
+RadonTracker:
+	$(CXX) $(CXXFLAGS) RadonTracker.cxx -o $(RHO)/bin/RadonTracker $(LDFLAGS) $(LIBS)
+
+testRadonTracker: RadonTracker
+	. $(PWD)/environment; $(BINDIR)/RadonTracker
+

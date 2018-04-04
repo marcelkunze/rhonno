@@ -98,7 +98,6 @@ int main(int argc, char* argv[]) {
     
     TRadon r;
     r.Transform(&hits);
-    //r.Write();
     
     // TBD: Analyze the network
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
@@ -106,7 +105,6 @@ int main(int argc, char* argv[]) {
     //TBD: Fit the helix tracks from the hits in the containers
     
     c1->Write();
-    //c1->Close();
     
     return EXIT_SUCCESS;
 }

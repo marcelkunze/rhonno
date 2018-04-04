@@ -24,6 +24,7 @@ class TRadon : public TObject {
 public:
     TRadon();
     TNtuple* Transform(TNtuple *hits);
+    void GenerateTrack(TNtuple *nt, int np, float delta, float radius, float phi, float gamma);
     ~TRadon();
 private:
     float getEta_g(RADON *t);

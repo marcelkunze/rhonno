@@ -15,13 +15,21 @@ using namespace std;
 
 ClassImp(TRadon)
 
+#define DGAMMA 0.1
+#define DKAPPA 0.25
+#define DPHI M_PI/30.
+#define SIGMA 0.005
+
+#define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
+
 TRadon::TRadon() : Hlist(0)
 {
     nt1 = new TNtuple("RadonTransform","Radon Transform","kappa:phi:gamma:sigma:density:x:y:z");
     nt2 = new TNtuple("RadonCoordinates","Radon Coordinates","x:y:z");
-
-    for (int i=0;i<30;i++) {
-        string name = "Gamma=" + to_string(i);
+ 
+    float gamma = 0.0;
+    for (int i=0;i<25;i++,gamma+=DGAMMA) {
+        string name = "Gamma=" + to_string(gamma);
         string title = "Radon density in r/Phi " + name;
         Hlist.Add(new TH2D(TString(name),TString(title),40,0.0,4.,30,0.0,3.0));
     }
@@ -43,35 +51,44 @@ TNtuple* TRadon::Transform(TNtuple *hits)
 {
     
     float maxdensity=0,maxkappa=0,maxphi=0,maxgamma=0;
-    float kappa,gamma,phi,radius,density,sigma,d,tau;
+    float kappa,gamma,phi,density,sigma,d;
     long k=0,g=0,p=0,i=0;
     
-  
+    
     long ih = hits->GetEntries();
     
-    sigma = 0.001;
-    for (g=0,gamma=0.;g<30;g++,gamma+=1.) {
-        for (k=0,kappa=0.25;k<20;k++,kappa+=0.25) {
-            for (p=0,phi=0.;p<30;p++,phi+=M_PI/30.) {
+    sigma = SIGMA;
+    gamma = 0.;
+    for (g=0;g<25;g++) {
+        gamma = gamma + DGAMMA;
+        kappa = DKAPPA;
+        for (k=0;k<20;k++) {
+            kappa = kappa + DKAPPA;
+            phi = 0.;
+            for (p=0;p<30;p++) {
+                phi = phi + DPHI;
+                RADON t;
+                t.kappa = kappa;
+                t.phi   = phi;
+                t.gamma = gamma;
+                t.sigma = sigma;
                 for (i=0,density=0.0;i<ih;i++) {
-                    RADON t;
-                    Float_t X[7];
-                    X[0] = t.kappa = kappa;
-                    X[1] = t.phi   = phi;
-                    X[2] = t.gamma = gamma;
-                    X[3] = t.sigma = sigma;
                     hits->GetEvent(i,1);
                     Float_t *x=hits->GetArgs();
-                    X[4] = t.x = x[0];
-                    X[5] = t.y = x[1];
-                    X[6] = t.z = x[2];
+                    t.x = x[0];
+                    t.y = x[1];
+                    t.z = x[2];
                     d =  radon_hit_density(&t);
                     density += d;
                     t.density = density;
-                    if (d > 0.001) nt1->Fill(X);
+                    if (d > 0.001) {
+                        //printf("\nHit #%ld: %f %f %f",i,t.x,t.y,t.z);
+                        printf("\nHit #%ld | r:%f k:%f p:%f g:%f : %f",i,1./kappa,kappa,phi,gamma,density);
+                        nt1->Fill(t.kappa,t.phi,t.gamma,t.sigma,t.density,t.x,t.y,t.z);
+                    }
                 }
                 if (density > 0.001 ) {
-                    printf("\ng:%f k:%f p:%f : %f",gamma,kappa,phi,density);
+                    printf("\nr:%f k:%f p:%f g:%f : %f\n",1./kappa,kappa,phi,gamma,density);
                     TH2D *h = (TH2D *) Hlist[(Int_t) g];
                     h->Fill(1./kappa,phi,density);
                     if (density > maxdensity) {
@@ -84,44 +101,30 @@ TNtuple* TRadon::Transform(TNtuple *hits)
             }
         }
     }
-    printf("\nMax. Values g:%f k:%f p:%f : %f\n",maxgamma,maxkappa,maxphi,maxdensity);
+    if (maxkappa>0.0) printf("\nMax. Values r:%f k:%f p:%f g:%f : %f\n",1./maxkappa, maxkappa,maxphi,maxgamma,maxdensity);
+    
     /*
      * Create a tuple with RADON coordinates
      */
-    for (tau = 0.0; tau <= M_PI; tau = tau + 0.0125)
-    {
-        Float_t X[3];
-        radius = 1./maxkappa;
-        X[0] = radius * ( sin(maxphi + tau) - sin(maxphi));
-        X[1] = radius * (-cos(maxphi + tau) + cos(maxphi));
-        X[2] = maxgamma * tau;
-        nt2->Fill(X);
-    }
+    GenerateTrack(nt2,30,0.0125,1./maxkappa,maxphi,maxgamma);
+
     return nt2;
 }
 
 float   TRadon::getEta_g(RADON *t)
 {
-    float  kappa,phi,x,y,sp,cp;
-    kappa = t->kappa;
-    phi   = t->phi;
-    x     = t->x;
-    y     = t->y;
-    sp    = sin(phi);
-    cp    = cos(phi);
-    return sqrt((((kappa * x) + sp) * ((kappa * x) + sp)) + (((kappa * y) - cp) * ((kappa * y) - cp)));
+    float  sp,cp;
+    sp    = sin(t->phi);
+    cp    = cos(t->phi);
+    return sqrt((((t->kappa * t->x) + sp) * ((t->kappa * t->x) + sp)) + (((t->kappa * t->y) - cp) * ((t->kappa * t->y) - cp)));
 }
 
 float   TRadon::getTau_g(RADON *t)
 {
-    float  kappa,phi,x,y,sp,cp;
-    kappa = t->kappa;
-    phi   = t->phi;
-    x     = t->x;
-    y     = t->y;
-    sp    = sin(phi);
-    cp    = cos(phi);
-    return atan(((y * sp) + (x * cp)) / ((1 / kappa) + (x * sp) - (y * cp)));
+    float  sp,cp;
+    sp    = sin(t->phi);
+    cp    = cos(t->phi);
+    return signum(t->kappa) * atan(((t->y * sp) + (t->x * cp)) / ((1 / t->kappa) + (t->x * sp) - (t->y * cp)));
 }
 
 float   TRadon::getZ_g(RADON *t)
@@ -149,3 +152,19 @@ float   TRadon::radon_hit_density(RADON *t)
     return radon;
     
 }
+
+/*
+ * Create a tuple with Track coordinates
+ */
+void TRadon::GenerateTrack(TNtuple *nt, int np, float delta, float radius, float phi, float gamma) {
+    float tau = delta;
+    for (int i=0; i<np; i++,tau+=delta)
+    {
+        Float_t X[3];
+        X[0] = radius * ( sin(phi + (signum(radius) * tau)) - sin(phi));
+        X[1] = radius * (-cos(phi + (signum(radius) * tau)) + cos(phi));
+        X[2] = gamma * tau;
+        nt->Fill(X);
+    }
+}
+
