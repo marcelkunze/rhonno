@@ -40,8 +40,9 @@ int main(int argc, char* argv[]) {
     else
     {
         // TNtuple *nt, int np, float delta tau, float radius, float phi, float gamma
-        //radon.GenerateTrack(&hits,50,0.0125,0.5,10.*M_PI/30.0,0.5);
-        radon.GenerateTrack(&hits,100,0.0125,1.0,M_PI/3.0,1.0,0.001);
+        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/1.0,0.5);
+        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/2.0,1.0);
+        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/3.0,1.5);
     }
     
     nhits = hits.GetEntries();
@@ -77,10 +78,15 @@ int main(int argc, char* argv[]) {
     
     // Perform a Radon transformation from hit space to track parameter space
     
-    radon.Transform(&hits);
+    TNtuple *result = radon.Transform(&hits);
+    cout << endl << endl << "Number of track candidates:" << result->GetEntries() << endl;
+    cout << "Drawing..." << endl;
     radon.Draw();
     
+    cout << endl << "Writing..." << endl;
     c1->Write();
+    
+    cout << endl;
     
     return EXIT_SUCCESS;
 }
