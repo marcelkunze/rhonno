@@ -13,14 +13,18 @@
 
 #include <string>
 #include <iostream>
+#include <random>
 using namespace std;
 
 ClassImp(TRadon)
 
 #define DGAMMA 0.1
-#define DKAPPA 0.25
+#define NGAMMA 25
+#define DKAPPA 0.1
+#define NKAPPA 50
 #define DPHI M_PI/30.
-#define SIGMA 0.005
+#define NPHI 30
+#define SIGMA 0.00172
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
@@ -30,7 +34,7 @@ TRadon::TRadon() : Hlist(0)
     nt2 = new TNtuple("RadonCoordinates","Radon Coordinates","x:y:z");
     
     float gamma = 0.0;
-    for (int i=0;i<25;i++,gamma+=DGAMMA) {
+    for (int i=0;i<NGAMMA;i++,gamma+=DGAMMA) {
         string name = "Gamma=" + to_string(gamma);
         string title = "Radon density in r/Phi " + name;
         Hlist.Add(new TH2D(TString(name),TString(title),40,0.0,4.,30,0.0,3.0));
@@ -61,20 +65,21 @@ TNtuple* TRadon::Transform(TNtuple *hits)
     
     sigma = SIGMA;
     gamma = 0.;
-    for (g=0;g<25;g++) {
+    for (g=0;g<NGAMMA;g++) {
         gamma = gamma + DGAMMA;
         kappa = DKAPPA;
-        for (k=0;k<20;k++) {
+        for (k=0;k<NKAPPA;k++) {
             kappa = kappa + DKAPPA;
             phi = 0.;
-            for (p=0;p<30;p++) {
+            for (p=0;p<NPHI;p++) {
                 phi = phi + DPHI;
                 RADON t;
                 t.kappa = kappa;
                 t.phi   = phi;
                 t.gamma = gamma;
                 t.sigma = sigma;
-                for (i=0,density=0.0;i<ih;i++) {
+                long nhits = 0;
+                for (i=0,density=d=0.0;i<ih;i++) {
                     hits->GetEvent(i,1);
                     Float_t *x=hits->GetArgs();
                     t.x = x[0];
@@ -83,14 +88,15 @@ TNtuple* TRadon::Transform(TNtuple *hits)
                     d =  radon_hit_density(&t);
                     density += d;
                     t.density = density;
-                    if (d > 0.001) {
-                        //printf("\nHit #%ld: %f %f %f",i,t.x,t.y,t.z);
-                        printf("\nHit #%ld | r:%f k:%f p:%f g:%f : %f",i,1./kappa,kappa,phi,gamma,density);
+                    if (d >1.0) {
+                        if (nhits==0) printf("\n\nr:%f k:%f p:%f g:%f",1./kappa,kappa,phi,gamma);
+                        printf("\nHit #%ld %f,%f,%f| : %f",i,t.x,t.y,t.z,d);
                         nt1->Fill(t.kappa,t.phi,t.gamma,t.sigma,t.density,t.x,t.y,t.z);
+                        nhits++;
                     }
                 }
-                if (density > 0.001 ) {
-                    printf("\nr:%f k:%f p:%f g:%f : %f\n",1./kappa,kappa,phi,gamma,density);
+                if (density > 1.0 && nhits > 1) {
+                    printf("\nDensity: %f",density);
                     TH2D *h = (TH2D *) Hlist[(Int_t) g];
                     h->Fill(1./kappa,phi,density);
                     if (density > maxdensity) {
@@ -103,12 +109,15 @@ TNtuple* TRadon::Transform(TNtuple *hits)
             }
         }
     }
-    if (maxkappa>0.0) printf("\nMax. Values r:%f k:%f p:%f g:%f : %f\n",1./maxkappa, maxkappa,maxphi,maxgamma,maxdensity);
-    
-    /*
-     * Create a tuple with RADON coordinates
-     */
-    GenerateTrack(nt2,50,0.0125,1./maxkappa,maxphi,maxgamma);
+    if (maxkappa>0.0) {
+        /*
+         * Create a tuple with RADON coordinates
+         */
+        float radius = 1./maxkappa;
+        GenerateTrack(nt2,100,0.0125,radius,maxphi,maxgamma);
+        printf("\nMax. Values r:%f k:%f p:%f g:%f : %f\n",radius, maxkappa,maxphi,maxgamma,maxdensity);
+
+    }
     
     return nt2;
 }
@@ -158,16 +167,26 @@ double   TRadon::radon_hit_density(RADON *t)
 /*
  * Create a tuple with Track coordinates
  */
-void TRadon::GenerateTrack(TNtuple *nt, int np, double delta, double radius, double phi, double gamma) {
-    double tau = delta;
+
+void TRadon::GenerateTrack(TNtuple *nt, int np, double delta, double radius, double phi, double gamma, double sigma) {
+    default_random_engine generator;
+    double tau = 0.1;
     for (int i=0; i<np; i++,tau+=delta)
     {
         Float_t X[3];
         X[0] = radius * ( sin(phi + tau) - sin(phi));
         X[1] = radius * (-cos(phi + tau) + cos(phi));
         X[2] = gamma * tau;
+        if (sigma > 0.0) {
+            normal_distribution<float> distribution0(X[0],sigma);
+            X[0] = distribution0(generator);
+            normal_distribution<float> distribution1(X[1],sigma);
+            X[1] = distribution1(generator);
+            normal_distribution<float> distribution2(X[2],sigma);
+            X[2] = distribution2(generator);
+        }
         nt->Fill(X);
-        printf("\nHit #%d: %f %f %f",i,X[0],X[1],X[2]);
+//        printf("\nHit #%d: %f %f %f",i,X[0],X[1],X[2]);
     }
 }
 

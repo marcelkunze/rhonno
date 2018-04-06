@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     {
         // TNtuple *nt, int np, float delta tau, float radius, float phi, float gamma
         //radon.GenerateTrack(&hits,50,0.0125,0.5,10.*M_PI/30.0,0.5);
-        radon.GenerateTrack(&hits,100,0.0125,0.5,M_PI/3.0,1.5);
+        radon.GenerateTrack(&hits,100,0.0125,1.0,M_PI/3.0,1.0,0.001);
     }
     
     nhits = hits.GetEntries();

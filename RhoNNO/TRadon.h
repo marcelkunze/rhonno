@@ -24,7 +24,7 @@ class TRadon : public TObject {
 public:
     TRadon();
     TNtuple* Transform(TNtuple *hits);
-    void GenerateTrack(TNtuple *nt, int np, double delta, double radius, double phi, double gamma);
+    void GenerateTrack(TNtuple *nt, int np, double delta, double radius, double phi, double gamma, double sigma=0.0);
     void Draw (Option_t *option="");
     ~TRadon();
 private:
