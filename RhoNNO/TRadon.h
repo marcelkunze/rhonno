@@ -14,8 +14,6 @@
 
 class TNtuple;
 
-#define TAUMAX 0.5*M_PI
-
 typedef struct { double x,y,z; } HIT;
 typedef struct { double kappa,phi,gamma,sigma,density,x,y,z; } RADON;
 double  radon_hit_density(RADON *t);
@@ -29,7 +27,7 @@ public:
     ~TRadon();
 private:
     double getEta_g(RADON *t);
-    double getTau_g(RADON *t);
+    double getTau_i(RADON *t);
     double getZ_g(RADON *t);
     double radon_hit_density(RADON *t);
     TNtuple *nt1, *nt2;

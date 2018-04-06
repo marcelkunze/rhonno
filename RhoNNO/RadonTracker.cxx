@@ -4,6 +4,7 @@
 #include <TCanvas.h>
 #include <TView.h>
 #include <TPolyMarker3D.h>
+#include <TAxis3D.h>
 #include <TPolyLine3D.h>
 #include <TNtuple.h>
 #include <TFile.h>
@@ -55,6 +56,9 @@ int main(int argc, char* argv[]) {
     // creating a view
     TView *view = TView::CreateView(1);
     view->SetRange(-2,-2,-2,2,2,2); // draw in a 2 meter cube
+    // Draw axis
+    TAxis3D rulers;
+    rulers.Draw();
     // create a first PolyMarker3D
     TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
     for (int i=0;i<nhits;i++) {

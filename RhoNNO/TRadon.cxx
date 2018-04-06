@@ -25,6 +25,7 @@ ClassImp(TRadon)
 #define DPHI M_PI/30.
 #define NPHI 30
 #define SIGMA 0.00172
+#define TAUMAX 0.5*M_PI
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
@@ -116,7 +117,7 @@ TNtuple* TRadon::Transform(TNtuple *hits)
         float radius = 1./maxkappa;
         GenerateTrack(nt2,100,0.0125,radius,maxphi,maxgamma);
         printf("\nMax. Values r:%f k:%f p:%f g:%f : %f\n",radius, maxkappa,maxphi,maxgamma,maxdensity);
-
+        
     }
     
     return nt2;
@@ -124,23 +125,27 @@ TNtuple* TRadon::Transform(TNtuple *hits)
 
 double   TRadon::getEta_g(RADON *t)
 {
-    double  sp,cp;
-    sp    = sin(t->phi);
-    cp    = cos(t->phi);
-    return sqrt((((t->kappa * t->x) + sp) * ((t->kappa * t->x) + sp)) + (((t->kappa * t->y) - cp) * ((t->kappa * t->y) - cp)));
+    double  sp,cp,x2,y2;
+    sp = sin(t->phi);
+    cp = cos(t->phi);
+    x2 = (t->kappa * t->x + sp) * (t->kappa * t->x + sp);
+    y2 = (t->kappa * t->y - cp) * (t->kappa * t->y - cp);
+    return sqrt(x2+y2);
 }
 
-double   TRadon::getTau_g(RADON *t)
+double   TRadon::getTau_i(RADON *t)
 {
-    double  sp,cp;
-    sp    = sin(t->phi);
-    cp    = cos(t->phi);
-    return signum(t->kappa) * atan(((t->y * sp) + (t->x * cp)) / ((1 / t->kappa) + (t->x * sp) - (t->y * cp)));
+    double  sp,cp, nom, denom;
+    sp  = sin(t->phi);
+    cp  = cos(t->phi);
+    nom = t->y * sp + t->x * cp;
+    denom = (1.0 / t->kappa) + t->x * sp - t->y * cp;
+    return signum(t->kappa) * atan(nom/denom);
 }
 
 double   TRadon::getZ_g(RADON *t)
 {
-    return ((t->gamma * getTau_g(t)) - t->z);
+    return ((t->gamma * getTau_i(t)) - t->z);
 }
 
 double   TRadon::radon_hit_density(RADON *t)
@@ -156,8 +161,8 @@ double   TRadon::radon_hit_density(RADON *t)
     g2    = gamma * gamma;
     
     factor = 1. / (2 * M_PI * s2 * TAUMAX);
-    kappafunction = kappa / sqrt(eta_g + k2 * g2);
-    efunction     = -1. / (2 * s2) * (((eta_g - 1) * (eta_g - 1) / k2) + (eta_g * z_g * z_g / (eta_g + k2 * g2)));
+    kappafunction = abs(kappa) / sqrt(eta_g + k2 * g2);
+    efunction     = -1.0 / (2 * s2) * (((eta_g - 1.0) * (eta_g - 1.0) / k2) + (eta_g * z_g * z_g / (eta_g + k2 * g2)));
     radon  =   factor * kappafunction * exp(efunction);
     
     return radon;
@@ -186,7 +191,7 @@ void TRadon::GenerateTrack(TNtuple *nt, int np, double delta, double radius, dou
             X[2] = distribution2(generator);
         }
         nt->Fill(X);
-//        printf("\nHit #%d: %f %f %f",i,X[0],X[1],X[2]);
+        //        printf("\nHit #%d: %f %f %f",i,X[0],X[1],X[2]);
     }
 }
 
