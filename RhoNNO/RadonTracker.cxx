@@ -13,10 +13,13 @@
 #include <iostream>
 using namespace std;
 
+#define NHITS 50
+#define SIGMA 0.001
+
+
 // The user member function processes one event
 
-TNtuple	    hits("Hits","Radon tracking data","x:y:z:sigma");
-Long_t      nhits=0, n=0;
+std::vector<Point> hits;
 
 int main(int argc, char* argv[]) {
     TFile output("RadonTracker.root","RECREATE");
@@ -33,19 +36,24 @@ int main(int argc, char* argv[]) {
         
         while(!feof(F)) {
             fscanf(F,"%lf %lf %lf",&X,&Y,&Z);
-            hits.Fill(X*0.01,Y*0.01,Z*0.01); // transform to meter
+            X*=0.01; // transform to meter
+            Y*=0.01;
+            Z*=0.01;
+            hits.push_back(Point(X,Y,Z));
         }
         fclose(F);
     }
     else
     {
-        // TNtuple *nt, int np, float delta tau, float radius, float phi, float gamma
-        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/1.0,0.5,0.001);
-        radon.GenerateTrack(&hits,50,0.0125,-1.0,M_PI/2.0,1.0,0.001);
-        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/3.0,1.5,0.001);
+        // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
+        radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/1.0,0.5,SIGMA);
+        radon.GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
+        radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/3.0,1.5,SIGMA);
     }
-    
-    nhits = hits.GetEntries();
+
+    // Sort the hits according to distance from origin
+
+    //sort(hits.begin(),hits.end());
     
     // Initialize a 3D canvas and draw the hits
     TCanvas *c1 = new TCanvas("c1","Fuzzy Radon Tracking",200,10,700,500);
@@ -61,11 +69,13 @@ int main(int argc, char* argv[]) {
     TAxis3D rulers;
     rulers.Draw();
     // create a first PolyMarker3D
+    long nhits = hits.size();
     TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
-    for (int i=0;i<nhits;i++) {
-        hits.GetEvent(i,1);
-        Float_t *x=hits.GetArgs();
-        hitmarker->SetPoint(i, x[0], x[1], x[2]);
+    vector<Point>::iterator it;
+    for(it = hits.begin(); it != hits.end(); it++)    {
+        static int i = 0;
+        Point p=*it;
+        hitmarker->SetPoint(i++,p.x(),p.y(),p.z());
     }
     // set marker size, color & style
     hitmarker->SetMarkerSize(1.0);
@@ -78,8 +88,8 @@ int main(int argc, char* argv[]) {
     
     // Perform a Radon transformation from hit space to track parameter space
     
-    TNtuple *result = radon.Transform(&hits);
-    cout << endl << endl << "Number of track candidates:" << result->GetEntries() << endl;
+    std::vector<RADON>&result = radon.Transform(hits);
+    cout << endl << endl << "Number of track candidates:" << result.size() << endl;
     cout << "Drawing..." << endl;
     radon.Draw();
     

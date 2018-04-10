@@ -26,14 +26,13 @@ ClassImp(TRadon)
 #define NPHI 30
 #define SIGMA 0.001
 #define TAUMAX 0.5*M_PI
-#define THRESHOLD 300000.
+#define THRESHOLD 100000.
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
 TRadon::TRadon() : Hlist(0)
 {
     nt1 = new TNtuple("RadonTransform","Radon Transform","kappa:phi:gamma:sigma:density:x:y:z");
-    nt2 = new TNtuple("RadonTrackParms","Radon Track Parameters","kappa:phi:gamma:sigma:density:x:y:z");
     
     float gamma = 0.0;
     for (int i=0;i<NGAMMA;i++,gamma+=DGAMMA) {
@@ -46,23 +45,18 @@ TRadon::TRadon() : Hlist(0)
 TRadon::~TRadon() {
     Hlist.Write();
     nt1->Write();
-    nt2->Write();
     delete nt1;
-    delete nt2;
 }
 
 /*
  * Do a RADON transform of coordinates (all lengths in meter)
  * (1 GeV/c == 2.22m Radius at B=1.5T)
  */
-TNtuple* TRadon::Transform(TNtuple *hits)
+std::vector<RADON>& TRadon::Transform(std::vector<Point> &hits)
 {
     
     double kappa,gamma,phi,density,sigma,d;
     long k=0,g=0,p=0,i=0;
-    
-    
-    long ih = hits->GetEntries();
     
     sigma = SIGMA;
     gamma = 0.0;
@@ -79,12 +73,13 @@ TNtuple* TRadon::Transform(TNtuple *hits)
                 t.gamma = gamma;
                 t.sigma = sigma;
                 long nhits = 0;
-                for (i=0,density=d=0.0;i<ih;i++) {
-                    hits->GetEvent(i,1);
-                    Float_t *x=hits->GetArgs();
-                    t.x = x[0];
-                    t.y = x[1];
-                    t.z = x[2];
+                density=d=0.0;
+                vector<Point>::iterator it;
+                for(it = hits.begin(); it != hits.end(); it++)    {
+                    Point point=*it;
+                    t.x = point.x();
+                    t.y = point.y();
+                    t.z = point.z();
                     d =  radon_hit_density(&t);
                     density += d;
                     t.density = density;
@@ -99,7 +94,7 @@ TNtuple* TRadon::Transform(TNtuple *hits)
                     printf("\nDensity: %f",density);
                     TH2D *h = (TH2D *) Hlist[(Int_t) g];
                     h->Fill(1./kappa,phi,density);
-                    nt2->Fill(t.kappa,t.phi,t.gamma,t.sigma,t.density,t.x,t.y,t.z);
+                    nt2.push_back(t);  // Note the candidate track parameters
                 }
             }
         }
@@ -158,86 +153,61 @@ double   TRadon::radon_hit_density(RADON *t)
  * Create a tuple with Track coordinates
  */
 
-void TRadon::GenerateTrack(TNtuple *nt, int np, double delta, double radius, double phi, double gamma, double sigma) {
+void TRadon::GenerateTrack(std::vector<Point> &hits, int np, double delta, double radius, double phi, double gamma, double sigma) {
     default_random_engine generator;
     double tau = 0.025;
     for (int i=0; i<np; i++,tau+=delta)
     {
-        Float_t X[3];
-        X[0] = radius * ( sin(phi + (signum(radius)) * tau) - sin(phi));
-        X[1] = radius * (-cos(phi + (signum(radius)) * tau) + cos(phi));
-        X[2] = gamma * tau;
+        Float_t X,Y,Z;
+        X = radius * ( sin(phi + (signum(radius)) * tau) - sin(phi));
+        Y = radius * (-cos(phi + (signum(radius)) * tau) + cos(phi));
+        Z = gamma * tau;
         if (sigma > 0.0) {
-            normal_distribution<float> distribution0(X[0],sigma);
-            X[0] = distribution0(generator);
-            normal_distribution<float> distribution1(X[1],sigma);
-            X[1] = distribution1(generator);
-            normal_distribution<float> distribution2(X[2],sigma);
-            X[2] = distribution2(generator);
+            normal_distribution<float> distribution0(X,sigma);
+            X = distribution0(generator);
+            normal_distribution<float> distribution1(Y,sigma);
+            Y = distribution1(generator);
+            normal_distribution<float> distribution2(Z,sigma);
+            Z = distribution2(generator);
         }
-        nt->Fill(X);
-        //        printf("\nHit #%d: %f %f %f",i,X[0],X[1],X[2]);
+        hits.push_back(Point(X,Y,Z));
     }
 }
 
 void TRadon::Draw(Option_t *option) {
-    long ih = nt2->GetEntries();
-    for (Int_t i=0;i<ih;++i) {
-        nt2->GetEvent(i,1);
-        Float_t *x=nt2->GetArgs();
-        double kappa = x[0];
-        double phi   = x[1];
-        double gamma = x[2];
-        double density = x[4];
+    int i = 0;
+    vector<RADON>::iterator radon;
+    for(radon = nt2.begin(); radon != nt2.end(); radon++)    {
+        RADON t=*radon;;
+        double kappa = t.kappa;
+        double phi   = t.phi;
+        double gamma = t.gamma;
+        double density = t.density;
         double radius = 1./kappa;
-        printf("\nTrack candidate #%d r:%f k:%f p:%f g:%f : %f  ",i,radius,kappa,phi,gamma,density);
+        printf("\nTrack candidate #%d r:%f k:%f p:%f g:%f : %f  ",i++,radius,kappa,phi,gamma,density);
         
         if (density > THRESHOLD) {
-            // Positive curvature
             printf("Density > %f", THRESHOLD);
-            TNtuple *nt3 = new TNtuple("Track","Track","x:y:z");
+            std::vector<Point> nt3;
             GenerateTrack(nt3,25,0.025,radius,phi,gamma);
             // Draw the track candidates
-            long ih = nt2->GetEntries();
-            TPolyMarker3D *hitmarker = new TPolyMarker3D(ih);
-            TPolyLine3D *connector = new TPolyLine3D(ih);
+            TPolyMarker3D *hitmarker = new TPolyMarker3D(nt3.size());
+            TPolyLine3D *connector = new TPolyLine3D(nt3.size());
             
-            for (Int_t j=0;j<ih-1;++j) {
-                nt3->GetEvent(j,1);
-                Float_t *x=nt3->GetArgs();
-                hitmarker->SetPoint(j, x[0], x[1], x[2]);
+            vector<Point>::iterator it;
+            for(it = nt3.begin(); it != nt3.end(); it++)    {
+                static int j = 0;
+                Point p=*it;
+                hitmarker->SetPoint(j,p.x(),p.y(),p.z());
                 hitmarker->SetMarkerSize(0.1);
                 hitmarker->SetMarkerColor(kRed);
                 hitmarker->SetMarkerStyle(kFullDotLarge);
                 hitmarker->Draw(option);
-                connector->SetPoint(j, x[0], x[1], x[2]);
+                connector->SetPoint(j++, p.x(),p.y(),p.z());
                 connector->SetLineWidth(1);
                 connector->SetLineColor(kRed);
                 connector->Draw(option);
             }
-/*
-            // Negative curvature
-            TNtuple *nt4 = new TNtuple("Track","Track","x:y:z");
-            GenerateTrack(nt3,25,0.025,-radius,phi,gamma);
-            // Draw the track candidates
-            long ih2 = nt4->GetEntries();
-            TPolyMarker3D *hitmarker2 = new TPolyMarker3D(ih2);
-            TPolyLine3D *connector2 = new TPolyLine3D(ih2);
-            
-            for (Int_t j=0;j<ih-1;++j) {
-                nt3->GetEvent(j,1);
-                Float_t *x=nt3->GetArgs();
-                hitmarker2->SetPoint(j, x[0], x[1], x[2]);
-                hitmarker2->SetMarkerSize(0.1);
-                hitmarker2->SetMarkerColor(kRed);
-                hitmarker2->SetMarkerStyle(kFullDotLarge);
-                hitmarker2->Draw(option);
-                connector2->SetPoint(j, x[0], x[1], x[2]);
-                connector2->SetLineWidth(1);
-                connector2->SetLineColor(kRed);
-                connector2->Draw(option);
-            }
- */
-}
+        }
     }
 }
