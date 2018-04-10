@@ -26,14 +26,15 @@ ClassImp(TRadon)
 #define NPHI 30
 #define SIGMA 0.001
 #define TAUMAX 0.5*M_PI
-#define THRESHOLD 100000.
+#define THRESHOLD 300000.
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
 TRadon::TRadon() : Hlist(0)
 {
     nt1 = new TNtuple("RadonTransform","Radon Transform","kappa:phi:gamma:sigma:density:x:y:z");
-    
+    nt2 = new TNtuple("RadonTrackParameters","Radon Track Parameters","kappa:phi:gamma:sigma:density:x:y:z");
+
     float gamma = 0.0;
     for (int i=0;i<NGAMMA;i++,gamma+=DGAMMA) {
         string name = "Gamma=" + to_string(gamma);
@@ -46,6 +47,8 @@ TRadon::~TRadon() {
     Hlist.Write();
     nt1->Write();
     delete nt1;
+    nt2->Write();
+    delete nt2;
 }
 
 /*
@@ -72,10 +75,11 @@ std::vector<RADON>& TRadon::Transform(std::vector<Point> &hits)
                 t.phi   = phi;
                 t.gamma = gamma;
                 t.sigma = sigma;
+                long i = 0;
                 long nhits = 0;
                 density=d=0.0;
                 vector<Point>::iterator it;
-                for(it = hits.begin(); it != hits.end(); it++)    {
+                for(it = hits.begin(); it != hits.end(); it++, i++)    {
                     Point point=*it;
                     t.x = point.x();
                     t.y = point.y();
@@ -84,6 +88,7 @@ std::vector<RADON>& TRadon::Transform(std::vector<Point> &hits)
                     density += d;
                     t.density = density;
                     if (d >1.0) {
+                        t.index.push_back(i); // Note the indices of the corresponding hits
                         if (nhits==0) printf("\n\nr:%f k:%f p:%f g:%f",1./kappa,kappa,phi,gamma);
                         printf("\nHit #%ld %f,%f,%f| : %f",i,t.x,t.y,t.z,d);
                         nt1->Fill(t.kappa,t.phi,t.gamma,t.sigma,d,t.x,t.y,t.z);
@@ -94,13 +99,13 @@ std::vector<RADON>& TRadon::Transform(std::vector<Point> &hits)
                     printf("\nDensity: %f",density);
                     TH2D *h = (TH2D *) Hlist[(Int_t) g];
                     h->Fill(1./kappa,phi,density);
-                    nt2.push_back(t);  // Note the candidate track parameters
+                    rt.push_back(t);  // Note the candidate track parameters
                 }
             }
         }
     }
     
-    return nt2;
+    return rt;
 }
 
 double   TRadon::getEta_g(RADON *t)
@@ -177,19 +182,22 @@ void TRadon::GenerateTrack(std::vector<Point> &hits, int np, double delta, doubl
 void TRadon::Draw(Option_t *option) {
     int i = 0;
     vector<RADON>::iterator radon;
-    for(radon = nt2.begin(); radon != nt2.end(); radon++)    {
-        RADON t=*radon;;
-        double kappa = t.kappa;
-        double phi   = t.phi;
-        double gamma = t.gamma;
-        double density = t.density;
-        double radius = 1./kappa;
-        printf("\nTrack candidate #%d r:%f k:%f p:%f g:%f : %f  ",i++,radius,kappa,phi,gamma,density);
+    for(radon = rt.begin(); radon != rt.end(); radon++)    {
         
-        if (density > THRESHOLD) {
+        RADON t=*radon;;
+        double radius = 1./t.kappa;
+        printf("\nTrack candidate #%d r:%f k:%f p:%f g:%f : %f  ",i++,radius,t.kappa,t.phi,t.gamma,t.density);
+        printf("\nAssociated hits: ");
+        for (int j = 0; j < t.index.size(); j++) {
+            cout << t.index[j] << " ";
+        }
+
+        nt2->Fill(t.kappa,t.phi,t.gamma,t.sigma,t.density,t.x,t.y,t.z); // Store results as ROOT ntuple
+        
+        if (t.density > THRESHOLD) {
             printf("Density > %f", THRESHOLD);
             std::vector<Point> nt3;
-            GenerateTrack(nt3,25,0.025,radius,phi,gamma);
+            GenerateTrack(nt3,25,0.025,radius,t.phi,t.gamma);
             // Draw the track candidates
             TPolyMarker3D *hitmarker = new TPolyMarker3D(nt3.size());
             TPolyLine3D *connector = new TPolyLine3D(nt3.size());
@@ -197,13 +205,13 @@ void TRadon::Draw(Option_t *option) {
             vector<Point>::iterator it;
             for(it = nt3.begin(); it != nt3.end(); it++)    {
                 static int j = 0;
-                Point p=*it;
-                hitmarker->SetPoint(j,p.x(),p.y(),p.z());
+                Point point=*it;
+                hitmarker->SetPoint(j,point.x(),point.y(),point.z());
                 hitmarker->SetMarkerSize(0.1);
                 hitmarker->SetMarkerColor(kRed);
                 hitmarker->SetMarkerStyle(kFullDotLarge);
                 hitmarker->Draw(option);
-                connector->SetPoint(j++, p.x(),p.y(),p.z());
+                connector->SetPoint(j++, point.x(),point.y(),point.z());
                 connector->SetLineWidth(1);
                 connector->SetLineColor(kRed);
                 connector->Draw(option);

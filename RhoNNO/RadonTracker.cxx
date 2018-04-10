@@ -53,7 +53,8 @@ int main(int argc, char* argv[]) {
 
     // Sort the hits according to distance from origin
 
-    //sort(hits.begin(),hits.end());
+    cout << "Sorting hits..." << endl;
+    reverse(hits.begin(),hits.end());
     
     // Initialize a 3D canvas and draw the hits
     TCanvas *c1 = new TCanvas("c1","Fuzzy Radon Tracking",200,10,700,500);
