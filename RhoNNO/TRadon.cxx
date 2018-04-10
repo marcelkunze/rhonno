@@ -20,13 +20,13 @@ ClassImp(TRadon)
 
 #define DGAMMA 0.1
 #define NGAMMA 20
-#define DKAPPA 0.005
-#define NKAPPA 100
+#define DKAPPA 0.125
+#define NKAPPA 25
 #define DPHI M_PI/30.
 #define NPHI 30
-#define SIGMA 0.002
+#define SIGMA 0.001
 #define TAUMAX 0.5*M_PI
-#define THRESHOLD 10000.
+#define THRESHOLD 300000.
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
@@ -67,7 +67,7 @@ TNtuple* TRadon::Transform(TNtuple *hits)
     sigma = SIGMA;
     gamma = 0.0;
     for (g=0;g<NGAMMA;g++,gamma += DGAMMA) {
-        kappa = DKAPPA;
+        kappa = -1.125;
         for (k=0;k<NKAPPA;k++) {
             kappa = kappa + DKAPPA;
             phi = 0.;
@@ -215,7 +215,7 @@ void TRadon::Draw(Option_t *option) {
                 connector->SetLineColor(kRed);
                 connector->Draw(option);
             }
-  
+/*
             // Negative curvature
             TNtuple *nt4 = new TNtuple("Track","Track","x:y:z");
             GenerateTrack(nt3,25,0.025,-radius,phi,gamma);
@@ -237,6 +237,7 @@ void TRadon::Draw(Option_t *option) {
                 connector2->SetLineColor(kRed);
                 connector2->Draw(option);
             }
+ */
 }
     }
 }

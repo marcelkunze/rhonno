@@ -40,9 +40,9 @@ int main(int argc, char* argv[]) {
     else
     {
         // TNtuple *nt, int np, float delta tau, float radius, float phi, float gamma
-        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/1.0,0.5);
-        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/2.0,1.0);
-        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/3.0,1.5);
+        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/1.0,0.5,0.001);
+        radon.GenerateTrack(&hits,50,0.0125,-1.0,M_PI/2.0,1.0,0.001);
+        radon.GenerateTrack(&hits,50,0.0125,1.0,M_PI/3.0,1.5,0.001);
     }
     
     nhits = hits.GetEntries();

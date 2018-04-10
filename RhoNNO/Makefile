@@ -35,31 +35,31 @@ all: strain utrain NetworkTrainer NNOTracker RadonTracker
 
 testall: teststrain testutrain testNetworkTrainer testNNOTracker testRadonTracker
 
-strain:
+strain: $(LIBA) $(LIBSO)
 	$(CXX) $(CXXFLAGS) strain.cxx -o $(RHO)/bin/strain $(LDFLAGS) $(LIBS)
 
 teststrain: strain
 	. $(PWD)/environment; $(BINDIR)/strain
 
-utrain:
+utrain: $(LIBA) $(LIBSO)
 	$(CXX) $(CXXFLAGS) utrain.cxx -o $(RHO)/bin/utrain $(LDFLAGS) $(LIBS)
 
 testutrain: utrain
 	. $(PWD)/environment; $(BINDIR)/utrain $(DATADIR)/ppe.dat
 
-NetworkTrainer:
+NetworkTrainer: $(LIBA) $(LIBSO)
 	$(CXX) $(CXXFLAGS) NetworkTrainer.cxx -o $(RHO)/bin/NetworkTrainer $(LDFLAGS) $(LIBS)
 
 testNetworkTrainer: NetworkTrainer
 	. $(PWD)/environment; $(BINDIR)/NetworkTrainer pid.nno
 
-NNOTracker:
+NNOTracker: $(LIBA) $(LIBSO)
 	$(CXX) $(CXXFLAGS) NNOTracker.cxx -o $(RHO)/bin/NNOTracker $(LDFLAGS) $(LIBS)
 
 testNNOTracker: NNOTracker
 	. $(PWD)/environment; $(BINDIR)/NNOTracker $(DATADIR)/event2
 
-RadonTracker:
+RadonTracker: $(LIBA) $(LIBSO)
 	$(CXX) $(CXXFLAGS) RadonTracker.cxx -o $(RHO)/bin/RadonTracker $(LDFLAGS) $(LIBS)
 
 testRadonTracker: RadonTracker
