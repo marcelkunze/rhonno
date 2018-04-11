@@ -20,9 +20,8 @@ using namespace std;
 #define DELETESTEP 500
 
 #define NHITS 25
-#define SIGMA 0.001
-
-#define RADON true
+#define SIGMA 0.002
+#define THRESHOLD 100.
 
 // The user member function processes one event
 
@@ -32,7 +31,8 @@ int main(int argc, char* argv[]) {
     
     TFile output("NNOTracker.root","RECREATE");
     
-    TRadon radon;
+    TRadon radon(SIGMA,THRESHOLD);
+    
     TString filename("event");
     TNtuple nt1("Hits","NNO Tracking Data","x:y:z");
     
@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
         radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/1.0,0.5,SIGMA);
         radon.GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
         radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/3.0,1.5,SIGMA);
+        radon.GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/3.0,-1.2,SIGMA);
     }
     
     // Sort the hits according to distance from origin
@@ -77,8 +78,7 @@ int main(int argc, char* argv[]) {
     // Draw axis
     TAxis3D rulers;
     rulers.Draw();
-    // create a first PolyMarker3D
-    // create a first PolyMarker3D
+    // draw hits as PolyMarker3D
     long nhits = hits.size();
     TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
     vector<Point>::iterator it;
@@ -121,15 +121,23 @@ int main(int argc, char* argv[]) {
     net.Print();
     net.Draw();
     
+    cout << endl << "Fuzzy Radon transform";
+    cout << endl << " Number of hits:" << nhits << endl;
+    
     // Perform a Radon transformation from hit space to track parameter space
     
-    if (RADON) radon.Transform(hits);
+    std::vector<RADON>&result = radon.Transform(hits);
+    cout << endl << endl << "Number of track candidates:" << result.size() << endl;
+    cout << "Drawing..." << endl;
+    radon.Draw();
     
+
     // TBD: Analyze the network
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
     
     //TBD: Fit the helix tracks from the hits in the containers
     
+    cout << endl << "Writing..." << endl;
     c1->Write();
     
     return EXIT_SUCCESS;

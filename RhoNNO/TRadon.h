@@ -36,9 +36,9 @@ struct Point {
 
 class TRadon : public TObject {
 public:
-    TRadon();
-    std::vector<RADON>& Transform(std::vector<Point> &p);
-    void GenerateTrack(std::vector<Point> &p, int np, double delta, double radius, double phi, double gamma, double sigma=0.0);
+    TRadon(double sigma=0.001, double threshold=10000.);
+    std::vector<RADON>& Transform(std::vector<Point> &points);
+    void GenerateTrack(std::vector<Point> &points, int np, double delta, double radius, double phi, double gamma, double error=0.0);
     void Draw (Option_t *option="");
     ~TRadon();
 private:
@@ -46,6 +46,7 @@ private:
     double getTau_i(RADON *t);
     double getZ_g(RADON *t);
     double radon_hit_density(RADON *t);
+    double sigma, threshold;
     TNtuple *nt1, *nt2;
     TObjArray Hlist;
     std::vector<Point> hits;

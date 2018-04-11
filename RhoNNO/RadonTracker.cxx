@@ -14,9 +14,9 @@
 #include <fstream>
 using namespace std;
 
-#define NHITS 25
+#define NHITS 50
 #define SIGMA 0.001
-
+#define THRESHOLD 300000.
 
 // The user member function processes one event
 
@@ -25,7 +25,8 @@ std::vector<Point> hits;
 int main(int argc, char* argv[]) {
     TFile output("RadonTracker.root","RECREATE");
     
-    TRadon radon;
+    TRadon radon(SIGMA,THRESHOLD);
+    
     TString filename("event");
     if (argc > 1) filename = argv[1];
     
@@ -48,6 +49,7 @@ int main(int argc, char* argv[]) {
         radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/1.0,0.5,SIGMA);
         radon.GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
         radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/3.0,1.5,SIGMA);
+        radon.GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/3.0,-1.2,SIGMA);
     }
     
     // Sort the hits according to distance from origin
@@ -68,7 +70,7 @@ int main(int argc, char* argv[]) {
     // Draw axis
     TAxis3D rulers;
     rulers.Draw();
-    // create a first PolyMarker3D
+    // draw hits as PolyMarker3D
     long nhits = hits.size();
     TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
     vector<Point>::iterator it;

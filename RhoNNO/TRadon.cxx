@@ -19,24 +19,22 @@ using namespace std;
 ClassImp(TRadon)
 
 #define DGAMMA 0.1
-#define NGAMMA 20
+#define NGAMMA 40
 #define DKAPPA 0.125
 #define NKAPPA 25
 #define DPHI M_PI/30.
 #define NPHI 30
-#define SIGMA 0.001
 #define TAUMAX 0.5*M_PI
-#define THRESHOLD 300000.
 #define DRAWTRACK false
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
-TRadon::TRadon() : Hlist(0)
+TRadon::TRadon(double sig, double thr) : sigma(sig), threshold(thr), Hlist(0)
 {
     nt1 = new TNtuple("RadonTransform","Radon Transform","kappa:phi:gamma:sigma:density:x:y:z");
     nt2 = new TNtuple("RadonTrackParameters","Radon Track Parameters","kappa:phi:gamma:sigma:density:x:y:z");
 
-    float gamma = 0.0;
+    float gamma = -2.0;
     for (int i=0;i<NGAMMA;i++,gamma+=DGAMMA) {
         string name = "Gamma=" + to_string(gamma);
         string title = "Radon density in r/Phi " + name;
@@ -56,14 +54,13 @@ TRadon::~TRadon() {
  * Do a RADON transform of coordinates (all lengths in meter)
  * (1 GeV/c == 2.22m Radius at B=1.5T)
  */
-std::vector<RADON>& TRadon::Transform(std::vector<Point> &h)
+std::vector<RADON>& TRadon::Transform(std::vector<Point> &points)
 {
-    hits = h;
-    double kappa,gamma,phi,density,sigma,d;
+    hits = points;
+    double kappa,gamma,phi,density,d;
     long k=0,g=0,p=0;
     
-    sigma = SIGMA;
-    gamma = 0.0;
+    gamma = -2.0;
     for (g=0;g<NGAMMA;g++,gamma += DGAMMA) {
         kappa = -1.125;
         for (k=0;k<NKAPPA;k++) {
@@ -88,15 +85,29 @@ std::vector<RADON>& TRadon::Transform(std::vector<Point> &h)
                     d =  radon_hit_density(&t);
                     density += d;
                     t.density = density;
-                    if (d >1.0) {
-                        t.index.push_back(i); // Note the indices of the corresponding hits
-                        if (nhits==0) printf("\n\nr:%f k:%f p:%f g:%f",1./kappa,kappa,phi,gamma);
-                        printf("\nHit #%ld %f,%f,%f| : %f",i,t.x,t.y,t.z,d);
-                        nt1->Fill(t.kappa,t.phi,t.gamma,t.sigma,d,t.x,t.y,t.z);
+                    if (d > 1.0) {
+                        // Suppress mirror points, as they yield the same radon value and do not belong to the same track
+                        static int oldsx, oldsy, oldsz;
+                        int sx = signum(t.x);
+                        int sy = signum(t.y);
+                        int sz = signum(t.z);
+                        if (nhits==0) { oldsx = sx; oldsy = sy; oldsz = sz;}
+                        if (sx==oldsx && sy==oldsy && sz==oldsz) {
+                            t.index.push_back(i); // Note the indices of the corresponding hits
+                            if (nhits==0) printf("\n\nr:%f k:%f p:%f g:%f",1./kappa,kappa,phi,gamma);
+                            printf("\nHit #%ld %f,%f,%f| : %f",i,t.x,t.y,t.z,d);
+                            nt1->Fill(t.kappa,t.phi,t.gamma,t.sigma,d,t.x,t.y,t.z);
+                            oldsx = sx;
+                            oldsy = sy;
+                            oldsz = sz;
+                        }
+                        else
+                            printf("\nMirror #%ld %f,%f,%f| : %f",i,t.x,t.y,t.z,d);
+                        
                         nhits++;
                     }
                 }
-                if (density > 1.0 && nhits > 2) {
+                if (density > 1.0 && nhits > 3) {
                     printf("\nDensity: %f",density);
                     TH2D *h = (TH2D *) Hlist[(Int_t) g];
                     h->Fill(1./kappa,phi,density);
@@ -136,14 +147,14 @@ double   TRadon::getZ_g(RADON *t)
 
 double   TRadon::radon_hit_density(RADON *t)
 {
-    double  eta_g,gamma,kappa,sigma,z_g,k2,s2,g2,factor, kappafunction,efunction,radon;
+    double  eta_g,gamma,kappa,error,z_g,k2,s2,g2,factor, kappafunction,efunction,radon;
     eta_g = getEta_g(t);
     gamma = t->gamma;
     kappa = t->kappa;
-    sigma = t->sigma;
+    error = t->sigma;
     z_g   = getZ_g(t)  ;
     k2    = kappa * kappa;
-    s2    = sigma * sigma;
+    s2    = error * error;
     g2    = gamma * gamma;
     
     factor = 1. / (2 * M_PI * s2 * TAUMAX);
@@ -159,7 +170,7 @@ double   TRadon::radon_hit_density(RADON *t)
  * Create a tuple with Track coordinates
  */
 
-void TRadon::GenerateTrack(std::vector<Point> &p, int np, double delta, double radius, double phi, double gamma, double sigma) {
+void TRadon::GenerateTrack(std::vector<Point> &points, int np, double delta, double radius, double phi, double gamma, double error) {
     default_random_engine generator;
     double tau = 0.025;
     for (int i=0; i<np; i++,tau+=delta)
@@ -168,26 +179,26 @@ void TRadon::GenerateTrack(std::vector<Point> &p, int np, double delta, double r
         X = radius * ( sin(phi + (signum(radius)) * tau) - sin(phi));
         Y = radius * (-cos(phi + (signum(radius)) * tau) + cos(phi));
         Z = gamma * tau;
-        if (sigma > 0.0) {
-            normal_distribution<float> distribution0(X,sigma);
+        if (error > 0.0) {
+            normal_distribution<float> distribution0(X,error);
             X = distribution0(generator);
-            normal_distribution<float> distribution1(Y,sigma);
+            normal_distribution<float> distribution1(Y,error);
             Y = distribution1(generator);
-            normal_distribution<float> distribution2(Z,sigma);
+            normal_distribution<float> distribution2(Z,error);
             Z = distribution2(generator);
         }
-        p.push_back(Point(X,Y,Z));
+        points.push_back(Point(X,Y,Z));
     }
 }
 
 void TRadon::Draw(Option_t *option) {
-    int i = 0;
+    int n = 0;
     vector<RADON>::iterator radon;
     for(radon = rt.begin(); radon != rt.end(); radon++)    {
         
         RADON t=*radon;;
         double radius = 1./t.kappa;
-        printf("\nTrack candidate #%d r:%f k:%f p:%f g:%f : %f  ",i++,radius,t.kappa,t.phi,t.gamma,t.density);
+        printf("\nTrack candidate #%d r:%f k:%f p:%f g:%f : %f  ",n++,radius,t.kappa,t.phi,t.gamma,t.density);
         printf("\nAssociated hits: ");
         for (int j = 0; j < t.index.size(); j++) {
             cout << t.index[j] << " ";
@@ -195,8 +206,8 @@ void TRadon::Draw(Option_t *option) {
 
         nt2->Fill(t.kappa,t.phi,t.gamma,t.sigma,t.density,t.x,t.y,t.z); // Store results as ROOT ntuple
         
-        if (t.density > THRESHOLD) {
-            printf("Density > %f", THRESHOLD);
+        if (t.density > threshold) {
+            printf("Density > %f", threshold);
             std::vector<Point> nt3;
             if (DRAWTRACK)
                 GenerateTrack(nt3,25,0.025,radius,t.phi,t.gamma);
@@ -220,12 +231,12 @@ void TRadon::Draw(Option_t *option) {
                 Point point=*it;
                 hitmarker->SetPoint(j,point.x(),point.y(),point.z());
                 hitmarker->SetMarkerSize(0.1);
-                hitmarker->SetMarkerColor(kRed);
+                hitmarker->SetMarkerColor(kYellow);
                 hitmarker->SetMarkerStyle(kFullDotLarge);
                 hitmarker->Draw(option);
                 connector->SetPoint(j, point.x(),point.y(),point.z());
                 connector->SetLineWidth(1);
-                connector->SetLineColor(kRed);
+                connector->SetLineColor(kYellow);
                 connector->Draw(option);
                 printf("\n%d: x:%f y:%f z:%f d:%f  ",j,point.x(),point.y(),point.z(),point.d());
             }
