@@ -68,7 +68,7 @@ void VUnsupervisedNet::Draw (Option_t *option) {
         else {
             cellmarker->SetPoint(i, x1[0], x1[1], 0.0);
         }
-        cellmarker->SetMarkerSize(0.5);
+        cellmarker->SetMarkerSize(0.1);
         cellmarker->SetMarkerColor(kBlue);
         cellmarker->SetMarkerStyle(kFullDotLarge);
         cellmarker->Draw(option);
