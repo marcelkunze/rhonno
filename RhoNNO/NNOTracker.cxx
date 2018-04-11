@@ -4,6 +4,7 @@
 #include <TCanvas.h>
 #include <TView.h>
 #include <TPolyMarker3D.h>
+#include <TAxis3D.h>
 #include <TPolyLine3D.h>
 #include <TNtuple.h>
 #include <TFile.h>
@@ -11,39 +12,57 @@
 #include "RhoNNO/TRadon.h"
 
 #include <iostream>
+#include <fstream>
 using namespace std;
 
-#define MAXEPOCH 10
+#define MAXEPOCH 100
 #define INSERTSTEP 100
-#define DELETESTEP 50
+#define DELETESTEP 500
+
+#define NHITS 25
+#define SIGMA 0.001
+
+#define RADON true
 
 // The user member function processes one event
 
-TNtuple	    hits("Hits","NNO tracking data","x:y:z");
-Long_t      nhits=0, n=0;
+std::vector<Point> hits;
 
 int main(int argc, char* argv[]) {
-    TString filename("event");
-    if (argc > 1) filename = argv[1];
-    
-    cout << "Reading input file: " << filename << endl;
-    FILE* F=fopen(filename,"r");
-    if (!F) {
-        cerr << "File does not exist!" << endl;
-        return EXIT_FAILURE;
-    }
-    
-    double X,Y,Z;
-    
-    while(!feof(F)) {
-        fscanf(F,"%lf %lf %lf",&X,&Y,&Z);
-        hits.Fill(X*0.01,Y*0.01,Z*0.01); // transform to meter
-    }
-    fclose(F);
     
     TFile output("NNOTracker.root","RECREATE");
     
-    nhits = hits.GetEntries();
+    TRadon radon;
+    TString filename("event");
+    TNtuple nt1("Hits","NNO Tracking Data","x:y:z");
+    
+    if (argc > 1) filename = argv[1];
+    
+    ifstream infile(filename);
+    if (infile) {
+        cout << "Reading input file: " << filename << endl;
+        double X,Y,Z;
+        while (infile >> X >> Y >> Z) {
+            X*=0.01; // transform to meter
+            Y*=0.01;
+            Z*=0.01;
+            Point point(X,Y,Z);
+            hits.push_back(point);
+            //cout << point.x() << "\t" << point.y() << "\t" << point.z() << "\t"<< point.d() << endl;
+        }
+    }
+    else
+    {
+        // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
+        radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/1.0,0.5,SIGMA);
+        radon.GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
+        radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/3.0,1.5,SIGMA);
+    }
+    
+    // Sort the hits according to distance from origin
+    
+    cout << "Sorting hits..." << endl;
+    reverse(hits.begin(),hits.end());
     
     // Initialize a 3D canvas and draw the hits
     TCanvas *c1 = new TCanvas("c1","NNO Tracking: Neural Gas",200,10,700,500);
@@ -55,12 +74,19 @@ int main(int argc, char* argv[]) {
     // creating a view
     TView *view = TView::CreateView(1);
     view->SetRange(-2,-2,-2,2,2,2); // draw in a 2 meter cube
+    // Draw axis
+    TAxis3D rulers;
+    rulers.Draw();
     // create a first PolyMarker3D
+    // create a first PolyMarker3D
+    long nhits = hits.size();
     TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
-    for (int i=0;i<nhits;i++) {
-        hits.GetEvent(i,1);
-        Float_t *x=hits.GetArgs();
-        hitmarker->SetPoint(i, x[0], x[1], x[2]);
+    vector<Point>::iterator it;
+    for(it = hits.begin(); it != hits.end(); it++)    {
+        static int i = 0;
+        Point p=*it;
+        hitmarker->SetPoint(i++,p.x(),p.y(),p.z());
+        nt1.Fill(p.x(),p.y(),p.z());
     }
     // set marker size, color & style
     hitmarker->SetMarkerSize(1.0);
@@ -84,10 +110,11 @@ int main(int argc, char* argv[]) {
                     "gng.net"      // Network Filename is "gng.net"
                     );
     
+    long n = 0;
     while (n++ < MAXEPOCH) {
         cout << endl << "Epoch: " << n << endl << "Cells:" << net.GetNumberOfCells() << endl;
         // Set the input data
-        net.TrainEpoch(&hits, kFALSE);
+        net.TrainEpoch(&nt1, kFALSE);
     }
     
     // Show the network
@@ -96,8 +123,7 @@ int main(int argc, char* argv[]) {
     
     // Perform a Radon transformation from hit space to track parameter space
     
-    TRadon r;
-    r.Transform(&hits);
+    if (RADON) radon.Transform(hits);
     
     // TBD: Analyze the network
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers

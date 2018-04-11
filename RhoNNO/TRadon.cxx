@@ -27,6 +27,7 @@ ClassImp(TRadon)
 #define SIGMA 0.001
 #define TAUMAX 0.5*M_PI
 #define THRESHOLD 300000.
+#define DRAWTRACK false
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
@@ -55,11 +56,11 @@ TRadon::~TRadon() {
  * Do a RADON transform of coordinates (all lengths in meter)
  * (1 GeV/c == 2.22m Radius at B=1.5T)
  */
-std::vector<RADON>& TRadon::Transform(std::vector<Point> &hits)
+std::vector<RADON>& TRadon::Transform(std::vector<Point> &h)
 {
-    
+    hits = h;
     double kappa,gamma,phi,density,sigma,d;
-    long k=0,g=0,p=0,i=0;
+    long k=0,g=0,p=0;
     
     sigma = SIGMA;
     gamma = 0.0;
@@ -158,7 +159,7 @@ double   TRadon::radon_hit_density(RADON *t)
  * Create a tuple with Track coordinates
  */
 
-void TRadon::GenerateTrack(std::vector<Point> &hits, int np, double delta, double radius, double phi, double gamma, double sigma) {
+void TRadon::GenerateTrack(std::vector<Point> &p, int np, double delta, double radius, double phi, double gamma, double sigma) {
     default_random_engine generator;
     double tau = 0.025;
     for (int i=0; i<np; i++,tau+=delta)
@@ -175,7 +176,7 @@ void TRadon::GenerateTrack(std::vector<Point> &hits, int np, double delta, doubl
             normal_distribution<float> distribution2(Z,sigma);
             Z = distribution2(generator);
         }
-        hits.push_back(Point(X,Y,Z));
+        p.push_back(Point(X,Y,Z));
     }
 }
 
@@ -197,24 +198,36 @@ void TRadon::Draw(Option_t *option) {
         if (t.density > THRESHOLD) {
             printf("Density > %f", THRESHOLD);
             std::vector<Point> nt3;
-            GenerateTrack(nt3,25,0.025,radius,t.phi,t.gamma);
+            if (DRAWTRACK)
+                GenerateTrack(nt3,25,0.025,radius,t.phi,t.gamma);
+            else
+                for (int i=0;i<t.index.size();i++) {
+                    long index = t.index[i];
+                    float x = hits[index].x();
+                    float y = hits[index].y();
+                    float z = hits[index].z();
+                    Point p(x,y,z);
+                    nt3.push_back(p);
+                }
+                
             // Draw the track candidates
             TPolyMarker3D *hitmarker = new TPolyMarker3D(nt3.size());
             TPolyLine3D *connector = new TPolyLine3D(nt3.size());
-            
+  
+            int j = 0;
             vector<Point>::iterator it;
-            for(it = nt3.begin(); it != nt3.end(); it++)    {
-                static int j = 0;
+            for(it = nt3.begin(); it != nt3.end(); it++, j++)    {
                 Point point=*it;
                 hitmarker->SetPoint(j,point.x(),point.y(),point.z());
                 hitmarker->SetMarkerSize(0.1);
                 hitmarker->SetMarkerColor(kRed);
                 hitmarker->SetMarkerStyle(kFullDotLarge);
                 hitmarker->Draw(option);
-                connector->SetPoint(j++, point.x(),point.y(),point.z());
+                connector->SetPoint(j, point.x(),point.y(),point.z());
                 connector->SetLineWidth(1);
                 connector->SetLineColor(kRed);
                 connector->Draw(option);
+                printf("\n%d: x:%f y:%f z:%f d:%f  ",j,point.x(),point.y(),point.z(),point.d());
             }
         }
     }

@@ -11,9 +11,10 @@
 #include "RhoNNO/TRadon.h"
 
 #include <iostream>
+#include <fstream>
 using namespace std;
 
-#define NHITS 50
+#define NHITS 25
 #define SIGMA 0.001
 
 
@@ -28,20 +29,18 @@ int main(int argc, char* argv[]) {
     TString filename("event");
     if (argc > 1) filename = argv[1];
     
-    FILE* F=fopen(filename,"r");
-    if (F) {
+    ifstream infile(filename);
+    if (infile) {
         cout << "Reading input file: " << filename << endl;
-        
         double X,Y,Z;
-        
-        while(!feof(F)) {
-            fscanf(F,"%lf %lf %lf",&X,&Y,&Z);
+        while (infile >> X >> Y >> Z) {
             X*=0.01; // transform to meter
             Y*=0.01;
             Z*=0.01;
-            hits.push_back(Point(X,Y,Z));
+            Point point(X,Y,Z);
+            hits.push_back(point);
+            //cout << point.x() << "\t" << point.y() << "\t" << point.z() << "\t"<< point.d() << endl;
         }
-        fclose(F);
     }
     else
     {
@@ -50,9 +49,9 @@ int main(int argc, char* argv[]) {
         radon.GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
         radon.GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/3.0,1.5,SIGMA);
     }
-
+    
     // Sort the hits according to distance from origin
-
+    
     cout << "Sorting hits..." << endl;
     reverse(hits.begin(),hits.end());
     

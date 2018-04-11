@@ -20,6 +20,7 @@ double  radon_hit_density(RADON *t);
 
 struct Point {
     float x_, y_, z_, d_;
+    Point() : x_(0), y_(0), z_(0) {}
     Point(float x, float y, float z) : x_(x), y_(y), z_(z), d_(sqrt(x_*x_ + y_*y_ + z_*z_)) {}
     bool operator< (Point const &other) const { return less(*this, other); }
     bool operator> (Point const &other) const { return greater(*this, other); }
@@ -36,8 +37,8 @@ struct Point {
 class TRadon : public TObject {
 public:
     TRadon();
-    std::vector<RADON>& Transform(std::vector<Point> &hits);
-    void GenerateTrack(std::vector<Point> &hits, int np, double delta, double radius, double phi, double gamma, double sigma=0.0);
+    std::vector<RADON>& Transform(std::vector<Point> &p);
+    void GenerateTrack(std::vector<Point> &p, int np, double delta, double radius, double phi, double gamma, double sigma=0.0);
     void Draw (Option_t *option="");
     ~TRadon();
 private:
@@ -47,6 +48,7 @@ private:
     double radon_hit_density(RADON *t);
     TNtuple *nt1, *nt2;
     TObjArray Hlist;
+    std::vector<Point> hits;
     std::vector<RADON> rt;
 public:
     ClassDef(TRadon,1)    // Fuzzy Radon transform
