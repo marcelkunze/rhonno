@@ -41,6 +41,7 @@ RhoNNO/TGNGTracker.cxx
 RhoNNO/TLVQ.cxx 
 RhoNNO/TDataServe.cxx 
 RhoNNO/TNNK.cxx
+RhoNNO/TRadon.cxx
 )
 
 set(LINKDEF  RhoNNO/RhoNNO_LinkDef.h)
@@ -63,6 +64,9 @@ target_link_libraries (NetworkTrainer  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
 add_executable (NNOTracker RhoNNO/NNOTracker.cxx)
 target_link_libraries (NNOTracker  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
 
+add_executable (RadonTracker RhoNNO/RadonTracker.cxx)
+target_link_libraries (RadonTracker  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
+
 include(CTest)
 
 # Run Tests
@@ -70,6 +74,7 @@ add_test (Teststrain ${CMAKE_BINARY_DIR}/bin/strain)
 add_test (Testutrain ${CMAKE_BINARY_DIR}/bin/utrain ${CMAKE_SOURCE_DIR}/rhonno/Data/ppe.dat)
 add_test (Testtrainer ${CMAKE_BINARY_DIR}/bin/NetworkTrainer ${CMAKE_BINARY_DIR}/pid.nno)
 add_test (Testtracker ${CMAKE_BINARY_DIR}/bin/NNOTracker ${CMAKE_SOURCE_DIR}/rhonno/Data/event2)
+add_test (Testradon ${CMAKE_BINARY_DIR}/bin/RadonTracker)
 file(WRITE ${CMAKE_BINARY_DIR}/pid.nno "
 # Training of PIDSelectors with NNO
 
