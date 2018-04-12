@@ -6,7 +6,6 @@
 #include <TPolyMarker3D.h>
 #include <TAxis3D.h>
 #include <TPolyLine3D.h>
-#include <TNtuple.h>
 #include <TFile.h>
 #include "RhoNNO/TRadon.h"
 
@@ -20,7 +19,7 @@ using namespace std;
 
 // The user member function processes one event
 
-std::vector<Point> hits;
+std::vector<TVector3> hits;
 
 int main(int argc, char* argv[]) {
     TFile output("RadonTracker.root","RECREATE");
@@ -38,7 +37,7 @@ int main(int argc, char* argv[]) {
             X*=0.01; // transform to meter
             Y*=0.01;
             Z*=0.01;
-            Point point(X,Y,Z);
+            TVector3 point(X,Y,Z);
             hits.push_back(point);
             //cout << point.x() << "\t" << point.y() << "\t" << point.z() << "\t"<< point.d() << endl;
         }
@@ -73,10 +72,10 @@ int main(int argc, char* argv[]) {
     // draw hits as PolyMarker3D
     long nhits = hits.size();
     TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
-    vector<Point>::iterator it;
+    vector<TVector3>::iterator it;
     for(it = hits.begin(); it != hits.end(); it++)    {
         static int i = 0;
-        Point p=*it;
+        TVector3 p=*it;
         hitmarker->SetPoint(i++,p.x(),p.y(),p.z());
     }
     // set marker size, color & style

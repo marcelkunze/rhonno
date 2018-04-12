@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <TNtuple.h>
+#include <TVector3.h>
 #include <TH2D.h>
 #include <TPolyMarker3D.h>
 #include <TPolyLine3D.h>
@@ -54,7 +55,7 @@ TRadon::~TRadon() {
  * Do a RADON transform of coordinates (all lengths in meter)
  * (1 GeV/c == 2.22m Radius at B=1.5T)
  */
-std::vector<RADON>& TRadon::Transform(std::vector<Point> &points)
+std::vector<RADON>& TRadon::Transform(std::vector<TVector3> &points)
 {
     hits = points;
     double kappa,gamma,phi,density,d;
@@ -76,9 +77,9 @@ std::vector<RADON>& TRadon::Transform(std::vector<Point> &points)
                 long i = 0;
                 long nhits = 0;
                 density=d=0.0;
-                vector<Point>::iterator it;
+                vector<TVector3>::iterator it;
                 for(it = hits.begin(); it != hits.end(); it++, i++)    {
-                    Point point=*it;
+                    TVector3 point=*it;
                     t.x = point.x();
                     t.y = point.y();
                     t.z = point.z();
@@ -170,7 +171,7 @@ double   TRadon::radon_hit_density(RADON *t)
  * Create a tuple with Track coordinates
  */
 
-void TRadon::GenerateTrack(std::vector<Point> &points, int np, double delta, double radius, double phi, double gamma, double error) {
+void TRadon::GenerateTrack(std::vector<TVector3> &points, int np, double delta, double radius, double phi, double gamma, double error) {
     default_random_engine generator;
     double tau = 0.025;
     for (int i=0; i<np; i++,tau+=delta)
@@ -187,7 +188,7 @@ void TRadon::GenerateTrack(std::vector<Point> &points, int np, double delta, dou
             normal_distribution<float> distribution2(Z,error);
             Z = distribution2(generator);
         }
-        points.push_back(Point(X,Y,Z));
+        points.push_back(TVector3(X,Y,Z));
     }
 }
 
@@ -208,7 +209,7 @@ void TRadon::Draw(Option_t *option) {
         
         if (t.density > threshold) {
             printf("Density > %f", threshold);
-            std::vector<Point> nt3;
+            std::vector<TVector3> nt3;
             if (DRAWTRACK)
                 GenerateTrack(nt3,25,0.025,radius,t.phi,t.gamma);
             else
@@ -217,7 +218,7 @@ void TRadon::Draw(Option_t *option) {
                     float x = hits[index].x();
                     float y = hits[index].y();
                     float z = hits[index].z();
-                    Point p(x,y,z);
+                    TVector3 p(x,y,z);
                     nt3.push_back(p);
                 }
                 
@@ -226,9 +227,9 @@ void TRadon::Draw(Option_t *option) {
             TPolyLine3D *connector = new TPolyLine3D(nt3.size());
   
             int j = 0;
-            vector<Point>::iterator it;
+            vector<TVector3>::iterator it;
             for(it = nt3.begin(); it != nt3.end(); it++, j++)    {
-                Point point=*it;
+                TVector3 point=*it;
                 hitmarker->SetPoint(j,point.x(),point.y(),point.z());
                 hitmarker->SetMarkerSize(0.1);
                 hitmarker->SetMarkerColor(kYellow);
@@ -238,7 +239,7 @@ void TRadon::Draw(Option_t *option) {
                 connector->SetLineWidth(1);
                 connector->SetLineColor(kYellow);
                 connector->Draw(option);
-                printf("\n%d: x:%f y:%f z:%f d:%f  ",j,point.x(),point.y(),point.z(),point.d());
+                printf("\n%d: x:%f y:%f z:%f d:%f  ",j,point.x(),point.y(),point.z(),point.Mag());
             }
         }
     }
