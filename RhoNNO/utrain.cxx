@@ -24,11 +24,11 @@ TROOT root("root","Unsupervised training test");
 #define MAXEPOCH 200
 
 int main(int argc, char* argv[]) {
-    TString filename("ppe.dat");
+    string filename("ppe.dat");
     if (argc > 1) filename = argv[1];
     
     cout << "Reading input file: " << filename << endl;
-    FILE* F=fopen(filename,"r");
+    FILE* F=fopen(filename.data(),"r");
     if (!F) {
         cerr << "File does not exist!" << endl;
         return EXIT_FAILURE;

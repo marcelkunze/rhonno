@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     
     TRadon radon(SIGMA,THRESHOLD);
     
-    TString filename("event");
+    string filename("event");
     if (argc > 1) filename = argv[1];
     
     ifstream infile(filename);

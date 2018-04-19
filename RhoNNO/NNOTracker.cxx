@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     
     TFile output("NNOTracker.root","RECREATE");
     
-    TString filename("event");
+    string filename("event");
     TNtuple nt1("Hits","NNO Tracking Data","x:y:z");
     
     if (argc > 1) filename = argv[1];

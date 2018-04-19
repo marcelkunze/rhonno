@@ -39,7 +39,7 @@ TRadon::TRadon(double sig, double thr) : sigma(sig), threshold(thr), Hlist(0)
     for (int i=0;i<NGAMMA;i++,gamma+=DGAMMA) {
         string name = "Gamma=" + to_string(gamma);
         string title = "Radon density in r/Phi " + name;
-        Hlist.Add(new TH2D(TString(name),TString(title),40,0.0,4.,30,0.0,3.0));
+        Hlist.Add(new TH2D(name.data(),title.data(),40,0.0,4.,30,0.0,3.0));
     }
 }
 
