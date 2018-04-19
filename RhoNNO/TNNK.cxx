@@ -12,6 +12,8 @@
 #include "RhoNNO/VNeuralNetPlotter.h"
 
 #include <iostream>
+#include <string>
+
 using namespace std;
 
 ClassImp(TNNK)
@@ -40,7 +42,7 @@ void TNNK::ReadText(void)
 void TNNK::ReadBinary(void)
 {}
 
-TNNK::TNNK(Double_t learn,Double_t fse,Double_t mu,Int_t innodes,Text_t *hidnodes,Int_t outnodes,const char* netFile)
+TNNK::TNNK(Double_t learn,Double_t fse,Double_t mu,Int_t innodes,Text_t *hidnodes,Int_t outnodes,string netFile)
 : VSupervisedNet("TNNK",innodes,outnodes,netFile) 
 {
     fShouldSave = kTRUE;
@@ -54,7 +56,7 @@ TNNK::TNNK(Double_t learn,Double_t fse,Double_t mu,Int_t innodes,Text_t *hidnode
     fKernel->PrintS();
 }
 
-TNNK::TNNK(const char* netFile)
+TNNK::TNNK(string netFile)
 : VSupervisedNet("TNNK",5,10,netFile)
 {
     fShouldSave = kFALSE;

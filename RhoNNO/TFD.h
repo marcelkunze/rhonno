@@ -17,7 +17,7 @@ public:
     TFD() {}
     TFD(Int_t innodes,Int_t outnodes,TNeuralNetParameters::TRANSFER f,const char* netFile)
 	: TXMLP(1,1.0,netFile,innodes,outnodes,0.1,f) {}
-    TFD(const char* netFile) : TXMLP(netFile) {ReadNet("XMLP");};
+    TFD(std::string netFile) : TXMLP(netFile) {ReadNet("XMLP");};
     virtual ~TFD() {}                          //destructor of network  (File will be saved)
     
     ClassDef(TFD,1)	    // Fisher discriminant

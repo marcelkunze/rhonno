@@ -8,9 +8,13 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "TMath.h"
+#include <TMath.h>
 #include "RhoNNO/TSGNG.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
+
+#include <string>
+
+using namespace std;
 
 ClassImp(TSGNG)
 
@@ -27,7 +31,7 @@ TSGNG::TSGNG(Int_t innodes,
              Int_t  connectors,
              Long_t insertStep,
              Long_t deleteStep,
-             const char* netFile)
+             string netFile)
 : VSupervisedNet("SGNG",innodes,outnodes,netFile)
 {
     fXB.fWinStep     = winStep;
@@ -54,7 +58,7 @@ TSGNG::TSGNG(Int_t innodes,
 }
 
 // copy constructor
-TSGNG::TSGNG(const TSGNG& sgng,const char* netFile)
+TSGNG::TSGNG(const TSGNG& sgng,string netFile)
 : VSupervisedNet("SGNG",sgng.fParm.fInNodes,sgng.fParm.fOutNodes,netFile) 
 {
     fXB = sgng.fXB;

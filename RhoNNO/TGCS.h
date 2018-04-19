@@ -18,7 +18,7 @@ public:
     TGCS(Int_t innodes,Int_t cells,Int_t maxCells,Double_t winStep,Double_t neiStep,
          Double_t aWinCount,Int_t connectors,
          Long_t insertStep,Long_t deleteStep,const char* netFile);
-    TGCS(const char* netFile) : VUnsupervisedNet(netFile) {ReadNet("GCS");};
+    TGCS(std::string netFile) : VUnsupervisedNet(netFile) {ReadNet("GCS");};
     TGCS(const TGCS& gcs,const char* netFile); // copy constructor
     virtual ~TGCS();                             // destructor of network  (File will be saved)
 private:

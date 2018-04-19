@@ -30,7 +30,7 @@ public:
 	long   deleteStep,
 	const char*  netFile);
     
-    TSGCS(const char* netFile) : VSupervisedNet(netFile), fXB() {ReadNet("SGCS");};
+    TSGCS(std::string netFile) : VSupervisedNet(netFile), fXB() {ReadNet("SGCS");};
     TSGCS(const TSGCS& sgcs,const char* netFile); // copy constructor
     virtual ~TSGCS();                          //destructor of network  (File will be saved)
        

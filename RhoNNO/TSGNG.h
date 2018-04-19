@@ -29,9 +29,9 @@ public:
 	Int_t  connectors,
 	Long_t insertStep,
 	Long_t deleteStep,
-	const char* netFile);
-    TSGNG(const char* netFile) : VSupervisedNet(netFile), fXB() {ReadNet("SGNG");};
-    TSGNG(const TSGNG& sgng,const char* netFile); // copy constructor
+	std::string netFile);
+    TSGNG(std::string netFile) : VSupervisedNet(netFile), fXB() {ReadNet("SGNG");};
+    TSGNG(const TSGNG& sgng,std::string netFile); // copy constructor
     virtual ~TSGNG();                          //destructor of network  (File will be saved)
        
 private:

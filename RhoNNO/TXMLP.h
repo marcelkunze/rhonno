@@ -26,7 +26,7 @@ public:
     TXMLP(Int_t layers,Double_t inputRange,const char* netFile,Int_t innodes,...);
     TXMLP(Int_t layers,Double_t inputRange,const char* netFile,Int_t innodes,Int_t n1,Int_t n2,Int_t n3,Double_t s1,Double_t s2,Double_t s3,
 	  TNeuralNetParameters::TRANSFER f1,TNeuralNetParameters::TRANSFER f2,TNeuralNetParameters::TRANSFER f3);
-    TXMLP(const char* netFile) : VSupervisedNet(netFile) {ReadNet("XMLP");};
+    TXMLP(std::string netFile) : VSupervisedNet(netFile) {ReadNet("XMLP");};
     virtual ~TXMLP();
     Double_t Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
     Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);

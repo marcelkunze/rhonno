@@ -48,7 +48,7 @@ VNeuralNet::VNeuralNet()
 }
 
 VNeuralNet::VNeuralNet(string netID,Int_t innodes,Int_t outnodes,string netFile)
-: TNamed(netID,netID), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
+: TNamed(netID.data(),netID.data()), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
 #ifndef NNORAND
     gRandom->SetSeed(); // Randomize the numbers
@@ -68,7 +68,7 @@ VNeuralNet::VNeuralNet(string netID,Int_t innodes,Int_t outnodes,string netFile)
 }
 
 VNeuralNet::VNeuralNet(string netFile)
-: TNamed(netFile,netFile), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
+: TNamed(netFile.data(),netFile.data()), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
     fFilename   = netFile;
     fShouldSave = kFALSE;

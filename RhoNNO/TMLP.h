@@ -18,7 +18,7 @@ public:
     TMLP(Double_t hidStep,Double_t outStep,Int_t innodes,Int_t hidnodes,Int_t outnodes,Double_t inputRange,
 	const char* netFile,TNeuralNetParameters::TRANSFER f=TNeuralNetParameters::TR_FERMI)
 	: TXMLP(2,inputRange,netFile,innodes,hidnodes,outnodes,hidStep,outStep,TNeuralNetParameters::TR_FERMI,f) {}
-    TMLP(const char* netFile) : TXMLP(netFile) {ReadNet("XMLP");};
+    TMLP(std::string netFile) : TXMLP(netFile) {ReadNet("XMLP");};
     virtual ~TMLP() {}                          //destructor of network  (File will be saved)
     
     ClassDef(TMLP,1)	    // Multi-Layer Perceptron

@@ -26,8 +26,8 @@ private:
     void ReadBinary(void);
 public:
     TNNK() {};
-    TNNK(Double_t learn,Double_t fse,Double_t mu,Int_t innodes,Text_t *hidnodes,Int_t outnodes,const char* netFile);
-    TNNK(const char* netFile);
+    TNNK(Double_t learn,Double_t fse,Double_t mu,Int_t innodes,Text_t *hidnodes,Int_t outnodes,std::string netFile);
+    TNNK(std::string netFile);
     virtual ~TNNK();                          //destructor of network  (File will be saved)
     Double_t Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
     Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);

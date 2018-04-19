@@ -29,7 +29,7 @@ public:
                 Long_t deleteStep,
                 const char* netFile);
     
-    TGNGTracker(const char* netFile) : VUnsupervisedNet(netFile) {ReadNet("GNG");};
+    TGNGTracker(std::string netFile) : VUnsupervisedNet(netFile) {ReadNet("GNG");};
     TGNGTracker(const TGNGTracker& gng,const char* netFile); // copy constructor
     
     virtual ~TGNGTracker();                          //destructor of network  (File will be saved)
