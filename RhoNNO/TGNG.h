@@ -16,22 +16,22 @@ class TGNG : public VUnsupervisedNet {
 public:
     TGNG() {}
     TGNG(Int_t innodes,
-	Int_t maxCells,
-	Double_t winStep,
-	Double_t neiStep,
-	Double_t aWinCount,
-	Double_t aEdgeCount,
-	Double_t minCount,
-	Int_t  connectors,
-	Long_t insertStep,
-	Long_t deleteStep,
-	const char* netFile);
+         Int_t maxCells,
+         Double_t winStep,
+         Double_t neiStep,
+         Double_t aWinCount,
+         Double_t aEdgeCount,
+         Double_t minCount,
+         Int_t  connectors,
+         Long_t insertStep,
+         Long_t deleteStep,
+         const char* netFile);
     
     TGNG(const char* netFile) : VUnsupervisedNet(netFile) {ReadNet("GNG");};
     TGNG(const TGNG& gng,const char* netFile); // copy constructor
     
     virtual ~TGNG();                          //destructor of network  (File will be saved)
-
+    
 protected:
     TNeuralNetCell*  fUbound;	//! Temp. unit
     TNeuralNetCell*  fUwin1;	//! Temp. unit
@@ -52,9 +52,9 @@ protected:
     
 public:
     virtual Double_t  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { GetWinnerCell(in); return fUwin1->fVector; }
+    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin1->fVector; }
     virtual Int_t GetWinnerCell(NNO_INTYPE* in);
-
+    
     void Deviation(void); // calculates s_dev of all cells
     void CopyData(const TGNG& gng); // copies data from another gcs network
     

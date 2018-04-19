@@ -16,8 +16,8 @@ class TGCS : public VUnsupervisedNet {
 public:
     TGCS() {}
     TGCS(Int_t innodes,Int_t cells,Int_t maxCells,Double_t winStep,Double_t neiStep,
-	Double_t aWinCount,Int_t connectors,
-	Long_t insertStep,Long_t deleteStep,const char* netFile);
+         Double_t aWinCount,Int_t connectors,
+         Long_t insertStep,Long_t deleteStep,const char* netFile);
     TGCS(const char* netFile) : VUnsupervisedNet(netFile) {ReadNet("GCS");};
     TGCS(const TGCS& gcs,const char* netFile); // copy constructor
     virtual ~TGCS();                             // destructor of network  (File will be saved)
@@ -36,9 +36,9 @@ private:
     
 public:
     virtual Double_t  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { GetWinnerCell(in); return fUwin->fVector; }
+    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin->fVector; }
     virtual Int_t GetWinnerCell(NNO_INTYPE* in);
-        
+    
     void Deviation(void); // calculates s_dev of all cells
     void CopyData(const TGCS& GCS); // copies data from another gcs network
     

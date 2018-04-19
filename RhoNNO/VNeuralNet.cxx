@@ -8,23 +8,19 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-static const char* NNO_VERSION="1.4ROOT";
+static const char* NNO_VERSION="2.0ROOT";
 
-#include "TRandom.h"
+#include <TRandom.h>
 
 #include "RhoNNO/VNeuralNet.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
 #include "RhoNNO/TDataServe.h"
 
-#ifdef WIN32
-//DllImport TRandom *gRandom;
-#endif
-
-ClassImp(TNeuralNetParameters)
-
 #include <iostream>
 #include <cstdlib>
 using namespace std;
+
+ClassImp(TNeuralNetParameters)
 
 TNeuralNetParameters::TNeuralNetParameters() 
 {
@@ -44,21 +40,21 @@ TNeuralNetParameters::TNeuralNetParameters()
 ClassImp(VNeuralNet)
 
 VNeuralNet::VNeuralNet() 
-  : TNamed("NNO","NNO"), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
+: TNamed("NNO","NNO"), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
-    fShouldSave = kFALSE; 
+    fShouldSave = kFALSE;
     fFile  = 0;
     fOut = 0;
 }
 
-VNeuralNet::VNeuralNet(const char* netID,Int_t innodes,Int_t outnodes,const char* netFile)
- : TNamed(netID,netID), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
+VNeuralNet::VNeuralNet(string netID,Int_t innodes,Int_t outnodes,string netFile)
+: TNamed(netID,netID), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
 #ifndef NNORAND
     gRandom->SetSeed(); // Randomize the numbers
 #endif
     fFilename = netFile;
-    strncpy(fParm.fNetId,netID,9);
+    strncpy(fParm.fNetId,netID.data(),9);
     fShouldSave  = kTRUE;
     fFiletype    = FILE_TEXT;
     fParm.fInNodes  = innodes;
@@ -66,13 +62,13 @@ VNeuralNet::VNeuralNet(const char* netID,Int_t innodes,Int_t outnodes,const char
     fFile   = 0;
     fOut    = 0;
     if (outnodes>0) {
-	fOut = new Double_t[fParm.fOutNodes];
-	TestPointer(fOut);
+        fOut = new Double_t[fParm.fOutNodes];
+        TestPointer(fOut);
     }
 }
 
-VNeuralNet::VNeuralNet(const char* netFile)
- : TNamed(netFile,netFile), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
+VNeuralNet::VNeuralNet(string netFile)
+: TNamed(netFile,netFile), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
     fFilename   = netFile;
     fShouldSave = kFALSE;
@@ -88,13 +84,13 @@ VNeuralNet::~VNeuralNet()
 
 void VNeuralNet::Save() 
 {
-    fFile = fopen(fFilename,"wb");
+    fFile = fopen(fFilename.data(),"wb");
     WriteNet();
 }
 
-void VNeuralNet::Save(char* file) 
+void VNeuralNet::Save(string file)
 {
-    fFile = fopen(file,"wb");
+    fFile = fopen(file.data(),"wb");
     WriteNet();
 }
 
@@ -123,48 +119,48 @@ void VNeuralNet::WriteNetBinary()
 
 void VNeuralNet::ReadNet(const char* netID) 
 {
-    fFile = fopen(fFilename,"rb");
-    if (fFile==0) Errorf((char *)"file %s not found",(char *)fFilename.Data());
+    fFile = fopen(fFilename.data(),"rb");
+    if (fFile==0) Errorf((char *)"file %s not found",(char *)fFilename.data());
     char ftype[16];
     char Version[16];
     fscanf(fFile,"C++  NEURAL NETWORK OBJECTS   VERSION %s\n(C) Copyright Johannes Steffens\nFiletype %s\n",Version,ftype);
     if      (!strcmp(ftype,"binary")) fFiletype = FILE_BINARY;
     else if (!strcmp(ftype,"text"))   fFiletype = FILE_TEXT;
-    else Errorf((char *)"illegal fileformat: %s",(char *)fFilename.Data());
-
-    if (fFiletype==FILE_BINARY) 
-	ReadNetBinary(); 
-    else 
-	ReadNetText();
-
+    else Errorf((char *)"illegal fileformat: %s",(char *)fFilename.data());
+    
+    if (fFiletype==FILE_BINARY)
+        ReadNetBinary();
+    else
+        ReadNetText();
+    
     fParm.fNetId[4]=0;
     if (strcmp(netID,fParm.fNetId)) {
-	fclose(fFile);
-	Errorf((char *)"file %s  (incompatible network)\nnetwork ID is %s and should be %s",fFilename.Data(),fParm.fNetId,netID);
+        fclose(fFile);
+        Errorf((char *)"file %s  (incompatible network)\nnetwork ID is %s and should be %s",fFilename.data(),fParm.fNetId,netID);
     }
-
+    
     if (strcmp(Version,NNO_VERSION)) {
-	fclose(fFile);
-	Errorf((char *)"illegal NNO version number of file %s\nversion number is %s and should be %s",fFilename.Data(),Version,(char *)NNO_VERSION);
+        fclose(fFile);
+        Errorf((char *)"illegal NNO version number of file %s\nversion number is %s and should be %s",fFilename.data(),Version,(char *)NNO_VERSION);
     }
-
+    
     if (fFiletype==FILE_BINARY)
-	ReadBinary();
+        ReadBinary();
     else
-	ReadText();
-
+        ReadText();
+    
     fOut = new Double_t[fParm.fOutNodes];
-
+    
     TestPointer(fOut);
-
+    
     fclose(fFile);
 }
 
 void VNeuralNet::ReadNetText() 
 {
-     fscanf(fFile,"\nnetwork id  %s\n",fParm.fNetId);
-     fscanf(fFile,"innodes     %i\n",&fParm.fInNodes);
-     fscanf(fFile,"outnodes    %i\n",&fParm.fOutNodes);
+    fscanf(fFile,"\nnetwork id  %s\n",fParm.fNetId);
+    fscanf(fFile,"innodes     %i\n",&fParm.fInNodes);
+    fscanf(fFile,"outnodes    %i\n",&fParm.fOutNodes);
 }
 
 void VNeuralNet::ReadNetBinary() 
@@ -174,52 +170,52 @@ void VNeuralNet::ReadNetBinary()
 
 void VNeuralNet::Errorf(char* format,...) 
 {
-     va_list ap;
-     va_start(ap, format);
-     char MainFormat[256];
-     sprintf(MainFormat,"NNO ERROR: %s\n",format);
-     vfprintf(stderr,MainFormat,ap);
-     exit(1);
+    va_list ap;
+    va_start(ap, format);
+    char MainFormat[256];
+    sprintf(MainFormat,"NNO ERROR: %s\n",format);
+    vfprintf(stderr,MainFormat,ap);
+    exit(1);
 }
 
 void VNeuralNet::Warningf(FILE* f,char* format,...) 
 {
-     va_list ap;
-     va_start(ap, format);
-     char MainFormat[256];
-     sprintf(MainFormat,"NNO WARNING: %s\n",format);
-     vfprintf(f,MainFormat,ap);
+    va_list ap;
+    va_start(ap, format);
+    char MainFormat[256];
+    sprintf(MainFormat,"NNO WARNING: %s\n",format);
+    vfprintf(f,MainFormat,ap);
 }
 
 void VNeuralNet::Messagef(FILE* f,char* format,...) 
 {
-     va_list ap;
-     va_start(ap, format);
-     char MainFormat[256];
-     sprintf(MainFormat,"NNO INFO: %s\n",format);
-     vfprintf(f,MainFormat,ap);
+    va_list ap;
+    va_start(ap, format);
+    char MainFormat[256];
+    sprintf(MainFormat,"NNO INFO: %s\n",format);
+    vfprintf(f,MainFormat,ap);
 }
 
 double VNeuralNet::Random(void) 
 {
 #ifdef NNORAND
-//  Machine independent random number generator.
-//  Produces uniformly-distributed floating points between 0 and 1.
-//  Identical sequence on all machines of >= 32 bits.
-//  Universal version (Fred james 1985).
-//  Return numbers in the range -0.5..0.5 (MK)
-
-   const float kCONS = 4.6566128730774E-10;
-   const int kMASK31 = 2147483647;
-   static unsigned int fSeed = 65539;
- 
-   fSeed *= 69069;
-      // keep only lower 31 bits
-   fSeed &= kMASK31;
-      // Set lower 8 bits to zero to assure exact float
-   int jy = (fSeed/256)*256;
-   double random = kCONS*jy;
-   return 1.0 - 2.0*random;
+    //  Machine independent random number generator.
+    //  Produces uniformly-distributed floating points between 0 and 1.
+    //  Identical sequence on all machines of >= 32 bits.
+    //  Universal version (Fred james 1985).
+    //  Return numbers in the range -0.5..0.5 (MK)
+    
+    const float kCONS = 4.6566128730774E-10;
+    const int kMASK31 = 2147483647;
+    static unsigned int fSeed = 65539;
+    
+    fSeed *= 69069;
+    // keep only lower 31 bits
+    fSeed &= kMASK31;
+    // Set lower 8 bits to zero to assure exact float
+    int jy = (fSeed/256)*256;
+    double random = kCONS*jy;
+    return 1.0 - 2.0*random;
 #else
     return 1.0 - 2.0*gRandom->Rndm();
 #endif
@@ -227,18 +223,18 @@ double VNeuralNet::Random(void)
 
 void VNeuralNet::TestPointer(void* Ptr) 
 {
-     if (Ptr==0) Errorf((char *)"not enough memory");
+    if (Ptr==0) Errorf((char *)"not enough memory");
 }
 
 void VNeuralNet::SetupPlots(VNeuralNetPlotter *plotter)
 {
     if (plotter==0) {
-	cout << "Instantiating plotter for " << GetName() << endl;
-	if (fOwnPlotter) delete fPlotter;
-	fPlotter = new TSimpleNeuralNetPlotter(GetName());
-	fOwnPlotter = kTRUE;
+        cout << "Instantiating plotter for " << GetName() << endl;
+        if (fOwnPlotter) delete fPlotter;
+        fPlotter = new TSimpleNeuralNetPlotter(GetName());
+        fOwnPlotter = kTRUE;
     }
-
+    
     fPlotter->Initialize();
 }
 
@@ -260,51 +256,51 @@ Double_t VNeuralNet::TrainEpoch(TDataServe *server, Int_t nEpoch)
     double       error = 0.0;			// squared error collector
     unsigned int classError;		// classification Error
     unsigned int n;			// number of samples
-
+    
     const Int_t samples = server->GetNumTrnvecs();
     const Int_t tests   = server->GetNumTstvecs();
-
+    
     for (Int_t epo=0; epo<nEpoch; epo++){
-	error = 0.0;
-	classError = 0;
-	n = 0;
-	
-	server->MixTrn(); // Shuffle the dataset
-
-	for (Int_t i=0; i<samples; i++){
-
-	    Int_t trnind = i;
-	    if (fBalance) trnind = BalancedTrnIndex(server);
-
-	    Float_t *inv  = (Float_t *) server->GetInvecTrn(trnind);
-	    Float_t *outv = (Float_t *) server->GetOutvecTrn(trnind);
-	    
-	    error += Train(inv,outv);
-	    n++;
-	}
-
-	classError = (UInt_t) TestEpoch(server);
-	double percentage = 100. * classError;
-	if (tests>0) percentage /= tests; else percentage = 0;
-	
-	// print training info
-	cout << GetNetID() << ": Epoch " << epo << 
-	    ", samples " << n << 
-	    ", Error " << error << 
-	    ", classError " << classError << 
-	    " (" << (int)percentage << "%)" << endl;
-
-	// Fill the plots (for a random recall)
-	if (fPlotter!=0) {
-	    fPlotter->AddTrainGraph(error);
-	    fPlotter->AddTestGraph(classError);
-	    fPlotter->ShowPlots();
-	    fPlotter->Reset();
-	}
+        error = 0.0;
+        classError = 0;
+        n = 0;
+        
+        server->MixTrn(); // Shuffle the dataset
+        
+        for (Int_t i=0; i<samples; i++){
+            
+            Int_t trnind = i;
+            if (fBalance) trnind = BalancedTrnIndex(server);
+            
+            Float_t *inv  = (Float_t *) server->GetInvecTrn(trnind);
+            Float_t *outv = (Float_t *) server->GetOutvecTrn(trnind);
+            
+            error += Train(inv,outv);
+            n++;
+        }
+        
+        classError = (UInt_t) TestEpoch(server);
+        double percentage = 100. * classError;
+        if (tests>0) percentage /= tests; else percentage = 0;
+        
+        // print training info
+        cout << GetNetID() << ": Epoch " << epo <<
+        ", samples " << n <<
+        ", Error " << error <<
+        ", classError " << classError <<
+        " (" << (int)percentage << "%)" << endl;
+        
+        // Fill the plots (for a random recall)
+        if (fPlotter!=0) {
+            fPlotter->AddTrainGraph(error);
+            fPlotter->AddTestGraph(classError);
+            fPlotter->ShowPlots();
+            fPlotter->Reset();
+        }
     }
-
+    
     if (fShouldSave) Save(); // Store the net
-
+    
     return error;
 }
 
@@ -315,27 +311,29 @@ Double_t VNeuralNet::TestEpoch(TDataServe *server)
     unsigned int classError = 0;    // classification Error
     const Int_t samples = server->GetNumTstvecs();
     TNeuralNetParameters &parm = GetParameters();
-
-    for (Int_t i=0; i<samples; i++){
-
-	Int_t tstind = i;
-	if (fBalance) tstind = BalancedTstIndex(server);
-
-	Float_t *inv  = server->GetInvecTst(tstind);
-	Float_t *outv = server->GetOutvecTst(tstind);
-	
-	// compare network recall with server
-	Recall(inv,outv);
-
-	for (int i=0;i<parm.fOutNodes;++i) {
-	    Double_t answer = GetOutput()[i];
-	    if ((answer>parm.fThreshold && outv[i]<=parm.fThreshold) ||
-		(answer<=parm.fThreshold && outv[i]>parm.fThreshold) )
-		++classError; // classification ok ?
-	}
-	
+    
+    int i;
+    
+    for (i=0; i<samples; i++){
+        
+        Int_t tstind = i;
+        if (fBalance) tstind = BalancedTstIndex(server);
+        
+        Float_t *inv  = server->GetInvecTst(tstind);
+        Float_t *outv = server->GetOutvecTst(tstind);
+        
+        // compare network recall with server
+        Recall(inv,outv);
+        
+        for (int ii=0;ii<parm.fOutNodes;++ii) {
+            Double_t answer = GetOutput()[ii];
+            if ((answer>parm.fThreshold && outv[ii]<=parm.fThreshold) ||
+                (answer<=parm.fThreshold && outv[ii]>parm.fThreshold) )
+                ++classError; // classification ok ?
+        }
+        
     }
-
+    
     return classError;
 }
 
@@ -346,100 +344,100 @@ Double_t  VNeuralNet::Test(NNO_INTYPE* in,NNO_OUTTYPE* out)
     Double_t* o = fOut;
     Double_t diff,totalError = 0.0;
     for (I=0;I<fParm.fOutNodes;++I) {
-	diff = *out++ - *o++; 
-	totalError += diff * diff;
+        diff = *out++ - *o++;
+        totalError += diff * diff;
     }
     return totalError;
 }
 
-Double_t VNeuralNet::TrainEpoch(const char *file, Int_t nEpoch)
+Double_t VNeuralNet::TrainEpoch(string file, Int_t nEpoch)
 {
-    FILE* ftrn=fopen(file,"rb");
+    FILE* ftrn=fopen(file.data(),"rb");
     if (ftrn==0) {
-	cerr << "Training file does not exist:" << file << endl;
-	return 0.0;
+        cerr << "Training file does not exist:" << file << endl;
+        return 0.0;
     }
     
     Int_t epoch=0;		// epoch counter
     double error;		// squared error collector
     UInt_t classError;		// classification Error
-
+    
     NNO_INTYPE   *in  = new NNO_INTYPE[fParm.fInNodes];	    // inputvector
     NNO_OUTTYPE  *out = new NNO_OUTTYPE[fParm.fOutNodes];   // outputvector
     
     // begin of training
     do {
-	error      = 0.0;
-	classError = 0;
-	
-	while ( fread(in,sizeof(NNO_INTYPE),fParm.fInNodes,ftrn) ) {  // read inputvector
-	    fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftrn);      // read outputvector
-	    //Double_t output = out[0];
-
-	    error += Train(in,out);                // perform learnstep
-	    
-	    // compare network output with 'Out'
-	    Double_t *net = GetOutput();
-	    //Double_t answer = net[0];
-	    for (int I=0;I<fParm.fOutNodes;++I) {
-		if ((net[I]>fParm.fThreshold && out[I]<=fParm.fThreshold) ||
-		    (net[I]<=fParm.fThreshold && out[I]>fParm.fThreshold) )
-		    ++classError; // classification ok ?
-	    }
-
-	}
-	rewind(ftrn);  // epoch completed, rewind filepointer
-	++epoch;
-	
-	// print training info
-	cout << GetNetID() << ": Epoch " << epoch << ", Error " << error << ", classError " << classError << endl;
-
-	// Fill the plots (for a random recall)
-	if (fPlotter!=0) {
-	    fPlotter->AddTrainGraph(error);
-	    fPlotter->AddTestGraph(classError);
-	    fPlotter->ShowPlots();
-	    fPlotter->Reset();
-	}
-	
+        error      = 0.0;
+        classError = 0;
+        
+        while ( fread(in,sizeof(NNO_INTYPE),fParm.fInNodes,ftrn) ) {  // read inputvector
+            fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftrn);      // read outputvector
+            //Double_t output = out[0];
+            
+            error += Train(in,out);                // perform learnstep
+            
+            // compare network output with 'Out'
+            Double_t *net = GetOutput();
+            //Double_t answer = net[0];
+            for (int I=0;I<fParm.fOutNodes;++I) {
+                if ((net[I]>fParm.fThreshold && out[I]<=fParm.fThreshold) ||
+                    (net[I]<=fParm.fThreshold && out[I]>fParm.fThreshold) )
+                    ++classError; // classification ok ?
+            }
+            
+        }
+        rewind(ftrn);  // epoch completed, rewind filepointer
+        ++epoch;
+        
+        // print training info
+        cout << GetNetID() << ": Epoch " << epoch << ", Error " << error << ", classError " << classError << endl;
+        
+        // Fill the plots (for a random recall)
+        if (fPlotter!=0) {
+            fPlotter->AddTrainGraph(error);
+            fPlotter->AddTestGraph(classError);
+            fPlotter->ShowPlots();
+            fPlotter->Reset();
+        }
+        
     } while (classError>0 && epoch<nEpoch);
     
     fclose(ftrn);
-
+    
     delete[] in; delete[] out;
-
+    
     if (fShouldSave) Save(); // Store the net
     
     return error;
 }
 
-Double_t VNeuralNet::TestEpoch(const char *file)
+Double_t VNeuralNet::TestEpoch(string file)
 {
-    FILE* ftst=fopen(file,"rb");
+    FILE* ftst=fopen(file.data(),"rb");
     if (ftst==0) {
-	cerr << "Test file does not exist:" << file << endl;
-	return 0.0;
+        cerr << "Test file does not exist:" << file << endl;
+        return 0.0;
     }
-
+    
     unsigned int classError = 0;    // classification Error
     NNO_INTYPE   *in  = new NNO_INTYPE[fParm.fInNodes];	    // inputvector
     NNO_OUTTYPE  *out = new NNO_OUTTYPE[fParm.fOutNodes];   // outputvector
     
     while ( fread(in,sizeof(NNO_INTYPE),fParm.fInNodes,ftst) ) {   // read inputvector
-	fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftst);		    // read outputvector
-	
-	// compare network recall with file
-	Double_t *net = Recall(in,out);
-	for (int I=0;I<fParm.fOutNodes;++I) {
-	    if ((net[I]>fParm.fThreshold && out[I]<=fParm.fThreshold) ||
-		(net[I]<=fParm.fThreshold && out[I]>fParm.fThreshold) )
-		++classError; // classification ok ?
-	}
-
+        fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftst);		    // read outputvector
+        
+        // compare network recall with file
+        Double_t *net = Recall(in,out);
+        for (int I=0;I<fParm.fOutNodes;++I) {
+            if ((net[I]>fParm.fThreshold && out[I]<=fParm.fThreshold) ||
+                (net[I]<=fParm.fThreshold && out[I]>fParm.fThreshold) )
+                ++classError; // classification ok ?
+        }
+        
     }
     
     fclose(ftst);
-
+    
     delete[] in; delete[] out;
     
     return classError;
@@ -451,15 +449,15 @@ UInt_t VNeuralNet::BalancedTrnIndex(TDataServe *server)
     UInt_t samples = server->GetNumTrnvecs();
     UInt_t index = (UInt_t) (gRandom->Rndm()*samples);
     Float_t *outv = server->GetOutvecTrn(index);
-
-    if (ngood<nbad) 
-	while (outv[0]<=0.0) {
-	  index++;
-	  outv = server->GetOutvecTrn(index%samples);
-	}
-
+    
+    if (ngood<nbad)
+        while (outv[0]<=0.0) {
+            index++;
+            outv = server->GetOutvecTrn(index%samples);
+        }
+    
     if (outv[0]>0.0) ngood++; else nbad++;
-
+    
     return index%samples;
 }
 
@@ -469,15 +467,15 @@ UInt_t VNeuralNet::BalancedTstIndex(TDataServe *server)
     UInt_t samples = server->GetNumTstvecs();
     UInt_t index = (UInt_t) (gRandom->Rndm()*samples);
     Float_t *outv = server->GetOutvecTst(index);
-
-    if (ngood<nbad) 
-	while (outv[0]<=0.0) {
-	  index++;
-	  outv = server->GetOutvecTst(index%samples);
-	}
-
+    
+    if (ngood<nbad)
+        while (outv[0]<=0.0) {
+            index++;
+            outv = server->GetOutvecTst(index%samples);
+        }
+    
     if (outv[0]>0.0) ngood++; else nbad++;
-
+    
     return index%samples;
 }
 

@@ -11,8 +11,7 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "TNamed.h"
-#include "TString.h"
+#include <TNamed.h>
 
 class TH1D;
 class TGraph;
@@ -21,7 +20,7 @@ class TCanvas;
 // Base class of all network plotterss
 class VNeuralNetPlotter : public TNamed {
 public:
-    VNeuralNetPlotter(const char *name);
+    VNeuralNetPlotter(std::string name);
     virtual ~VNeuralNetPlotter() {}
     virtual void Initialize() = 0;
     virtual void Reset() = 0;
@@ -39,8 +38,8 @@ public:
 class TSimpleNeuralNetPlotter : public VNeuralNetPlotter {
 protected:
     Bool_t	    fPlots;	    //!Show plots
-    TString	    fTrnPlot;	    //!
-    TString	    fTstPlot;	    //!
+    std::string fTrnPlot;	    //!
+    std::string fTstPlot;	    //!
     Int_t	    fIndex;	    //!the index number
     TH1D*	    fTrnHistTrue;   //!Training histogram
     TH1D*	    fTrnHistFalse;  //!Training histogram
@@ -57,7 +56,7 @@ protected:
     TCanvas*	    fCanvas;	    //!Drawing
 
 public:
-    TSimpleNeuralNetPlotter(const char *name);
+    TSimpleNeuralNetPlotter(std::string name);
     virtual ~TSimpleNeuralNetPlotter();
     void Initialize();
     void Reset();

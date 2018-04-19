@@ -18,26 +18,23 @@
 // M.Kunze, Bochum University, Feb. 01
 // Copyright (C) 1999-2001, Ruhr-University Bochum.
 
-#include <cmath>
-#include <cstdlib>
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TTreeFormula.h"
-#include "TRandom.h"
-#include "TCanvas.h"
-#include "TH1.h"
-#include "TF1.h"
+#include <TFile.h>
+#include <TNtuple.h>
+#include <TTreeFormula.h>
+#include <TRandom.h>
+#include <TCanvas.h>
+#include <TH1.h>
+#include <TF1.h>
 
 #include "RhoNNO/TDataServe.h"
 
+#include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <strstream>
-using namespace std;
 
-#ifdef WIN32
-//DllImport TRandom *gRandom;
-#endif
+using namespace std;
 
 ClassImp(TDataServe)
 
@@ -113,7 +110,7 @@ fData_OK(kFALSE),
 fBalance(kFALSE)
 {}
 
-TDataServe::TDataServe(TString name,TString title,const UInt_t in,const  UInt_t out):
+TDataServe::TDataServe(string name,string title,const UInt_t in,const  UInt_t out):
 TNamed(name,title),
 fInvecLen(in),
 fOutvecLen(out),
@@ -255,7 +252,7 @@ void TDataServe::Init(const UInt_t tst)
     delete[] helpvec;
 }
 
-void TDataServe::DataRead(const char* name,
+void TDataServe::DataRead(string name,
                           const Float_t* out,
                           const UInt_t start,
                           const UInt_t laenge)
@@ -422,35 +419,34 @@ void TDataServe::Deletevec(const UInt_t ind)
 }
 
 
-Bool_t TDataServe::TTreeDataRead(const char* file,const char *tree,const char* in, const char* out, const char *c)
+Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,string cut)
 {
-    TFile f(file);
-    TTree *t = (TTree*) f.Get(tree);
+    TFile f(file.data());
+    TTree *t = (TTree*) f.Get(tree.data());
     if (t==0) {
         cerr << "TDataServe::TTreeDataRead: Tree "<< tree << " not found in " << file << endl;
         return kFALSE;
     }
     
     // Set up the cut
-    TString cut(c);
     TTreeFormula *cutForm = 0;
-    if (cut!="") cutForm = new TTreeFormula("Cut",cut,t);
+    if (cut!="") cutForm = new TTreeFormula("Cut",cut.data(),t);
     
     // Determine input branches
-    TString input(in);
-    input.ReplaceAll(":"," ");
+    string input(in);
+    replace( input.begin(), input.end(), ':', ' ');
     input += " ";
     TTreeFormula *inForm[100];
-    istrstream inStream((char *) input.Data());
-    TString inName;
+    istrstream inStream((char *) input.data());
+    string inName;
     UInt_t nInputs = 0;
     while (inStream >> inName && nInputs<fInvecLen){
-        inForm[nInputs++] = new TTreeFormula("Input",inName.Data(),t);
+        inForm[nInputs++] = new TTreeFormula("Input",inName.data(),t);
     }
     
     // Determine output branches
-    TString output(out);
-    output.ReplaceAll(":"," ");
+    string output(out);
+    replace( output.begin(), output.end(), ':', ' ');
     output += " ";
     
     Bool_t tag = (output=="-1" || output=="0" || output=="1");
@@ -461,10 +457,10 @@ Bool_t TDataServe::TTreeDataRead(const char* file,const char *tree,const char* i
     TTreeFormula *outForm[100];
     UInt_t nOutputs = 0;
     if (!tag) {
-        istrstream outStream((char *) output.Data());
-        TString outName;
+        istrstream outStream((char *) output.data());
+        string outName;
         while (outStream >> outName && nOutputs<fOutvecLen){
-            outForm[nOutputs++] = new TTreeFormula("Output",outName.Data(),t);
+            outForm[nOutputs++] = new TTreeFormula("Output",outName.data(),t);
         }
     }
     else
@@ -556,9 +552,9 @@ Float_t* TDataServe::GetInputScale()
         pmain->cd(j%9+1);
         TF1 fit("g","gaus");
         fit.SetLineColor(kRed);
-        TString name("Input ");
+        string name("Input ");
         name += j;
-        TH1F *hist = new TH1F(name,name,400,2*min,2*max);
+        TH1F *hist = new TH1F(name.data(),name.data(),400,2*min,2*max);
         hist->SetFillColor(45);
         for (i=0; i<fNumvecs; i++) hist->Fill(fInvecAr[i][j]);
         hist->Fit("g");

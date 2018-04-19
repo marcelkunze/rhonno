@@ -12,18 +12,18 @@
 #include "RhoNNO/VSupervisedNet.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
 
-ClassImp(VSupervisedNet)
-
 #include <iostream>
 using namespace std;
 
-Long_t VSupervisedNet::TrainEpoch(TNtuple *tuple, Bool_t rand) {
+ClassImp(VSupervisedNet)
+
+Long_t VSupervisedNet::TrainEpoch(TNtuple *tuple, Bool_t randomize) {
     fTuple = tuple;
     if (fTuple == 0) return 0;
     Long_t nhits = fTuple->GetEntries();
     for (int i=0;i<nhits;i++) {
         Long_t index = i;
-        if (rand) index = random()%nhits;
+        if (randomize) index = rand()%nhits;
         fTuple->GetEvent(index,1);
         Float_t *x=fTuple->GetArgs();
         Learnstep(x, &x[fParm.fInNodes]); // the first fInNodes columns hold input data, the following fOutNodes columns hold the output data

@@ -11,7 +11,6 @@
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TNamed.h"
-#include "TString.h"
 
 // Define the precision
 typedef Float_t NNO_INTYPE;
@@ -69,8 +68,8 @@ public:
     // Training and testing
     Double_t	TrainEpoch(TDataServe *server, Int_t nEpoch=1);
     Double_t	TestEpoch(TDataServe *server);
-    Double_t	TrainEpoch(const char *file, Int_t nEpoch=1);
-    Double_t	TestEpoch(const char *file);
+    Double_t	TrainEpoch(std::string file, Int_t nEpoch=1);
+    Double_t	TestEpoch(std::string file);
     Double_t	Test(NNO_INTYPE* in,NNO_OUTTYPE* trn);        // returns squared error
     void	BalanceSamples(Bool_t yesNo = kTRUE) { fBalance = yesNo; }
     virtual void SetMomentumTerm(Double_t f);
@@ -91,7 +90,7 @@ private:
     UInt_t  BalancedTstIndex(TDataServe *server);
     
 protected:
-    TString	    fFilename;	    // Name of network file
+    std::string	    fFilename;	    // Name of network file
     FILE_TYPE	    fFiletype;	    // Type of file
     TNeuralNetParameters  fParm;    // Topology of network
     VNeuralNetPlotter* fPlotter;    //!Show plots
@@ -110,19 +109,19 @@ protected:
     
 public:
     VNeuralNet();
-    VNeuralNet(const char* netID,Int_t innodes,Int_t outnodes,const char* netFile);
-    VNeuralNet(const char* netFile);
+    VNeuralNet(std::string netID,Int_t innodes,Int_t outnodes,std::string netFile);
+    VNeuralNet(std::string netFile);
     virtual ~VNeuralNet();
-    void Save(char* file);
+    void Save(std::string file);
     void Save();
 
     // Getter functions
     TNeuralNetParameters& GetParameters() { return fParm; }
     VNeuralNetPlotter& GetPlotter() const { return *fPlotter; }
-    const char *    GetFilename() const { return fFilename; }
+    std::string     GetFilename() const { return fFilename; }
     Double_t*	    GetOutput() const { return fOut; }
     Double_t	    GetThreshold() const { return fParm.fThreshold; }
-    const char *    GetNetID() const { return fParm.fNetId; }
+    std::string     GetNetID() const { return fParm.fNetId; }
     static Double_t Random(void);
 
     // Setter functions

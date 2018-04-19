@@ -23,6 +23,8 @@
 #include <assert.h>
 #include "TNamed.h"
 
+#include <string>
+
 class TNtuple;
 
 class TDataServe : public TNamed {
@@ -30,18 +32,18 @@ class TDataServe : public TNamed {
 private:  		
     UInt_t	fInvecLen;	//length of inputvector
     UInt_t	fOutvecLen;	//length of outputvectors
-    UInt_t	fMaxvecs;	
+    UInt_t	fMaxvecs;
     Float_t**	fInvecAr;	//array of inputputvectors
     Float_t*	fInvecMean;	//mean values
-    Float_t*	fInvecScale;	//input scale
+    Float_t*	fInvecScale;//input scale
     Float_t**	fOutvecAr;	//array of outputvectors
-    Float_t*	fOutvecMean;	//mean values
-    Float_t*	fOutvecScale;	//output scale
+    Float_t*	fOutvecMean;//mean values
+    Float_t*	fOutvecScale;//output scale
     
-    UInt_t	fNumTrnvecs;	//Number of trainvectors
-    UInt_t	fNumTstvecs;	//Number of testvevtors
+    UInt_t	fNumTrnvecs;//Number of trainvectors
+    UInt_t	fNumTstvecs;//Number of testvevtors
     UInt_t	fNumvecs;	//Number of all vectors
-    UInt_t* 	fIndexTrn;	//index array
+    UInt_t* fIndexTrn;	//index array
     UInt_t*	fIndexTst;	//index array
     Bool_t	fData_OK;
     Bool_t	fBalance;	//!Balance samples
@@ -52,24 +54,24 @@ private:
     
 public:
     TDataServe();
-    TDataServe(TString name,TString title,const UInt_t,const UInt_t);			
+    TDataServe(std::string name,std::string title,const UInt_t,const UInt_t);
     virtual ~TDataServe();
     void	MixTrn();
-    void	Init(const UInt_t);				
-    void	DataRead(const char*, const Float_t*, const UInt_t=0, const UInt_t=0);	
+    void	Init(const UInt_t);
+    void	DataRead(std::string name, const Float_t*, const UInt_t=0, const UInt_t=0);
     UInt_t	GetNumAllvecs() const { return fNumTrnvecs+fNumTstvecs; }
     UInt_t	GetNumTrnvecs() const { return fNumTrnvecs; }
     UInt_t	GetNumTstvecs() const { return fNumTstvecs; }
-    UInt_t	GetNumvecs() const { return fNumvecs; } 
+    UInt_t	GetNumvecs() const { return fNumvecs; }
     void	FillTNtuple(TNtuple&) const;
     void	Reset();
-
-    Bool_t	TTreeDataRead(const char* file,const char *tree,const char* in, const char* out, const char *cut="");
-
+    
+    Bool_t	TTreeDataRead(std::string file,std::string tree,std::string in,std::string out,std::string cut="");
+    
     void	TNtupleDataRead(TNtuple&,const UInt_t=0,UInt_t=0);
     
     void	TNtupleXDataRead(TNtuple&,const UInt_t,const UInt_t,const UInt_t*,
-			    const UInt_t*,const UInt_t=0,UInt_t=0);
+                             const UInt_t*,const UInt_t=0,UInt_t=0);
     void	SetInvecElem(const UInt_t, const UInt_t, const Float_t);
     void	SetOutvecElem(const UInt_t, const UInt_t, const Float_t);
     void	Putvec(const Float_t*, const Float_t*);
@@ -80,43 +82,43 @@ public:
     Float_t*	GetOutputScale();
     Float_t*	GetInputMean();
     Float_t*	GetInputScale();
-
     
-    Float_t* GetInvec(const UInt_t i) const 
+    
+    Float_t* GetInvec(const UInt_t i) const
     {
-	assert(i<fNumvecs);
-	return fInvecAr[i];
+        assert(i<fNumvecs);
+        return fInvecAr[i];
     }
     
-    Float_t* GetOutvec(const UInt_t i) const 
+    Float_t* GetOutvec(const UInt_t i) const
     {
-	assert(i<fNumvecs);
-	return fOutvecAr[i];
-    }  
+        assert(i<fNumvecs);
+        return fOutvecAr[i];
+    }
     
-    Float_t* GetInvecTrn(const UInt_t i) const 
+    Float_t* GetInvecTrn(const UInt_t i) const
     {
-	assert(fData_OK && i<fNumTrnvecs);
-	return fInvecAr[fIndexTrn[i]];	
+        assert(fData_OK && i<fNumTrnvecs);
+        return fInvecAr[fIndexTrn[i]];
     }
-
-    Float_t* GetInvecTst(const UInt_t i) const 
+    
+    Float_t* GetInvecTst(const UInt_t i) const
     {
-	assert(fData_OK && i<fNumTstvecs);
-	return fInvecAr[fIndexTst[i]];
+        assert(fData_OK && i<fNumTstvecs);
+        return fInvecAr[fIndexTst[i]];
     }
-
-    Float_t* GetOutvecTrn(const UInt_t i) const 
+    
+    Float_t* GetOutvecTrn(const UInt_t i) const
     {
-	assert(fData_OK && i<fNumTrnvecs);
-	return fOutvecAr[fIndexTrn[i]];
+        assert(fData_OK && i<fNumTrnvecs);
+        return fOutvecAr[fIndexTrn[i]];
     }
-
+    
     Float_t* GetOutvecTst(const UInt_t i) const {
-	assert(fData_OK && i<fNumTstvecs);
-	return fOutvecAr[fIndexTst[i]];
+        assert(fData_OK && i<fNumTstvecs);
+        return fOutvecAr[fIndexTst[i]];
     }
     
-    ClassDef(TDataServe,2)	//Database for network training	  
+    ClassDef(TDataServe,2)	//Database for network training
 };
 #endif

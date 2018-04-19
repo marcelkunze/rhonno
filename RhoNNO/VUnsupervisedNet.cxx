@@ -9,12 +9,12 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/VUnsupervisedNet.h"
 #include <TCanvas.h>
 #include <TView.h>
 #include <TPolyMarker3D.h>
 #include <TPolyLine3D.h>
 #include <TNtuple.h>
+#include "RhoNNO/VUnsupervisedNet.h"
 
 #include <iostream>
 using namespace std;
@@ -38,13 +38,13 @@ Long_t  VUnsupervisedNet::TrainEpoch(FILE* file)
     return records;
 }
 
-Long_t VUnsupervisedNet::TrainEpoch(TNtuple *tuple, Bool_t rand) {
+Long_t VUnsupervisedNet::TrainEpoch(TNtuple *tuple, Bool_t randomize) {
     fTuple = tuple;
     if (fTuple == 0) return 0;
     Long_t nhits = fTuple->GetEntries();
     for (int i=0;i<nhits;i++) {
         Long_t index = i;
-        if (rand) index = random()%nhits;
+        if (randomize) index = rand()%nhits;
         fTuple->GetEvent(index,1);
         Float_t *x=fTuple->GetArgs();
         Learnstep(x);

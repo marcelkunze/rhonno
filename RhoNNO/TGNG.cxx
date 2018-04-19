@@ -56,7 +56,7 @@ TGNG::~TGNG()
     Deviation();
     //transfom fMainWinCount, fMainEdgeCount
     TNeuralNetCell* up;
-    Int_t I;
+    Long_t I;
     for(up=fU;up<fUbound;++up) {
         up->fCount*=fXB.fMainWinCount;
         for (I=0;I<up->fNc;++I) up->fAge[I]*=fXB.fMainEdgeCount;
@@ -65,8 +65,7 @@ TGNG::~TGNG()
     fXB.fMainEdgeCount=1;
     if (fFilename!="") if (fShouldSave) Save();
     if (fU!=0) {
-        Long_t I;
-        TNeuralNetCell* up = fU;
+        up = fU;
         for (I=0;I<fParm.fOutNodes;++I) {
             delete[] up->fVector;
             delete[] up->fDiff;

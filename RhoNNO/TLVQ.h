@@ -33,9 +33,9 @@ private:
     
 public:
     virtual Double_t  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { GetWinnerCell(in); return fUwin->fVector; }
+    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin->fVector; }
     virtual Int_t GetWinnerCell(NNO_INTYPE* in);
-        
+    
     void Implant(Int_t nr,Int_t Class,NNO_INTYPE* in);
     void CopyData(const TLVQ& lvq); // copies data from another lvq network
     

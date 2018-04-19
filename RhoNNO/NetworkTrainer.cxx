@@ -15,18 +15,20 @@
 #include "NetworkTrainer.h"
 #include <cstdlib>
 
+using namespace std;
+
 TROOT root("trainer","Network Trainer");
 TApplication *theApp = new TApplication("Network Trainer",0,0);
 
 int main(int argc,char* argv[])
 {
-    TString steeringFile;
+    string steeringFile;
     if (argc>1) steeringFile = argv[1];
     
     int startEpoch =                1;       // First epoch and
     if (argc>2) startEpoch = atoi(argv[2]);
     
-    int stopEpoch   =             200;       // Last epoch to be trained
+    int stopEpoch   =             100;       // Last epoch to be trained
     if (argc>3) stopEpoch = atoi(argv[3]);
     
     NetworkTrainer *trainer = new NetworkTrainer(steeringFile,startEpoch,stopEpoch);
@@ -35,7 +37,7 @@ int main(int argc,char* argv[])
     trainer->Train();
     trainer->PrintOn();
     
-    TString file("Recall");
+    string file("Recall");
     file =  file + trainer->GetModel() + ".cpp";
     trainer->WriteSourceCode(file);
     
@@ -68,7 +70,7 @@ int main(int argc,char* argv[])
 #include <cstdlib>
 using namespace std;
 
-NetworkTrainer::NetworkTrainer(const char *file,Int_t se,Int_t ee)
+NetworkTrainer::NetworkTrainer(string file,Int_t se,Int_t ee)
 : fVectorsEpoch(0), fNet(0), fMomentum(0.0), fPidDataServer(0), fTrainingServer(0),
 fTrnMax(0), fTstMax(1000), fInNodes(NNODIMENSION), fHid1Nodes(10), fHid2Nodes(1), fOutNodes(1),
 fCells(1000), fBalance(kFALSE), fPlots(kFALSE), fScale(1.0), fAutoScale(kFALSE),
@@ -88,10 +90,10 @@ fTransfer(TNeuralNetParameters::TR_FERMI)
     for (i=0;i<NNODIMENSION;i++) fInMean[i] = 0.0;
     for (i=0;i<NNODIMENSION;i++) fOutMean[i] = 0.0;
     
-    TString steeringFile = file;
+    string steeringFile = file;
     if (steeringFile!="") ReadSteeringFile(steeringFile);
     
-    cout << "\n\nTraining " << fModel.Data() << " epoch: " << fStartEpoch << " - " << fStopEpoch << endl;
+    cout << "\n\nTraining " << fModel << " epoch: " << fStartEpoch << " - " << fStopEpoch << endl;
 }
 
 NetworkTrainer::~NetworkTrainer() 
@@ -104,9 +106,9 @@ NetworkTrainer::~NetworkTrainer()
 
 // Perform a training cycle
 
-void NetworkTrainer::SetupDataServer(const char* file)
+void NetworkTrainer::SetupDataServer(string file)
 {
-    TString path(fDataPath);
+    string path(fDataPath);
     
     if (fTree!="") {
         
@@ -117,24 +119,24 @@ void NetworkTrainer::SetupDataServer(const char* file)
         
         int i;
         for (i=0;i<fAll.GetSize();i++) {
-            TString fileName = path + (((TObjString*)fAll.At(i))->GetString()).Data();
-            cout << "+file " << fileName.Data() << endl;
-            fPidDataServer->TTreeDataRead(fileName.Data(),fTree,fInput,fOutput,fCut);
+            string fileName = path + (((TObjString*)fAll.At(i))->GetString()).Data();
+            cout << "+file " << fileName << endl;
+            fPidDataServer->TTreeDataRead(fileName,fTree,fInput,fOutput,fCut);
         }
         for (i=0;i<fPro.GetSize();i++) {
-            TString fileName = path + (((TObjString*)fPro.At(i))->GetString()).Data();
-            cout << "+sample " << fileName.Data() << endl;
-            fPidDataServer->TTreeDataRead(fileName.Data(),fTree,fInput,"1",fCut);
+            string fileName = path + (((TObjString*)fPro.At(i))->GetString()).Data();
+            cout << "+sample " << fileName << endl;
+            fPidDataServer->TTreeDataRead(fileName,fTree,fInput,"1",fCut.data());
         }
         for (i=0;i<fCon.GetSize();i++) {
-            TString fileName = path + (((TObjString*)fCon.At(i))->GetString()).Data();
-            cout << "-sample " << fileName.Data() << endl;
-            fPidDataServer->TTreeDataRead(fileName.Data(),fTree,fInput,"0",fCut);
+            string fileName = path + (((TObjString*)fCon.At(i))->GetString()).Data();
+            cout << "-sample " << fileName << endl;
+            fPidDataServer->TTreeDataRead(fileName,fTree,fInput,"0",fCut.data());
         }
     }
     else {
-        TString fileName = path + file;
-        fFile = new TFile(fileName.Data(),"READ");
+        string fileName = path + file;
+        fFile = new TFile(fileName.data(),"READ");
         fPidDataServer = (TDataServe*)fFile->Get("PidData");
     }
     
@@ -153,17 +155,17 @@ void NetworkTrainer::SetupDataServer(const char* file)
         cout << endl << "Scale input layer: " << endl;
         
         
-        TString input(fInput);
-        input.ReplaceAll(":"," ");
+        string input(fInput);
+        replace( input.begin(), input.end(), ':', ' ');
         input += " ";
-        istrstream inStream((char *) input.Data());
+        istrstream inStream((char *) input.data());
         
         Float_t *inScale  = fPidDataServer->GetInputScale();
         for (j=0;j<fInNodes;j++) {
             fInScale[j] = inScale[j];
-            TString token;
+            string token;
             inStream >> token;
-            cout << token.Data() << "\t*\t" << fInScale[j] << endl;
+            cout << token.data() << "\t*\t" << fInScale[j] << endl;
         }
         
         /*	cout << endl << "Scale factors for output:" << endl;
@@ -205,30 +207,30 @@ void NetworkTrainer::SetupNetworks()
     
     if (fStartEpoch==1) {
         
-        cout << "Initializing " << fModel.Data() << " network";
+        cout << "Initializing " << fModel << " network";
         fNetworkFile = "NNO0001." + fModel;
         
         if (fModel == "TFD") {
-            fNet = new TXMLP(1,fScale,fNetworkFile,fInNodes,fOutNodes,0.1,fTransfer);
+            fNet = new TXMLP(1,fScale,fNetworkFile.data(),fInNodes,fOutNodes,0.1,fTransfer);
         }
         else if (fModel == "TMLP") {
-            fNet = new TMLP(0.1,0.01,fInNodes,fHid1Nodes,fOutNodes,fScale,fNetworkFile,fTransfer);
+            fNet = new TMLP(0.1,0.01,fInNodes,fHid1Nodes,fOutNodes,fScale,fNetworkFile.data(),fTransfer);
         }
         else if (fModel == "TXMLP") {
-            fNet = new TXMLP(3,fScale,fNetworkFile,fInNodes,fHid1Nodes,fHid2Nodes,fOutNodes,0.1,0.02,0.01,TNeuralNetParameters::TR_FERMI,TNeuralNetParameters::TR_FERMI,fTransfer);
+            fNet = new TXMLP(3,fScale,fNetworkFile.data(),fInNodes,fHid1Nodes,fHid2Nodes,fOutNodes,0.1,0.02,0.01,TNeuralNetParameters::TR_FERMI,TNeuralNetParameters::TR_FERMI,fTransfer);
         }
         else if (fModel == "TNNK") {
-            TString hidden;
+            string hidden;
             hidden += fHid1Nodes;
             if (fHid2Nodes>1) {
                 hidden += ":";
                 hidden += fHid2Nodes;
             }
-            Text_t *hid = (char *) hidden.Data();
-            fNet = new TNNK(0.2,0.0,fMomentum,fInNodes,hid,fOutNodes,fNetworkFile);
+            Text_t *hid = (char *) hidden.data();
+            fNet = new TNNK(0.2,0.0,fMomentum,fInNodes,hid,fOutNodes,fNetworkFile.data());
         }
         else if (fModel == "TSGNG") {
-            fNet = new TSGNG(fInNodes,fOutNodes,200,0.1,0.02,0.1,0.01,0.01,0.01,0.01,10,5000,500, fNetworkFile);
+            fNet = new TSGNG(fInNodes,fOutNodes,200,0.1,0.02,0.1,0.01,0.01,0.01,0.01,10,5000,500, fNetworkFile.data());
         }
         else if (fModel == "TSGCS") {
             fNet = new TSGCS(fInNodes,   // number of inputnodes
@@ -243,7 +245,7 @@ void NetworkTrainer::SetupNetworks()
                              10,               // maximum number of allowed connections for one cell
                              1000,             // cell insertion after 1000 Learningsteps
                              0,                // don't remove cells
-                             fNetworkFile);    // network - filename (used by destructor)
+                             fNetworkFile.data());    // network - filename (used by destructor)
         }
         else if (fModel == "TGNG") {
             fNet = new TGNG(	fInNodes,   // number of inputnodes
@@ -256,7 +258,7 @@ void NetworkTrainer::SetupNetworks()
                             20,               // maximum number of allowed connections for one cell
                             1000,             // cell insertion
                             0,                // cell removal
-                            fNetworkFile);    // network - filename (used by destructor)
+                            fNetworkFile.data());    // network - filename (used by destructor)
         }
         else if (fModel == "TGCS") {
             fNet = new TGCS( fInNodes,   // number of inputnodes
@@ -268,48 +270,48 @@ void NetworkTrainer::SetupNetworks()
                             20,		    // connectors
                             500,		    // insert_step
                             0,		    // delet_step
-                            fNetworkFile);      // network - filename (used by destructor)
+                            fNetworkFile.data());      // network - filename (used by destructor)
         }
         else if (fModel == "TLVQ") {
             fNet = new TLVQ( fInNodes,   // number of inputnodes
                             fCells,		    // cells
                             0.2,		    // Learnstep of Winner-Cell
-                            fNetworkFile);      // network - filename (used by destructor)
+                            fNetworkFile.data());      // network - filename (used by destructor)
         }
         else {
-            cout << "Error initializing network. Unknown model " << fModel.Data() << endl;
+            cout << "Error initializing network. Unknown model " << fModel << endl;
             exit(0);
         }
     }
     
     else {
-        cout << "Loading " << fModel.Data() << " network " << fNetworkFile << endl;
+        cout << "Loading " << fModel << " network " << fNetworkFile << endl;
         if (fModel == "TFD"){
-            fNet = new TFD(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TFD(Makename(fStartEpoch , fNetworkPath, fNetworkFile.data()).data());
         }
         else if (fModel == "TMLP"){
-            fNet = new TMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile.data()).data());
         }
         else if (fModel == "TXMLP"){
-            fNet = new TXMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TXMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile.data()).data());
         }
         else if (fModel == "TNNK"){
-            fNet = new TNNK(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TNNK(Makename(fStartEpoch , fNetworkPath, fNetworkFile.data()).data());
         }
         else if (fModel == "TSGNG"){
-            fNet = new TSGNG(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TSGNG(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
         }
         else if (fModel == "TSGCS"){
-            fNet = new TSGCS(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TSGCS(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
         }
         else if (fModel == "TGNG"){
-            fNet = new TGNG(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TGNG(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
         }
         else if (fModel == "TGCS"){
-            fNet = new TGCS(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TGCS(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
         }
         else if (fModel == "TLVQ"){
-            fNet = new TLVQ(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+            fNet = new TLVQ(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
         }
         else {
             cout<<"Error initializing network. Unknown Model."<<endl;
@@ -337,9 +339,9 @@ Double_t NetworkTrainer::Train()
         error = fNet->TrainEpoch(fTrainingServer);
         
         // Save the networks after each epoch
-        TString network =  Makename(epo , fNetworkPath, fNetworkFile);
+        string network =  Makename(epo , fNetworkPath, fNetworkFile);
         cout << "Saving: " << network << endl;
-        char * name = const_cast<char*> (network.Data());
+        char * name = const_cast<char*> (network.data());
         fNet->Save(name);
         
         // Adapt the learning rate, freeze network upon convergence
@@ -378,9 +380,9 @@ void NetworkTrainer::PrintOn()
 
 // Generate names with epoch number extension
 
-TString NetworkTrainer::Makename(Int_t z, TString networkPath, TString name){
+string NetworkTrainer::Makename(Int_t z, string networkPath, string name){
     
-    TString number = to_string(z);
+    string number = to_string(z);
     if (z<10)
         name = networkPath + "NNO000" + number + "." + fModel;
     else if (z<100)
@@ -393,7 +395,7 @@ TString NetworkTrainer::Makename(Int_t z, TString networkPath, TString name){
     return name;
 }
 
-Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
+Bool_t NetworkTrainer::ReadSteeringFile(string filename)
 {
     const Int_t len(1024);
     Char_t skip[len];
@@ -408,7 +410,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
         cout << endl << "NetworkTrainer: Reading parameters from " << filename << endl;
     
     while (!s.eof()) {
-        TString key,model;
+        string key,model;
         s >> key;  // Get key
         
         if (key == "") { s.getline(skip,len); } // empty line
@@ -439,7 +441,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
         }
         
         else if (key == "autoscale") {
-            TString choice;
+            string choice;
             s >> choice;
             if (choice=="true") {
                 AutoScale();
@@ -448,7 +450,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
         }
         
         else if (key == "balance") {
-            TString choice;
+            string choice;
             s >> choice;
             if (choice=="true") {
                 BalanceSamples();
@@ -457,7 +459,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
         }
         
         else if (key == "plots") {
-            TString choice;
+            string choice;
             s >> choice;
             if (choice=="true") {
                 ShowControlPlots();
@@ -471,7 +473,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
         }
         
         else if (key == "transfer") {
-            TString trans;
+            string trans;
             s >> trans;
             
             if (trans=="TR_FERMI")
@@ -487,17 +489,17 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
             else
                 cerr << "Do not know how to set ";
             
-            cout << "+Transfer functions " << trans.Data() << endl;
+            cout << "+Transfer functions " << trans << endl;
         }
         
         else if (key == "tree") {
             s >> fTree;
-            cout << "+tree " << fTree.Data() << endl;
+            cout << "+tree " << fTree << endl;
         }
         
         else if (key == "datapath") {
             s >> fDataPath;
-            cout << "+datapath " << fDataPath.Data() << endl;
+            cout << "+datapath " << fDataPath << endl;
             fDataPath += "/";
         }
         
@@ -509,33 +511,33 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
         
         else if (key == "input") {
             s >> fInput;
-            cout << "+input " << fInput.Data() << endl;
+            cout << "+input " << fInput << endl;
         }
         
         else if (key == "output") {
             s >> fOutput;
-            cout << "+output " << fOutput.Data() << endl;
+            cout << "+output " << fOutput << endl;
         }
         
         else if (key == "pro") {
-            TString pro;
+            string pro;
             s >> pro;
-            fPro.Add(new TObjString(pro));
-            cout << "+pro " << pro.Data() << endl;
+            fPro.Add(new TObjString(pro.data()));
+            cout << "+pro " << pro << endl;
         }
         
         else if (key == "con") {
-            TString con;
+            string con;
             s >> con;
-            fCon.Add(new TObjString(con));
-            cout << "+con " << con.Data() << endl;
+            fCon.Add(new TObjString(con.data()));
+            cout << "+con " << con << endl;
         }
         
         else if (key == "file") {
-            TString all;
+            string all;
             s >> all;
-            fAll.Add(new TObjString(all));
-            cout << "+file " << all.Data() << endl;
+            fAll.Add(new TObjString(all.data()));
+            cout << "+file " << all << endl;
         }
         
         else if (key == "inscale") {
@@ -557,10 +559,10 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
         }
         
         else if (key == "cut") {
-            TString cut;
+            string cut;
             s >> cut;
             fCut = cut;
-            cout << "+cut " << fCut.Data() << endl;
+            cout << "+cut " << fCut << endl;
         }
         
         else if (key == "fisher") {
@@ -568,7 +570,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
             s >> fInNodes >> fOutNodes;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
             if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << "-" << fOutNodes << endl;
+            cout << fModel << " " << fInNodes << "-" << fOutNodes << endl;
         }
         
         else if (key == "mlp") {
@@ -576,7 +578,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
             s >> fInNodes >> fHid1Nodes >> fOutNodes;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
             if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << "-" << fHid1Nodes << "-" << fOutNodes << endl;
+            cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fOutNodes << endl;
         }
         
         else if (key == "xmlp") {
@@ -584,7 +586,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
             s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
             if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
+            cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
         }
         
         else if (key == "tnnk") {
@@ -592,7 +594,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
             s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
             if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
+            cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
         }
         
         else if (key == "sgng") {
@@ -600,7 +602,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
             s >> fInNodes >> fCells >> fOutNodes;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
             if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << "-" << fCells << "-" << fOutNodes << endl;
+            cout << fModel << " " << fInNodes << "-" << fCells << "-" << fOutNodes << endl;
         }
         
         else if (key == "sgcs") {
@@ -608,33 +610,33 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
             s >> fInNodes >> fCells >> fOutNodes;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
             if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << "-" << fCells << "-" << fOutNodes << endl;
+            cout << fModel << " " << fInNodes << "-" << fCells << "-" << fOutNodes << endl;
         }
         
         else if (key == "gng") {
             fModel = "TGNG";
             s >> fInNodes >> fCells;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << " " << fCells << endl;
+            cout << fModel << " " << fInNodes << " " << fCells << endl;
         }
         
         else if (key == "gcs") {
             fModel = "TGCS";
             s >> fInNodes >> fCells;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << " " << fCells << endl;
+            cout << fModel << " " << fInNodes << " " << fCells << endl;
         }
         
         else if (key == "lvq") {
             fModel = "TLVQ";
             s >> fInNodes >> fCells;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            cout << fModel.Data() << " " << fInNodes << " " << fCells << endl;
+            cout << fModel << " " << fInNodes << " " << fCells << endl;
         }
         
         
         //else if (key.find("#")!=string::npos) { s.getline(skip,len);  }
-        else if (key.BeginsWith("#")) {
+        else if (key.substr(0,1)=="#") {
             s.getline(skip,len);
         }
     }
@@ -643,37 +645,37 @@ Bool_t NetworkTrainer::ReadSteeringFile(const char *filename)
     return kTRUE;
 }
 
-void NetworkTrainer::WriteSourceCode(const char *filename)
+void NetworkTrainer::WriteSourceCode(string filename)
 {
     TDatime theTime;
-    TString input(fInput);
-    input.ReplaceAll(":"," ");
+    string input(fInput);
+    replace( input.begin(), input.end(), ':', ' ');
     input += " ";
-    istrstream inStream((char *) input.Data());
+    istrstream inStream((char *) input.data());
     
     std::ofstream f(filename);
-    f << "// " << fModel.Data() << " network trained with NNO NetworkTrainer at " << theTime.AsString() << endl;
-    f << "// Input parameters  " << fInput.Data() << endl;
-    f << "// Output parameters " << fOutput.Data() << endl;
+    f << "// " << fModel << " network trained with NNO NetworkTrainer at " << theTime.AsString() << endl;
+    f << "// Input parameters  " << fInput << endl;
+    f << "// Output parameters " << fOutput << endl;
     Int_t i;
     f << "// Training files:" << endl;
     for (i=0;i<fAll.GetSize();i++) {
-        TString fileName = fDataPath + (((TObjString*)fAll.At(i))->GetString()).Data();
-        f << "//" << fileName.Data() << endl;
+        string fileName = fDataPath + (((TObjString*)fAll.At(i))->GetString()).Data();
+        f << "//" << fileName << endl;
     }
     for (i=0;i<fPro.GetSize();i++) {
-        TString fileName = fDataPath + (((TObjString*)fPro.At(i))->GetString()).Data();
-        f << "//" <<  fileName.Data() << endl;
+        string fileName = fDataPath + (((TObjString*)fPro.At(i))->GetString()).Data();
+        f << "//" <<  fileName << endl;
     }
     for (i=0;i<fCon.GetSize();i++) {
-        TString fileName = fDataPath + (((TObjString*)fCon.At(i))->GetString()).Data();
-        f << "//" <<  fileName.Data() << endl;
+        string fileName = fDataPath + (((TObjString*)fCon.At(i))->GetString()).Data();
+        f << "//" <<  fileName << endl;
     }
     f << endl;
-    f << "#include \"RhoNNO/" << fModel.Data() << ".h\"" << endl << endl;
+    f << "#include \"RhoNNO/" << fModel << ".h\"" << endl << endl;
     f << "Double_t* Recall(Double_t *invec)" << endl;
     f << "{" << endl;
-    f << "\tstatic " << fModel.Data() << " net(\"" << fModel.Data() << ".net\");" << endl;
+    f << "\tstatic " << fModel << " net(\"" << fModel << ".net\");" << endl;
     f << "\tFloat_t x[" << fInNodes << "];" << endl;
     for (i=0;i<fInNodes;i++) {
         f << "\tx[" << i << "] \t= " << fInScale[i] << "\t*\tinvec[" << i << "];" ;

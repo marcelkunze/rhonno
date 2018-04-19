@@ -11,7 +11,7 @@ start 1
 stop 100
 
 #define the data source
-datapath ../Data
+datapath $RHO/Data
 networkpath ../Networks
 file PidTuple.root
 

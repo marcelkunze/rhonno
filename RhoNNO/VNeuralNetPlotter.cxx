@@ -9,20 +9,22 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "TCanvas.h"
-#include "TFrame.h"
-#include "TGraph.h"
-#include "TH1.h"
-#include "TText.h"
-#include "TTree.h"
-#include "TBranch.h"
+#include <TCanvas.h>
+#include <TFrame.h>
+#include <TGraph.h>
+#include <TH1.h>
+#include <TText.h>
+#include <TTree.h>
+#include <TBranch.h>
 #include "RhoNNO/VNeuralNetPlotter.h"
 
 #define NPMAX 500
 
+using namespace std;
+
 ClassImp(VNeuralNetPlotter)
 
-VNeuralNetPlotter::VNeuralNetPlotter(const char *name) : TNamed(name,name)
+VNeuralNetPlotter::VNeuralNetPlotter(string name) : TNamed(name,name)
 {}
 
 void VNeuralNetPlotter::DrawT(Text_t *text, Float_t x, Float_t y, Float_t angle, Int_t color)
@@ -37,7 +39,7 @@ void VNeuralNetPlotter::DrawT(Text_t *text, Float_t x, Float_t y, Float_t angle,
 
 ClassImp(TSimpleNeuralNetPlotter)
 
-TSimpleNeuralNetPlotter::TSimpleNeuralNetPlotter(const char *name) 
+TSimpleNeuralNetPlotter::TSimpleNeuralNetPlotter(string name) 
   : VNeuralNetPlotter(name), 
     fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0), fCanvas(0)
 {
@@ -81,15 +83,15 @@ void TSimpleNeuralNetPlotter::Initialize()
 
     TString trnLabel("Train");
     fTrnPlot = trnLabel + GetName(); 
-    fTrnHistTrue = new TH1D(fTrnPlot,fTrnPlot,100,-1.1,1.1);
+    fTrnHistTrue = new TH1D(fTrnPlot.data(),fTrnPlot.data(),100,-1.1,1.1);
     fTrnHistTrue->SetFillColor(kGreen);
-    fTrnHistFalse = new TH1D(fTrnPlot,fTrnPlot,100,-1.1,1.1);
+    fTrnHistFalse = new TH1D(fTrnPlot.data(),fTrnPlot.data(),100,-1.1,1.1);
     fTrnHistFalse->SetFillColor(kRed);
     TString tstLabel("Recall");
     fTstPlot = tstLabel + GetName(); 
-    fTstHistTrue = new TH1D(fTstPlot,fTstPlot,100,-1.1,1.1);
+    fTstHistTrue = new TH1D(fTstPlot.data(),fTstPlot.data(),100,-1.1,1.1);
     fTstHistTrue->SetFillColor(kGreen);
-    fTstHistFalse = new TH1D(fTstPlot,fTstPlot,100,-1.1,1.1);
+    fTstHistFalse = new TH1D(fTstPlot.data(),fTstPlot.data(),100,-1.1,1.1);
     fTstHistFalse->SetFillColor(kRed);
 
     fPlots = kTRUE;
@@ -124,7 +126,7 @@ void TSimpleNeuralNetPlotter::AddTrainGraph(Double_t trn)
 	fTrnCurve->SetLineWidth(3);
 	fTrnCurve->SetMarkerColor(3);
 	fTrnCurve->SetMarkerStyle(20);
-	fTrnCurve->SetTitle(fTrnPlot+": Error on training data");
+	fTrnCurve->SetTitle((fTrnPlot+": Error on training data").data());
     }
 }
 
@@ -141,7 +143,7 @@ void TSimpleNeuralNetPlotter::AddTestGraph(Double_t tst)
 	fTstCurve->SetLineWidth(3);
 	fTstCurve->SetMarkerColor(5);
 	fTstCurve->SetMarkerStyle(20);
-	fTstCurve->SetTitle(fTstPlot+": Error on test data");
+	fTstCurve->SetTitle((fTstPlot+": Error on test data").data());
     }
 }
 

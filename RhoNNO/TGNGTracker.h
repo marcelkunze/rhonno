@@ -54,7 +54,7 @@ protected:
     
 public:
     virtual Double_t  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { GetWinnerCell(in); return fUwin1->fVector; }
+    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin1->fVector; }
     virtual Int_t GetWinnerCell(NNO_INTYPE* in);
     
     void Deviation(void); // calculates s_dev of all cells
@@ -65,7 +65,7 @@ public:
     
     void SetHits(TNtuple* tuple) { fTuple = tuple; } // sets the input data
     TNtuple* GetHits(void) const { return fTuple; } // gets the input data
-
+    
     ClassDef(TGNGTracker,1)	// Unsupervised Growing Neural Gas
 };
 

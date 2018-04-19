@@ -21,26 +21,18 @@ const int HIDNODES = 10;
 const int CELLS = 100;
 
 #define PLOTS kFALSE
-//#define READFILE
 
-#ifdef READFILE
-#define THRESHOLD 0.5
-#else
-#define THRESHOLD 0.0
-#endif
-
-#include "TROOT.h"
-#include "TSystem.h"
-#include "TApplication.h"
-#include "TList.h"
-#include "TIterator.h"
+#include <TROOT.h>
+#include <TSystem.h>
+#include <TApplication.h>
+#include <TList.h>
+#include <TIterator.h>
 
 #include "RhoNNO/TNNK.h"
 #include "RhoNNO/TMLP.h"
 #include "RhoNNO/TXMLP.h"
 #include "RhoNNO/TSGCS.h"
 #include "RhoNNO/TSGNG.h"
-#include "RhoNNO/TDataServe.h"
 
 #include <iostream>
 using namespace std;
@@ -66,7 +58,6 @@ public:
 private:
     Int_t fEpoch;
     TList fNets;
-    TDataServe *fServer;
 };
 
 
@@ -93,7 +84,7 @@ Int_t main() {
                                 "mlp.net");  // network - filename (used by destructor)
     
     net1->SetMomentumTerm(0.4);
-    net1->SetThreshold(THRESHOLD);
+    net1->SetThreshold(0.0);
     trainer.AddNetwork(net1);
     
     // Multi-Layer-Perceptron training using xmlp.
@@ -110,7 +101,7 @@ Int_t main() {
                                  TNeuralNetParameters::TR_LINEAR);   // transferfunctions
     
     net2->SetMomentumTerm(0.0001);
-    net2->SetThreshold(THRESHOLD);
+    net2->SetThreshold(0.0);
     trainer.AddNetwork(net2);
     
     // Simple Supervised-Growing-Cell-Structure
@@ -134,7 +125,7 @@ Int_t main() {
                                  0,         // don't remove cells
                                  "sgcs.net");  // network - filename (used by destructor)
     
-    net3->SetThreshold(THRESHOLD);
+    net3->SetThreshold(0.0);
     trainer.AddNetwork(net3);
     
     
@@ -160,7 +151,7 @@ Int_t main() {
                                  100,          // attempt of edge removal afer 100 Learningsteps
                                  "sgng.net");  // network - filename (used by destructor)
     
-    net4->SetThreshold(THRESHOLD);
+    net4->SetThreshold(0.0);
     trainer.AddNetwork(net4);
     
     
@@ -212,7 +203,7 @@ Int_t main() {
 }
 
 
-NetworkTrainer::NetworkTrainer(Int_t nEpoch) : fEpoch(nEpoch), fServer(0)
+NetworkTrainer::NetworkTrainer(Int_t nEpoch) : fEpoch(nEpoch)
 {
     // Set up training and test files for the parity problem
     
@@ -222,17 +213,6 @@ NetworkTrainer::NetworkTrainer(Int_t nEpoch) : fEpoch(nEpoch), fServer(0)
     cout << "Training samples=" << ntrn << " ; Test samples=" << ntst << endl;
     MakeFile("parity.trn",ntrn,kFALSE); // create training file
     MakeFile("parity.tst",ntst,kTRUE); // create testing file
-    
-#ifdef READFILE
-    // Set up the dataset
-    fServer = new TDataServe("test","test",5,1);
-    const char* tag[1];
-    tag[0] = 1;
-    fServer->TTreeDataRead("NNsignal.root","NNsignal","v1 v2 v3 v4 v5 ",tag);
-    tag[0] = 0;
-    fServer->TTreeDataRead("NNbackg.root","NNbackg","v1 v2 v3 v4 v5 ",tag);
-    fServer->Init(1000);
-#endif
 }
 
 void NetworkTrainer::Train()
@@ -246,13 +226,8 @@ void NetworkTrainer::Train()
     while ((net = (VNeuralNet *) iter.Next()) != NULL) {
         if (PLOTS) net->SetupPlots();
         for (int i=0;i<fEpoch;i++) {
-#ifdef READFILE
-            net->TrainEpoch(fServer);
-            net->TestEpoch(fServer);
-#else
             net->TrainEpoch("parity.trn");
             net->TestEpoch("parity.tst");
-#endif
         }
         gSystem->Sleep(1000);
     }
