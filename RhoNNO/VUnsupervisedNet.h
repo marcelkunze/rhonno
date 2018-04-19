@@ -24,9 +24,9 @@ protected:
     
 public:
     VUnsupervisedNet()  :  VNeuralNet(), fXB() {};
-    VUnsupervisedNet(const char* netID,Int_t innodes,Int_t outnodes,const char* netFile) :
+    VUnsupervisedNet(std::string netID,Int_t innodes,Int_t outnodes,std::string netFile) :
     VNeuralNet(netID,innodes,outnodes,netFile), fXB() {}
-    VUnsupervisedNet(const char* netFile) :
+    VUnsupervisedNet(std::string netFile) :
     VNeuralNet(netFile), fXB() {}
     TNeuralNetCellParameters &GetParameters() { return fXB; }
     Int_t GetNumberOfCells() const { return fXB.fCells; }

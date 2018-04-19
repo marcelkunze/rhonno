@@ -20,9 +20,9 @@ protected:
     TNtuple *fTuple;  // Training data
 public:
     VSupervisedNet() : VNeuralNet() {};
-    VSupervisedNet(const char* netID,Int_t innodes,Int_t outnodes,const char* netFile) :
+    VSupervisedNet(std::string netID,Int_t innodes,Int_t outnodes,std::string netFile) :
     VNeuralNet(netID,innodes,outnodes,netFile) {}
-    VSupervisedNet(const char* netFile) :
+    VSupervisedNet(std::string netFile) :
     VNeuralNet(netFile) {}
     virtual ~VSupervisedNet() {};
     virtual Long_t TrainEpoch (TNtuple *tuple, Bool_t random=kTRUE);    // learn the hits from the ntuple
