@@ -9,14 +9,15 @@ DllSuf        = dll
 OutPutOpt     = /out:
  
 # Win32 system with Microsoft Visual C/C++
-!include <win32.mak>
+#!include <win32.mak>
 CC            = $(COMPILER)
 CXX           = $(COMPILER)
 CXXDEBUG      = -Fd$*.pdb
 CXXFLAGS      = $(cvarsdll) -EHsc -nologo -GR -DWIN32 -DANSISTREAM \
-                -DVISUAL_CPLUSPLUS -DWINDOWS -I.. -I$(ROOTSYS)/include
+                -DVISUAL_CPLUSPLUS -DWINDOWS -D_USE_MATH_DEFINES -I.. -I$(ROOTSYS)/include
 
-LD            = $(link)
+#LD            = $(link)
+LD = cl
 LDFLAGS = $(LDOPT) $(conlflags) -nologo -include:_G__cpp_setupG__Hist \
                 -include:_G__cpp_setupG__Graf -include:_G__cpp_setupG__G3D \
                 -include:_G__cpp_setupG__GPad -include:_G__cpp_setupG__Tree \
@@ -54,9 +55,11 @@ HEADERS	=	\
 			TSGNG.h \
 			TGCS.h \
 			TGNG.h \
+			TGNGTracker.h \
 			TLVQ.h \
 			TDataServe.h \
-			TNNK.h
+			TNNK.h \
+			TRadon.h
    
 OBJECTS	=	$(PACKAGE)Cint.$(ObjSuf) \
 			VNeuralNet.$(ObjSuf) \
@@ -72,9 +75,11 @@ OBJECTS	=	$(PACKAGE)Cint.$(ObjSuf) \
 			TSGNG.$(ObjSuf) \
 			TGCS.$(ObjSuf) \
 			TGNG.$(ObjSuf) \
+			TGNGTracker.$(ObjSuf) \
 			TLVQ.$(ObjSuf) \
 			TDataServe.$(ObjSuf) \
-			TNNK.$(ObjSuf)
+			TNNK.$(ObjSuf) \
+			TRadon.$(ObjSuf)
    
 STRAINS = strain.$(SrcSuf)
 STRAINO = strain.$(ObjSuf)
@@ -88,6 +93,14 @@ NETWORKTRAINERS = NetworkTrainer.$(SrcSuf)
 NETWORKTRAINERO = NetworkTrainer.$(ObjSuf)
 NETWORKTRAINER  = NetworkTrainer$(ExeSuf)
 
+RADONTRACKERS = RadonTracker.$(SrcSuf)
+RADONTRACKERO = RadonTracker.$(ObjSuf)
+RADONTRACKER  = RadonTracker$(ExeSuf)
+
+NNOTRACKERS = NNOTracker.$(SrcSuf)
+NNOTRACKERO = NNOTracker.$(ObjSuf)
+NNOTRACKER  = NNOTracker$(ExeSuf)
+
 SHLIB	=	$(PACKAGE).$(DllSuf)
 
 PROGRAMS = 
@@ -96,12 +109,12 @@ all: $(SHLIB) $(PROGRAMS)
 
 lib: $(OBJECTS)
 	BINDEXPLIB  $(PACKAGE) $(OBJECTS) > $(PACKAGE).def
-	lib /nologo /MACHINE:IX86 $(OBJECTS) /def:$(PACKAGE).def $(OutPutOpt)$(LIBRARY)	
+	lib /nologo /MACHINE:X86 $(OBJECTS) /def:$(PACKAGE).def $(OutPutOpt)$(LIBRARY)	
 	copy $(LIBRARY) ..\lib
  
 $(SHLIB): $(OBJECTS)
 	BINDEXPLIB  $* $(OBJECTS) > $*.def
-	lib /nologo /MACHINE:IX86 $(OBJECTS) /def:$*.def      $(OutPutOpt)$(LIBRARY)
+	lib /nologo /MACHINE:X86 $(OBJECTS) /def:$*.def      $(OutPutOpt)$(LIBRARY)
 	$(LD) $(SOFLAGS) $(OBJECTS) $*.exp $(LIBS) $(OutPutOpt)$(SHLIB)
 #                mt.exe -manifest $(SHLIB).manifest -outputresource:$(SHLIB);2
 	copy $(LIBRARY) ..\lib
@@ -133,6 +146,14 @@ $(UTRAIN): $(LIBRARY) $(UTRAINO)
 $(NETWORKTRAINER): $(LIBRARY) $(NETWORKTRAINERO)
                 $(LD)  $(LDFLAGS) $(NETWORKTRAINERO) $(LIBRARY) $(LIBS) $(OutPutOpt)$(NETWORKTRAINER)
 		@echo "$(NETWORKTRAINER) done"
+
+$(RADONTRACKER): $(LIBRARY) $(RADONTRACKERO)
+                $(LD)  $(LDFLAGS) $(RADONTRACKERO) $(LIBRARY) $(LIBS) $(OutPutOpt)$(RADONTRACKER)
+		@echo "$(RADONTRACKER) done"
+
+$(NNOTRACKER): $(LIBRARY) $(NNOTRACKERO)
+                $(LD)  $(LDFLAGS) $(NNOTRACKERO) $(LIBRARY) $(LIBS) $(OutPutOpt)$(NNOTRACKER)
+		@echo "$(NNOTRACKER) done"
 
 # Dependencies
 
@@ -178,6 +199,9 @@ TGCS.$(ObjSuf): TGCS.$(SrcSuf) TGCS.h
 TGNG.$(ObjSuf): TGNG.$(SrcSuf) TGNG.h
 	$(CXX) $(CXXFLAGS) -c TGNG.$(SrcSuf)
 
+TGNGTracker.$(ObjSuf): TGNGTracker.$(SrcSuf) TGNGTracker.h
+	$(CXX) $(CXXFLAGS) -c TGNGTracker.$(SrcSuf)
+
 TLVQ.$(ObjSuf): TLVQ.$(SrcSuf) TLVQ.h
 	$(CXX) $(CXXFLAGS) -c TLVQ.$(SrcSuf)
 
@@ -187,6 +211,9 @@ TDataServe.$(ObjSuf): TDataServe.$(SrcSuf) TDataServe.h
 TNNK.$(ObjSuf): TNNK.$(SrcSuf) TNNK.h
 	$(CXX) $(CXXFLAGS) -c TNNK.$(SrcSuf)
 
+TRadon.$(ObjSuf): TRadon.$(SrcSuf) TRadon.h
+	$(CXX) $(CXXFLAGS) -c TRadon.$(SrcSuf)
+
 strain.$(ObjSuf): strain.$(SrcSuf)
 	$(CXX) $(CXXFLAGS) -c strain.$(SrcSuf)
 
@@ -195,4 +222,7 @@ utrain.$(ObjSuf): utrain.$(SrcSuf)
 
 NetworkTrainer.$(ObjSuf): NetworkTrainer.$(SrcSuf)
 	$(CXX) $(CXXFLAGS) -c NetworkTrainer.$(SrcSuf)
+
+RadonTracker.$(ObjSuf): RadonTracker.$(SrcSuf)
+	$(CXX) $(CXXFLAGS) -c RadonTracker.$(SrcSuf)
 

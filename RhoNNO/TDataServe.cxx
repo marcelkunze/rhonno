@@ -33,6 +33,7 @@
 #include <iostream>
 #include <fstream>
 #include <strstream>
+#include <algorithm>
 
 using namespace std;
 
