@@ -16,14 +16,10 @@ CXXDEBUG      = -Fd$*.pdb
 CXXFLAGS      = $(cvarsdll) -EHsc -nologo -GR -DWIN32 -DANSISTREAM \
                 -DVISUAL_CPLUSPLUS -DWINDOWS -D_USE_MATH_DEFINES -I.. -I$(ROOTSYS)/include
 
-#LD            = $(link)
-LD = cl
-LDFLAGS = $(LDOPT) $(conlflags) -nologo -include:_G__cpp_setupG__Hist \
-                -include:_G__cpp_setupG__Graf -include:_G__cpp_setupG__G3D \
-                -include:_G__cpp_setupG__GPad -include:_G__cpp_setupG__Tree \
-                -include:_G__cpp_setupG__Rint -include:_G__cpp_setupG__PostScript \
-                -include:_G__cpp_setupG__Matrix -include:_G__cpp_setupG__Physics
-SOFLAGS      = $(dlllflags:-pdb:none=)
+LD            = link
+#LD = cl 
+LDFLAGS = $(LDOPT) $(conlflags)
+SOFLAGS      =  $(dlllflags:-pdb:none=)
 ROOTLIBS     = 	$(ROOTSYS)\lib\libCore.lib \
 		$(ROOTSYS)\lib\libCint.lib $(ROOTSYS)\lib\libHist.lib \
 		$(ROOTSYS)\lib\libGraf.lib $(ROOTSYS)\lib\libGraf3d.lib \
@@ -136,7 +132,7 @@ $(PACKAGE)Cint.$(SrcSuf): $(HEADERS) $(PACKAGE)_LinkDef.h
 ###
 
 $(STRAIN): $(LIBRARY) $(STRAINO)
-                $(LD)  $(LDFLAGS) $(STRAINO) $(LIBRARY) $(LIBS) $(OutPutOpt)$(STRAIN)
+                $(LD) $(STRAINO)  $(LDFLAGS) $(LIBRARY) $(LIBS)
 		@echo "$(STRAIN) done"
  
 $(UTRAIN): $(LIBRARY) $(UTRAINO)
