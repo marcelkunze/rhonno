@@ -66,7 +66,7 @@ int main(int argc,char* argv[])
 
 #include <iostream>
 #include <fstream>
-#include <strstream>
+#include <sstream>
 #include <cstdlib>
 using namespace std;
 
@@ -158,7 +158,7 @@ void NetworkTrainer::SetupDataServer(string file)
         string input(fInput);
         replace( input.begin(), input.end(), ':', ' ');
         input += " ";
-        istrstream inStream((char *) input.data());
+        istringstream inStream(input);
         
         Float_t *inScale  = fPidDataServer->GetInputScale();
         for (j=0;j<fInNodes;j++) {
@@ -651,7 +651,7 @@ void NetworkTrainer::WriteSourceCode(string filename)
     string input(fInput);
     replace( input.begin(), input.end(), ':', ' ');
     input += " ";
-    istrstream inStream((char *) input.data());
+    istringstream inStream(input);
     
     std::ofstream f(filename);
     f << "// " << fModel << " network trained with NNO NetworkTrainer at " << theTime.AsString() << endl;

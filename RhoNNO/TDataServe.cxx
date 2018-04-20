@@ -32,7 +32,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
-#include <strstream>
+#include <sstream>
 #include <algorithm>
 
 using namespace std;
@@ -438,7 +438,7 @@ Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,st
     replace( input.begin(), input.end(), ':', ' ');
     input += " ";
     TTreeFormula *inForm[100];
-    istrstream inStream((char *) input.data());
+    istringstream inStream(input);
     string inName;
     UInt_t nInputs = 0;
     while (inStream >> inName && nInputs<fInvecLen){
@@ -458,7 +458,7 @@ Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,st
     TTreeFormula *outForm[100];
     UInt_t nOutputs = 0;
     if (!tag) {
-        istrstream outStream((char *) output.data());
+        istringstream outStream(output);
         string outName;
         while (outStream >> outName && nOutputs<fOutvecLen){
             outForm[nOutputs++] = new TTreeFormula("Output",outName.data(),t);
