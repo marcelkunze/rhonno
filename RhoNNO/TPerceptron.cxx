@@ -222,7 +222,7 @@ void TPerceptron::ReadText()
     }
 }
 
-Double_t* TPerceptron::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out) 
+Double_t* TPerceptron::Recall(NNO_INTYPE*,NNO_OUTTYPE*) 
 {
     int I;
     PerceptronUnit* up;
@@ -241,7 +241,7 @@ Double_t* TPerceptron::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
     return o;
 }
 
-Double_t TPerceptron::Train(NNO_INTYPE* in,NNO_OUTTYPE* out) 
+Double_t TPerceptron::Train(NNO_INTYPE*,NNO_OUTTYPE*) 
 {
     int I;
     PerceptronUnit* up;
