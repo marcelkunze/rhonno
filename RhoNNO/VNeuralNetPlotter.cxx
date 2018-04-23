@@ -83,15 +83,19 @@ void TSimpleNeuralNetPlotter::Initialize()
     
     string trnLabel("Train");
     fTrnPlot = trnLabel + GetName();
-    fTrnHistTrue = new TH1D(fTrnPlot.data(),fTrnPlot.data(),100,-1.1,1.1);
+    string histname = fTrnPlot + "+";
+    fTrnHistTrue = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
     fTrnHistTrue->SetFillColor(kGreen);
-    fTrnHistFalse = new TH1D(fTrnPlot.data(),fTrnPlot.data(),100,-1.1,1.1);
+    histname = fTrnPlot + "-";
+    fTrnHistFalse = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
     fTrnHistFalse->SetFillColor(kRed);
     string tstLabel("Recall");
     fTstPlot = tstLabel + GetName();
-    fTstHistTrue = new TH1D(fTstPlot.data(),fTstPlot.data(),100,-1.1,1.1);
+    histname = fTstPlot + "+";
+    fTstHistTrue = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
     fTstHistTrue->SetFillColor(kGreen);
-    fTstHistFalse = new TH1D(fTstPlot.data(),fTstPlot.data(),100,-1.1,1.1);
+    histname = fTstPlot + "-";
+    fTstHistFalse = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
     fTstHistFalse->SetFillColor(kRed);
     
     fPlots = kTRUE;
