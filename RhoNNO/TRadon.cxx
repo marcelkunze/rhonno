@@ -201,7 +201,7 @@ void TRadon::Draw(Option_t *option) {
         double radius = 1./t.kappa;
         printf("\nTrack candidate #%d r:%f k:%f p:%f g:%f : %f  ",n++,radius,t.kappa,t.phi,t.gamma,t.density);
         printf("\nAssociated hits: ");
-        for (int j = 0; j < t.index.size(); j++) {
+        for (unsigned long j = 0; j < t.index.size(); j++) {
             cout << t.index[j] << " ";
         }
 
@@ -213,7 +213,7 @@ void TRadon::Draw(Option_t *option) {
             if (DRAWTRACK)
                 GenerateTrack(nt3,25,0.025,radius,t.phi,t.gamma);
             else
-                for (int i=0;i<t.index.size();i++) {
+                for (unsigned long i=0;i<t.index.size();i++) {
                     long index = t.index[i];
                     float x = hits[index].x();
                     float y = hits[index].y();

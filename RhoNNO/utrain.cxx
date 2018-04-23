@@ -76,10 +76,10 @@ int main(int argc, char* argv[]) {
     graph2d->SetName("Graph2D");
     graph2d->SetTitle("GCS: Voronoi Diagram");
     
-    for (int i=0;i<numberCells;++i) {
+    for (unsigned long i=0;i<numberCells;++i) {
         const TNeuralNetCell *cell = net.GetCell(i);
         const Double_t *x = cell->GetVector();
-        printf("\n Cell %d: (%f,%f) \n",i,x[0],x[1]);
+        printf("\n Cell %ld: (%f,%f) \n",i,x[0],x[1]);
         graph2d->SetPoint(i,x[0],x[1],0.0);
     }
     

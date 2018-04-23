@@ -459,7 +459,7 @@ void TGNGTracker::Prune(void)
                 x1[1] = xi[1] - x0[1];
                 x1[2] = xi[2] - x0[2];
                 double rx1 = sqrt(x1[0]*x1[0] + x1[1]*x1[1] + x1[2]*x1[2]); // Disctance between cells
-                for (int j=0;j<numberConnections;j++) {
+                for (long j=0;j<numberConnections;j++) {
                     const TNeuralNetCell *u = c->GetConnectedCell(j);
                     const Double_t *xj = u->GetVector();
                     double x2[3];
