@@ -52,17 +52,17 @@ fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0)
 
 TSimpleNeuralNetPlotter::~TSimpleNeuralNetPlotter() 
 { 
-    if (fTrnHistTrue!=0) { delete fTrnHistTrue; }
-    if (fTrnHistFalse!=0) { delete fTrnHistFalse; }
-    if (fTstHistTrue!=0) { delete fTstHistTrue; }
-    if (fTstHistFalse!=0) { delete fTstHistFalse; }
-    if (fTrnCurve!=0) { delete fTrnCurve; }
-    if (fTstCurve!=0) { delete fTstCurve; }
-    if (fXtrn!=0) { delete [] fXtrn; }
-    if (fYtrn!=0) { delete [] fYtrn; }
-    if (fXtst!=0) { delete [] fXtst; }
-    if (fYtst!=0) { delete [] fYtst; }
-    if (fCanvas!=0) { fCanvas->Close(); delete fCanvas; }
+    if (fTrnHistTrue!=nullptr) { delete fTrnHistTrue; fTrnHistTrue=nullptr;}
+    if (fTrnHistFalse!=nullptr) { delete fTrnHistFalse; fTrnHistFalse=nullptr;}
+    if (fTstHistTrue!=nullptr) { delete fTstHistTrue; fTstHistTrue=nullptr;}
+    if (fTstHistFalse!=nullptr) { delete fTstHistFalse; fTstHistFalse=nullptr;}
+    if (fTrnCurve!=nullptr) { delete fTrnCurve; fTrnCurve=nullptr;}
+    if (fTstCurve!=nullptr) { delete fTstCurve; fTstCurve=nullptr;}
+    if (fXtrn!=nullptr) { delete [] fXtrn; fXtrn=nullptr;}
+    if (fYtrn!=nullptr) { delete [] fYtrn; fYtrn=nullptr;}
+    if (fXtst!=nullptr) { delete [] fXtst; fXtst=nullptr;}
+    if (fYtst!=nullptr) { delete [] fYtst; fYtst=nullptr;}
+    if (fCanvas!=nullptr) { fCanvas->Close(); delete fCanvas; fCanvas=nullptr;}
 }
 
 void TSimpleNeuralNetPlotter::Initialize() 
@@ -130,7 +130,8 @@ void TSimpleNeuralNetPlotter::AddTrainGraph(Double_t trn)
         fTrnCurve->SetLineWidth(3);
         fTrnCurve->SetMarkerColor(3);
         fTrnCurve->SetMarkerStyle(20);
-        fTrnCurve->SetTitle((fTrnPlot+": Error on training data").data());
+        string histname = fTstPlot + ": Error on training data";
+        fTrnCurve->SetTitle(histname.data());
     }
 }
 
@@ -147,7 +148,8 @@ void TSimpleNeuralNetPlotter::AddTestGraph(Double_t tst)
         fTstCurve->SetLineWidth(3);
         fTstCurve->SetMarkerColor(5);
         fTstCurve->SetMarkerStyle(20);
-        fTstCurve->SetTitle((fTstPlot+": Error on test data").data());
+        string histname = fTstPlot + ": Error on test data";
+        fTstCurve->SetTitle(histname.data());
     }
 }
 
