@@ -38,22 +38,22 @@ public:
 class TSimpleNeuralNetPlotter : public VNeuralNetPlotter {
 protected:
     Bool_t	    fPlots;	    //!Show plots
-    std::string fTrnPlot;	    //!
-    std::string fTstPlot;	    //!
+    std::string fTrnPlot;	//!
+    std::string fTstPlot;	//!
     Int_t	    fIndex;	    //!the index number
+    TCanvas*    fCanvas;    //!Drawing
     TH1D*	    fTrnHistTrue;   //!Training histogram
     TH1D*	    fTrnHistFalse;  //!Training histogram
     TH1D*	    fTstHistTrue;   //!Test histogram
     TH1D*	    fTstHistFalse;  //!Test histogram
     TGraph*	    fTrnCurve;	    //!Error plot
     Int_t	    fNtrn;	    //!Number of points
-    Double_t*	    fXtrn;	    //!
-    Double_t*	    fYtrn;	    //!
-    TGraph*	    fTstCurve;	    //!Test plot
+    Double_t*	fXtrn;	    //!
+    Double_t*	fYtrn;	    //!
+    TGraph*	    fTstCurve;	//!Test plot
     Int_t	    fNtst;	    //!Number of points
-    Double_t*	    fXtst;	    //!
-    Double_t*	    fYtst;	    //!
-    TCanvas*	    fCanvas;	    //!Drawing
+    Double_t*	fXtst;	    //!
+    Double_t*	fYtst;	    //!
 
 public:
     TSimpleNeuralNetPlotter(std::string name);

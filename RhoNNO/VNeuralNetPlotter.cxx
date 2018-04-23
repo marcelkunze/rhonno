@@ -40,8 +40,8 @@ void VNeuralNetPlotter::DrawT(Text_t *text, Float_t x, Float_t y, Float_t angle,
 ClassImp(TSimpleNeuralNetPlotter)
 
 TSimpleNeuralNetPlotter::TSimpleNeuralNetPlotter(string name) 
-: VNeuralNetPlotter(name),
-fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0), fCanvas(0)
+: VNeuralNetPlotter(name), fCanvas(0),
+fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0)
 {
     fPlots = kFALSE;
     fXtrn = new Double_t[NPMAX];
@@ -52,7 +52,6 @@ fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0), fCanvas(0)
 
 TSimpleNeuralNetPlotter::~TSimpleNeuralNetPlotter() 
 { 
-    if (fCanvas!=0) { fCanvas->Close(); delete fCanvas; }
     if (fTrnHistTrue!=0) { delete fTrnHistTrue; }
     if (fTrnHistFalse!=0) { delete fTrnHistFalse; }
     if (fTstHistTrue!=0) { delete fTstHistTrue; }
@@ -63,6 +62,7 @@ TSimpleNeuralNetPlotter::~TSimpleNeuralNetPlotter()
     if (fYtrn!=0) { delete [] fYtrn; }
     if (fXtst!=0) { delete [] fXtst; }
     if (fYtst!=0) { delete [] fYtst; }
+    if (fCanvas!=0) { fCanvas->Close(); delete fCanvas; }
 }
 
 void TSimpleNeuralNetPlotter::Initialize() 
