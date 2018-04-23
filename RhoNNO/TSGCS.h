@@ -17,23 +17,23 @@ class TSGCS : public VSupervisedNet {
 public:
     TSGCS() {};
     TSGCS(Int_t   innodes,
-	Int_t    cells,
-	Int_t    outnodes,
-	Int_t    maxCells,
-	Double_t winStep,
-	Double_t neiStep,
-	Double_t neuStep,
-	Double_t aErrCount,
-	Double_t bSDev,
-	Int_t    connectors,
-	long   insertStep,
-	long   deleteStep,
-	const char*  netFile);
+          Int_t    cells,
+          Int_t    outnodes,
+          Int_t    maxCells,
+          Double_t winStep,
+          Double_t neiStep,
+          Double_t neuStep,
+          Double_t aErrCount,
+          Double_t bSDev,
+          Int_t    connectors,
+          long   insertStep,
+          long   deleteStep,
+          std::string  netFile);
     
     TSGCS(std::string netFile) : VSupervisedNet(netFile), fXB() {ReadNet("SGCS");};
-    TSGCS(const TSGCS& sgcs,const char* netFile); // copy constructor
+    TSGCS(const TSGCS& sgcs,std::string netFile); // copy constructor
     virtual ~TSGCS();                          //destructor of network  (File will be saved)
-       
+    
 private:
     TNeuralNetCell* fU;		//! Temp.Cell
     TNeuralNetCellParameters fXB;//  Network parameters

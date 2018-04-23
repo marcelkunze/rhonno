@@ -8,12 +8,11 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include <TMath.h>
 #include "RhoNNO/TSGNG.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
 
+#include <cfloat>
 #include <string>
-
 using namespace std;
 
 ClassImp(TSGNG)

@@ -15,9 +15,9 @@
 class TLVQ : public VUnsupervisedNet {
 public:
     TLVQ() {}
-    TLVQ(Int_t innodes,Int_t cells,Double_t winStep,const char* netFile);
+    TLVQ(Int_t innodes,Int_t cells,Double_t winStep,std::string netFile);
     TLVQ(std::string netFile) : VUnsupervisedNet(netFile) {ReadNet("LVQ");};
-    TLVQ(const TLVQ& lvq,const char* netFile); // copy constructor
+    TLVQ(const TLVQ& lvq,std::string netFile); // copy constructor
     
     virtual ~TLVQ();                          //destructor of network  (File will be saved)
 private:

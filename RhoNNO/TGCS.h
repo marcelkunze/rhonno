@@ -17,9 +17,9 @@ public:
     TGCS() {}
     TGCS(Int_t innodes,Int_t cells,Int_t maxCells,Double_t winStep,Double_t neiStep,
          Double_t aWinCount,Int_t connectors,
-         Long_t insertStep,Long_t deleteStep,const char* netFile);
+         Long_t insertStep,Long_t deleteStep,std::string netFile);
     TGCS(std::string netFile) : VUnsupervisedNet(netFile) {ReadNet("GCS");};
-    TGCS(const TGCS& gcs,const char* netFile); // copy constructor
+    TGCS(const TGCS& gcs,std::string netFile); // copy constructor
     virtual ~TGCS();                             // destructor of network  (File will be saved)
 private:
     TNeuralNetCell*  fUbound;	//! Temp. unit

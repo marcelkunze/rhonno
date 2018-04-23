@@ -8,18 +8,20 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "TMath.h"
 #include "RhoNNO/TGCS.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
 
 ClassImp(TGCS)
+
+#include <cfloat>
+using namespace std;
 
 //cell states
 #define REMOVE 1
 
 TGCS::TGCS (Int_t innodes,Int_t cells,Int_t maxCells,Double_t winStep,Double_t neiStep,
             Double_t aWinCount,Int_t connectors,
-            Long_t insertStep,Long_t deleteStep,const char* netFile)
+            Long_t insertStep,Long_t deleteStep,string netFile)
 : VUnsupervisedNet("GCS",innodes,maxCells,netFile)
 {
     fXB.fCells       = cells;
@@ -38,7 +40,7 @@ TGCS::TGCS (Int_t innodes,Int_t cells,Int_t maxCells,Double_t winStep,Double_t n
 }
 
 // copy constructor
-TGCS::TGCS(const TGCS& gcs,const char* netFile)
+TGCS::TGCS(const TGCS& gcs,string netFile)
 : VUnsupervisedNet("GCS",gcs.fParm.fInNodes,gcs.fParm.fOutNodes,netFile) 
 {
     fXB = gcs.fXB;

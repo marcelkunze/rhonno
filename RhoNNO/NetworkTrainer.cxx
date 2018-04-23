@@ -126,12 +126,12 @@ void NetworkTrainer::SetupDataServer(string file)
         for (i=0;i<fPro.GetSize();i++) {
             string fileName = path + (((TObjString*)fPro.At(i))->GetString()).Data();
             cout << "+sample " << fileName << endl;
-            fPidDataServer->TTreeDataRead(fileName,fTree,fInput,"1",fCut.data());
+            fPidDataServer->TTreeDataRead(fileName,fTree,fInput,"1",fCut);
         }
         for (i=0;i<fCon.GetSize();i++) {
             string fileName = path + (((TObjString*)fCon.At(i))->GetString()).Data();
             cout << "-sample " << fileName << endl;
-            fPidDataServer->TTreeDataRead(fileName,fTree,fInput,"0",fCut.data());
+            fPidDataServer->TTreeDataRead(fileName,fTree,fInput,"0",fCut);
         }
     }
     else {
@@ -165,7 +165,7 @@ void NetworkTrainer::SetupDataServer(string file)
             fInScale[j] = inScale[j];
             string token;
             inStream >> token;
-            cout << token.data() << "\t*\t" << fInScale[j] << endl;
+            cout << token << "\t*\t" << fInScale[j] << endl;
         }
         
         /*	cout << endl << "Scale factors for output:" << endl;
@@ -211,13 +211,13 @@ void NetworkTrainer::SetupNetworks()
         fNetworkFile = "NNO0001." + fModel;
         
         if (fModel == "TFD") {
-            fNet = new TXMLP(1,fScale,fNetworkFile.data(),fInNodes,fOutNodes,0.1,fTransfer);
+            fNet = new TXMLP(1,fScale,fNetworkFile,fInNodes,fOutNodes,0.1,fTransfer);
         }
         else if (fModel == "TMLP") {
-            fNet = new TMLP(0.1,0.01,fInNodes,fHid1Nodes,fOutNodes,fScale,fNetworkFile.data(),fTransfer);
+            fNet = new TMLP(0.1,0.01,fInNodes,fHid1Nodes,fOutNodes,fScale,fNetworkFile,fTransfer);
         }
         else if (fModel == "TXMLP") {
-            fNet = new TXMLP(3,fScale,fNetworkFile.data(),fInNodes,fHid1Nodes,fHid2Nodes,fOutNodes,0.1,0.02,0.01,TNeuralNetParameters::TR_FERMI,TNeuralNetParameters::TR_FERMI,fTransfer);
+            fNet = new TXMLP(3,fScale,fNetworkFile,fInNodes,fHid1Nodes,fHid2Nodes,fOutNodes,0.1,0.02,0.01,TNeuralNetParameters::TR_FERMI,TNeuralNetParameters::TR_FERMI,fTransfer);
         }
         else if (fModel == "TNNK") {
             string hidden;
@@ -227,10 +227,10 @@ void NetworkTrainer::SetupNetworks()
                 hidden += fHid2Nodes;
             }
             Text_t *hid = (char *) hidden.data();
-            fNet = new TNNK(0.2,0.0,fMomentum,fInNodes,hid,fOutNodes,fNetworkFile.data());
+            fNet = new TNNK(0.2,0.0,fMomentum,fInNodes,hid,fOutNodes,fNetworkFile);
         }
         else if (fModel == "TSGNG") {
-            fNet = new TSGNG(fInNodes,fOutNodes,200,0.1,0.02,0.1,0.01,0.01,0.01,0.01,10,5000,500, fNetworkFile.data());
+            fNet = new TSGNG(fInNodes,fOutNodes,200,0.1,0.02,0.1,0.01,0.01,0.01,0.01,10,5000,500, fNetworkFile);
         }
         else if (fModel == "TSGCS") {
             fNet = new TSGCS(fInNodes,   // number of inputnodes
@@ -245,7 +245,7 @@ void NetworkTrainer::SetupNetworks()
                              10,               // maximum number of allowed connections for one cell
                              1000,             // cell insertion after 1000 Learningsteps
                              0,                // don't remove cells
-                             fNetworkFile.data());    // network - filename (used by destructor)
+                             fNetworkFile);    // network - filename (used by destructor)
         }
         else if (fModel == "TGNG") {
             fNet = new TGNG(	fInNodes,   // number of inputnodes
@@ -258,7 +258,7 @@ void NetworkTrainer::SetupNetworks()
                             20,               // maximum number of allowed connections for one cell
                             1000,             // cell insertion
                             0,                // cell removal
-                            fNetworkFile.data());    // network - filename (used by destructor)
+                            fNetworkFile);    // network - filename (used by destructor)
         }
         else if (fModel == "TGCS") {
             fNet = new TGCS( fInNodes,   // number of inputnodes
@@ -270,13 +270,13 @@ void NetworkTrainer::SetupNetworks()
                             20,		    // connectors
                             500,		    // insert_step
                             0,		    // delet_step
-                            fNetworkFile.data());      // network - filename (used by destructor)
+                            fNetworkFile);      // network - filename (used by destructor)
         }
         else if (fModel == "TLVQ") {
             fNet = new TLVQ( fInNodes,   // number of inputnodes
                             fCells,		    // cells
                             0.2,		    // Learnstep of Winner-Cell
-                            fNetworkFile.data());      // network - filename (used by destructor)
+                            fNetworkFile);      // network - filename (used by destructor)
         }
         else {
             cout << "Error initializing network. Unknown model " << fModel << endl;
@@ -287,31 +287,31 @@ void NetworkTrainer::SetupNetworks()
     else {
         cout << "Loading " << fModel << " network " << fNetworkFile << endl;
         if (fModel == "TFD"){
-            fNet = new TFD(Makename(fStartEpoch , fNetworkPath, fNetworkFile.data()).data());
+            fNet = new TFD(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TMLP"){
-            fNet = new TMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile.data()).data());
+            fNet = new TMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TXMLP"){
-            fNet = new TXMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile.data()).data());
+            fNet = new TXMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TNNK"){
-            fNet = new TNNK(Makename(fStartEpoch , fNetworkPath, fNetworkFile.data()).data());
+            fNet = new TNNK(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TSGNG"){
-            fNet = new TSGNG(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
+            fNet = new TSGNG(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TSGCS"){
-            fNet = new TSGCS(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
+            fNet = new TSGCS(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TGNG"){
-            fNet = new TGNG(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
+            fNet = new TGNG(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TGCS"){
-            fNet = new TGCS(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
+            fNet = new TGCS(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TLVQ"){
-            fNet = new TLVQ(Makename(fStartEpoch , fNetworkPath, fNetworkFile).data());
+            fNet = new TLVQ(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else {
             cout<<"Error initializing network. Unknown Model."<<endl;
@@ -341,8 +341,7 @@ Double_t NetworkTrainer::Train()
         // Save the networks after each epoch
         string network =  Makename(epo , fNetworkPath, fNetworkFile);
         cout << "Saving: " << network << endl;
-        char * name = const_cast<char*> (network.data());
-        fNet->Save(name);
+        fNet->Save(network);
         
         // Adapt the learning rate, freeze network upon convergence
         if (fModel == "xmlp") {

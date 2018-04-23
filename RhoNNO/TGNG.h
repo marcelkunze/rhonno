@@ -25,10 +25,10 @@ public:
          Int_t  connectors,
          Long_t insertStep,
          Long_t deleteStep,
-         const char* netFile);
+         std::string netFile);
     
     TGNG(std::string netFile) : VUnsupervisedNet(netFile) {ReadNet("GNG");};
-    TGNG(const TGNG& gng,const char* netFile); // copy constructor
+    TGNG(const TGNG& gng,std::string netFile); // copy constructor
     
     virtual ~TGNG();                          //destructor of network  (File will be saved)
     

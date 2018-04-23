@@ -16,7 +16,7 @@ ClassImp(TXMLP)
 #include <iostream>
 using namespace std;
 
-TXMLP:: TXMLP(Int_t layers,Double_t inputRange,const char* netFile,Int_t innodes,...)
+TXMLP:: TXMLP(Int_t layers,Double_t inputRange,string netFile,Int_t innodes,...)
 : VSupervisedNet("XMLP",innodes,0,netFile) 
 {    
     Int_t I;
@@ -41,12 +41,12 @@ TXMLP:: TXMLP(Int_t layers,Double_t inputRange,const char* netFile,Int_t innodes
     fParm.fOutNodes = nodes[layers-1];
     
     for (I=0;I<fParm.fLayers;++I) {
-	if (I==0)
-	    fPerc[I] = new TPerceptron(fParm.fInNodes,nodes[I],step[I],func[I],I);
-	else
-	    fPerc[I] = new TPerceptron(fPerc[I-1],nodes[I],step[I],func[I],I);
-
-	TestPointer(fPerc[I]);
+        if (I==0)
+            fPerc[I] = new TPerceptron(fParm.fInNodes,nodes[I],step[I],func[I],I);
+        else
+            fPerc[I] = new TPerceptron(fPerc[I-1],nodes[I],step[I],func[I],I);
+        
+        TestPointer(fPerc[I]);
     }
     fOut = new Double_t[fParm.fOutNodes]; // As we did not know before, allocate here...
     TestPointer(fOut);
@@ -56,8 +56,8 @@ TXMLP:: TXMLP(Int_t layers,Double_t inputRange,const char* netFile,Int_t innodes
     delete[] func;
 }
 
-TXMLP:: TXMLP(Int_t layers,Double_t inputRange,const char* netFile,Int_t innodes,Int_t n0,Int_t n1,Int_t n2,Double_t s0,Double_t s1,Double_t s2,
-	      TNeuralNetParameters::TRANSFER f0,TNeuralNetParameters::TRANSFER f1,TNeuralNetParameters::TRANSFER f2)
+TXMLP:: TXMLP(Int_t layers,Double_t inputRange,string netFile,Int_t innodes,Int_t n0,Int_t n1,Int_t n2,Double_t s0,Double_t s1,Double_t s2,
+              TNeuralNetParameters::TRANSFER f0,TNeuralNetParameters::TRANSFER f1,TNeuralNetParameters::TRANSFER f2)
 : VSupervisedNet("XMLP",innodes,0,netFile) 
 {    
     Int_t I;
@@ -77,12 +77,12 @@ TXMLP:: TXMLP(Int_t layers,Double_t inputRange,const char* netFile,Int_t innodes
     fParm.fOutNodes = nodes[layers-1];
     
     for (I=0;I<fParm.fLayers;++I) {
-	if (I==0)
-	    fPerc[I] = new TPerceptron(fParm.fInNodes,nodes[I],step[I],func[I],I);
-	else
-	    fPerc[I] = new TPerceptron(fPerc[I-1],nodes[I],step[I],func[I],I);
-	
-	TestPointer(fPerc[I]);
+        if (I==0)
+            fPerc[I] = new TPerceptron(fParm.fInNodes,nodes[I],step[I],func[I],I);
+        else
+            fPerc[I] = new TPerceptron(fPerc[I-1],nodes[I],step[I],func[I],I);
+        
+        TestPointer(fPerc[I]);
     }
     fOut = new Double_t[fParm.fOutNodes]; // As we did not know before, allocate here...
     TestPointer(fOut);
@@ -97,12 +97,12 @@ void TXMLP:: AllocNet(void)
     fPerc = new TPerceptron*[fParm.fLayers]; TestPointer(fPerc); // MK: Allocation
     Int_t I;
     for (I=0;I<fParm.fLayers;++I) {
-	if (I==0)
-	    fPerc[I] = new TPerceptron();
-	else
-	    fPerc[I] = new TPerceptron(fPerc[I-1]);
-	
-	TestPointer(fPerc[I]);
+        if (I==0)
+            fPerc[I] = new TPerceptron();
+        else
+            fPerc[I] = new TPerceptron(fPerc[I-1]);
+        
+        TestPointer(fPerc[I]);
     }
 }
 
@@ -120,8 +120,8 @@ void TXMLP::ReadBinary(void)
     fread(&fParm,sizeof(TNeuralNetParameters),1,fFile);
     AllocNet();
     for (I=0;I<fParm.fLayers;++I) {
-	fPerc[I]->SetFile(fFile);
-	fPerc[I]->ReadBinary();
+        fPerc[I]->SetFile(fFile);
+        fPerc[I]->ReadBinary();
     }
 }
 
@@ -136,8 +136,8 @@ void  TXMLP::ReadText(void)
     fParm.fInScale = scale;
     AllocNet();
     for (I=0;I<fParm.fLayers;++I) {
-	fPerc[I]->SetFile(fFile);
-	fPerc[I]->ReadText();
+        fPerc[I]->SetFile(fFile);
+        fPerc[I]->ReadText();
     }
 }
 
@@ -146,8 +146,8 @@ void TXMLP::WriteBinary(void)
     Int_t I;
     fwrite(&fParm,sizeof(TNeuralNetParameters),1,fFile);
     for (I=0;I<fParm.fLayers;++I) {
-	fPerc[I]->SetFile(fFile);
-	fPerc[I]->WriteBinary();
+        fPerc[I]->SetFile(fFile);
+        fPerc[I]->WriteBinary();
     }
 }
 
@@ -157,8 +157,8 @@ void  TXMLP::WriteText(void)
     fprintf(fFile,"layers    %i\n",fParm.fLayers);
     fprintf(fFile,"in_scale  %le\n",fParm.fInScale);
     for (I=0;I<fParm.fLayers;++I) {
-	fPerc[I]->SetFile(fFile);
-	fPerc[I]->WriteText();
+        fPerc[I]->SetFile(fFile);
+        fPerc[I]->WriteText();
     }
 }
 
@@ -175,13 +175,13 @@ Double_t* TXMLP::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
     // recallstep of each perceptron
     for (I=0;I<fParm.fLayers;++I) fPerc[I]->Recall();
     for (I=0;I<fParm.fOutNodes;++I) fOut[I] = fPerc[fParm.fLayers-1]->fOut[I];
-
+    
     if (fPlotter) {
-	Bool_t good = kTRUE;
-	if (out!=0) good = out[0]>fParm.fThreshold;
-	fPlotter->AddTestSample(fOut[0],good);
+        Bool_t good = kTRUE;
+        if (out!=0) good = out[0]>fParm.fThreshold;
+        fPlotter->AddTestSample(fOut[0],good);
     }
-
+    
     return fOut;
 }
 
@@ -189,7 +189,7 @@ Double_t TXMLP::Train(NNO_INTYPE* in,NNO_OUTTYPE* trout)
 {
     Int_t I,J;
     fShouldSave = kTRUE;
-
+    
     // convert input
     NNO_INTYPE* i=in;
     Double_t* pi = fPerc[0]->fIn;
@@ -203,24 +203,24 @@ Double_t TXMLP::Train(NNO_INTYPE* in,NNO_OUTTYPE* trout)
     Double_t*   d = fPerc[fParm.fLayers-1]->fDiffSrc;
     Double_t* out = fPerc[fParm.fLayers-1]->fOut;
     NNO_OUTTYPE* tr_out=trout;
-    for (J=0;J<fParm.fOutNodes;++J) { 
-	*d = *tr_out++ - *out++; 
-	S_Err += *d * *d; 
-	d++; 
+    for (J=0;J<fParm.fOutNodes;++J) {
+        *d = *tr_out++ - *out++;
+        S_Err += *d * *d;
+        d++;
     }
-
+    
     for (I=fParm.fLayers-1;I>=0;--I) fPerc[I]->Train();
-
+    
     if (fPlotter) fPlotter->AddTrainSample(trout[0],trout[0]>fParm.fThreshold);
-
+    
     return S_Err;
 }
 
 void TXMLP::SetMomentumTerm(Double_t f)
 {
     for (int I=0;I<fParm.fLayers;++I) {
-	fParm.fMu = f;
-	TNeuralNetParameters &parm = fPerc[I]->GetParameters();
-	parm.fMu = f;
+        fParm.fMu = f;
+        TNeuralNetParameters &parm = fPerc[I]->GetParameters();
+        parm.fMu = f;
     }
 }

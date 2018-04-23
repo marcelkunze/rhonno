@@ -8,11 +8,13 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "TMath.h"
 #include "RhoNNO/TSGCS.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
 
 ClassImp(TSGCS)
+
+#include <cfloat>
+using namespace std;
 
 //cell states
 #define REMOVE 1
@@ -29,7 +31,7 @@ TSGCS::TSGCS(Int_t innodes,
              Int_t connectors,
              Long_t insertStep,
              Long_t deleteStep,
-             const char* netFile)
+             string netFile)
 : VSupervisedNet("SGCS",innodes,outnodes,netFile)
 {
     fXB.fWinStep	= winStep;
@@ -51,7 +53,7 @@ TSGCS::TSGCS(Int_t innodes,
 }
 
 // copy constructor
-TSGCS::TSGCS(const TSGCS& sgcs,const char* netFile)
+TSGCS::TSGCS(const TSGCS& sgcs,string netFile)
 : VSupervisedNet("SGCS",sgcs.fParm.fInNodes,sgcs.fParm.fOutNodes,netFile) 
 {
     fXB = sgcs.fXB;

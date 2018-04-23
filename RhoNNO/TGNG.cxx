@@ -8,15 +8,17 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "TMath.h"
 #include "RhoNNO/TGNG.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
 
 ClassImp(TGNG)
 
+#include <cfloat>
+using namespace std;
+
 TGNG::TGNG(Int_t innodes,Int_t maxCells,Double_t winStep,Double_t neiStep,
            Double_t aWinCount,Double_t aEdgeCount,Double_t minCount,Int_t connectors,
-           Long_t insertStep,Long_t deleteStep,const char* netFile)
+           Long_t insertStep,Long_t deleteStep,string netFile)
 : VUnsupervisedNet("GNG",innodes,maxCells,netFile)
 {
     fXB.fCells        = 2;
@@ -40,7 +42,7 @@ TGNG::TGNG(Int_t innodes,Int_t maxCells,Double_t winStep,Double_t neiStep,
 }
 
 // copy constructor
-TGNG::TGNG(const TGNG& gng,const char* netFile)
+TGNG::TGNG(const TGNG& gng,string netFile)
 : VUnsupervisedNet("GNG",gng.fParm.fInNodes,gng.fParm.fOutNodes,netFile) 
 {
     fXB = gng.fXB;

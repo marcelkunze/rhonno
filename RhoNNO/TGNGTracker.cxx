@@ -8,11 +8,11 @@
 // M.Kunze, Heidelberg University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include <TMath.h>
 #include <TNtuple.h>
 #include "RhoNNO/TGNGTracker.h"
 #include "RhoNNO/VNeuralNetPlotter.h"
 
+#include <cfloat>
 #include <iostream>
 using namespace std;
 
