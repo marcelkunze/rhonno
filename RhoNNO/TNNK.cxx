@@ -12,8 +12,6 @@
 #include "RhoNNO/VNeuralNetPlotter.h"
 
 #include <iostream>
-#include <string>
-
 using namespace std;
 
 ClassImp(TNNK)
@@ -209,10 +207,11 @@ void TNNKernel::SetHidden(Text_t *ttext)
     j=0;
     for (i=1;i<=fNHiddL;i++)
     {
-        TString number;
-        while(text[j]&&(text[j]!=':')){number.Append(text[j]);j++;}
+        string number;
+        string t;
+        while(text[j]&&(text[j]!=':')){t = text[j]; number.append(t);j++;}
         j++;
-        sscanf(number.Data(),"%i",&fNUnits[i]);
+        sscanf(number.data(),"%i",&fNUnits[i]);
         printf("%i \n",fNUnits[i]);
     }
     
