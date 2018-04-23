@@ -24,7 +24,7 @@ using namespace std;
 
 ClassImp(VNeuralNetPlotter)
 
-VNeuralNetPlotter::VNeuralNetPlotter(string name) : TNamed(name,name)
+VNeuralNetPlotter::VNeuralNetPlotter(string name) : TNamed(name.data(),name.data())
 {}
 
 void VNeuralNetPlotter::DrawT(Text_t *text, Float_t x, Float_t y, Float_t angle, Int_t color)
@@ -59,11 +59,11 @@ TSimpleNeuralNetPlotter::~TSimpleNeuralNetPlotter()
     if (fTstHistFalse!=0) { delete fTstHistFalse; }
     if (fTrnCurve!=0) { delete fTrnCurve; }
     if (fTstCurve!=0) { delete fTstCurve; }
-    delete [] fXtrn;
-    delete [] fYtrn;
-    delete [] fXtst;
-    delete [] fYtst;
-}	
+    if (fXtrn!=0) { delete [] fXtrn; }
+    if (fYtrn!=0) { delete [] fYtrn; }
+    if (fXtst!=0) { delete [] fXtst; }
+    if (fYtst!=0) { delete [] fYtst; }
+}
 
 void TSimpleNeuralNetPlotter::Initialize() 
 {

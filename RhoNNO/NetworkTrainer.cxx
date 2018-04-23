@@ -10,11 +10,26 @@
 // start         = epoch to start with (Default 1)
 // end           = epoch to end with (Default 200)
 
-#include "TROOT.h"
-#include "TApplication.h"
-#include "NetworkTrainer.h"
-#include <cstdlib>
+#include <TROOT.h>
+#include <TApplication.h>
+#include <TFile.h>
+#include "RhoNNO/NetworkTrainer.h"
+#include "RhoNNO/TDataServe.h"
+#include "RhoNNO/TNNK.h"
+#include "RhoNNO/TFD.h"
+#include "RhoNNO/TMLP.h"
+#include "RhoNNO/TXMLP.h"
+#include "RhoNNO/TSGNG.h"
+#include "RhoNNO/TSGCS.h"
+#include "RhoNNO/TGNG.h"
+#include "RhoNNO/TGCS.h"
+#include "RhoNNO/TLVQ.h"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
+#include <cstdlib>
 using namespace std;
 
 TROOT root("trainer","Network Trainer");
@@ -43,32 +58,6 @@ int main(int argc,char* argv[])
     
     return EXIT_SUCCESS;
 }
-
-#include "NetworkTrainer.h"
-
-#include "TFile.h"
-#include "TH1.h"
-#include "TRandom.h"
-#include "TObjString.h"
-
-#include "RhoNNO/VNeuralNet.h"
-#include "RhoNNO/VSupervisedNet.h"
-#include "RhoNNO/TNNK.h"
-#include "RhoNNO/TFD.h"
-#include "RhoNNO/TMLP.h"
-#include "RhoNNO/TXMLP.h"
-#include "RhoNNO/TSGNG.h"
-#include "RhoNNO/TSGCS.h"
-#include "RhoNNO/TGNG.h"
-#include "RhoNNO/TGCS.h"
-#include "RhoNNO/TLVQ.h"
-#include "RhoNNO/TDataServe.h"
-
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstdlib>
-using namespace std;
 
 NetworkTrainer::NetworkTrainer(string file,Int_t se,Int_t ee)
 : fVectorsEpoch(0), fNet(0), fMomentum(0.0), fPidDataServer(0), fTrainingServer(0),
