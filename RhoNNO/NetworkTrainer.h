@@ -31,6 +31,8 @@ const Double_t adaptRate	= 0.99;
 class NetworkTrainer : public TObject
 {
 private:
+    TDataServe *fPidDataServer, // input data set
+    *fTrainingServer;           // training data set
     Int_t	fStartEpoch;	    // first epoch and
     Int_t	fStopEpoch;	        // last epoch to be trained
     Int_t	fVectorsEpoch;	    // number of vectors per epoch
@@ -40,8 +42,6 @@ private:
     std::string	fNetworkPath;	// path to network directory
     VNeuralNet *fNet;		    // pointer to actual network
     Double_t	fMomentum;	    // momentum term
-    TDataServe *fPidDataServer,	// input data set
-    *fTrainingServer;           // training data set
     Int_t	fTrnMax,	        // number of training vectors
     fTstMax;	                // number of test vectors
     std::string	fModel;		    // name of network model
