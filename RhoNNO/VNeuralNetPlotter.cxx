@@ -62,7 +62,7 @@ TSimpleNeuralNetPlotter::~TSimpleNeuralNetPlotter()
     if (fYtrn!=nullptr) { delete [] fYtrn; fYtrn=nullptr;}
     if (fXtst!=nullptr) { delete [] fXtst; fXtst=nullptr;}
     if (fYtst!=nullptr) { delete [] fYtst; fYtst=nullptr;}
-    if (fCanvas!=nullptr) { fCanvas->Close(); delete fCanvas; fCanvas=nullptr;}
+    if (fCanvas!=nullptr) { fCanvas->Close(); /*delete fCanvas; fCanvas=nullptr;*/}
 }
 
 void TSimpleNeuralNetPlotter::Initialize() 

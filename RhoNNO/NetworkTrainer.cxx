@@ -196,7 +196,7 @@ void NetworkTrainer::SetupNetworks()
     
     if (fStartEpoch==1) {
         
-        cout << "Initializing " << fModel << " network";
+        cout << "Initializing " << fModel << " network" << endl;
         fNetworkFile = "NNO0001." + fModel;
         
         if (fModel == "TFD") {
