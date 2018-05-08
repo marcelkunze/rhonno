@@ -112,7 +112,7 @@ fBalance(kFALSE)
 {}
 
 TDataServe::TDataServe(string name,string title,const UInt_t in,const  UInt_t out):
-TNamed(name,title),
+TNamed(name.data(),title.data()),
 fInvecLen(in),
 fOutvecLen(out),
 fMaxvecs(0),
