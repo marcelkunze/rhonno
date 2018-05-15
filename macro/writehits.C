@@ -29,21 +29,22 @@
     TClonesArray *track = new TClonesArray("PndTrackCand");
     treereco->SetBranchAddress("SttMvdGemTrackCand",&track);
     
-   ofstream fdigi("digi0");
-    
     // event loop
-    for (Int_t evt = 0; evt < 5 /*treereco->GetEntriesFast()*/; evt++) {
+    for (Int_t evt = 0; evt < 100 /*treereco->GetEntriesFast()*/; evt++) {
         
         treepnt->GetEntry(evt);
         treedigi->GetEntry(evt);
         treereco->GetEntry(evt);
         cout << "Event " << evt << ": MC Hits " << digi->GetEntriesFast() << endl;
-        
+ 
+        string name = "digi" + to_string(evt);
+        ofstream fdigi(name);
         for (Int_t m = 0; m < digi->GetEntriesFast(); m++) {
             PndSttPoint *mcpoint = (PndSttPoint*) pnt->At(m);
             cout << m << ": x " << mcpoint->GetX() << " y " << mcpoint->GetY() << " z " << mcpoint->GetZ() << endl;
             fdigi << mcpoint->GetX() << "   " << mcpoint->GetY() << "   " << mcpoint->GetZ() << endl;
         }
+        fdigi.close();
         
         cout << "Event " << evt << ": num tracks " << track->GetEntriesFast() << endl;
 
