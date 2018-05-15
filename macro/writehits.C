@@ -41,6 +41,7 @@
         ofstream fdigi(name);
         for (Int_t m = 0; m < digi->GetEntriesFast(); m++) {
             PndSttPoint *mcpoint = (PndSttPoint*) pnt->At(m);
+            if (mcpoint==0) continue;
             cout << m << ": x " << mcpoint->GetX() << " y " << mcpoint->GetY() << " z " << mcpoint->GetZ() << endl;
             fdigi << mcpoint->GetX() << "   " << mcpoint->GetY() << "   " << mcpoint->GetZ() << endl;
         }
@@ -63,8 +64,10 @@
                Int_t hitindex = h.GetHitId();
                cout << " " << hitindex;
                PndSttHit* hit = (PndSttHit*) digi->At(hitindex);
+	       if (hit==0) continue;
                cout << " x " << hit->GetX() << " y " << hit->GetY() << " z " << hit->GetZ();
                PndSttPoint *mcpoint = (PndSttPoint*) pnt->At(hit->GetRefIndex());
+	       if (mcpoint==0) continue;
                cout << "  MC: x " << mcpoint->GetX() << " y " << mcpoint->GetY() << " z " << mcpoint->GetZ() << endl;
            }
             cout << endl;
