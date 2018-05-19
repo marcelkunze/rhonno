@@ -17,12 +17,13 @@ class TNtuple;
 
 typedef struct { double x,y,z; } HIT;
 typedef struct { double kappa,phi,gamma,sigma,density,x,y,z; std::vector<long> index; } RADON;
-double  radon_hit_density(RADON *t);
 
 class TRadon : public TObject {
 public:
     TRadon(double sigma=0.001, double threshold=10000.);
     std::vector<RADON>& Transform(std::vector<TVector3> &points);
+    long Density(RADON &t) { radon_hit_density(&t); return 0;}
+    long Density(RADON &t,std::vector<TVector3> &points);
     void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double radius, double phi, double gamma, double error=0.0);
     void Draw (Option_t *option="");
     ~TRadon();

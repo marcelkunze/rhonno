@@ -34,7 +34,7 @@ TRadon::TRadon(double sig, double thr) : sigma(sig), threshold(thr), Hlist(0)
 {
     nt1 = new TNtuple("RadonTransform","Radon Transform","kappa:phi:gamma:sigma:density:x:y:z");
     nt2 = new TNtuple("RadonTrackParameters","Radon Track Parameters","kappa:phi:gamma:sigma:density:x:y:z");
-
+    
     float gamma = -2.0;
     for (int i=0;i<NGAMMA;i++,gamma+=DGAMMA) {
         string name = "Gamma=" + to_string(gamma);
@@ -58,7 +58,7 @@ TRadon::~TRadon() {
 std::vector<RADON>& TRadon::Transform(std::vector<TVector3> &points)
 {
     hits = points;
-    double kappa,gamma,phi,density,d;
+    double kappa,gamma,phi;
     long k=0,g=0,p=0;
     
     gamma = -2.0;
@@ -74,44 +74,13 @@ std::vector<RADON>& TRadon::Transform(std::vector<TVector3> &points)
                 t.phi   = phi;
                 t.gamma = gamma;
                 t.sigma = sigma;
-                long i = 0;
-                long nhits = 0;
-                density=d=0.0;
-                vector<TVector3>::iterator it;
-                for(it = hits.begin(); it != hits.end(); it++, i++)    {
-                    TVector3 point=*it;
-                    t.x = point.x();
-                    t.y = point.y();
-                    t.z = point.z();
-                    d =  radon_hit_density(&t);
-                    density += d;
-                    t.density = density;
-                    if (d > 1.0) {
-                        // Suppress mirror points, as they yield the same radon value and do not belong to the same track
-                        static int oldsx, oldsy, oldsz;
-                        int sx = signum(t.x);
-                        int sy = signum(t.y);
-                        int sz = signum(t.z);
-                        if (nhits==0) { oldsx = sx; oldsy = sy; oldsz = sz;}
-                        if (sx==oldsx && sy==oldsy && sz==oldsz) {
-                            t.index.push_back(i); // Note the indices of the corresponding hits
-                            if (nhits==0) printf("\n\nr:%f k:%f p:%f g:%f",1./kappa,kappa,phi,gamma);
-                            printf("\nHit #%ld %f,%f,%f| : %f",i,t.x,t.y,t.z,d);
-                            nt1->Fill(t.kappa,t.phi,t.gamma,t.sigma,d,t.x,t.y,t.z);
-                            oldsx = sx;
-                            oldsy = sy;
-                            oldsz = sz;
-                        }
-                        else
-                            printf("\nMirror #%ld %f,%f,%f| : %f",i,t.x,t.y,t.z,d);
-                        
-                        nhits++;
-                    }
-                }
-                if (density > 1.0 && nhits > 3) {
-                    printf("\nDensity: %f",density);
+            
+                long nhits = Density(t,hits);
+                
+                if (t.density > threshold && nhits > 3) {
+                    printf("\nDensity: %f",t.density);
                     TH2D *h = (TH2D *) Hlist[(Int_t) g];
-                    h->Fill(1./kappa,phi,density);
+                    h->Fill(1./kappa,phi,t.density);
                     rt.push_back(t);  // Note the candidate track parameters
                 }
             }
@@ -119,6 +88,27 @@ std::vector<RADON>& TRadon::Transform(std::vector<TVector3> &points)
     }
     
     return rt;
+}
+
+long TRadon::Density(RADON &t, std::vector<TVector3> &points)
+{
+    long nhits = 0, index = 0;
+    double density = 0.0;
+    vector<TVector3>::iterator it;
+    for(it = points.begin(); it != points.end(); it++, index++)    {
+        TVector3 point=*it;
+        t.x = point.x();
+        t.y = point.y();
+        t.z = point.z();
+        double d =  radon_hit_density(&t);
+        density += d;
+        t.density = density;
+        if (d > 1.0) {
+            t.index.push_back(index);
+            nhits++;
+        }
+    }
+    return nhits;
 }
 
 double   TRadon::getEta_g(RADON *t)
@@ -193,7 +183,7 @@ void TRadon::GenerateTrack(std::vector<TVector3> &points, int np, double delta, 
 }
 
 void TRadon::Draw(Option_t *option) {
-    int n = 0;
+    int n = 1;
     vector<RADON>::iterator radon;
     for(radon = rt.begin(); radon != rt.end(); radon++)    {
         
@@ -204,7 +194,7 @@ void TRadon::Draw(Option_t *option) {
         for (unsigned long j = 0; j < t.index.size(); j++) {
             cout << t.index[j] << " ";
         }
-
+        
         nt2->Fill(t.kappa,t.phi,t.gamma,t.sigma,t.density,t.x,t.y,t.z); // Store results as ROOT ntuple
         
         if (t.density > threshold) {
@@ -221,11 +211,11 @@ void TRadon::Draw(Option_t *option) {
                     TVector3 p(x,y,z);
                     nt3.push_back(p);
                 }
-                
+            
             // Draw the track candidates
             TPolyMarker3D *hitmarker = new TPolyMarker3D(nt3.size());
             TPolyLine3D *connector = new TPolyLine3D(nt3.size());
-  
+            
             int j = 0;
             vector<TVector3>::iterator it;
             for(it = nt3.begin(); it != nt3.end(); it++, j++)    {
