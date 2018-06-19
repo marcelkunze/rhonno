@@ -9,9 +9,12 @@
 #include <TFile.h>
 #include "RhoNNO/TRadon.h"
 
+#include <geneva/Go2.hpp>
+
 #include <iostream>
 #include <fstream>
 using namespace std;
+using namespace Gem::Geneva;
 
 #define NHITS 50
 #define SIGMA 0.001
@@ -25,6 +28,12 @@ int main(int argc, char* argv[]) {
     TFile output("RadonOptimizer.root","RECREATE");
     
     TRadon radon(SIGMA,THRESHOLD);
+    
+    Go2 go(argc, argv, "./config/Go2.json");
+    GFMinIndividualFactory gfi("./config/GFMinIndividual.json");
+    GEvolutionaryAlgorithmFactory ea("./config/GEvolutionaryAlgorithm.json");
+    std::shared_ptr<GEvolutionaryAlgorithm> ea_ptr = ea.get<GEvolutionaryAlgorithm>();
+    go & ea_ptr;
     
     string filename("event");
     if (argc > 1) filename = argv[1];

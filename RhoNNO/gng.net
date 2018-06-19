@@ -1,0 +1,3726 @@
+C++  NEURAL NETWORK OBJECTS   VERSION 2.0ROOT
+(C) Copyright Johannes Steffens
+Filetype text
+
+network id  GNG
+innodes     3
+outnodes    285
+win_step     5.000000e-01
+nei_step     5.000000e-02
+a_win_count  8.000000e-01
+a_edge_count 1.000000e-02
+min_count    1.000000e-01
+cells        285
+connectors   3
+insert_step  100
+delete_step  500
+ins_count    0
+del_count    0
+
+main_win_count  1.000000e+00
+main_edge_count 1.000000e+00
+
+unit number    0
+square deviation 6.865327e-05
+count            5.483246e-146
+vector
+1.241394e-01
+1.206376e-01
+3.500000e-01
+
+connections 1
+connected with 279 
+edge count nan 
+class            0
+
+unit number    1
+square deviation 7.494792e-05
+count            1.486872e-146
+vector
+1.745205e-01
+6.035953e-02
+3.500000e-01
+
+connections 1
+connected with 182 
+edge count 5.995722e-08 
+class            0
+
+unit number    2
+square deviation 7.958075e-05
+count            2.694149e-146
+vector
+1.920138e-01
+1.048587e-02
+3.500000e-01
+
+connections 2
+connected with 163 28 
+edge count nan nan 
+class            0
+
+unit number    3
+square deviation 9.983824e-03
+count            5.759297e-147
+vector
+1.663059e-01
+1.521693e-02
+3.500000e-01
+
+connections 1
+connected with 12 
+edge count nan 
+class            0
+
+unit number    4
+square deviation 7.528224e-05
+count            1.554168e-146
+vector
+-1.578687e-01
+-1.310538e-01
+3.500000e-01
+
+connections 1
+connected with 262 
+edge count 5.571517e-16 
+class            0
+
+unit number    5
+square deviation 9.257068e-05
+count            1.486877e-146
+vector
+-3.840290e-01
+1.005191e-01
+3.500000e-01
+
+connections 1
+connected with 217 
+edge count 6.641607e-12 
+class            0
+
+unit number    6
+square deviation 7.395820e-05
+count            5.174141e-146
+vector
+-1.498724e-01
+1.067287e-01
+3.500000e-01
+
+connections 1
+connected with 184 
+edge count 1.275942e-10 
+class            0
+
+unit number    7
+square deviation 3.931988e-07
+count            3.528323e-216
+vector
+4.373430e-02
+-1.672771e-01
+3.500000e-01
+
+connections 1
+connected with 284 
+edge count 5.095868e-11 
+class            0
+
+unit number    8
+square deviation 7.496403e-05
+count            1.487192e-146
+vector
+3.622619e-02
+3.116450e-01
+8.971197e-01
+
+connections 1
+connected with 88 
+edge count 2.774399e-11 
+class            0
+
+unit number    9
+square deviation 9.440863e-05
+count            1.486839e-146
+vector
+6.997490e-02
+3.929381e-01
+3.500000e-01
+
+connections 1
+connected with 205 
+edge count 3.583903e-10 
+class            0
+
+unit number    10
+square deviation 8.456086e-05
+count            1.884791e-216
+vector
+3.761150e-01
+-1.454881e-01
+3.500000e-01
+
+connections 1
+connected with 222 
+edge count nan 
+class            0
+
+unit number    11
+square deviation 6.626709e-05
+count            8.810951e-147
+vector
+1.575864e-01
+1.313828e-01
+3.500000e-01
+
+connections 1
+connected with 168 
+edge count 1.535262e-07 
+class            0
+
+unit number    12
+square deviation 2.843728e-02
+count            0.000000e+00
+vector
+1.937505e-01
+6.631706e-02
+2.686403e-01
+
+connections 2
+connected with 3 13 
+edge count nan nan 
+class            0
+
+unit number    13
+square deviation 4.689073e-02
+count            2.007229e-166
+vector
+2.534040e-01
+1.771200e-01
+9.241630e-02
+
+connections 1
+connected with 12 
+edge count nan 
+class            0
+
+unit number    14
+square deviation 8.202486e-02
+count            0.000000e+00
+vector
+-1.313504e-01
+-1.744864e-01
+5.549924e-01
+
+connections 1
+connected with 29 
+edge count 0.000000e+00 
+class            0
+
+unit number    15
+square deviation 1.383233e-03
+count            0.000000e+00
+vector
+-2.086932e-01
+-1.407623e-01
+3.500000e-01
+
+connections 1
+connected with 271 
+edge count 6.933819e-53 
+class            0
+
+unit number    16
+square deviation 7.497637e-05
+count            1.885550e-216
+vector
+2.379345e-01
+9.567324e-02
+4.369441e-01
+
+connections 1
+connected with 124 
+edge count 1.636693e-09 
+class            0
+
+unit number    17
+square deviation 1.301419e-02
+count            0.000000e+00
+vector
+3.792670e-02
+-2.870450e-01
+8.213950e-01
+
+connections 1
+connected with 29 
+edge count 5.538158e-12 
+class            0
+
+unit number    18
+square deviation 8.497132e-05
+count            2.044601e-216
+vector
+-1.220206e-01
+-3.335477e-01
+3.500000e-01
+
+connections 1
+connected with 264 
+edge count 3.179852e-13 
+class            0
+
+unit number    19
+square deviation 4.138911e-05
+count            0.000000e+00
+vector
+5.228870e-02
+-2.440740e-01
+1.956320e-01
+
+connections 1
+connected with 72 
+edge count 1.452653e-11 
+class            0
+
+unit number    20
+square deviation 1.942939e-04
+count            1.009432e-146
+vector
+1.403073e-01
+1.415714e-01
+3.500000e-01
+
+connections 1
+connected with 259 
+edge count nan 
+class            0
+
+unit number    21
+square deviation 7.927186e-05
+count            1.884805e-216
+vector
+-7.955474e-02
+-3.277690e-01
+3.500000e-01
+
+connections 1
+connected with 215 
+edge count 7.172083e-13 
+class            0
+
+unit number    22
+square deviation 3.559824e-07
+count            0.000000e+00
+vector
+1.744203e-01
+8.050168e-02
+3.500000e-01
+
+connections 1
+connected with 150 
+edge count 1.006085e-07 
+class            0
+
+unit number    23
+square deviation 7.485988e-05
+count            1.485126e-146
+vector
+2.410819e-01
+1.687916e-01
+6.284047e-01
+
+connections 1
+connected with 91 
+edge count 2.810382e-10 
+class            0
+
+unit number    24
+square deviation 8.422821e-05
+count            6.985362e-216
+vector
+4.373430e-02
+-1.758276e-01
+3.500000e-01
+
+connections 1
+connected with 284 
+edge count 4.780892e-11 
+class            0
+
+unit number    25
+square deviation 7.494622e-05
+count            1.486838e-146
+vector
+1.924310e-01
+7.118095e-02
+3.500000e-01
+
+connections 1
+connected with 227 
+edge count 3.122327e-08 
+class            0
+
+unit number    26
+square deviation 1.193541e-06
+count            0.000000e+00
+vector
+-3.670104e-01
+-9.193231e-02
+3.500000e-01
+
+connections 1
+connected with 200 
+edge count 1.137414e-13 
+class            0
+
+unit number    27
+square deviation 6.833092e-05
+count            8.779770e-217
+vector
+4.373430e-02
+-1.874230e-01
+3.500000e-01
+
+connections 1
+connected with 113 
+edge count 3.817923e-11 
+class            0
+
+unit number    28
+square deviation 9.357263e-05
+count            1.494981e-146
+vector
+1.841019e-01
+1.490876e-02
+3.500000e-01
+
+connections 2
+connected with 2 186 
+edge count nan 2.617311e-05 
+class            0
+
+unit number    29
+square deviation 4.751953e-02
+count            0.000000e+00
+vector
+-7.105241e-02
+-2.533883e-01
+8.236250e-01
+
+connections 2
+connected with 14 17 
+edge count 0.000000e+00 8.996601e-08 
+class            0
+
+unit number    30
+square deviation 3.013804e-05
+count            5.463478e-167
+vector
+-1.414020e-01
+1.926240e-01
+3.500000e-01
+
+connections 1
+connected with 161 
+edge count 1.533007e-10 
+class            0
+
+unit number    31
+square deviation 1.190240e-06
+count            0.000000e+00
+vector
+2.183139e-01
+6.668089e-02
+3.500000e-01
+
+connections 1
+connected with 276 
+edge count 1.005662e-08 
+class            0
+
+unit number    32
+square deviation 7.487017e-05
+count            1.486501e-146
+vector
+-2.926117e-01
+-1.882005e-01
+8.281117e-01
+
+connections 1
+connected with 245 
+edge count 2.740405e-12 
+class            0
+
+unit number    33
+square deviation 7.499953e-05
+count            1.487896e-146
+vector
+2.379345e-01
+9.205057e-03
+3.500000e-01
+
+connections 1
+connected with 214 
+edge count 5.532815e-09 
+class            0
+
+unit number    34
+square deviation 9.256831e-05
+count            1.884793e-216
+vector
+2.186710e-01
+3.373881e-01
+3.500000e-01
+
+connections 1
+connected with 216 
+edge count 1.039249e-11 
+class            0
+
+unit number    35
+square deviation 7.075416e-05
+count            8.810946e-147
+vector
+-2.008912e-01
+3.518442e-02
+3.500000e-01
+
+connections 1
+connected with 169 
+edge count 1.138686e-11 
+class            0
+
+unit number    36
+square deviation 1.612813e-04
+count            2.174357e-163
+vector
+2.018740e-01
+1.577100e-01
+2.921240e-01
+
+connections 1
+connected with 128 
+edge count 2.274189e-09 
+class            0
+
+unit number    37
+square deviation 7.494785e-05
+count            1.884831e-216
+vector
+3.752819e-01
+1.358691e-01
+3.500000e-01
+
+connections 1
+connected with 190 
+edge count 3.745143e-11 
+class            0
+
+unit number    38
+square deviation 7.425345e-05
+count            6.752871e-146
+vector
+-1.674011e-01
+2.594922e-02
+3.500000e-01
+
+connections 1
+connected with 146 
+edge count 1.263290e-11 
+class            0
+
+unit number    39
+square deviation 7.932179e-05
+count            8.365581e-147
+vector
+1.479391e-01
+1.463186e-01
+3.500000e-01
+
+connections 1
+connected with 185 
+edge count 1.687972e-09 
+class            0
+
+unit number    40
+square deviation 8.789807e-04
+count            7.407063e-164
+vector
+3.101260e-01
+1.415690e-01
+1.805390e-01
+
+connections 1
+connected with 57 
+edge count 1.655176e-10 
+class            0
+
+unit number    41
+square deviation 1.714340e-06
+count            1.415101e-146
+vector
+1.115171e-01
+-2.831526e-01
+3.500000e-01
+
+connections 1
+connected with 280 
+edge count 2.063951e-11 
+class            0
+
+unit number    42
+square deviation 2.284706e-04
+count            5.666071e-216
+vector
+2.809250e-01
+2.774716e-02
+3.500000e-01
+
+connections 1
+connected with 139 
+edge count 4.904386e-10 
+class            0
+
+unit number    43
+square deviation 7.488700e-05
+count            6.291780e-146
+vector
+-1.826117e-01
+2.586907e-02
+3.500000e-01
+
+connections 1
+connected with 146 
+edge count 9.148204e-12 
+class            0
+
+unit number    44
+square deviation 7.494089e-05
+count            1.517714e-146
+vector
+1.324560e-01
+-2.474321e-01
+3.500000e-01
+
+connections 1
+connected with 261 
+edge count 3.567655e-11 
+class            0
+
+unit number    45
+square deviation 7.500553e-05
+count            1.488015e-146
+vector
+1.935447e-01
+1.875801e-01
+3.500000e-01
+
+connections 1
+connected with 159 
+edge count 2.550116e-12 
+class            0
+
+unit number    46
+square deviation 6.630036e-05
+count            5.178220e-146
+vector
+6.874911e-02
+3.166154e-01
+3.500000e-01
+
+connections 1
+connected with 165 
+edge count 2.179505e-09 
+class            0
+
+unit number    47
+square deviation 6.269805e-05
+count            1.239310e-147
+vector
+1.663107e-01
+-2.776813e-01
+3.500000e-01
+
+connections 1
+connected with 269 
+edge count 3.260479e-11 
+class            0
+
+unit number    48
+square deviation 3.386634e-05
+count            5.379930e-149
+vector
+4.023550e-01
+-4.037107e-02
+3.500000e-01
+
+connections 1
+connected with 140 
+edge count 1.230553e-10 
+class            0
+
+unit number    49
+square deviation 9.236970e-05
+count            1.486869e-146
+vector
+3.140539e-01
+-2.529810e-01
+3.500000e-01
+
+connections 1
+connected with 183 
+edge count 1.039537e-10 
+class            0
+
+unit number    50
+square deviation 2.276819e-04
+count            4.469733e-146
+vector
+2.671355e-01
+8.543292e-02
+3.500000e-01
+
+connections 1
+connected with 119 
+edge count 1.643466e-09 
+class            0
+
+unit number    51
+square deviation 7.494601e-05
+count            1.884787e-216
+vector
+2.624060e-02
+-2.262881e-01
+3.500000e-01
+
+connections 1
+connected with 210 
+edge count 6.883553e-12 
+class            0
+
+unit number    52
+square deviation 7.062850e-05
+count            8.810973e-147
+vector
+-3.150304e-01
+-1.919828e-01
+3.500000e-01
+
+connections 1
+connected with 180 
+edge count 6.990630e-16 
+class            0
+
+unit number    53
+square deviation 7.494833e-05
+count            1.486884e-146
+vector
+3.240505e-01
+-5.290477e-03
+3.500000e-01
+
+connections 1
+connected with 234 
+edge count 9.688535e-10 
+class            0
+
+unit number    54
+square deviation 7.485987e-05
+count            1.485185e-146
+vector
+2.066461e-01
+1.554367e-01
+1.956288e-01
+
+connections 1
+connected with 236 
+edge count 2.103979e-09 
+class            0
+
+unit number    55
+square deviation 8.397760e-05
+count            1.507990e-146
+vector
+-2.278990e-01
+4.045738e-02
+3.500000e-01
+
+connections 1
+connected with 58 
+edge count 3.793361e-12 
+class            0
+
+unit number    56
+square deviation 7.492160e-05
+count            1.900316e-216
+vector
+3.236341e-01
+-2.573293e-02
+3.500000e-01
+
+connections 1
+connected with 256 
+edge count 3.171753e-10 
+class            0
+
+unit number    57
+square deviation 8.789807e-04
+count            0.000000e+00
+vector
+2.811778e-01
+1.462441e-01
+1.849120e-01
+
+connections 1
+connected with 40 
+edge count 2.664522e-10 
+class            0
+
+unit number    58
+square deviation 8.771142e-05
+count            2.137670e-147
+vector
+-2.369763e-01
+4.171416e-02
+3.500000e-01
+
+connections 2
+connected with 189 55 
+edge count 3.606021e-16 7.381151e-08 
+class            0
+
+unit number    59
+square deviation 7.499071e-05
+count            1.487721e-146
+vector
+1.690587e-01
+2.262971e-01
+3.500000e-01
+
+connections 1
+connected with 193 
+edge count 1.162962e-09 
+class            0
+
+unit number    60
+square deviation 4.550878e-05
+count            0.000000e+00
+vector
+2.462700e-01
+1.667580e-01
+7.249030e-01
+
+connections 1
+connected with 131 
+edge count 5.575227e-11 
+class            0
+
+unit number    61
+square deviation 3.442447e-05
+count            8.245134e-154
+vector
+-2.588051e-01
+5.182654e-02
+3.500000e-01
+
+connections 1
+connected with 192 
+edge count 4.028701e-12 
+class            0
+
+unit number    62
+square deviation 7.500009e-05
+count            1.886146e-216
+vector
+2.805085e-01
+1.204578e-01
+3.500000e-01
+
+connections 1
+connected with 207 
+edge count 3.669506e-10 
+class            0
+
+unit number    63
+square deviation 6.626332e-05
+count            8.810951e-147
+vector
+1.750804e-01
+1.414828e-01
+3.500000e-01
+
+connections 1
+connected with 100 
+edge count 7.292835e-09 
+class            0
+
+unit number    64
+square deviation 7.991996e-05
+count            1.407412e-146
+vector
+1.840871e-01
+-2.779876e-01
+3.500000e-01
+
+connections 1
+connected with 198 
+edge count 3.556665e-11 
+class            0
+
+unit number    65
+square deviation 7.499553e-05
+count            1.487820e-146
+vector
+2.108688e-01
+2.267383e-01
+3.500000e-01
+
+connections 1
+connected with 225 
+edge count 1.899824e-11 
+class            0
+
+unit number    66
+square deviation 3.602128e-05
+count            1.230392e-153
+vector
+3.013790e-01
+-1.642796e-02
+3.500000e-01
+
+connections 1
+connected with 157 
+edge count 6.602367e-10 
+class            0
+
+unit number    67
+square deviation 7.493734e-05
+count            1.486341e-146
+vector
+2.103414e-01
+-2.825595e-01
+3.500000e-01
+
+connections 1
+connected with 84 
+edge count 7.482155e-11 
+class            0
+
+unit number    68
+square deviation 7.494629e-05
+count            1.486835e-146
+vector
+2.011780e-01
+2.580310e-01
+3.500000e-01
+
+connections 1
+connected with 228 
+edge count 1.184213e-10 
+class            0
+
+unit number    69
+square deviation 7.494895e-05
+count            1.486619e-146
+vector
+3.415435e-01
+-1.539046e-02
+3.500000e-01
+
+connections 1
+connected with 92 
+edge count 6.931026e-10 
+class            0
+
+unit number    70
+square deviation 7.494749e-05
+count            1.892415e-216
+vector
+3.323815e-01
+-4.953717e-02
+3.500000e-01
+
+connections 1
+connected with 76 
+edge count 2.224482e-10 
+class            0
+
+unit number    71
+square deviation 7.493917e-05
+count            1.492169e-146
+vector
+3.240513e-01
+1.664091e-01
+3.500000e-01
+
+connections 1
+connected with 253 
+edge count 8.395767e-11 
+class            0
+
+unit number    72
+square deviation 4.138911e-05
+count            0.000000e+00
+vector
+5.289717e-02
+-2.439207e-01
+2.020348e-01
+
+connections 1
+connected with 19 
+edge count 1.462364e-11 
+class            0
+
+unit number    73
+square deviation 7.494800e-05
+count            1.884885e-216
+vector
+3.240505e-01
+1.260095e-01
+3.500000e-01
+
+connections 1
+connected with 233 
+edge count 1.152250e-10 
+class            0
+
+unit number    74
+square deviation 3.201848e-04
+count            0.000000e+00
+vector
+2.871897e-01
+1.521093e-01
+8.691208e-02
+
+connections 1
+connected with 188 
+edge count 1.127640e-10 
+class            0
+
+unit number    75
+square deviation 7.504264e-05
+count            1.486745e-146
+vector
+-2.880061e-01
+5.629439e-02
+3.500000e-01
+
+connections 1
+connected with 143 
+edge count 7.204209e-12 
+class            0
+
+unit number    76
+square deviation 7.494749e-05
+count            1.876972e-216
+vector
+3.323803e-01
+-4.087995e-02
+3.500000e-01
+
+connections 1
+connected with 70 
+edge count 2.368107e-10 
+class            0
+
+unit number    77
+square deviation 6.625796e-05
+count            8.810749e-147
+vector
+5.248110e-02
+3.435656e-01
+3.500000e-01
+
+connections 1
+connected with 220 
+edge count 1.305617e-09 
+class            0
+
+unit number    78
+square deviation 7.503487e-05
+count            1.475516e-146
+vector
+-3.017939e-01
+6.723695e-02
+3.500000e-01
+
+connections 1
+connected with 177 
+edge count 7.862550e-12 
+class            0
+
+unit number    79
+square deviation 7.494674e-05
+count            1.884789e-216
+vector
+3.498740e-01
+-7.118095e-02
+3.500000e-01
+
+connections 1
+connected with 202 
+edge count 1.431513e-10 
+class            0
+
+unit number    80
+square deviation 7.753550e-05
+count            7.115099e-147
+vector
+6.151613e-02
+-2.173164e-01
+3.500000e-01
+
+connections 1
+connected with 164 
+edge count 4.163993e-11 
+class            0
+
+unit number    81
+square deviation 7.450253e-05
+count            1.487448e-146
+vector
+-1.578596e-01
+1.315406e-01
+3.500000e-01
+
+connections 1
+connected with 247 
+edge count 5.976928e-11 
+class            0
+
+unit number    82
+square deviation 7.494866e-05
+count            1.486837e-146
+vector
+2.015945e-01
+2.779905e-01
+3.500000e-01
+
+connections 1
+connected with 148 
+edge count 8.692036e-11 
+class            0
+
+unit number    83
+square deviation 8.197776e-05
+count            2.833530e-148
+vector
+7.700646e-02
+-2.639114e-01
+3.500000e-01
+
+connections 1
+connected with 224 
+edge count 3.425491e-11 
+class            0
+
+unit number    84
+square deviation 7.493734e-05
+count            1.486072e-146
+vector
+2.178382e-01
+-2.782310e-01
+3.500000e-01
+
+connections 1
+connected with 67 
+edge count 7.997203e-11 
+class            0
+
+unit number    85
+square deviation 7.966520e-05
+count            1.883672e-216
+vector
+2.099250e-01
+2.933808e-01
+3.500000e-01
+
+connections 1
+connected with 219 
+edge count 1.607875e-11 
+class            0
+
+unit number    86
+square deviation 7.497910e-05
+count            1.482347e-146
+vector
+2.453274e-01
+-2.729409e-01
+3.500000e-01
+
+connections 1
+connected with 101 
+edge count 8.893523e-11 
+class            0
+
+unit number    87
+square deviation 6.218308e-05
+count            6.386991e-146
+vector
+-1.651897e-01
+1.450215e-01
+3.500000e-01
+
+connections 1
+connected with 175 
+edge count 4.037424e-18 
+class            0
+
+unit number    88
+square deviation 7.496403e-05
+count            1.487192e-146
+vector
+3.622876e-02
+3.029870e-01
+8.970631e-01
+
+connections 1
+connected with 8 
+edge count 2.835733e-11 
+class            0
+
+unit number    89
+square deviation 8.779183e-05
+count            1.486869e-146
+vector
+-3.490409e-01
+-2.015191e-01
+3.500000e-01
+
+connections 1
+connected with 208 
+edge count 1.653193e-15 
+class            0
+
+unit number    90
+square deviation 7.890228e-05
+count            8.810723e-147
+vector
+-1.574430e-01
+1.518311e-01
+3.500000e-01
+
+connections 1
+connected with 212 
+edge count 1.466089e-10 
+class            0
+
+unit number    91
+square deviation 7.485988e-05
+count            1.485126e-146
+vector
+2.335931e-01
+1.644587e-01
+6.283482e-01
+
+connections 1
+connected with 23 
+edge count 3.064280e-10 
+class            0
+
+unit number    92
+square deviation 7.494895e-05
+count            1.486669e-146
+vector
+3.490410e-01
+-1.971903e-02
+3.500000e-01
+
+connections 1
+connected with 69 
+edge count 6.053113e-10 
+class            0
+
+unit number    93
+square deviation 4.369626e-05
+count            0.000000e+00
+vector
+2.599462e-01
+2.166495e-03
+3.500000e-01
+
+connections 1
+connected with 112 
+edge count 1.592063e-12 
+class            0
+
+unit number    94
+square deviation 7.497912e-05
+count            1.486877e-146
+vector
+3.665350e-01
+1.620809e-01
+3.500000e-01
+
+connections 1
+connected with 199 
+edge count 6.014672e-11 
+class            0
+
+unit number    95
+square deviation 7.591566e-05
+count            1.492925e-146
+vector
+-3.240514e-01
+7.550904e-02
+3.500000e-01
+
+connections 1
+connected with 149 
+edge count 2.665087e-51 
+class            0
+
+unit number    96
+square deviation 8.346593e-05
+count            1.884287e-216
+vector
+3.586209e-01
+-8.633089e-02
+3.500000e-01
+
+connections 1
+connected with 239 
+edge count 1.163827e-10 
+class            0
+
+unit number    97
+square deviation 7.497915e-05
+count            1.482367e-146
+vector
+3.415426e-01
+1.664093e-01
+3.500000e-01
+
+connections 1
+connected with 196 
+edge count 6.916405e-11 
+class            0
+
+unit number    98
+square deviation 7.201367e-05
+count            4.670260e-147
+vector
+-3.408728e-01
+7.566025e-02
+3.500000e-01
+
+connections 1
+connected with 249 
+edge count 3.359496e-12 
+class            0
+
+unit number    99
+square deviation 7.494814e-05
+count            1.884841e-216
+vector
+2.265850e-01
+1.005191e-01
+3.500000e-01
+
+connections 1
+connected with 213 
+edge count 4.180102e-09 
+class            0
+
+unit number    100
+square deviation 6.626332e-05
+count            5.172154e-146
+vector
+1.821301e-01
+1.455528e-01
+3.500000e-01
+
+connections 1
+connected with 63 
+edge count 3.074938e-09 
+class            0
+
+unit number    101
+square deviation 7.497910e-05
+count            1.479952e-146
+vector
+2.528277e-01
+-2.772682e-01
+3.500000e-01
+
+connections 1
+connected with 86 
+edge count 8.565433e-11 
+class            0
+
+unit number    102
+square deviation 7.499071e-05
+count            1.487721e-146
+vector
+1.521466e-01
+1.955588e-01
+3.500000e-01
+
+connections 1
+connected with 173 
+edge count 7.568931e-09 
+class            0
+
+unit number    103
+square deviation 7.075303e-05
+count            5.174939e-146
+vector
+5.365665e-02
+3.642787e-01
+3.500000e-01
+
+connections 1
+connected with 117 
+edge count 9.038761e-10 
+class            0
+
+unit number    104
+square deviation 7.500009e-05
+count            1.886147e-216
+vector
+3.017955e-01
+1.051788e-01
+3.500000e-01
+
+connections 1
+connected with 204 
+edge count 3.086471e-10 
+class            0
+
+unit number    105
+square deviation 6.893194e-05
+count            1.298016e-216
+vector
+2.010295e-01
+8.609033e-02
+3.500000e-01
+
+connections 1
+connected with 162 
+edge count 1.881985e-11 
+class            0
+
+unit number    106
+square deviation 1.002305e-04
+count            8.841208e-147
+vector
+-3.319008e-01
+-1.925022e-01
+3.500000e-01
+
+connections 1
+connected with 208 
+edge count 4.385166e-28 
+class            0
+
+unit number    107
+square deviation 6.233985e-05
+count            1.072642e-145
+vector
+2.740206e-02
+-1.975155e-01
+3.500000e-01
+
+connections 1
+connected with 278 
+edge count 1.128434e-38 
+class            0
+
+unit number    108
+square deviation 6.821361e-05
+count            1.597175e-146
+vector
+1.482487e-01
+1.264679e-01
+3.500000e-01
+
+connections 1
+connected with 242 
+edge count 6.033123e-07 
+class            0
+
+unit number    109
+square deviation 8.654202e-05
+count            2.807443e-146
+vector
+2.102597e-01
+1.110019e-02
+3.500000e-01
+
+connections 1
+connected with 166 
+edge count 1.455157e-14 
+class            0
+
+unit number    110
+square deviation 7.493530e-05
+count            1.884543e-216
+vector
+3.402941e-01
+1.267310e-01
+3.500000e-01
+
+connections 1
+connected with 230 
+edge count 8.289126e-11 
+class            0
+
+unit number    111
+square deviation 7.494998e-05
+count            1.486511e-146
+vector
+3.665350e-01
+-1.971907e-02
+3.500000e-01
+
+connections 1
+connected with 197 
+edge count 4.639937e-10 
+class            0
+
+unit number    112
+square deviation 4.369626e-05
+count            2.824378e-217
+vector
+2.588928e-01
+8.692328e-03
+3.500000e-01
+
+connections 1
+connected with 93 
+edge count 6.672494e-10 
+class            0
+
+unit number    113
+square deviation 6.833092e-05
+count            1.021613e-145
+vector
+4.373430e-02
+-1.956893e-01
+3.500000e-01
+
+connections 1
+connected with 27 
+edge count 3.587948e-11 
+class            0
+
+unit number    114
+square deviation 7.031675e-05
+count            1.415937e-146
+vector
+-1.665899e-01
+-1.163957e-01
+3.500000e-01
+
+connections 1
+connected with 265 
+edge count 3.012748e-77 
+class            0
+
+unit number    115
+square deviation 7.705533e-05
+count            1.245612e-146
+vector
+4.407281e-02
+-2.073314e-01
+3.500000e-01
+
+connections 1
+connected with 226 
+edge count 2.333717e-15 
+class            0
+
+unit number    116
+square deviation 7.494623e-05
+count            1.486839e-146
+vector
+1.574430e-01
+1.620809e-01
+3.500000e-01
+
+connections 1
+connected with 171 
+edge count 4.333267e-12 
+class            0
+
+unit number    117
+square deviation 7.075303e-05
+count            8.810800e-147
+vector
+6.094122e-02
+3.684844e-01
+3.500000e-01
+
+connections 1
+connected with 103 
+edge count 8.284407e-10 
+class            0
+
+unit number    118
+square deviation 7.641946e-05
+count            1.322981e-146
+vector
+2.802725e-01
+-2.628575e-01
+3.500000e-01
+
+connections 1
+connected with 121 
+edge count 9.930231e-11 
+class            0
+
+unit number    119
+square deviation 1.530093e-04
+count            6.400344e-216
+vector
+2.599806e-01
+9.871785e-02
+3.500000e-01
+
+connections 2
+connected with 50 122 
+edge count 6.255734e-14 3.620710e-08 
+class            0
+
+unit number    120
+square deviation 7.494841e-05
+count            1.486816e-146
+vector
+-3.577880e-01
+8.536905e-02
+3.500000e-01
+
+connections 1
+connected with 232 
+edge count 6.749529e-12 
+class            0
+
+unit number    121
+square deviation 7.641946e-05
+count            1.177675e-146
+vector
+2.878926e-01
+-2.671417e-01
+3.500000e-01
+
+connections 1
+connected with 118 
+edge count 9.455381e-11 
+class            0
+
+unit number    122
+square deviation 7.833676e-05
+count            1.886081e-216
+vector
+2.667189e-01
+1.044564e-01
+3.500000e-01
+
+connections 1
+connected with 119 
+edge count 8.409711e-10 
+class            0
+
+unit number    123
+square deviation 8.346696e-05
+count            1.486743e-146
+vector
+-3.677845e-01
+9.114046e-02
+3.500000e-01
+
+connections 1
+connected with 217 
+edge count 3.364636e-12 
+class            0
+
+unit number    124
+square deviation 7.497637e-05
+count            1.885550e-216
+vector
+2.454319e-01
+1.000047e-01
+4.370007e-01
+
+connections 1
+connected with 16 
+edge count 1.275582e-09 
+class            0
+
+unit number    125
+square deviation 8.454967e-05
+count            1.884513e-216
+vector
+2.178380e-01
+3.075691e-01
+3.500000e-01
+
+connections 1
+connected with 219 
+edge count 2.224763e-11 
+class            0
+
+unit number    126
+square deviation 7.494975e-05
+count            1.486882e-146
+vector
+3.840290e-01
+-2.981905e-02
+3.500000e-01
+
+connections 1
+connected with 237 
+edge count 3.502048e-10 
+class            0
+
+unit number    127
+square deviation 9.934387e-05
+count            8.940182e-147
+vector
+-1.571566e-01
+1.709865e-01
+3.500000e-01
+
+connections 1
+connected with 152 
+edge count 5.410696e-18 
+class            0
+
+unit number    128
+square deviation 1.612813e-04
+count            0.000000e+00
+vector
+2.016596e-01
+1.553204e-01
+3.045950e-01
+
+connections 1
+connected with 36 
+edge count 1.970606e-09 
+class            0
+
+unit number    129
+square deviation 5.069684e-05
+count            8.645605e-150
+vector
+1.495334e-01
+-2.471783e-01
+3.500000e-01
+
+connections 1
+connected with 255 
+edge count 4.084699e-11 
+class            0
+
+unit number    130
+square deviation 7.792118e-05
+count            1.371927e-216
+vector
+3.671049e-01
+-1.114149e-01
+3.500000e-01
+
+connections 1
+connected with 250 
+edge count 4.417112e-14 
+class            0
+
+unit number    131
+square deviation 2.378540e-03
+count            0.000000e+00
+vector
+2.459659e-01
+1.669336e-01
+7.181661e-01
+
+connections 2
+connected with 134 60 
+edge count 0.000000e+00 3.120500e-07 
+class            0
+
+unit number    132
+square deviation 7.794057e-05
+count            2.973753e-146
+vector
+2.265850e-01
+1.058095e-02
+3.500000e-01
+
+connections 1
+connected with 166 
+edge count 1.052197e-08 
+class            0
+
+unit number    133
+square deviation 8.456434e-05
+count            1.710398e-216
+vector
+-1.053597e-01
+-3.335274e-01
+3.500000e-01
+
+connections 1
+connected with 264 
+edge count 2.210803e-13 
+class            0
+
+unit number    134
+square deviation 4.711570e-03
+count            0.000000e+00
+vector
+2.428714e-01
+1.687202e-01
+6.496183e-01
+
+connections 1
+connected with 131 
+edge count 1.802820e-258 
+class            0
+
+unit number    135
+square deviation 7.354102e-05
+count            5.174901e-146
+vector
+-1.574430e-01
+1.198426e-01
+3.500000e-01
+
+connections 1
+connected with 184 
+edge count 4.941118e-11 
+class            0
+
+unit number    136
+square deviation 7.494827e-05
+count            1.884808e-216
+vector
+3.502905e-01
+1.315405e-01
+3.500000e-01
+
+connections 1
+connected with 187 
+edge count 6.180474e-11 
+class            0
+
+unit number    137
+square deviation 3.486523e-05
+count            0.000000e+00
+vector
+1.867187e-01
+8.637502e-02
+3.500000e-01
+
+connections 2
+connected with 221 153 
+edge count 2.283708e-12 2.602457e-08 
+class            0
+
+unit number    138
+square deviation 4.823193e-05
+count            1.988227e-219
+vector
+3.498920e-02
+-2.120932e-01
+3.500000e-01
+
+connections 1
+connected with 178 
+edge count 8.870122e-12 
+class            0
+
+unit number    139
+square deviation 1.523917e-04
+count            5.315055e-146
+vector
+2.876634e-01
+1.421703e-02
+3.500000e-01
+
+connections 2
+connected with 42 211 
+edge count 5.617125e-13 4.362447e-06 
+class            0
+
+unit number    140
+square deviation 3.101509e-05
+count            0.000000e+00
+vector
+3.999910e-01
+-3.505335e-02
+3.500000e-01
+
+connections 2
+connected with 263 48 
+edge count 4.903845e-14 5.360974e-07 
+class            0
+
+unit number    141
+square deviation 2.972539e-05
+count            3.278238e-153
+vector
+3.498721e-02
+-1.817999e-01
+3.500000e-01
+
+connections 1
+connected with 201 
+edge count 1.684040e-11 
+class            0
+
+unit number    142
+square deviation 7.966738e-05
+count            1.883399e-216
+vector
+3.677845e-01
+-1.315401e-01
+3.500000e-01
+
+connections 1
+connected with 222 
+edge count nan 
+class            0
+
+unit number    143
+square deviation 7.504264e-05
+count            1.473560e-146
+vector
+-2.805062e-01
+5.195912e-02
+3.500000e-01
+
+connections 1
+connected with 75 
+edge count 7.000117e-12 
+class            0
+
+unit number    144
+square deviation 2.967013e-10
+count            0.000000e+00
+vector
+3.497248e-02
+-1.919086e-01
+3.500000e-01
+
+connections 1
+connected with 275 
+edge count 3.098213e-11 
+class            0
+
+unit number    145
+square deviation 7.497562e-05
+count            1.884789e-216
+vector
+3.411270e-01
+-6.468810e-02
+3.500000e-01
+
+connections 1
+connected with 167 
+edge count 1.666101e-10 
+class            0
+
+unit number    146
+square deviation 7.457023e-05
+count            2.984754e-146
+vector
+-1.750071e-01
+2.999912e-02
+3.500000e-01
+
+connections 2
+connected with 38 43 
+edge count 8.148220e-16 2.599636e-07 
+class            0
+
+unit number    147
+square deviation 9.424453e-05
+count            1.383585e-216
+vector
+3.587460e-01
+-1.051740e-01
+3.500000e-01
+
+connections 1
+connected with 239 
+edge count 2.373008e-64 
+class            0
+
+unit number    148
+square deviation 7.494866e-05
+count            1.884546e-216
+vector
+2.090920e-01
+2.823191e-01
+3.500000e-01
+
+connections 1
+connected with 82 
+edge count 5.789794e-11 
+class            0
+
+unit number    149
+square deviation 7.591566e-05
+count            1.200987e-146
+vector
+-3.316416e-01
+7.123064e-02
+3.500000e-01
+
+connections 1
+connected with 95 
+edge count 1.579501e-55 
+class            0
+
+unit number    150
+square deviation 3.559824e-07
+count            0.000000e+00
+vector
+1.749370e-01
+8.080000e-02
+3.500000e-01
+
+connections 1
+connected with 22 
+edge count 9.891509e-08 
+class            0
+
+unit number    151
+square deviation 2.751939e-06
+count            0.000000e+00
+vector
+1.325799e-01
+1.169499e-01
+3.500000e-01
+
+connections 1
+connected with 282 
+edge count 3.347353e-25 
+class            0
+
+unit number    152
+square deviation 9.934387e-05
+count            3.932905e-147
+vector
+-1.489308e-01
+1.766150e-01
+3.500000e-01
+
+connections 1
+connected with 127 
+edge count 7.812302e-18 
+class            0
+
+unit number    153
+square deviation 6.024537e-05
+count            3.230019e-216
+vector
+1.933863e-01
+9.034843e-02
+3.500000e-01
+
+connections 1
+connected with 137 
+edge count 1.341852e-08 
+class            0
+
+unit number    154
+square deviation 6.688741e-05
+count            6.362164e-147
+vector
+1.398194e-01
+1.212523e-01
+3.500000e-01
+
+connections 1
+connected with 242 
+edge count 3.245696e-39 
+class            0
+
+unit number    155
+square deviation 3.720051e-05
+count            1.820922e-166
+vector
+-1.501610e-01
+1.875670e-01
+3.500000e-01
+
+connections 1
+connected with 161 
+edge count 1.281870e-10 
+class            0
+
+unit number    156
+square deviation 8.142784e-06
+count            0.000000e+00
+vector
+1.661900e-01
+7.575000e-02
+3.500000e-01
+
+connections 1
+connected with 176 
+edge count 1.211494e-07 
+class            0
+
+unit number    157
+square deviation 3.409610e-05
+count            0.000000e+00
+vector
+3.044972e-01
+-1.129982e-02
+3.500000e-01
+
+connections 3
+connected with 231 66 240 
+edge count 8.493838e-16 4.724920e-10 4.474056e-10 
+class            0
+
+unit number    158
+square deviation 5.306362e-05
+count            1.135104e-146
+vector
+-1.407331e-01
+1.813479e-01
+3.500000e-01
+
+connections 1
+connected with 161 
+edge count 1.425396e-10 
+class            0
+
+unit number    159
+square deviation 7.500553e-05
+count            1.488015e-146
+vector
+1.935396e-01
+1.962407e-01
+3.500000e-01
+
+connections 1
+connected with 45 
+edge count 1.742179e-11 
+class            0
+
+unit number    160
+square deviation 7.085132e-05
+count            8.810800e-147
+vector
+6.137139e-02
+3.788328e-01
+3.500000e-01
+
+connections 1
+connected with 205 
+edge count 4.639713e-10 
+class            0
+
+unit number    161
+square deviation 4.013406e-05
+count            0.000000e+00
+vector
+-1.440672e-01
+1.878246e-01
+3.500000e-01
+
+connections 3
+connected with 30 155 158 
+edge count 4.643873e-18 6.488689e-14 1.478608e-12 
+class            0
+
+unit number    162
+square deviation 6.893194e-05
+count            7.436653e-216
+vector
+2.084537e-01
+8.980689e-02
+3.500000e-01
+
+connections 1
+connected with 105 
+edge count 1.168117e-08 
+class            0
+
+unit number    163
+square deviation 7.699985e-05
+count            3.261400e-146
+vector
+2.000116e-01
+1.409643e-02
+3.500000e-01
+
+connections 1
+connected with 2 
+edge count nan 
+class            0
+
+unit number    164
+square deviation 7.753550e-05
+count            1.486846e-146
+vector
+6.914186e-02
+-2.217191e-01
+3.500000e-01
+
+connections 1
+connected with 80 
+edge count 4.498216e-11 
+class            0
+
+unit number    165
+square deviation 6.630036e-05
+count            8.816388e-147
+vector
+6.169489e-02
+3.125487e-01
+3.500000e-01
+
+connections 1
+connected with 46 
+edge count 2.396819e-09 
+class            0
+
+unit number    166
+square deviation 8.224130e-05
+count            2.220018e-146
+vector
+2.188105e-01
+1.476413e-02
+3.500000e-01
+
+connections 2
+connected with 132 109 
+edge count 1.066141e-10 1.965786e-04 
+class            0
+
+unit number    167
+square deviation 7.497562e-05
+count            1.871522e-216
+vector
+3.411243e-01
+-5.602925e-02
+3.500000e-01
+
+connections 1
+connected with 145 
+edge count 1.775256e-10 
+class            0
+
+unit number    168
+square deviation 6.626709e-05
+count            5.169048e-146
+vector
+1.646363e-01
+1.354530e-01
+3.500000e-01
+
+connections 1
+connected with 11 
+edge count 3.662856e-08 
+class            0
+
+unit number    169
+square deviation 7.075416e-05
+count            5.175024e-146
+vector
+-1.936066e-01
+3.097870e-02
+3.500000e-01
+
+connections 1
+connected with 35 
+edge count 1.038179e-11 
+class            0
+
+unit number    170
+square deviation 8.346439e-05
+count            1.884781e-216
+vector
+2.186710e-01
+3.186310e-01
+3.500000e-01
+
+connections 1
+connected with 216 
+edge count 2.151096e-11 
+class            0
+
+unit number    171
+square deviation 7.494623e-05
+count            1.486839e-146
+vector
+1.574430e-01
+1.707381e-01
+3.500000e-01
+
+connections 1
+connected with 116 
+edge count 3.357603e-09 
+class            0
+
+unit number    172
+square deviation 7.493509e-05
+count            1.486617e-146
+vector
+-2.103415e-01
+3.054048e-02
+3.500000e-01
+
+connections 1
+connected with 223 
+edge count 6.391591e-12 
+class            0
+
+unit number    173
+square deviation 7.499071e-05
+count            1.487721e-146
+vector
+1.521517e-01
+1.868991e-01
+3.500000e-01
+
+connections 1
+connected with 102 
+edge count 9.009336e-09 
+class            0
+
+unit number    174
+square deviation 1.599990e-05
+count            0.000000e+00
+vector
+1.931066e-01
+1.518805e-01
+3.460571e-01
+
+connections 1
+connected with 191 
+edge count 3.643059e-10 
+class            0
+
+unit number    175
+square deviation 6.218308e-05
+count            2.324508e-146
+vector
+-1.582760e-01
+1.412288e-01
+3.500000e-01
+
+connections 1
+connected with 87 
+edge count 2.576648e-18 
+class            0
+
+unit number    176
+square deviation 3.032741e-05
+count            0.000000e+00
+vector
+1.662077e-01
+7.289650e-02
+3.500000e-01
+
+connections 2
+connected with 156 179 
+edge count 1.476653e-08 1.979688e-04 
+class            0
+
+unit number    177
+square deviation 7.503487e-05
+count            1.487907e-146
+vector
+-3.092930e-01
+7.157278e-02
+3.500000e-01
+
+connections 1
+connected with 78 
+edge count 7.965384e-12 
+class            0
+
+unit number    178
+square deviation 4.823193e-05
+count            0.000000e+00
+vector
+3.571244e-02
+-2.051861e-01
+3.500000e-01
+
+connections 1
+connected with 138 
+edge count 9.425376e-12 
+class            0
+
+unit number    179
+square deviation 5.251204e-05
+count            0.000000e+00
+vector
+1.661900e-01
+6.565000e-02
+3.500000e-01
+
+connections 1
+connected with 176 
+edge count 6.940841e-08 
+class            0
+
+unit number    180
+square deviation 7.062850e-05
+count            3.261405e-146
+vector
+-3.224676e-01
+-1.958964e-01
+3.500000e-01
+
+connections 1
+connected with 52 
+edge count 7.437689e-16 
+class            0
+
+unit number    181
+square deviation 8.779169e-05
+count            4.268394e-147
+vector
+2.976162e-01
+-2.624712e-01
+3.500000e-01
+
+connections 1
+connected with 183 
+edge count 4.891949e-11 
+class            0
+
+unit number    182
+square deviation 7.494792e-05
+count            1.884835e-216
+vector
+1.670230e-01
+5.603095e-02
+3.500000e-01
+
+connections 1
+connected with 1 
+edge count 5.913664e-08 
+class            0
+
+unit number    183
+square deviation 9.008069e-05
+count            7.424123e-149
+vector
+3.057306e-01
+-2.577864e-01
+3.500000e-01
+
+connections 2
+connected with 49 181 
+edge count 3.160067e-14 4.752797e-07 
+class            0
+
+unit number    184
+square deviation 7.374961e-05
+count            8.135673e-147
+vector
+-1.571748e-01
+1.112712e-01
+3.500000e-01
+
+connections 2
+connected with 6 135 
+edge count 1.720795e-14 2.481958e-07 
+class            0
+
+unit number    185
+square deviation 7.932179e-05
+count            5.174908e-146
+vector
+1.486970e-01
+1.551926e-01
+3.500000e-01
+
+connections 1
+connected with 39 
+edge count 8.368609e-09 
+class            0
+
+unit number    186
+square deviation 1.049836e-04
+count            4.044924e-146
+vector
+1.746243e-01
+1.880227e-02
+3.500000e-01
+
+connections 1
+connected with 28 
+edge count 9.020617e-09 
+class            0
+
+unit number    187
+square deviation 7.494827e-05
+count            1.884812e-216
+vector
+3.577880e-01
+1.358691e-01
+3.500000e-01
+
+connections 1
+connected with 136 
+edge count 4.910538e-11 
+class            0
+
+unit number    188
+square deviation 3.201848e-04
+count            5.103938e-165
+vector
+3.013790e-01
+1.415730e-01
+8.411290e-02
+
+connections 1
+connected with 74 
+edge count 1.002871e-10 
+class            0
+
+unit number    189
+square deviation 9.144523e-05
+count            1.487889e-146
+vector
+-2.454319e-01
+4.618039e-02
+3.500000e-01
+
+connections 1
+connected with 58 
+edge count 7.801444e-12 
+class            0
+
+unit number    190
+square deviation 7.494785e-05
+count            1.884789e-216
+vector
+3.677845e-01
+1.315405e-01
+3.500000e-01
+
+connections 1
+connected with 37 
+edge count 4.635566e-11 
+class            0
+
+unit number    191
+square deviation 4.547634e-05
+count            1.485149e-146
+vector
+1.928471e-01
+1.512593e-01
+3.500000e-01
+
+connections 2
+connected with 174 194 
+edge count 8.307938e-13 3.047578e-06 
+class            0
+
+unit number    192
+square deviation 3.441239e-05
+count            0.000000e+00
+vector
+-2.646414e-01
+5.242811e-02
+3.500000e-01
+
+connections 3
+connected with 235 61 243 
+edge count 7.965832e-21 2.393665e-12 2.185735e-12 
+class            0
+
+unit number    193
+square deviation 7.499071e-05
+count            1.487721e-146
+vector
+1.690536e-01
+2.349568e-01
+3.500000e-01
+
+connections 1
+connected with 59 
+edge count 1.064931e-09 
+class            0
+
+unit number    194
+square deviation 7.495278e-05
+count            1.486873e-146
+vector
+2.003450e-01
+1.469310e-01
+3.500000e-01
+
+connections 1
+connected with 191 
+edge count 8.332014e-10 
+class            0
+
+unit number    195
+square deviation 8.013559e-05
+count            1.803193e-216
+vector
+-9.539103e-02
+-3.277740e-01
+3.500000e-01
+
+connections 1
+connected with 215 
+edge count 2.665484e-13 
+class            0
+
+unit number    196
+square deviation 7.497915e-05
+count            1.479840e-146
+vector
+3.490426e-01
+1.620816e-01
+3.500000e-01
+
+connections 1
+connected with 97 
+edge count 7.405269e-11 
+class            0
+
+unit number    197
+square deviation 7.494998e-05
+count            1.486552e-146
+vector
+3.590374e-01
+-1.539052e-02
+3.500000e-01
+
+connections 1
+connected with 111 
+edge count 5.267801e-10 
+class            0
+
+unit number    198
+square deviation 8.223563e-05
+count            1.293456e-146
+vector
+1.920136e-01
+-2.821218e-01
+3.500000e-01
+
+connections 2
+connected with 229 64 
+edge count 1.820754e-14 3.926587e-07 
+class            0
+
+unit number    199
+square deviation 7.497912e-05
+count            1.475889e-146
+vector
+3.590346e-01
+1.664080e-01
+3.500000e-01
+
+connections 1
+connected with 94 
+edge count 5.698758e-11 
+class            0
+
+unit number    200
+square deviation 1.193541e-06
+count            0.000000e+00
+vector
+-3.673680e-01
+-9.090000e-02
+3.500000e-01
+
+connections 1
+connected with 26 
+edge count 1.171174e-13 
+class            0
+
+unit number    201
+square deviation 2.753171e-05
+count            0.000000e+00
+vector
+2.972162e-02
+-1.803860e-01
+3.500000e-01
+
+connections 2
+connected with 244 141 
+edge count 1.781764e-15 1.787648e-07 
+class            0
+
+unit number    202
+square deviation 7.494674e-05
+count            1.884494e-216
+vector
+3.498740e-01
+-7.983813e-02
+3.500000e-01
+
+connections 1
+connected with 79 
+edge count 1.343327e-10 
+class            0
+
+unit number    203
+square deviation 7.539194e-05
+count            1.462529e-146
+vector
+2.628191e-01
+-2.724615e-01
+3.500000e-01
+
+connections 1
+connected with 206 
+edge count 9.043778e-11 
+class            0
+
+unit number    204
+square deviation 7.500009e-05
+count            1.886147e-216
+vector
+3.092930e-01
+1.095134e-01
+3.500000e-01
+
+connections 1
+connected with 104 
+edge count 2.350603e-10 
+class            0
+
+unit number    205
+square deviation 8.262998e-05
+count            3.238420e-146
+vector
+6.848216e-02
+3.833370e-01
+3.500000e-01
+
+connections 2
+connected with 9 160 
+edge count 1.292272e-13 8.638530e-07 
+class            0
+
+unit number    206
+square deviation 7.539194e-05
+count            1.349371e-146
+vector
+2.703387e-01
+-2.681201e-01
+3.500000e-01
+
+connections 1
+connected with 203 
+edge count 9.455646e-11 
+class            0
+
+unit number    207
+square deviation 7.500009e-05
+count            1.886147e-216
+vector
+2.880060e-01
+1.247924e-01
+3.500000e-01
+
+connections 1
+connected with 62 
+edge count 2.649077e-10 
+class            0
+
+unit number    208
+square deviation 9.401117e-05
+count            5.324734e-147
+vector
+-3.409265e-01
+-1.968342e-01
+3.500000e-01
+
+connections 2
+connected with 89 106 
+edge count 7.152838e-22 7.269432e-09 
+class            0
+
+unit number    209
+square deviation 7.496071e-05
+count            1.485940e-146
+vector
+2.278343e-01
+-2.825594e-01
+3.500000e-01
+
+connections 1
+connected with 218 
+edge count 7.824104e-11 
+class            0
+
+unit number    210
+square deviation 7.494601e-05
+count            1.884787e-216
+vector
+2.624060e-02
+-2.176310e-01
+3.500000e-01
+
+connections 1
+connected with 51 
+edge count 7.257863e-12 
+class            0
+
+unit number    211
+square deviation 7.631271e-05
+count            1.487900e-146
+vector
+2.805085e-01
+9.205057e-03
+3.500000e-01
+
+connections 1
+connected with 139 
+edge count 2.380661e-09 
+class            0
+
+unit number    212
+square deviation 7.890228e-05
+count            1.034674e-146
+vector
+-1.574430e-01
+1.607138e-01
+3.500000e-01
+
+connections 1
+connected with 90 
+edge count 1.628817e-10 
+class            0
+
+unit number    213
+square deviation 7.494814e-05
+count            1.884840e-216
+vector
+2.190875e-01
+9.619048e-02
+3.500000e-01
+
+connections 1
+connected with 99 
+edge count 6.419267e-09 
+class            0
+
+unit number    214
+square deviation 7.499953e-05
+count            1.487896e-146
+vector
+2.454319e-01
+1.353959e-02
+3.500000e-01
+
+connections 1
+connected with 33 
+edge count 5.100323e-09 
+class            0
+
+unit number    215
+square deviation 7.970372e-05
+count            1.637087e-216
+vector
+-8.744691e-02
+-3.236477e-01
+3.500000e-01
+
+connections 2
+connected with 21 195 
+edge count 2.089357e-17 1.654224e-08 
+class            0
+
+unit number    216
+square deviation 8.801635e-05
+count            4.313423e-219
+vector
+2.186710e-01
+3.277668e-01
+3.500000e-01
+
+connections 2
+connected with 34 170 
+edge count 3.113969e-15 3.255767e-07 
+class            0
+
+unit number    217
+square deviation 8.801882e-05
+count            3.402771e-149
+vector
+-3.756966e-01
+9.570843e-02
+3.500000e-01
+
+connections 2
+connected with 5 123 
+edge count 2.604759e-16 5.911563e-08 
+class            0
+
+unit number    218
+square deviation 7.496071e-05
+count            1.483059e-146
+vector
+2.353325e-01
+-2.782306e-01
+3.500000e-01
+
+connections 1
+connected with 209 
+edge count 8.300527e-11 
+class            0
+
+unit number    219
+square deviation 8.210743e-05
+count            1.642915e-216
+vector
+2.103035e-01
+3.022983e-01
+3.500000e-01
+
+connections 2
+connected with 125 85 
+edge count 1.161803e-14 2.046859e-07 
+class            0
+
+unit number    220
+square deviation 6.625796e-05
+count            5.174907e-146
+vector
+5.248110e-02
+3.517055e-01
+3.500000e-01
+
+connections 1
+connected with 77 
+edge count 1.127051e-09 
+class            0
+
+unit number    221
+square deviation 9.485080e-06
+count            0.000000e+00
+vector
+1.836840e-01
+8.585000e-02
+3.500000e-01
+
+connections 1
+connected with 137 
+edge count 4.578063e-08 
+class            0
+
+unit number    222
+square deviation 8.211412e-05
+count            1.643258e-216
+vector
+3.753180e-01
+-1.363270e-01
+3.500000e-01
+
+connections 2
+connected with 10 142 
+edge count nan nan 
+class            0
+
+unit number    223
+square deviation 7.493509e-05
+count            1.486613e-146
+vector
+-2.178380e-01
+3.486905e-02
+3.500000e-01
+
+connections 1
+connected with 172 
+edge count 6.945772e-12 
+class            0
+
+unit number    224
+square deviation 8.197776e-05
+count            1.487789e-146
+vector
+6.915960e-02
+-2.593943e-01
+3.500000e-01
+
+connections 1
+connected with 83 
+edge count 3.229978e-11 
+class            0
+
+unit number    225
+square deviation 7.499553e-05
+count            1.487816e-146
+vector
+2.183714e-01
+2.310634e-01
+3.500000e-01
+
+connections 1
+connected with 65 
+edge count 9.591830e-12 
+class            0
+
+unit number    226
+square deviation 7.705533e-05
+count            1.046293e-146
+vector
+5.171183e-02
+-2.116559e-01
+3.500000e-01
+
+connections 1
+connected with 115 
+edge count 1.858819e-11 
+class            0
+
+unit number    227
+square deviation 7.494622e-05
+count            1.884736e-216
+vector
+1.924310e-01
+7.983810e-02
+3.500000e-01
+
+connections 1
+connected with 25 
+edge count 3.676598e-08 
+class            0
+
+unit number    228
+square deviation 7.494629e-05
+count            1.486819e-146
+vector
+2.011780e-01
+2.666881e-01
+3.500000e-01
+
+connections 1
+connected with 68 
+edge count 1.246144e-10 
+class            0
+
+unit number    229
+square deviation 8.455130e-05
+count            1.486777e-146
+vector
+2.003450e-01
+-2.782309e-01
+3.500000e-01
+
+connections 1
+connected with 198 
+edge count 7.577727e-11 
+class            0
+
+unit number    230
+square deviation 7.493530e-05
+count            1.884400e-216
+vector
+3.327975e-01
+1.310595e-01
+3.500000e-01
+
+connections 1
+connected with 110 
+edge count 8.532601e-11 
+class            0
+
+unit number    231
+square deviation 3.168810e-05
+count            6.804612e-157
+vector
+3.101260e-01
+-1.137120e-02
+3.500000e-01
+
+connections 1
+connected with 157 
+edge count 5.930235e-10 
+class            0
+
+unit number    232
+square deviation 7.494841e-05
+count            1.486839e-146
+vector
+-3.502905e-01
+8.104047e-02
+3.500000e-01
+
+connections 1
+connected with 120 
+edge count 6.745280e-12 
+class            0
+
+unit number    233
+square deviation 7.494800e-05
+count            1.884830e-216
+vector
+3.315480e-01
+1.216810e-01
+3.500000e-01
+
+connections 1
+connected with 73 
+edge count 1.104421e-10 
+class            0
+
+unit number    234
+square deviation 7.494833e-05
+count            1.486784e-146
+vector
+3.315480e-01
+-9.619054e-03
+3.500000e-01
+
+connections 1
+connected with 53 
+edge count 8.364249e-10 
+class            0
+
+unit number    235
+square deviation 2.832259e-05
+count            2.297621e-155
+vector
+-2.675520e-01
+5.688358e-02
+3.500000e-01
+
+connections 1
+connected with 192 
+edge count 4.189799e-12 
+class            0
+
+unit number    236
+square deviation 7.485987e-05
+count            1.485108e-146
+vector
+2.141349e-01
+1.597696e-01
+1.955714e-01
+
+connections 1
+connected with 54 
+edge count 1.743514e-09 
+class            0
+
+unit number    237
+square deviation 7.494975e-05
+count            1.486284e-146
+vector
+3.765314e-01
+-2.549043e-02
+3.500000e-01
+
+connections 1
+connected with 126 
+edge count 3.941322e-10 
+class            0
+
+unit number    238
+square deviation 1.409166e-07
+count            0.000000e+00
+vector
+2.642346e-02
+-1.865222e-01
+3.500000e-01
+
+connections 1
+connected with 241 
+edge count 1.357847e-11 
+class            0
+
+unit number    239
+square deviation 8.885523e-05
+count            4.313493e-219
+vector
+3.586210e-01
+-9.546686e-02
+3.500000e-01
+
+connections 2
+connected with 147 96 
+edge count 6.992244e-87 5.458493e-07 
+class            0
+
+unit number    240
+square deviation 3.457891e-05
+count            3.330539e-155
+vector
+3.013790e-01
+-6.314293e-03
+3.500000e-01
+
+connections 1
+connected with 157 
+edge count 7.143149e-10 
+class            0
+
+unit number    241
+square deviation 1.409166e-07
+count            0.000000e+00
+vector
+2.624060e-02
+-1.868500e-01
+3.500000e-01
+
+connections 1
+connected with 238 
+edge count 1.349858e-11 
+class            0
+
+unit number    242
+square deviation 6.755051e-05
+count            4.423231e-146
+vector
+1.405275e-01
+1.294000e-01
+3.500000e-01
+
+connections 2
+connected with 108 154 
+edge count 6.952639e-12 3.900881e-07 
+class            0
+
+unit number    243
+square deviation 4.049011e-05
+count            7.823341e-152
+vector
+-2.675530e-01
+4.677013e-02
+3.500000e-01
+
+connections 1
+connected with 192 
+edge count 3.440299e-12 
+class            0
+
+unit number    244
+square deviation 2.533803e-05
+count            1.526643e-155
+vector
+2.624061e-02
+-1.767500e-01
+3.500000e-01
+
+connections 1
+connected with 201 
+edge count 1.429183e-11 
+class            0
+
+unit number    245
+square deviation 7.487017e-05
+count            1.485296e-146
+vector
+-2.851221e-01
+-1.838677e-01
+8.280551e-01
+
+connections 1
+connected with 32 
+edge count 2.942265e-12 
+class            0
+
+unit number    246
+square deviation 2.353594e-07
+count            0.000000e+00
+vector
+-3.321322e-01
+8.038349e-02
+3.500000e-01
+
+connections 1
+connected with 260 
+edge count 3.896380e-84 
+class            0
+
+unit number    247
+square deviation 7.450253e-05
+count            8.666436e-146
+vector
+-1.648061e-01
+1.366639e-01
+3.500000e-01
+
+connections 1
+connected with 81 
+edge count 5.844465e-11 
+class            0
+
+unit number    248
+square deviation 5.309208e-08
+count            0.000000e+00
+vector
+3.938394e-01
+-3.534659e-02
+3.500000e-01
+
+connections 1
+connected with 251 
+edge count 1.395371e-10 
+class            0
+
+unit number    249
+square deviation 3.721635e-05
+count            0.000000e+00
+vector
+-3.336284e-01
+8.007974e-02
+3.500000e-01
+
+connections 2
+connected with 98 252 
+edge count 3.053928e-128 8.888201e-69 
+class            0
+
+unit number    250
+square deviation 7.792118e-05
+count            1.883743e-216
+vector
+3.673680e-01
+-1.202382e-01
+3.500000e-01
+
+connections 1
+connected with 130 
+edge count 8.307827e-11 
+class            0
+
+unit number    251
+square deviation 5.309208e-08
+count            0.000000e+00
+vector
+3.936090e-01
+-3.535000e-02
+3.500000e-01
+
+connections 1
+connected with 248 
+edge count 1.399701e-10 
+class            0
+
+unit number    252
+square deviation 2.419020e-06
+count            0.000000e+00
+vector
+-3.320909e-01
+8.031421e-02
+3.500000e-01
+
+connections 1
+connected with 249 
+edge count 4.220887e-73 
+class            0
+
+unit number    253
+square deviation 7.493917e-05
+count            1.484683e-146
+vector
+3.315483e-01
+1.620809e-01
+3.500000e-01
+
+connections 1
+connected with 71 
+edge count 9.164019e-11 
+class            0
+
+unit number    254
+square deviation 1.589835e-06
+count            0.000000e+00
+vector
+-3.319655e-01
+8.010436e-02
+3.500000e-01
+
+connections 1
+connected with 257 
+edge count 3.135881e-72 
+class            0
+
+unit number    255
+square deviation 3.148672e-05
+count            0.000000e+00
+vector
+1.427377e-01
+-2.450534e-01
+3.500000e-01
+
+connections 2
+connected with 258 129 
+edge count 3.908967e-18 2.187006e-10 
+class            0
+
+unit number    256
+square deviation 7.492160e-05
+count            1.880151e-216
+vector
+3.236340e-01
+-3.438866e-02
+3.500000e-01
+
+connections 1
+connected with 56 
+edge count 2.984990e-10 
+class            0
+
+unit number    257
+square deviation 1.589835e-06
+count            0.000000e+00
+vector
+-3.314157e-01
+7.896968e-02
+3.500000e-01
+
+connections 1
+connected with 254 
+edge count 2.776526e-99 
+class            0
+
+unit number    258
+square deviation 1.227661e-05
+count            8.146562e-151
+vector
+1.407918e-01
+-2.421396e-01
+3.500000e-01
+
+connections 1
+connected with 255 
+edge count 4.048691e-11 
+class            0
+
+unit number    259
+square deviation 1.942939e-04
+count            0.000000e+00
+vector
+1.331172e-01
+1.296301e-01
+3.500000e-01
+
+connections 1
+connected with 20 
+edge count nan 
+class            0
+
+unit number    260
+square deviation 2.353594e-07
+count            0.000000e+00
+vector
+-3.323810e-01
+8.080000e-02
+3.500000e-01
+
+connections 1
+connected with 246 
+edge count 4.538712e-63 
+class            0
+
+unit number    261
+square deviation 7.494089e-05
+count            1.480262e-146
+vector
+1.399534e-01
+-2.517599e-01
+3.500000e-01
+
+connections 1
+connected with 44 
+edge count 3.615553e-11 
+class            0
+
+unit number    262
+square deviation 7.528224e-05
+count            1.299708e-146
+vector
+-1.653748e-01
+-1.267018e-01
+3.500000e-01
+
+connections 1
+connected with 4 
+edge count 3.605453e-17 
+class            0
+
+unit number    263
+square deviation 2.816384e-05
+count            2.501277e-151
+vector
+4.023550e-01
+-3.030197e-02
+3.500000e-01
+
+connections 1
+connected with 140 
+edge count 1.257442e-10 
+class            0
+
+unit number    264
+square deviation 8.476783e-05
+count            1.598138e-216
+vector
+-1.136732e-01
+-3.374582e-01
+3.500000e-01
+
+connections 2
+connected with 18 133 
+edge count 1.009850e-17 1.309493e-08 
+class            0
+
+unit number    265
+square deviation 3.523312e-05
+count            0.000000e+00
+vector
+-1.738584e-01
+-1.205773e-01
+3.500000e-01
+
+connections 2
+connected with 274 114 
+edge count 1.076715e-26 9.292433e-09 
+class            0
+
+unit number    266
+square deviation 3.295990e-06
+count            3.328526e-147
+vector
+1.747399e-01
+-2.728138e-01
+3.500000e-01
+
+connections 1
+connected with 269 
+edge count 3.592630e-11 
+class            0
+
+unit number    267
+square deviation 6.616314e-05
+count            3.094653e-148
+vector
+2.674826e-01
+3.797868e-03
+3.500000e-01
+
+connections 1
+connected with 270 
+edge count 2.240454e-32 
+class            0
+
+unit number    268
+square deviation 9.997453e-04
+count            0.000000e+00
+vector
+-1.823746e-01
+-1.258848e-01
+3.500000e-01
+
+connections 1
+connected with 277 
+edge count 8.017412e-51 
+class            0
+
+unit number    269
+square deviation 3.299702e-05
+count            0.000000e+00
+vector
+1.731677e-01
+-2.737215e-01
+3.500000e-01
+
+connections 2
+connected with 266 47 
+edge count 9.077084e-15 3.907755e-07 
+class            0
+
+unit number    270
+square deviation 3.492728e-05
+count            0.000000e+00
+vector
+2.603522e-01
+-1.162396e-04
+3.500000e-01
+
+connections 2
+connected with 267 273 
+edge count 1.002312e-43 7.916125e-06 
+class            0
+
+unit number    271
+square deviation 1.383233e-03
+count            0.000000e+00
+vector
+-1.765158e-01
+-1.221115e-01
+3.500000e-01
+
+connections 1
+connected with 15 
+edge count 7.030248e-77 
+class            0
+
+unit number    272
+square deviation 2.470396e-07
+count            0.000000e+00
+vector
+3.498050e-02
+-2.019960e-01
+3.500000e-01
+
+connections 1
+connected with 283 
+edge count 8.691486e-29 
+class            0
+
+unit number    273
+square deviation 3.691419e-06
+count            1.254074e-150
+vector
+2.588050e-01
+-1.255365e-03
+3.500000e-01
+
+connections 1
+connected with 270 
+edge count 3.220576e-09 
+class            0
+
+unit number    274
+square deviation 1.494828e-07
+count            8.916132e-147
+vector
+-1.741932e-01
+-1.207706e-01
+3.500000e-01
+
+connections 1
+connected with 265 
+edge count 1.028276e-55 
+class            0
+
+unit number    275
+square deviation 2.967013e-10
+count            0.000000e+00
+vector
+3.498740e-02
+-1.919000e-01
+3.500000e-01
+
+connections 1
+connected with 144 
+edge count 3.099338e-11 
+class            0
+
+unit number    276
+square deviation 1.190240e-06
+count            0.000000e+00
+vector
+2.186710e-01
+6.565000e-02
+3.500000e-01
+
+connections 1
+connected with 31 
+edge count 9.828027e-09 
+class            0
+
+unit number    277
+square deviation 9.997453e-04
+count            0.000000e+00
+vector
+-2.099250e-01
+-1.414000e-01
+3.500000e-01
+
+connections 1
+connected with 268 
+edge count 1.296949e-32 
+class            0
+
+unit number    278
+square deviation 6.233985e-05
+count            0.000000e+00
+vector
+3.419384e-02
+-2.015418e-01
+3.500000e-01
+
+connections 1
+connected with 107 
+edge count 4.868726e-28 
+class            0
+
+unit number    279
+square deviation 6.865327e-05
+count            4.098191e-147
+vector
+1.305579e-01
+1.258776e-01
+3.500000e-01
+
+connections 1
+connected with 0 
+edge count nan 
+class            0
+
+unit number    280
+square deviation 1.714340e-06
+count            0.000000e+00
+vector
+1.103733e-01
+-2.825154e-01
+3.500000e-01
+
+connections 1
+connected with 41 
+edge count 2.054938e-11 
+class            0
+
+unit number    281
+square deviation 5.187643e-09
+count            0.000000e+00
+vector
+3.461244e-02
+-2.017835e-01
+3.500000e-01
+
+connections 1
+connected with 283 
+edge count 7.998185e-19 
+class            0
+
+unit number    282
+square deviation 2.751939e-06
+count            5.122742e-147
+vector
+1.310937e-01
+1.162131e-01
+3.500000e-01
+
+connections 1
+connected with 151 
+edge count 3.126252e-03 
+class            0
+
+unit number    283
+square deviation 1.261136e-07
+count            6.206904e-286
+vector
+3.455006e-02
+-2.017475e-01
+3.500000e-01
+
+connections 2
+connected with 272 281 
+edge count 5.874913e-14 6.108919e-06 
+class            0
+
+unit number    284
+square deviation 4.231070e-05
+count            5.256842e-216
+vector
+4.373430e-02
+-1.666500e-01
+3.500000e-01
+
+connections 2
+connected with 24 7 
+edge count 2.898877e-13 1.943763e-05 
+class            0
