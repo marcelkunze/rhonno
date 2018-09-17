@@ -24,7 +24,7 @@ void tracks(long n=5) {
     TH1F h2("h2","y distribution",100,-1,1);
     TH1F h3("h3","z distribution",100,-1,1);
     TH1F h4("h4","p distribution",100,-10,10);
-    TNtuple ntuple("tracks","training data","x1:y1:z1:x2:y2:z2:truth:p");
+    TNtuple ntuple("tracks","training data","x1:y1:z1:x2:y2:z2:cos:c1:c2:truth:p");
     TRandom r;
     while (nlines<n) {
         //in >> x >> y >> z;
@@ -49,52 +49,64 @@ void tracks(long n=5) {
         Double_t truth = 1.0;
         for(int i=0; i<nhits-1; i++)    {
            TVector3 hit1 = t1[i];
+           Double_t c1 = hit1.CosTheta();
            for(int j=i+1; j<nhits; j++)    {
                 TVector3 hit2 = t1[j];
+                Double_t c2 = hit2.CosTheta();
+                Double_t cos = hit1.Dot(hit2);
                 if (nlines < 5) printf("x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f t=%8f\n",hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth);
                 h1.Fill(hit1.x());
                 h2.Fill(hit1.y());
                 h3.Fill(hit1.z());
-                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth,p1);
-                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),truth,p1);
+                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),cos,c1,c2,truth,p1);
+                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),cos,c2,c1,truth,p1);
             }
         }
         for(int i=0; i<nhits-1; i++)    {
             TVector3 hit1 = t2[i];
+            Double_t c1 = hit1.CosTheta();
             for(int j=i+1; j<nhits; j++)    {
                 TVector3 hit2 = t2[j];
+                Double_t c2 = hit2.CosTheta();
+                Double_t cos = hit1.Dot(hit2);
                 if (nlines < 5) printf("x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f t=%8f\n",hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth);
                 h1.Fill(hit1.x());
                 h2.Fill(hit1.y());
                 h3.Fill(hit1.z());
-                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth,p2);
-                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),truth,p2);
+                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),cos,c1,c2,truth,p1);
+                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),cos,c2,c1,truth,p1);
             }
         }
 
         truth = 0.0;
         for(int i=0; i<nhits-1; i++)    {
             TVector3 hit1 = t1[i];
+            Double_t c1 = hit1.CosTheta();
             for(int j=i+1; j<nhits; j++)    {
                 TVector3 hit2 = t2[j];
+                Double_t c2 = hit2.CosTheta();
+                Double_t cos = hit1.Dot(hit2);
                 if (nlines < 5) printf("x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f t=%8f\n",hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth);
                 h1.Fill(hit2.x());
                 h2.Fill(hit2.y());
                 h3.Fill(hit2.z());
-                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth,p1);
-                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),truth,p1);
+                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),cos,c1,c2,truth,p1);
+                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),cos,c2,c1,truth,p1);
             }
         }
         for(int i=0; i<nhits-1; i++)    {
             TVector3 hit1 = t2[i];
+            Double_t c1 = hit1.CosTheta();
             for(int j=i+1; j<nhits; j++)    {
                 TVector3 hit2 = t1[j];
+                Double_t c2 = hit2.CosTheta();
+                Double_t cos = hit1.Dot(hit2);
                 if (nlines < 5) printf("x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f t=%8f\n",hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth);
                 h1.Fill(hit2.x());
                 h2.Fill(hit2.y());
                 h3.Fill(hit2.z());
-                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth,p2);
-                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),truth,p2);
+                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),cos,c1,c2,truth,p1);
+                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),cos,c2,c1,truth,p1);
             }
         }
 
