@@ -16,6 +16,7 @@
 #include <fstream>
 using namespace std;
 
+#define NHITS 5
 #define SIGMA 0.001
 
 #define THRESHOLD 0.5
@@ -84,10 +85,10 @@ int main(int argc, char* argv[]) {
     else
     {
         // std::vector<TVector3>, int np, float delta tau, float radius, float phi, float gamma
-        GenerateTrack(hits,3,0.025,1.0,M_PI/1.0,0.5,SIGMA);
-        //        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/3.0,1.5,SIGMA);
-        //        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/4.0,-1.2,SIGMA);
-        GenerateTrack(hits,2,0.025,-1.0,M_PI/2.0,1.0,SIGMA);
+        GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/1.0,0.5,SIGMA);
+        GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/3.0,1.5,SIGMA);
+        GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/4.0,-1.2,SIGMA);
+        GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
     }
     
     // Sort the hits according to distance from origin
