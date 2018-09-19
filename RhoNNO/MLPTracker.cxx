@@ -16,10 +16,9 @@
 #include <fstream>
 using namespace std;
 
-#define NHITS 5
 #define SIGMA 0.001
 
-#define THRESHOLD 0.65
+#define THRESHOLD 0.5
 
 // The user member function processes one event
 
@@ -29,7 +28,15 @@ std::vector<int> tracks[100];
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
 Double_t* Recall(Double_t *invec);
-int bestMatchingHit(TMatrixD &m, int column);
+int bestMatchingHit(TMatrixD &m, int row);
+int bestHitPair(TMatrixD &m, int &row, int &col);
+
+void print(vector<int> const &input)
+{
+    for (int i = 0; i < input.size(); i++) {
+        cout << input.at(i) << ' ';
+    }
+}
 
 void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double radius, double phi, double gamma, double error) {
     default_random_engine generator;
@@ -77,16 +84,16 @@ int main(int argc, char* argv[]) {
     else
     {
         // std::vector<TVector3>, int np, float delta tau, float radius, float phi, float gamma
-        GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/1.0,0.5,SIGMA);
- //       GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
- //       GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/3.0,1.5,SIGMA);
-//        GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/3.0,-1.2,SIGMA);
+        GenerateTrack(hits,3,0.025,1.0,M_PI/1.0,0.5,SIGMA);
+        //        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/3.0,1.5,SIGMA);
+        //        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/4.0,-1.2,SIGMA);
+        GenerateTrack(hits,2,0.025,-1.0,M_PI/2.0,1.0,SIGMA);
     }
     
     // Sort the hits according to distance from origin
     
-    cout << "Sorting hits..." << endl;
-    reverse(hits.begin(),hits.end());
+    //cout << "Sorting hits..." << endl;
+    //reverse(hits.begin(),hits.end());
     
     // Initialize a 3D canvas and draw the hits
     TCanvas *c1 = new TCanvas("c1","NNO Tracking: XMLP",200,10,700,500);
@@ -145,8 +152,8 @@ int main(int argc, char* argv[]) {
             in2[6] = cos;
             m[i][j] = Recall(in1)[0];
             m[j][i] = Recall(in2)[0];
-            if (m[i][j]< THRESHOLD) m[j][i] = 0.0;
-            if (m[j][i]< THRESHOLD) m[i][j] = 0.0;
+            if (m[i][j]< THRESHOLD) m[i][j] = 0.0;
+            if (m[j][i]< THRESHOLD) m[j][i] = 0.0;
         }
     }
     m.Print();
@@ -154,14 +161,25 @@ int main(int argc, char* argv[]) {
     // Analyze the network
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
     long ntracks = 0;
-
-    int column = 0;
-    while (column>-1) {
-        column = bestMatchingHit(m, column);
-        m.Print();
+    
+    int row, col;
+    int seed = bestHitPair(m, row, col); // Look for seed
+    while (seed > -1) {
+        cout << "Best hit pair: (" << row << "," << col << ")" << endl;
+        while (seed>-1) {
+            tracks[ntracks].push_back(seed);
+            seed = bestMatchingHit(m, seed);
+            m.Print();
+        }
+        ntracks++;
+        seed = bestHitPair(m, row, col); // Look for new seed
     }
-
-    // 1) Look for seed
+    
+    for(int i=0; i<ntracks; i++) {
+        cout << "Track " << i << ":";
+        print(tracks[i]);
+        cout << endl;
+    }
     
     //TBD: Fit the helix tracks from the hits in the containers
     
@@ -171,23 +189,49 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-int bestMatchingHit(TMatrixD &m, int column)
+int bestMatchingHit(TMatrixD &m, int row)
 {
     long nhits = m.GetNcols();
     int imax = -1;
-
-    cout << "Seed hit: " << column << endl;
-    Double_t max = -1.0;
+    static int imaxold = -1;
+    
+    cout << "Seed hit: " << row << endl;
+    Double_t max = 0.0;
     for(int i=0; i<nhits; i++)    {
-        if (m[i][column] > max) {
-            max = m[i][column]; // Best matching hit
+        if (i!=row && m[row][i] > max) {
+            max = m[row][i]; // Best matching hit
             imax = i;
         }
     }
     cout << "  Best matching hit: " << imax << endl;
-    for(int i=0; i<nhits; i++) m[i][column] = -1.0;
-    for(int i=0; i<nhits; i++) m[column][i] = -1.0;
+    for(int i=0; i<nhits; i++) m[row][i] = -1.0;
+    for(int i=0; i<nhits; i++) m[i][row] = -1.0;
+    if (imax == imaxold) {
+        //for(int i=0; i<nhits; i++) m[i][imax] = -1.0;
+        //for(int i=0; i<nhits; i++) m[imax][i] = -1.0;
+        return -1;
+    }
+    imaxold = imax;
     return imax;
+}
+
+int bestHitPair(TMatrixD &m, int &row, int &col)
+{
+    long nhits = m.GetNcols();
+    col = -1;
+    row = -1;
+    
+    Double_t max = -1.0;
+    for(int i=0; i<nhits; i++)    {
+        for(int j=0; j<nhits; j++)    {
+            if (m[i][j] > max) {
+                max = m[i][j]; // Best hit pair
+                row = i;
+                col = j;
+            }
+        }
+    }
+    return row;
 }
 
 Double_t* Recall(Double_t *invec)
