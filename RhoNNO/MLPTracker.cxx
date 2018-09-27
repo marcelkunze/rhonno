@@ -31,6 +31,7 @@ std::vector<int> tracks[100];
 Double_t* Recall(Double_t *invec);
 int bestMatchingHit(TMatrixD &m, int row);
 int bestHitPair(TMatrixD &m, int &row, int &col);
+int findTracks(int nhits, float *x, float *y, float *z, int* labels);
 
 void print(vector<int> const &input)
 {
@@ -110,7 +111,7 @@ int main(int argc, char* argv[]) {
     TAxis3D rulers;
     rulers.Draw();
     // draw hits as PolyMarker3D
-    const long nhits = hits.size();
+    const int nhits = (int) hits.size();
     TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
     vector<TVector3>::iterator it;
     for(it = hits.begin(); it != hits.end(); it++)    {
@@ -127,6 +128,26 @@ int main(int argc, char* argv[]) {
     
     cout << endl << "Reconstruct Track data with a XMLP Network";
     cout << endl << " Number of hits:" << nhits << endl;
+    
+    float x[nhits],y[nhits],z[nhits];
+    int labels[nhits];
+    int nt;
+    nt = findTracks(nhits,x,y,z,labels);
+    
+    cout << "Labels: ";
+    for (int i=0;i<nhits;i++) cout << labels[i] << " ";
+    
+    //TBD: Fit the helix tracks from the hits in the containers
+    
+    cout << endl << "Writing..." << endl;
+    c1->Write();
+    
+    return EXIT_SUCCESS;
+}
+
+int findTracks(int nhits, float *x, float *y, float *z, int* labels)
+{
+    for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
     
     Double_t in1[7], in2[7], *out;
     TMatrixD m(nhits,nhits);
@@ -161,13 +182,14 @@ int main(int argc, char* argv[]) {
     
     // Analyze the network
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
-    long ntracks = 0;
+    int ntracks = 0;
     
     int row, col;
     int seed = bestHitPair(m, row, col); // Look for seed
     while (seed > -1) {
         cout << "Best hit pair: (" << row << "," << col << ")" << endl;
         while (seed>-1) {
+            labels[seed] = ntracks;
             tracks[ntracks].push_back(seed);
             seed = bestMatchingHit(m, seed);
             m.Print();
@@ -182,12 +204,7 @@ int main(int argc, char* argv[]) {
         cout << endl;
     }
     
-    //TBD: Fit the helix tracks from the hits in the containers
-    
-    cout << endl << "Writing..." << endl;
-    c1->Write();
-    
-    return EXIT_SUCCESS;
+    return ntracks;
 }
 
 int bestMatchingHit(TMatrixD &m, int row)
