@@ -8,7 +8,6 @@
 #include <TPolyLine3D.h>
 #include <TFile.h>
 #include <TVector3.h>
-#include <TMatrixD.h>
 #include "RhoNNO/TXMLP.h"
 
 #include <random>
@@ -19,7 +18,7 @@ using namespace std;
 #define NHITS 5
 #define SIGMA 0.001
 
-#define THRESHOLD 0.5
+#define THRESHOLD 50
 
 // The user member function processes one event
 
@@ -29,8 +28,8 @@ std::vector<int> tracks[100];
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
 Double_t* Recall(Double_t *invec);
-int bestMatchingHit(TMatrixD &m, int row);
-int bestHitPair(TMatrixD &m, int &row, int &col);
+int bestMatchingHit(size_t nhits, int **m, int row);
+int bestHitPair(size_t nhits, int **m, int &row, int &col);
 int findTracks(int nhits, float *x, float *y, float *z, int* labels);
 
 void print(vector<int> const &input)
@@ -132,8 +131,21 @@ int main(int argc, char* argv[]) {
     float x[nhits],y[nhits],z[nhits];
     int labels[nhits];
     int nt;
+    for (int i=0; i<nhits; i++) {
+        TVector3 hit = hits[i];
+        x[i] = hit.X();
+        y[i] = hit.Y();
+        z[i] = hit.Z();
+    }
     nt = findTracks(nhits,x,y,z,labels);
+    cout << "Number of tracks:" << nt << endl;
+    for(int i=0; i<nt; i++) {
+        cout << "Track " << i << ":";
+        print(tracks[i]);
+        cout << endl;
+    }
     
+
     cout << "Labels: ";
     for (int i=0;i<nhits;i++) cout << labels[i] << " ";
     
@@ -145,97 +157,99 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
+// Assign track labels to hits (x,y,z)
+// The hit pair quality is assessed by the neural network
+// The quality is noted in the hit pair matrix m[nhits][nhits]
 int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
     for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
     
     Double_t in1[7], in2[7], *out;
-    TMatrixD m(nhits,nhits);
+    
+    // Allocate a nhits*nhits hit pair matrix as one continuous memory block
+    int** m = new int*[nhits];
+    if (nhits)
+    {
+        m[0] = new int[nhits * nhits];
+        for (int i = 1; i < nhits; ++i)
+            m[i] = m[0] + i * nhits;
+    }
+    
     for(int i=0; i<nhits-1; i++)    {
-        TVector3 hit1 = hits[i];
-        Double_t c1 = hit1.CosTheta();
-        in1[0] = hit1.x();
-        in1[1] = hit1.y();
-        in1[2] = hit1.z();
-        in2[3] = hit1.x();
-        in2[4] = hit1.y();
-        in2[5] = hit1.z();
+        in1[0] = x[i];
+        in1[1] = y[i];
+        in1[2] = z[i];
+        in2[3] = x[i];
+        in2[4] = y[i];
+        in2[5] = z[i];
         for(int j=i+1; j<nhits; j++)    {
-            TVector3 hit2 = hits[j];
-            Double_t c2 = hit2.CosTheta();
-            Double_t cos = hit1.Dot(hit2);
-            in1[3] = hit2.x();
-            in1[4] = hit2.y();
-            in1[5] = hit2.z();
-            in2[0] = hit2.x();
-            in2[1] = hit2.y();
-            in2[2] = hit2.z();
-            in1[6] = cos;
-            in2[6] = cos;
-            m[i][j] = Recall(in1)[0];
-            m[j][i] = Recall(in2)[0];
-            if (m[i][j]< THRESHOLD) m[i][j] = 0.0;
-            if (m[j][i]< THRESHOLD) m[j][i] = 0.0;
+            in1[3] = x[j];
+            in1[4] = y[j];
+            in1[5] = z[j];
+            in2[0] = x[j];
+            in2[1] = y[j];
+            in2[2] = z[j];
+            double dot = in1[0]*in2[0] + in1[1]*in2[1] + in1[2]*in2[2];
+            in1[6] = dot;
+            in2[6] = dot;
+            m[i][j] = (int) 100. * Recall(in1)[0]; // Recall the hit pair matching quality
+            m[j][i] = (int) 100. * Recall(in2)[0];
+            if (m[i][j]< THRESHOLD) m[i][j] = 0; // Apply a cut on the quality
+            if (m[j][i]< THRESHOLD) m[j][i] = 0;
         }
     }
-    m.Print();
     
-    // Analyze the network
+    // Analyze the hit pair matrix
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
     int ntracks = 0;
     
     int row, col;
-    int seed = bestHitPair(m, row, col); // Look for seed
+    int seed = bestHitPair(nhits, m, row, col); // Look for seed
     while (seed > -1) {
         cout << "Best hit pair: (" << row << "," << col << ")" << endl;
         while (seed>-1) {
             labels[seed] = ntracks;
             tracks[ntracks].push_back(seed);
-            seed = bestMatchingHit(m, seed);
-            m.Print();
+            seed = bestMatchingHit(nhits, m, seed);
         }
         ntracks++;
-        seed = bestHitPair(m, row, col); // Look for new seed
+        seed = bestHitPair(nhits, m, row, col); // Look for new seed
     }
     
-    for(int i=0; i<ntracks; i++) {
-        cout << "Track " << i << ":";
-        print(tracks[i]);
-        cout << endl;
-    }
+    if (nhits) delete [] m[0]; // Clean up the memory
+    delete [] m;
     
     return ntracks;
 }
 
-int bestMatchingHit(TMatrixD &m, int row)
+// Examine the hit pair matrix to find the best matching hit
+// The corresponding rows and columns are crossed out (-1)
+int bestMatchingHit(size_t nhits, int **m, int row)
 {
-    long nhits = m.GetNcols();
     int imax = -1;
     static int imaxold = -1;
     
     cout << "Seed hit: " << row << endl;
     Double_t max = 0.0;
-    for(int i=0; i<nhits; i++)    {
+    for(size_t i=0; i<nhits; i++)    {
         if (i!=row && m[row][i] > max) {
             max = m[row][i]; // Best matching hit
-            imax = i;
+            imax = (int) i;
         }
     }
     cout << "  Best matching hit: " << imax << endl;
-    for(int i=0; i<nhits; i++) m[row][i] = -1.0;
-    for(int i=0; i<nhits; i++) m[i][row] = -1.0;
+    for(size_t i=0; i<nhits; i++) m[row][i] = -1.0;
+    for(size_t i=0; i<nhits; i++) m[i][row] = -1.0;
     if (imax == imaxold) {
-        //for(int i=0; i<nhits; i++) m[i][imax] = -1.0;
-        //for(int i=0; i<nhits; i++) m[imax][i] = -1.0;
         return -1;
     }
     imaxold = imax;
     return imax;
 }
 
-int bestHitPair(TMatrixD &m, int &row, int &col)
+// Find the best matching hit pair in the matrix
+int bestHitPair(size_t nhits, int **m, int &row, int &col)
 {
-    long nhits = m.GetNcols();
     col = -1;
     row = -1;
     
@@ -252,6 +266,7 @@ int bestHitPair(TMatrixD &m, int &row, int &col)
     return row;
 }
 
+// Recall function on normalised network input
 Double_t* Recall(Double_t *invec)
 {
     static TXMLP net("/Users/marcel/workspace/rhonno/RhoNNO/NNO0069.TXMLP");
@@ -262,7 +277,7 @@ Double_t* Recall(Double_t *invec)
     x[3]     = 2631.15    *    invec[3];    // x2
     x[4]     = 383.788    *    invec[4];    // y2
     x[5]     = 490.839    *    invec[5];    // z2
-    x[6]     = 126.061    *    invec[6];    // cos
+    x[6]     = 126.061    *    invec[6];    // dot
     return net.Recall(x,y);
 }
 
