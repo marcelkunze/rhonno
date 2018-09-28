@@ -233,40 +233,45 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     for(int i=0; i<nhits-1; i++)    {
         vector<int> tmpvec;
         tmpvec.push_back(i);
-        for(int j=i+1; j<nhits; j++)    {
+         for(int j=i; j<nhits; j++)    {
             int dist = d[i][j];
-            if (dist < DISTANCE && (m[i][j]>THRESHOLD || m[j][i]>THRESHOLD)) {
+            int rec  = (m[i][j]>m[j][i]) ? m[i][j]:m[j][i];
+            if (dist < DISTANCE && rec>THRESHOLD) {
                 tmpvec.push_back(j);
             }
         }
-        int n = (int) tmpvec.size();
 
         //sort(tmpvec.begin(), tmpvec.end());
         tracklet.push_back(tmpvec);
 
-        cout << "Tracklet " << i << endl;
-        print(tmpvec);
-        cout << endl;
-        for (int k=0;k<n;k++) { cout << m[i][tmpvec[k]] << " ";}
-        cout << endl;
-        for (int k=0;k<n;k++) { cout << m[tmpvec[k]][i] << " ";}
-        cout << endl;
+        //cout << "Tracklet " << i << endl;
+        //print(tmpvec);
+        //cout << endl;
+        //for (int k=0;k<n;k++) { cout << m[i][tmpvec[k]] << " ";}
+        //cout << endl;
+        //for (int k=0;k<n;k++) { cout << m[tmpvec[k]][i] << " ";}
+        //cout << endl;
     }
+    
+    cout << "Number of tracklets: " << tracklet.size() << endl;
     
     // Sort the tracklet vector according to the tracklet length
     
     sort(tracklet.begin(), tracklet.end(), sortFunc);
     
-    // Print out the pre-sorted vector
+    // Print out the sorted vector
     cout << "Sorted tracklets:" << endl;
     for( int i=0; i<tracklet.size(); i++ ) {
         for( int j=0; j<tracklet[i].size(); j++ ) {
-            cout << tracklet[i][j] << " ";
+            cout << tracklet[i][j] << "(" << m[tracklet[i][0]][tracklet[i][j]] << ") ";
         }
         cout << endl;
     }
         
     cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
+    
+    // Run through the tracklets and assemble the tracks
+    
     
     // Analyze the hit pair matrix
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
