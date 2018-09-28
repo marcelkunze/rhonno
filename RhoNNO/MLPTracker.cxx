@@ -13,10 +13,15 @@
 #include <random>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <vector>
+
 using namespace std;
 
 #define NHITS 5
 #define SIGMA 0.001
+#define DIMENSION 10
+#define DISTANCE 100
 
 #define THRESHOLD 50
 
@@ -31,6 +36,11 @@ Double_t* Recall(Double_t *invec);
 int bestMatchingHit(size_t nhits, int **m, int row);
 int bestHitPair(size_t nhits, int **m, int &row, int &col);
 int findTracks(int nhits, float *x, float *y, float *z, int* labels);
+
+bool sortFunc( const vector<int>& p1,
+              const vector<int>& p2 ) {
+    return p1.size() > p2.size();
+}
 
 void print(vector<int> const &input)
 {
@@ -93,8 +103,8 @@ int main(int argc, char* argv[]) {
     
     // Sort the hits according to distance from origin
     
-    //cout << "Sorting hits..." << endl;
-    //reverse(hits.begin(),hits.end());
+    cout << "Sorting hits..." << endl;
+    reverse(hits.begin(),hits.end());
     
     // Initialize a 3D canvas and draw the hits
     TCanvas *c1 = new TCanvas("c1","NNO Tracking: XMLP",200,10,700,500);
@@ -145,7 +155,7 @@ int main(int argc, char* argv[]) {
         cout << endl;
     }
     
-
+    
     cout << "Labels: ";
     for (int i=0;i<nhits;i++) cout << labels[i] << " ";
     
@@ -164,7 +174,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
     for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
     
-    Double_t in1[7], in2[7], *out;
+    Double_t in1[7], in2[7];
     
     // Allocate a nhits*nhits hit pair matrix as one continuous memory block
     int** m = new int*[nhits];
@@ -175,6 +185,15 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             m[i] = m[0] + i * nhits;
     }
     
+    // Allocate a nhits*nhits hit pair distance matrix as one continuous memory block
+    int** d = new int*[nhits];
+    if (nhits)
+    {
+        d[0] = new int[nhits * nhits];
+        for (int i = 1; i < nhits; ++i)
+            d[i] = d[0] + i * nhits;
+    }
+    
     for(int i=0; i<nhits-1; i++)    {
         in1[0] = x[i];
         in1[1] = y[i];
@@ -182,6 +201,12 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
         in2[3] = x[i];
         in2[4] = y[i];
         in2[5] = z[i];
+        d[i][i] = 0;
+        m[i][i] = 0;
+        // Polar coordinates
+        //double phi = atan2(y[i],x[i]);
+        //double r = sqrt(x[i]*x[i]+y[i]*y[i]);
+        //double zz = z[i];
         for(int j=i+1; j<nhits; j++)    {
             in1[3] = x[j];
             in1[4] = y[j];
@@ -189,15 +214,59 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             in2[0] = x[j];
             in2[1] = y[j];
             in2[2] = z[j];
-            double dot = in1[0]*in2[0] + in1[1]*in2[1] + in1[2]*in2[2];
-            in1[6] = dot;
-            in2[6] = dot;
+            double dist = sqrt((in1[0]-in2[0])*(in1[0]-in2[0]) + (in1[1]-in2[1])*(in1[1]-in2[1]) + (in1[2]-in2[2])*(in1[2]-in2[2]));
+            in1[6] = dist;
+            in2[6] = dist;
+            d[i][j] = 1000.*dist; // Cache the distance between the points
+            d[j][i] = 1000.*dist;
+            d[j][j] = 0;
+            m[j][j] = 0;
             m[i][j] = (int) 100. * Recall(in1)[0]; // Recall the hit pair matching quality
             m[j][i] = (int) 100. * Recall(in2)[0];
             if (m[i][j]< THRESHOLD) m[i][j] = 0; // Apply a cut on the quality
             if (m[j][i]< THRESHOLD) m[j][i] = 0;
         }
     }
+    
+    // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
+    vector<vector<int>> tracklet;
+    for(int i=0; i<nhits-1; i++)    {
+        vector<int> tmpvec;
+        tmpvec.push_back(i);
+        for(int j=i+1; j<nhits; j++)    {
+            int dist = d[i][j];
+            if (dist < DISTANCE && (m[i][j]>THRESHOLD || m[j][i]>THRESHOLD)) {
+                tmpvec.push_back(j);
+            }
+        }
+        int n = (int) tmpvec.size();
+
+        //sort(tmpvec.begin(), tmpvec.end());
+        tracklet.push_back(tmpvec);
+
+        cout << "Tracklet " << i << endl;
+        print(tmpvec);
+        cout << endl;
+        for (int k=0;k<n;k++) { cout << m[i][tmpvec[k]] << " ";}
+        cout << endl;
+        for (int k=0;k<n;k++) { cout << m[tmpvec[k]][i] << " ";}
+        cout << endl;
+    }
+    
+    // Sort the tracklet vector according to the tracklet length
+    
+    sort(tracklet.begin(), tracklet.end(), sortFunc);
+    
+    // Print out the pre-sorted vector
+    cout << "Sorted tracklets:" << endl;
+    for( int i=0; i<tracklet.size(); i++ ) {
+        for( int j=0; j<tracklet[i].size(); j++ ) {
+            cout << tracklet[i][j] << " ";
+        }
+        cout << endl;
+    }
+        
+    cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
     
     // Analyze the hit pair matrix
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
@@ -218,6 +287,9 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     if (nhits) delete [] m[0]; // Clean up the memory
     delete [] m;
+    
+    if (nhits) delete [] d[0]; // Clean up the memory
+    delete [] d;
     
     return ntracks;
 }
