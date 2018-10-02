@@ -21,7 +21,7 @@ using namespace std;
 #define NHITS 5
 #define SIGMA 0.001
 #define DIMENSION 10
-#define DISTANCE 100
+#define DISTANCE 50
 
 #define THRESHOLD 50
 
@@ -47,6 +47,7 @@ void print(vector<int> const &input)
     for (int i = 0; i < input.size(); i++) {
         cout << input.at(i) << ' ';
     }
+    cout << endl;
 }
 
 void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double radius, double phi, double gamma, double error) {
@@ -69,6 +70,8 @@ void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double r
         points.push_back(TVector3(X,Y,Z));
     }
 }
+
+int getFarestHit(vector<int>, int* d);
 
 int main(int argc, char* argv[]) {
     
@@ -177,7 +180,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     Double_t in1[7], in2[7];
     
     // Allocate a nhits*nhits hit pair matrix as one continuous memory block
-    int** m = new int*[nhits];
+    int **m = new int*[nhits];
     if (nhits)
     {
         m[0] = new int[nhits * nhits];
@@ -186,7 +189,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
     
     // Allocate a nhits*nhits hit pair distance matrix as one continuous memory block
-    int** d = new int*[nhits];
+    int **d = new int*[nhits];
     if (nhits)
     {
         d[0] = new int[nhits * nhits];
@@ -232,25 +235,16 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     vector<vector<int>> tracklet;
     for(int i=0; i<nhits-1; i++)    {
         vector<int> tmpvec;
-        tmpvec.push_back(i);
-         for(int j=i; j<nhits; j++)    {
+        tmpvec.push_back(i); //Note the row in the first place
+        for(int j=i; j<nhits; j++)    {
             int dist = d[i][j];
-            int rec  = (m[i][j]>m[j][i]) ? m[i][j]:m[j][i];
-            if (dist < DISTANCE && rec>THRESHOLD) {
-                tmpvec.push_back(j);
+            int recall  = (m[i][j]>m[j][i]) ? m[i][j]:m[j][i];
+            if (dist < DISTANCE && recall>THRESHOLD) {
+                tmpvec.push_back(j); // Note the columns with a good combination
             }
         }
-
-        //sort(tmpvec.begin(), tmpvec.end());
+        
         tracklet.push_back(tmpvec);
-
-        //cout << "Tracklet " << i << endl;
-        //print(tmpvec);
-        //cout << endl;
-        //for (int k=0;k<n;k++) { cout << m[i][tmpvec[k]] << " ";}
-        //cout << endl;
-        //for (int k=0;k<n;k++) { cout << m[tmpvec[k]][i] << " ";}
-        //cout << endl;
     }
     
     cout << "Number of tracklets: " << tracklet.size() << endl;
@@ -263,32 +257,60 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Sorted tracklets:" << endl;
     for( int i=0; i<tracklet.size(); i++ ) {
         for( int j=0; j<tracklet[i].size(); j++ ) {
-            cout << tracklet[i][j] << "(" << m[tracklet[i][0]][tracklet[i][j]] << ") ";
+            int row = tracklet[i][0];
+            int col = tracklet[i][j];
+            cout << tracklet[i][j] << "(" << m[row][col] << ") ";
         }
         cout << endl;
     }
-        
+    
     cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
     
-    // Run through the tracklets and assemble the tracks
-    
-    
-    // Analyze the hit pair matrix
-    // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
-    int ntracks = 0;
-    
-    int row, col;
-    int seed = bestHitPair(nhits, m, row, col); // Look for seed
-    while (seed > -1) {
-        cout << "Best hit pair: (" << row << "," << col << ")" << endl;
-        while (seed>-1) {
-            labels[seed] = ntracks;
-            tracks[ntracks].push_back(seed);
-            seed = bestMatchingHit(nhits, m, seed);
+    // Prune the tracklets by removing short tracks
+    for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
+        vector<int> row = *it;
+        if (row.size() < 3) { // Remove short tracklets
+            tracklet.erase(it);
+            *it--;
+            continue;
         }
-        ntracks++;
-        seed = bestHitPair(nhits, m, row, col); // Look for new seed
     }
+    
+    // Print out the pruned vector
+    cout << "Pruned tracklets (remove short paths):" << endl;
+    for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
+    
+    // Prune the tracklets by removing rows with identical entries
+    // Assemble tracks from the corresponding tracklets
+    vector<vector<int>> track;
+    for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
+        vector<int> row = *it;
+        vector<int> tmpvec = row; // Vector to assemble the track
+        for (vector<int>::iterator it2 = row.begin(); it2 != row.end(); ++it2) { // Search next seeding hits in remainder tracklet list
+            int prune = *it2;
+            for (vector<vector<int>>::iterator it3 = it+1; it3 != tracklet.end(); ++it3) {
+                vector<int> nextrow = *it3;
+                bool hitExists = find(nextrow.begin(),nextrow.end(),prune) != nextrow.end();
+                if (hitExists) {
+                    for (int j=0;j<nextrow.size();j++) tmpvec.push_back(nextrow[j]); // Append the hits to track before erasing the row
+                    tracklet.erase(it3);
+                    *it3--;
+                    continue;
+                }
+            }
+        }
+        set<int> s( tmpvec.begin(), tmpvec.end() ); // Remove duplicates
+        tmpvec.assign( s.begin(), s.end() );
+        track.push_back(tmpvec);
+    }
+    
+    // Print out the pruned vector
+    cout << "Pruned tracklets:" << endl;
+    for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
+    
+    // Print out the tracks vector
+    cout << "Tracks:" << endl;
+    for( int i=0; i<track.size(); i++ ) print(track[i]);
     
     if (nhits) delete [] m[0]; // Clean up the memory
     delete [] m;
@@ -296,51 +318,14 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     if (nhits) delete [] d[0]; // Clean up the memory
     delete [] d;
     
-    return ntracks;
-}
-
-// Examine the hit pair matrix to find the best matching hit
-// The corresponding rows and columns are crossed out (-1)
-int bestMatchingHit(size_t nhits, int **m, int row)
-{
-    int imax = -1;
-    static int imaxold = -1;
-    
-    cout << "Seed hit: " << row << endl;
-    Double_t max = 0.0;
-    for(size_t i=0; i<nhits; i++)    {
-        if (i!=row && m[row][i] > max) {
-            max = m[row][i]; // Best matching hit
-            imax = (int) i;
+    for (int i=0;i<track.size();i++) {
+        tracks[i] = track[i]; // Save the results
+        for (int j=0;j<track[i].size();j++) {
+            int hit = track[i][j];
+            labels[hit] = i;
         }
     }
-    cout << "  Best matching hit: " << imax << endl;
-    for(size_t i=0; i<nhits; i++) m[row][i] = -1.0;
-    for(size_t i=0; i<nhits; i++) m[i][row] = -1.0;
-    if (imax == imaxold) {
-        return -1;
-    }
-    imaxold = imax;
-    return imax;
-}
-
-// Find the best matching hit pair in the matrix
-int bestHitPair(size_t nhits, int **m, int &row, int &col)
-{
-    col = -1;
-    row = -1;
-    
-    Double_t max = -1.0;
-    for(int i=0; i<nhits; i++)    {
-        for(int j=0; j<nhits; j++)    {
-            if (m[i][j] > max) {
-                max = m[i][j]; // Best hit pair
-                row = i;
-                col = j;
-            }
-        }
-    }
-    return row;
+    return (int) track.size();
 }
 
 // Recall function on normalised network input
