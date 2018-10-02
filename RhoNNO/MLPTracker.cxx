@@ -20,15 +20,15 @@ using namespace std;
 
 #define NHITS 5
 #define SIGMA 0.001
-#define DIMENSION 10
-#define DISTANCE 50
 
-#define THRESHOLD 50
+#define TRACKLET 3
+#define DISTANCE 100
+#define THRESHOLD 65
 
 // The user member function processes one event
 
 std::vector<TVector3> hits;
-std::vector<int> tracks[100];
+std::vector<int> tracks[20000];
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
@@ -155,7 +155,6 @@ int main(int argc, char* argv[]) {
     for(int i=0; i<nt; i++) {
         cout << "Track " << i << ":";
         print(tracks[i]);
-        cout << endl;
     }
     
     
@@ -269,7 +268,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Prune the tracklets by removing short tracks
     for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
         vector<int> row = *it;
-        if (row.size() < 3) { // Remove short tracklets
+        if (row.size() < TRACKLET) { // Remove short tracklets
             tracklet.erase(it);
             *it--;
             continue;
