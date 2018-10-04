@@ -23,7 +23,7 @@ std::vector<int> tracks[200000];
 int layerNHits[Geo::NLayers];
 
 #define NEVENTS 10
-#define MAXPARTICLES 10000
+#define MAXPARTICLES 100000
 
 #define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0100.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
@@ -489,15 +489,20 @@ int main()
     //const int firstEvent=1000;
     TString dir = "/Users/marcel/workspace/train_sample/";
     
-    auto f = TFile::Open("tracks.root","RECREATE");
-    ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:phi1:phi2:v1:v2:d:truth:p");
     
     long nParticles = 0;
 
     for( int event = firstEvent; event<firstEvent+nEvents; event++){
         cout<<"read event "<<event<<endl;
         readEvent( dir.Data(),  event, analyseTruth );
-        
+
+        TString filePrefix;
+        filePrefix.Form("%sevent%09d",dir.Data(),event);
+        TString fname = filePrefix+".root";
+        auto f = TFile::Open(fname,"RECREATE");
+        cout << "Writing training data to " << fname << endl;
+        ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:phi1:phi2:v1:v2:d:truth:p");
+
          for( int ih=0; ih<mHitsMC.size(); ih++ ){
             HitMC &h = mHitsMC[ih];
             if (ih<10) h.Print();
@@ -509,21 +514,21 @@ int main()
         }
         
         cout << "Particles:" << mParticles.size() << endl;
-        for( int ip=0; ip<mParticles.size(); ip++ ){
-	    if (nParticles++ > MAXPARTICLES) break;
-            int n1 = r.Rndm() * mParticles.size();
-            Particle &p1 = mParticles[n1];
-            int n2 = r.Rndm() * mParticles.size();
-            if (VERBOSE) cout << "Combine " << n1 << " " << n2 << endl;
-            Particle &p2 = mParticles[n2];
-            combine(p1,p1,1.0); // wright pairs
-            combine(p2,p2,1.0); // wright pairs
-            combine(p1,p2,0.0); // wrong pairs
-            combine(p2,p1,0.0); // wrong pairs
+        for (int ip=0; ip<mParticles.size()-1; ip++ ) {
+            for (int jp=ip+1; jp<mParticles.size(); jp++ ) {
+                if (nParticles++ > MAXPARTICLES) break;
+                if (VERBOSE) cout << "Combine " << ip << " " << jp << endl;
+                Particle &p1 = mParticles[ip];
+                Particle &p2 = mParticles[jp];
+                combine(p1,p1,1.0); // wright pairs
+                combine(p2,p2,1.0); // wright pairs
+                combine(p1,p2,0.0); // wrong pairs
+                combine(p2,p1,0.0); // wrong pairs
+            }
         }
-        
+        f->Write();
+        delete ntuple;
     }
-    f->Write();
     
     size_t nhits = MAXHITS; //mHits.size();
     float x[nhits],y[nhits],z[nhits];
@@ -686,12 +691,12 @@ double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float
 {
     static TXMLP net(NETFILE);
     float x[7];
-    x[0]     = 0.775527    *    x1;    // x1
-    x[1]     = 0.71624     *    y1;    // y1
-    x[2]     = 0.100536    *    z1;    // z1
-    x[3]     = 0.775527    *    x2;    // x2
-    x[4]     = 0.71624     *    y2;    // y2
-    x[5]     = 0.100536    *    z2;    // z2
+    x[0]     = 1.05776     *    x1;    // x1
+    x[1]     = 0.80706     *    y1;    // y1
+    x[2]     = 0.240051    *    z1;    // z1
+    x[3]     = 1.05776     *    x2;    // x2
+    x[4]     = 0.80706     *    y2;    // y2
+    x[5]     = 0.240051    *    z2;    // z2
     x[6]     = 0.00215027  *    dist;
     return net.Recallstep(x);
 }
