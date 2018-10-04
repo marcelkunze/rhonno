@@ -22,16 +22,71 @@ std::vector<int> tracks[200000];
 
 int layerNHits[Geo::NLayers];
 
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0036.TXMLP"
-//#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
-#define THRESHOLD 50
-#define MAXHITS 1000
-#define MAXPARTICLES 5000
+#define MAXPARTICLES 15000
 
-double* Recall(double *invec);
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0100.TXMLP"
+//#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
+#define MAXHITS 10000
+#define TRACKLET 3
+#define DISTANCE 5000
+#define THRESHOLD 65
+
+#define VERBOSE false
+
+Double_t* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist);
 int bestMatchingHit(size_t nhits, int **m, int row);
 int bestHitPair(size_t nhits, int **m, int &row, int &col);
-int findTracks(int nhits, float *x, float *y, float *z, float *v, int* labels);
+int findTracks(int nhits, float *x, float *y, float *z, int* labels);
+
+bool sortFunc( const vector<int>& p1,
+              const vector<int>& p2 ) {
+    return p1.size() > p2.size();
+}
+
+struct Point
+{
+    int val;         // Group of point
+    double x, y, z;  // Co-ordinate of point
+    double distance; // Distance from test point
+};
+
+// Used to sort an array of points by increasing
+// order of distance
+bool comparison(Point a, Point b)
+{
+    return (a.distance < b.distance);
+}
+
+// This function finds classification of point p using
+// k nearest neighbour algorithm. It assumes only two
+// groups and returns 0 if p belongs to group 0, else
+// 1 (belongs to group 1).
+int classifyAPoint(Point arr[], int n, int k, Point p)
+{
+    // Fill distances of all points from p
+    for (int i = 0; i < n; i++)
+        arr[i].distance =
+        sqrt((arr[i].x - p.x) * (arr[i].x - p.x) +
+             (arr[i].y - p.y) * (arr[i].y - p.y) +
+             (arr[i].z - p.z) * (arr[i].z - p.z));
+    
+    // Sort the Points by distance from p
+    sort(arr, arr+n, comparison);
+    
+    // Now consider the first k elements and only
+    // two groups
+    int freq1 = 0;     // Frequency of group 0
+    int freq2 = 0;     // Frequency of group 1
+    for (int i = 0; i < k; i++)
+    {
+        if (arr[i].val == 0)
+            freq1++;
+        else if (arr[i].val == 1)
+            freq2++;
+    }
+    
+    return (freq1 > freq2 ? 0 : 1);
+}
 
 TRandom r;
 TNtuple *ntuple;
@@ -105,9 +160,9 @@ void readEvent( const char *directory, int event, bool loadMC )
                 exit(0);
             }
             Hit hit;
-            hit.x = h[1]*0.1; // convert to [cm]
-            hit.y = h[2]*0.1; // convert to [cm]
-            hit.z = h[3]*0.1; // convert to [cm]
+            hit.x = h[1]; // [mm]
+            hit.y = h[2]; // [mm]
+            hit.z = h[3]; // [mm]
             hit.r = sqrt( hit.x*hit.x + hit.y*hit.y );
             hit.phi = atan2( hit.y, hit.x );
             hit.module = h[6];
@@ -206,9 +261,9 @@ void readEvent( const char *directory, int event, bool loadMC )
             int nhits = (int) f[9];
             if( nhits==0 ) continue; // no hits belong to the particle
             Particle p( nhits );
-            p.x = f[2]*0.1; // [cm]
-            p.y = f[3]*0.1; // [cm]
-            p.z = f[4]*0.1; // [cm]
+            p.x = f[2]; // [mm]
+            p.y = f[3]; // [mm]
+            p.z = f[4]; // [mm]
             p.r = sqrt(p.x*p.x+p.y*p.y);
             p.px = f[5];
             p.py = f[6];
@@ -257,9 +312,9 @@ void readEvent( const char *directory, int event, bool loadMC )
             Hit &hit = mHits[mHitsMC.size()];
             
             hitmc.hitID = mHitsMC.size();
-            hitmc.x = mc[2]*0.1; // convert to [cm]
-            hitmc.y = mc[3]*0.1; // convert to [cm]
-            hitmc.z = mc[4]*0.1; // convert to [cm]
+            hitmc.x = mc[2]; // convert to [mm]
+            hitmc.y = mc[3]; // convert to [mm]
+            hitmc.z = mc[4]; // convert to [mm]
             hitmc.partID = -1;
             hitmc.w = mc[8]; // weight
             hitmc.px = mc[5];
@@ -417,11 +472,9 @@ void combine(Particle &p1, Particle &p2, Double_t truth)
         Hit &hit1 = mHits[p1.hits[i]];
         for(int j=0; j<nhits2; j++)    {
             Hit &hit2 = mHits[p2.hits[j]];
-            //printf("%i %i: x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f, v=%8f, l=%8f, m=%8f, t=%8f \n",i,j,hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,(double)hit1.volume,(double)hit1.layer,(double)hit1.module,truth);
-            Double_t cos = sqrt(hit1.x*hit2.x+hit1.y*hit2.y+hit1.z+hit2.z);
-            cos /= sqrt(hit1.x*hit1.x+hit1.y*hit1.y+hit1.z+hit1.z);
-            cos /= sqrt(hit2.x*hit2.x+hit2.y*hit2.y+hit2.z+hit2.z);
-            if (i!=j) ntuple->Fill(hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,cos,hit1.values,hit2.values,truth,p1.p);
+            //printf("%i %i: x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f, v1=%8f, v2=%8f, v=%8f, l=%8f, m=%8f, t=%8f \n",i,j,hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.values,hit2.values,(double)hit1.volume,(double)hit1.layer,(double)hit1.module,truth);
+            double dist = sqrt((hit1.x-hit2.x)*(hit1.x-hit2.x) + (hit1.y-hit2.y)*(hit1.y-hit2.y) + (hit1.z-hit2.z)*(hit1.z-hit2.z));
+            if (i!=j) ntuple->Fill(hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.phi,hit2.phi,hit1.values,hit2.values,dist,truth,p1.p);
         }
     }
 }
@@ -437,9 +490,7 @@ int main()
     
     const long nParticles = MAXPARTICLES; // Number of particles to extract to ROOT file
     auto f = TFile::Open("tracks.root","RECREATE");
-    ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:cos:v1:v2:truth:p");
-    
-    long int currentID=1;
+    ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:phi1:phi2:v1:v2:d:truth:p");
     
     for( int event = firstEvent; event<firstEvent+nEvents; event++){
         cout<<"read event "<<event<<endl;
@@ -460,7 +511,7 @@ int main()
             int n1 = r.Rndm() * mParticles.size();
             Particle &p1 = mParticles[n1];
             int n2 = r.Rndm() * mParticles.size();
-            cout << "Combine " << n1 << " " << n2 << endl;
+            if (VERBOSE) cout << "Combine " << n1 << " " << n2 << endl;
             Particle &p2 = mParticles[n2];
             combine(p1,p1,1.0); // wright pairs
             combine(p2,p2,1.0); // wright pairs
@@ -472,18 +523,21 @@ int main()
     f->Write();
     
     size_t nhits = MAXHITS; //mHits.size();
-    float x[nhits],y[nhits],z[nhits], v[nhits];
+    float x[nhits],y[nhits],z[nhits];
+    Point p[nhits];
     int labels[nhits];
     int nt;
     for (int i=0; i<nhits; i++) {
         x[i] = mHits[i].x;
         y[i] = mHits[i].y;
         z[i] = mHits[i].z;
-        v[i] = mHits[i].values;
+        p[i].x = mHits[i].x;
+        p[i].y = mHits[i].y;
+        p[i].z = mHits[i].z;
     }
 
     cout << "Find tracks:" << endl;
-    nt = findTracks(nhits,x,y,z,v,labels);
+    nt = findTracks(nhits,x,y,z,labels);
     
     cout << "Number of tracks:" << nt << endl;
     for(int i=0; i<nt; i++) {
@@ -501,125 +555,140 @@ int main()
 // Assign track labels to hits (x,y,z)
 // The hit pair quality is assessed by the neural network
 // The quality is noted in the hit pair matrix m[nhits][nhits]
-int findTracks(int nhits, float *x, float *y, float *z, float *v, int* labels)
+int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
+    std::clock_t c_start = std::clock();
+    
     for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
     
-    double in1[7], in2[7], *out;
+
     
-    // Allocate a nhits*nhits hit pair matrix as one continuous memory block
-    int** m = new int*[nhits];
-    if (nhits)
-    {
-        m[0] = new int[nhits * nhits];
-        for (int i = 1; i < nhits; ++i)
-            m[i] = m[0] + i * nhits;
-    }
-    
+    // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
+    vector<vector<int>> tracklet;
     for(int i=0; i<nhits-1; i++)    {
-        in1[0] = x[i];
-        in1[1] = y[i];
-        in1[2] = z[i];
-        in2[3] = x[i];
-        in2[4] = y[i];
-        in2[5] = z[i];
+        vector<int> tmpvec;
+        tmpvec.push_back(i); //Note the row in the first place
         for(int j=i+1; j<nhits; j++)    {
-            in1[3] = x[j];
-            in1[4] = y[j];
-            in1[5] = z[j];
-            in2[0] = x[j];
-            in2[1] = y[j];
-            in2[2] = z[j];
-            double cos = sqrt(in1[0]*in2[0] + in1[1]*in2[1] + in1[2]*in2[2]);
-            cos /= sqrt(in1[0]*in1[0] + in1[1]*in1[1] + in1[2]*in1[2]);
-            cos /= sqrt(in2[0]*in2[0] + in2[1]*in2[1] + in2[2]*in2[2]);
-            in1[6] = cos;
-            in2[6] = cos;
-            m[i][j] = (int) 100. * Recall(in1)[0]; // Recall the hit pair matching quality
-            m[j][i] = (int) 100. * Recall(in2)[0];
-            if (m[i][j]< THRESHOLD) m[i][j] = 0; // Apply a cut on the quality
-            if (m[j][i]< THRESHOLD) m[j][i] = 0;
-        }
-    }
-    
-    // Analyze the hit pair matrix
-    // Sort out the tracks by following the network connections and fill the corresponding track hits into containers
-    int ntracks = 0;
-    
-    int row, col;
-    int seed = bestHitPair(nhits, m, row, col); // Look for seed
-    while (seed > -1) {
-        cout << "Best hit pair: (" << row << "," << col << ")" << endl;
-        while (seed>-1) {
-            labels[seed] = ntracks;
-            tracks[ntracks].push_back(seed);
-            seed = bestMatchingHit(nhits, m, seed);
-        }
-        ntracks++;
-        seed = bestHitPair(nhits, m, row, col); // Look for new seed
-    }
-    
-    if (nhits) delete [] m[0]; // Clean up the memory
-    delete [] m;
-    
-    return ntracks;
-}
-
-// Examine the hit pair matrix to find the best matching hit
-// The corresponding rows and columns are crossed out (-1)
-int bestMatchingHit(size_t nhits, int **m, int row)
-{
-    int imax = -1;
-    static int imaxold = -1;
-    
-    cout << "Seed hit: " << row << endl;
-    Double_t max = 0.0;
-    for(size_t i=0; i<nhits; i++)    {
-        if (i!=row && m[row][i] > max) {
-            max = m[row][i]; // Best matching hit
-            imax = (int) i;
-        }
-    }
-    cout << "  Best matching hit: " << imax << endl;
-    for(size_t i=0; i<nhits; i++) m[row][i] = -1.0;
-    for(size_t i=0; i<nhits; i++) m[i][row] = -1.0;
-    if (imax == imaxold) {
-        return -1;
-    }
-    imaxold = imax;
-    return imax;
-}
-
-// Find the best matching hit pair in the matrix
-int bestHitPair(size_t nhits, int **m, int &row, int &col)
-{
-    col = -1;
-    row = -1;
-    
-    Double_t max = -1.0;
-    for(int i=0; i<nhits; i++)    {
-        for(int j=0; j<nhits; j++)    {
-            if (m[i][j] > max) {
-                max = m[i][j]; // Best hit pair
-                row = i;
-                col = j;
+            double d = sqrt((x[i]-x[j])*(x[i]-x[j]) + (y[i]-y[j])*(y[i]-y[j]) + (z[i]-z[j])*(z[i]-z[j]));
+            int dist = 1000.*d;
+            if (dist > DISTANCE) continue;
+            int recall1 = (int) 100. * Recall(x[i],y[i],z[i],x[j],y[j],z[j],d)[0]; // Recall the hit pair matching quality
+            int recall2 = (int) 100. * Recall(x[j],y[j],z[j],x[i],y[i],z[i],d)[0]; // Recall the hit pair matching quality
+            if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
+            if (recall2 < THRESHOLD) recall2 = 0;
+            int recall  = (recall1>recall2) ? recall1:recall2;
+            if (recall>THRESHOLD) {
+                tmpvec.push_back(j); // Note the columns with a good combination
             }
         }
+        
+        tracklet.push_back(tmpvec);
     }
-    return row;
+    
+    cout << "Number of tracklets: " << tracklet.size() << endl;
+    
+    // Sort the tracklet vector according to the tracklet length
+    
+    sort(tracklet.begin(), tracklet.end(), sortFunc);
+    
+    // Print out the sorted vector
+    if (VERBOSE) {
+        cout << "Sorted tracklets:" << endl;
+        for( int i=0; i<tracklet.size(); i++ ) {
+            for( int j=0; j<tracklet[i].size(); j++ ) {
+                int row = tracklet[i][0];
+                int col = tracklet[i][j];
+                double dist = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
+                int recall1 = (int) 100. * Recall(x[row],y[row],z[row],x[col],y[col],z[col],dist)[0]; // Recall the hit pair matching quality
+                int recall2 = (int) 100. * Recall(x[col],y[col],z[col],x[row],y[row],z[row],dist)[0]; // Recall the hit pair matching quality
+                if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
+                if (recall2 < THRESHOLD) recall2 = 0;
+                int recall  = (recall1>recall2) ? recall1:recall2;
+                if (j==0) recall = 0.;
+                cout << tracklet[i][j] << "(" << recall << ") ";
+            }
+            cout << endl;
+        }
+    }
+    
+    cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
+    
+    // Prune the tracklets by removing short tracks
+    for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
+        vector<int> row = *it;
+        if (row.size() < TRACKLET) { // Remove short tracklets
+            tracklet.erase(it);
+            *it--;
+            continue;
+        }
+    }
+    
+    // Print out the pruned vector
+    if (VERBOSE) {
+        cout << "Pruned tracklets (remove short paths):" << endl;
+        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
+    }
+    
+    // Prune the tracklets by removing rows with identical entries
+    // Assemble tracks from the corresponding tracklets
+    vector<vector<int>> track;
+    for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
+        vector<int> row = *it;
+        vector<int> tmpvec = row; // Vector to assemble the track
+        for (vector<int>::iterator it2 = row.begin(); it2 != row.end(); ++it2) { // Search next seeding hits in remainder tracklet list
+            int prune = *it2;
+            for (vector<vector<int>>::iterator it3 = it+1; it3 != tracklet.end(); ++it3) {
+                vector<int> nextrow = *it3;
+                bool hitExists = find(nextrow.begin(),nextrow.end(),prune) != nextrow.end();
+                if (hitExists) {
+                    for (int j=0;j<nextrow.size();j++) tmpvec.push_back(nextrow[j]); // Append the hits to track before erasing the row
+                    tracklet.erase(it3);
+                    *it3--;
+                    continue;
+                }
+            }
+        }
+        set<int> s( tmpvec.begin(), tmpvec.end() ); // Remove duplicates
+        tmpvec.assign( s.begin(), s.end() );
+        track.push_back(tmpvec);
+    }
+    
+    // Print out the pruned vector
+    if (VERBOSE) {
+        cout << "Pruned tracklets (Removed duplicates):" << endl;
+        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
+    }
+    
+    // Print out the tracks vector
+    cout << "Tracks:" << endl;
+    for( int i=0; i<track.size(); i++ ) print(track[i]);
+    
+    for (int i=0;i<track.size();i++) {
+        tracks[i] = track[i]; // Save the results
+        for (int j=0;j<track[i].size();j++) {
+            int hit = track[i][j];
+            labels[hit] = i;
+        }
+    }
+    
+    std::clock_t c_end = std::clock();
+    double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n";
+    
+    return (int) track.size();
 }
 
 // Recall function on normalised network input
-double* Recall(double *invec)
+double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist)
 {
     static TXMLP net(NETFILE);
-    float x[7],y[1];
-    x[0]     = 7.75563     *    invec[0];    // x1
-    x[1]     = 7.16209     *    invec[1];    // y1
-    x[2]     = 1.00536     *    invec[2];    // z1
-    x[3]     = 7.75563     *    invec[3];    // x2
-    x[4]     = 7.16209     *    invec[4];    // y2
-    x[5]     = 1.00536     *    invec[5];    // z2
-    x[6]     = 0.000245409 *    invec[6];    // dot
-    return net.Recallstep(x,y);
+    float x[7];
+    x[0]     = 0.775527    *    x1;    // x1
+    x[1]     = 0.71624     *    y1;    // y1
+    x[2]     = 0.100536    *    z1;    // z1
+    x[3]     = 0.775527    *    x2;    // x2
+    x[4]     = 0.71624     *    y2;    // y2
+    x[5]     = 0.100536    *    z2;    // z2
+    x[6]     = 0.00215027  *    dist;
+    return net.Recallstep(x);
 }
