@@ -22,7 +22,8 @@ std::vector<int> tracks[200000];
 
 int layerNHits[Geo::NLayers];
 
-#define MAXPARTICLES 15000
+#define NEVENTS 10
+#define MAXPARTICLES 10000
 
 #define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0100.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
@@ -483,15 +484,16 @@ int main()
 {
     bool analyseTruth = true;
     
-    const int nEvents = 1;
-    const int firstEvent=21130;
+    const int nEvents = NEVENTS;
+    const int firstEvent=21100;
     //const int firstEvent=1000;
     TString dir = "/Users/marcel/workspace/train_sample/";
     
-    const long nParticles = MAXPARTICLES; // Number of particles to extract to ROOT file
     auto f = TFile::Open("tracks.root","RECREATE");
     ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:phi1:phi2:v1:v2:d:truth:p");
     
+    long nParticles = 0;
+
     for( int event = firstEvent; event<firstEvent+nEvents; event++){
         cout<<"read event "<<event<<endl;
         readEvent( dir.Data(),  event, analyseTruth );
@@ -507,7 +509,8 @@ int main()
         }
         
         cout << "Particles:" << mParticles.size() << endl;
-        for( int ip=0; ip<nParticles; ip++ ){
+        for( int ip=0; ip<mParticles.size(); ip++ ){
+	    if (nParticles++ > MAXPARTICLES) break;
             int n1 = r.Rndm() * mParticles.size();
             Particle &p1 = mParticles[n1];
             int n2 = r.Rndm() * mParticles.size();
