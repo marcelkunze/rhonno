@@ -23,9 +23,9 @@ std::vector<int> tracks[200000];
 int layerNHits[Geo::NLayers];
 
 #define NEVENTS 10
-#define MAXPARTICLES 100000
+#define MAXPARTICLES 200000
 
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0100.TXMLP"
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0098.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
 #define MAXHITS 10000
 #define TRACKLET 3
@@ -213,7 +213,7 @@ void readEvent( const char *directory, int event, bool loadMC )
         in.close();
         
     } // load hits
- 
+    
     // ===== load cells
     {
         TString fname = filePrefix+"-cells.csv";
@@ -238,7 +238,7 @@ void readEvent( const char *directory, int event, bool loadMC )
         in.close();
         
     } // load cells
-
+    
     // create particle ID->index map
     std::map<unsigned long long int,int> partIDmap;
     
@@ -491,19 +491,19 @@ int main()
     
     
     long nParticles = 0;
-
+    
     for( int event = firstEvent; event<firstEvent+nEvents; event++){
         cout<<"read event "<<event<<endl;
         readEvent( dir.Data(),  event, analyseTruth );
-
+        
         TString filePrefix;
         filePrefix.Form("%sevent%09d",dir.Data(),event);
         TString fname = filePrefix+".root";
         auto f = TFile::Open(fname,"RECREATE");
         cout << "Writing training data to " << fname << endl;
         ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:phi1:phi2:v1:v2:d:truth:p");
-
-         for( int ih=0; ih<mHitsMC.size(); ih++ ){
+        
+        for( int ih=0; ih<mHitsMC.size(); ih++ ){
             HitMC &h = mHitsMC[ih];
             if (ih<10) h.Print();
         }
@@ -514,17 +514,16 @@ int main()
         }
         
         cout << "Particles:" << mParticles.size() << endl;
-        for (int ip=0; ip<mParticles.size()-1; ip++ ) {
-            for (int jp=ip+1; jp<mParticles.size(); jp++ ) {
-                if (nParticles++ > MAXPARTICLES) break;
-                if (VERBOSE) cout << "Combine " << ip << " " << jp << endl;
-                Particle &p1 = mParticles[ip];
-                Particle &p2 = mParticles[jp];
-                combine(p1,p1,1.0); // wright pairs
-                combine(p2,p2,1.0); // wright pairs
-                combine(p1,p2,0.0); // wrong pairs
-                combine(p2,p1,0.0); // wrong pairs
-            }
+        for (int ip=0; ip<mParticles.size(); ip++ ) {
+            if (nParticles++ > MAXPARTICLES) break;
+            int jp = r.Rndm() * mParticles.size();
+            if (VERBOSE) cout << "Combine " << ip << " " << jp << endl;
+            Particle &p1 = mParticles[ip];
+            Particle &p2 = mParticles[jp];
+            combine(p1,p1,1.0); // wright pairs
+            combine(p2,p2,1.0); // wright pairs
+            combine(p1,p2,0.0); // wrong pairs
+            combine(p2,p1,0.0); // wrong pairs
         }
         f->Write();
         delete ntuple;
@@ -543,7 +542,7 @@ int main()
         p[i].y = mHits[i].y;
         p[i].z = mHits[i].z;
     }
-
+    
     cout << "Find tracks:" << endl;
     nt = findTracks(nhits,x,y,z,labels);
     
@@ -569,7 +568,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
     
-
+    
     
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     vector<vector<int>> tracklet;
