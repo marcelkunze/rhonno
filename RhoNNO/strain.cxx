@@ -20,19 +20,19 @@ const int INNODES = 5;
 const int HIDNODES = 10;
 const int CELLS = 100;
 
-#define PLOTS kFALSE
+#define PLOTS false
 
-#include <TROOT.h>
-#include <TSystem.h>
-#include <TApplication.h>
-#include <TList.h>
-#include <TIterator.h>
+#include "TROOT.h"
+#include "TSystem.h"
+#include "TApplication.h"
+#include "TList.h"
+#include "TIterator.h"
 
-#include "RhoNNO/TNNK.h"
-#include "RhoNNO/TMLP.h"
-#include "RhoNNO/TXMLP.h"
-#include "RhoNNO/TSGCS.h"
-#include "RhoNNO/TSGNG.h"
+#include "TNNK.h"
+#include "TMLP.h"
+#include "TXMLP.h"
+#include "TSGCS.h"
+#include "TSGNG.h"
 
 #include <iostream>
 using namespace std;
@@ -52,8 +52,8 @@ public:
     virtual ~NetworkTrainer() {}
     void AddNetwork(VNeuralNet *net) { fNets.Add(net); }
     void Train();
-    int MakeData(NNO_INTYPE*, bool randomize = kFALSE);
-    void MakeFile(const char*,int, bool randomize = kFALSE);
+    int MakeData(NNO_INTYPE*, bool randomize = false);
+    void MakeFile(const char*,int, bool randomize = false);
     PARITY Parity(NNO_INTYPE*);
 private:
     int fEpoch;
@@ -190,7 +190,7 @@ int main() {
     
     for (int i=0;i<10; i++) {
         NNO_INTYPE in[INNODES];
-        int testData = trainer.MakeData(in,kTRUE);
+        int testData = trainer.MakeData(in,true);
         NetworkTrainer::PARITY parity = trainer.Parity(in);
         double *answer = testNet->Recall(in);
         if (parity == NetworkTrainer::EVEN)
@@ -211,8 +211,8 @@ NetworkTrainer::NetworkTrainer(int nEpoch) : fEpoch(nEpoch)
     int ntrn = 1000;
     int ntst = 100;
     cout << "Training samples=" << ntrn << " ; Test samples=" << ntst << endl;
-    MakeFile("parity.trn",ntrn,kFALSE); // create training file
-    MakeFile("parity.tst",ntst,kTRUE); // create testing file
+    MakeFile("parity.trn",ntrn,false); // create training file
+    MakeFile("parity.tst",ntst,false); // create testing file
 }
 
 void NetworkTrainer::Train()
@@ -252,7 +252,7 @@ int NetworkTrainer::MakeData(NNO_INTYPE* in, bool randomize)
     
     const int ntrn = 1<<INNODES; // Number of patterns
     static int samples[ntrn];
-    static bool initialized = kFALSE;
+    static bool initialized = false;
     if (!initialized) {
         
         for (int i=0;i<ntrn;i++) { // Generate all patterns
@@ -267,7 +267,7 @@ int NetworkTrainer::MakeData(NNO_INTYPE* in, bool randomize)
             samples[index2] = tmp;
         }
         
-        initialized = kTRUE;
+        initialized = true;
     }
     
     // Choose an item and set up the input vector

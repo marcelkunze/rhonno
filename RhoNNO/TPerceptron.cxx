@@ -9,7 +9,7 @@
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TMath.h"
-#include "RhoNNO/TPerceptron.h"
+#include "TPerceptron.h"
 
 ClassImp(TPerceptron)
 

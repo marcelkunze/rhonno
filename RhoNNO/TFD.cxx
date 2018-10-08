@@ -8,7 +8,7 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TFD.h"
+#include "TFD.h"
 
 ClassImp(TFD)
 

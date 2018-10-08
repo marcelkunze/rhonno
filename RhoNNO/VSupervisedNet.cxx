@@ -9,8 +9,10 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/VSupervisedNet.h"
-#include "RhoNNO/VNeuralNetPlotter.h"
+#include "VSupervisedNet.h"
+#include "VNeuralNetPlotter.h"
+
+#include "TNtuple.h"
 
 #include <iostream>
 using namespace std;

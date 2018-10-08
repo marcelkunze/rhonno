@@ -10,20 +10,21 @@
 // start         = epoch to start with (Default 1)
 // end           = epoch to end with (Default 200)
 
-#include <TROOT.h>
-#include <TApplication.h>
-#include <TFile.h>
-#include "RhoNNO/NetworkTrainer.h"
-#include "RhoNNO/TDataServe.h"
-#include "RhoNNO/TNNK.h"
-#include "RhoNNO/TFD.h"
-#include "RhoNNO/TMLP.h"
-#include "RhoNNO/TXMLP.h"
-#include "RhoNNO/TSGNG.h"
-#include "RhoNNO/TSGCS.h"
-#include "RhoNNO/TGNG.h"
-#include "RhoNNO/TGCS.h"
-#include "RhoNNO/TLVQ.h"
+#include "TROOT.h"
+#include "TApplication.h"
+#include "TFile.h"
+
+#include "NetworkTrainer.h"
+#include "TDataServe.h"
+#include "TNNK.h"
+#include "TFD.h"
+#include "TMLP.h"
+#include "TXMLP.h"
+#include "TSGNG.h"
+#include "TSGCS.h"
+#include "TGNG.h"
+#include "TGCS.h"
+#include "TLVQ.h"
 
 #include <iostream>
 #include <fstream>
@@ -62,7 +63,7 @@ int main(int argc,char* argv[])
 NetworkTrainer::NetworkTrainer(string file,int se,int ee)
 : fPidDataServer(0), fTrainingServer(0), fVectorsEpoch(0), fNet(0), fMomentum(0.0), 
 fTrnMax(0), fTstMax(1000), fInNodes(NNODIMENSION), fHid1Nodes(10), fHid2Nodes(1), fOutNodes(1),
-fCells(1000), fBalance(kFALSE), fPlots(kFALSE), fScale(1.0), fAutoScale(kFALSE),
+fCells(1000), fBalance(false), fPlots(false), fScale(1.0), fAutoScale(false),
 fTransfer(TNeuralNetParameters::TR_FERMI)
 {
     fStartEpoch = se;
@@ -392,7 +393,7 @@ bool NetworkTrainer::ReadSteeringFile(string filename)
     
     if (!s) {
         cout << endl << "NetworkTrainer: Could not open " << filename << endl;
-        return kFALSE;
+        return false;
     }
     else
         cout << endl << "NetworkTrainer: Reading parameters from " << filename << endl;
@@ -556,69 +557,69 @@ bool NetworkTrainer::ReadSteeringFile(string filename)
         else if (key == "fisher") {
             fModel = "TFD";
             s >> fInNodes >> fOutNodes;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
             cout << fModel << " " << fInNodes << "-" << fOutNodes << endl;
         }
         
         else if (key == "mlp") {
             fModel = "TMLP";
             s >> fInNodes >> fHid1Nodes >> fOutNodes;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
             cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fOutNodes << endl;
         }
         
         else if (key == "xmlp") {
             fModel = "TXMLP";
             s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
             cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
         }
         
         else if (key == "tnnk") {
             fModel = "TNNK";
             s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
             cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
         }
         
         else if (key == "sgng") {
             fModel = "TSGNG";
             s >> fInNodes >> fCells >> fOutNodes;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
             cout << fModel << " " << fInNodes << "-" << fCells << "-" << fOutNodes << endl;
         }
         
         else if (key == "sgcs") {
             fModel = "TSGCS";
             s >> fInNodes >> fCells >> fOutNodes;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
-            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
             cout << fModel << " " << fInNodes << "-" << fCells << "-" << fOutNodes << endl;
         }
         
         else if (key == "gng") {
             fModel = "TGNG";
             s >> fInNodes >> fCells;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
             cout << fModel << " " << fInNodes << " " << fCells << endl;
         }
         
         else if (key == "gcs") {
             fModel = "TGCS";
             s >> fInNodes >> fCells;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
             cout << fModel << " " << fInNodes << " " << fCells << endl;
         }
         
         else if (key == "lvq") {
             fModel = "TLVQ";
             s >> fInNodes >> fCells;
-            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return kFALSE; }
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
             cout << fModel << " " << fInNodes << " " << fCells << endl;
         }
         

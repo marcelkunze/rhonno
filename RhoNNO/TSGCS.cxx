@@ -8,8 +8,8 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TSGCS.h"
-#include "RhoNNO/VNeuralNetPlotter.h"
+#include "TSGCS.h"
+#include "VNeuralNetPlotter.h"
 
 ClassImp(TSGCS)
 
@@ -274,7 +274,7 @@ double* TSGCS::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
     }
     
     if (fPlotter) {
-        bool good = kTRUE;
+        bool good = true;
         if (out!=0) good = out[0]>fParm.fThreshold;
         fPlotter->AddTestSample(fOut[0],good);
     }
@@ -371,7 +371,7 @@ double TSGCS::Train(NNO_INTYPE* in,NNO_OUTTYPE* out)
             fXB.fDeleteCount=0;
         }
     
-    fShouldSave = kTRUE;
+    fShouldSave = true;
     
     if (fPlotter) fPlotter->AddTrainSample(out[0],out[0]>fParm.fThreshold);
     

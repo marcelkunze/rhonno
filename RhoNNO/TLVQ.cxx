@@ -8,8 +8,8 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TLVQ.h"
-#include "RhoNNO/VNeuralNetPlotter.h"
+#include "TLVQ.h"
+#include "VNeuralNetPlotter.h"
 
 ClassImp(TLVQ)
 
@@ -192,7 +192,7 @@ double  TLVQ::Train(NNO_INTYPE* in,NNO_OUTTYPE*)
     double* vwin = fUwin->fVector;
     double* dwin = fUwin->fDiff;
     for (J=0;J<fParm.fInNodes;++J) *vwin++ += *dwin++ * fXB.fWinStep;
-    fShouldSave = kTRUE;
+    fShouldSave = true;
     return fUwin->fID;
 }
 
@@ -202,5 +202,5 @@ void TLVQ::Implant(int nr,int c,NNO_INTYPE* in)
     fU[nr].fClass = c;
     double* v=fU[nr].fVector;
     for (I=0;I<fParm.fInNodes;++I) *v++ = *in++;
-    fShouldSave = kTRUE;
+    fShouldSave = true;
 }

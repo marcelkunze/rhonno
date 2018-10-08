@@ -10,7 +10,7 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/VSupervisedNet.h"
+#include "VSupervisedNet.h"
 
 class PerceptronUnit {
 public:   

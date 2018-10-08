@@ -10,11 +10,9 @@
 
 static const char* NNO_VERSION="2.0ROOT";
 
-#include <TRandom.h>
-
-#include "RhoNNO/VNeuralNet.h"
-#include "RhoNNO/VNeuralNetPlotter.h"
-#include "RhoNNO/TDataServe.h"
+#include "VNeuralNet.h"
+#include "VNeuralNetPlotter.h"
+#include "TDataServe.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -40,22 +38,19 @@ TNeuralNetParameters::TNeuralNetParameters()
 ClassImp(VNeuralNet)
 
 VNeuralNet::VNeuralNet() 
-: TNamed("NNO","NNO"), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
+: TNamed("NNO","NNO"), fBalance(false), fOwnPlotter(false), fParm(), fPlotter(0)
 {
-    fShouldSave = kFALSE;
+    fShouldSave = false;
     fFile  = 0;
     fOut = 0;
 }
 
 VNeuralNet::VNeuralNet(string netID,int innodes,int outnodes,string netFile)
-: TNamed(netID.data(),netID.data()), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
+: TNamed(netID.data(),netID.data()), fBalance(false), fOwnPlotter(false), fParm(), fPlotter(0)
 {
-#ifndef NNORAND
-    gRandom->SetSeed(); // Randomize the numbers
-#endif
     fFilename = netFile;
     strncpy(fParm.fNetId,netID.data(),9);
-    fShouldSave  = kTRUE;
+    fShouldSave  = true;
     fFiletype    = FILE_TEXT;
     fParm.fInNodes  = innodes;
     fParm.fOutNodes = outnodes;
@@ -68,10 +63,10 @@ VNeuralNet::VNeuralNet(string netID,int innodes,int outnodes,string netFile)
 }
 
 VNeuralNet::VNeuralNet(string netFile)
-: TNamed(netFile.data(),netFile.data()), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
+: TNamed(netFile.data(),netFile.data()), fBalance(false), fOwnPlotter(false), fParm(), fPlotter(0)
 {
     fFilename   = netFile;
-    fShouldSave = kFALSE;
+    fShouldSave = false;
     fFile	= 0;
     fOut        = 0;
 }
@@ -217,7 +212,7 @@ double VNeuralNet::Random(void)
     double random = kCONS*jy;
     return 1.0 - 2.0*random;
 #else
-    return 1.0 - 2.0*gRandom->Rndm();
+    return rand() / (RAND_MAX + 1.);
 #endif
 }
 
@@ -232,7 +227,7 @@ void VNeuralNet::SetupPlots(VNeuralNetPlotter *plotter)
         cout << "Instantiating plotter for " << GetName() << endl;
         if (fOwnPlotter) delete fPlotter;
         fPlotter = new TSimpleNeuralNetPlotter(GetName());
-        fOwnPlotter = kTRUE;
+        fOwnPlotter = true;
     }
     
     fPlotter->Initialize();
@@ -241,8 +236,8 @@ void VNeuralNet::SetupPlots(VNeuralNetPlotter *plotter)
 void VNeuralNet::FillPlots(double trn, double tst)
 {
     if (fPlotter==0) return;
-    fPlotter->AddTrainSample(trn,kTRUE);
-    fPlotter->AddTestSample(tst,kTRUE);
+    fPlotter->AddTrainSample(trn,true);
+    fPlotter->AddTestSample(tst,true);
 }
 
 void VNeuralNet::ShowPlots()
@@ -447,7 +442,7 @@ unsigned int VNeuralNet::BalancedTrnIndex(TDataServe *server)
 {
     static ULong_t ngood=0, nbad=0;
     unsigned int samples = server->GetNumTrnvecs();
-    unsigned int index = (unsigned int) (gRandom->Rndm()*samples);
+    unsigned int index = (unsigned int) (rand()%samples);
     float *outv = server->GetOutvecTrn(index);
     
     if (ngood<nbad)
@@ -465,7 +460,7 @@ unsigned int VNeuralNet::BalancedTstIndex(TDataServe *server)
 {
     static ULong_t ngood=0, nbad=0;
     unsigned int samples = server->GetNumTstvecs();
-    unsigned int index = (unsigned int) (gRandom->Rndm()*samples);
+    unsigned int index = (unsigned int) (rand()%samples);
     float *outv = server->GetOutvecTst(index);
     
     if (ngood<nbad)

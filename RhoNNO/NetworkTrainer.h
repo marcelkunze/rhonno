@@ -13,7 +13,7 @@
 #include "string.h"
 #include "TList.h"
 
-#include "RhoNNO/VNeuralNet.h"
+#include "VNeuralNet.h"
 
 class TFile;
 class TDataServe;
@@ -85,9 +85,9 @@ public:
     void	SetDataPath(std::string path) { fDataPath = path;}
     void	SetNetworkPath(std::string path) { fNetworkPath = path;}
     std::string     Makename(int z,  std::string fNetworkPath, std::string name);
-    void	AutoScale(bool yesNo=kTRUE) { fAutoScale = yesNo; }
-    void	BalanceSamples(bool yesNo=kTRUE) { fBalance = yesNo; }
-    void	ShowControlPlots(bool yesNo=kTRUE) { fPlots = yesNo; }
+    void	AutoScale(bool yesNo=true) { fAutoScale = yesNo; }
+    void	BalanceSamples(bool yesNo=true) { fBalance = yesNo; }
+    void	ShowControlPlots(bool yesNo=true) { fPlots = yesNo; }
     std::string GetModel() { return fModel; }
 };
 

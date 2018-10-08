@@ -18,15 +18,15 @@
 // M.Kunze, Bochum University, Feb. 01
 // Copyright (C) 1999-2001, Ruhr-University Bochum.
 
-#include <TFile.h>
-#include <TNtuple.h>
-#include <TTreeFormula.h>
-#include <TRandom.h>
-#include <TCanvas.h>
-#include <TH1.h>
-#include <TF1.h>
+#include "TFile.h"
+#include "TNtuple.h"
+#include "TTreeFormula.h"
+#include "TRandom.h"
+#include "TCanvas.h"
+#include "TH1.h"
+#include "TF1.h"
 
-#include "RhoNNO/TDataServe.h"
+#include "TDataServe.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -107,8 +107,8 @@ fNumTstvecs(0),
 fNumvecs(0),
 fIndexTrn(0),
 fIndexTst(0),
-fData_OK(kFALSE),
-fBalance(kFALSE)
+fData_OK(false),
+fBalance(false)
 {}
 
 TDataServe::TDataServe(string name,string title,const unsigned int in,const  unsigned int out):
@@ -127,8 +127,8 @@ fNumTstvecs(0),
 fNumvecs(0),
 fIndexTrn(0),
 fIndexTst(0),
-fData_OK(kFALSE),
-fBalance(kFALSE)
+fData_OK(false),
+fBalance(false)
 {
     // normal constructor
     // Parameters: name, title, inputvectorlength, outputvectorlength
@@ -173,7 +173,7 @@ void TDataServe::Reset()
     DelAr2DD(fInvecAr, fNumvecs);
     DelAr2DD(fOutvecAr, fNumvecs);
     fNumvecs=0;
-    fData_OK=kFALSE;
+    fData_OK=false;
     fNumTrnvecs=0;
     fNumTstvecs=0;
     fMaxvecs=0;
@@ -249,7 +249,7 @@ void TDataServe::Init(const unsigned int tst)
     Mix(helpvec, fNumvecs);
     for (i=0; i<fNumTstvecs; i++) fIndexTst[i]=helpvec[fNumvecs-i-1];
     for (i=0; i<fNumTrnvecs; i++) fIndexTrn[i]=helpvec[i];
-    fData_OK=kTRUE;
+    fData_OK=true;
     delete[] helpvec;
 }
 
@@ -292,7 +292,7 @@ void TDataServe::DataRead(string name,
     }
     fMaxvecs=fNumvecs+=len;
     delete [] fvec;
-    fData_OK=kFALSE;
+    fData_OK=false;
 }
 
 void TDataServe::TNtupleXDataRead(TNtuple& tup,
@@ -331,7 +331,7 @@ void TDataServe::TNtupleXDataRead(TNtuple& tup,
         for (j=outlen; j<fOutvecLen; j++) fOutvecAr[i+fNumvecs][j]=0.0;
     }
     fMaxvecs=fNumvecs+=len;
-    fData_OK=kFALSE;
+    fData_OK=false;
 }
 
 void TDataServe::TNtupleDataRead(TNtuple& tup,
@@ -404,7 +404,7 @@ void TDataServe::Putvec(const float* invec, const float* outvec)
     for (i=0; i<fInvecLen; i++) fInvecAr[fNumvecs][i]=invec[i];
     for (i=0; i<fOutvecLen; i++) fOutvecAr[fNumvecs][i]=outvec[i];
     fNumvecs++;
-    fData_OK=kFALSE;
+    fData_OK=false;
 }
 
 void TDataServe::Deletevec(const unsigned int ind)
@@ -416,7 +416,7 @@ void TDataServe::Deletevec(const unsigned int ind)
     fInvecAr[ind]=fInvecAr[fNumvecs];
     fOutvecAr[ind]=fOutvecAr[fNumvecs];
     fNumvecs--;
-    fData_OK=kFALSE;
+    fData_OK=false;
 }
 
 
@@ -426,7 +426,7 @@ bool TDataServe::TTreeDataRead(string file,string tree,string in,string out,stri
     TTree *t = (TTree*) f.Get(tree.data());
     if (t==0) {
         cerr << "TDataServe::TTreeDataRead: Tree "<< tree << " not found in " << file << endl;
-        return kFALSE;
+        return false;
     }
     
     // Set up the cut
@@ -494,7 +494,7 @@ bool TDataServe::TTreeDataRead(string file,string tree,string in,string out,stri
     
     //cout << "TDataServe::TTreeDataRead: Accumulated " << fNumvecs << " vectors " << endl;
     
-    return kTRUE;
+    return true;
 }
 
 float* TDataServe::GetInputMean()

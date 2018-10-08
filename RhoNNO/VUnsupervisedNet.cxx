@@ -9,12 +9,13 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include <TCanvas.h>
-#include <TView.h>
-#include <TPolyMarker3D.h>
-#include <TPolyLine3D.h>
-#include <TNtuple.h>
-#include "RhoNNO/VUnsupervisedNet.h"
+#include "TCanvas.h"
+#include "TView.h"
+#include "TPolyMarker3D.h"
+#include "TPolyLine3D.h"
+#include "TNtuple.h"
+
+#include "VUnsupervisedNet.h"
 
 #include <iostream>
 using namespace std;

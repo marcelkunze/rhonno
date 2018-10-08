@@ -6,8 +6,8 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TNeuralNetCell.h"
-#include "RhoNNO/VNeuralNet.h"
+#include "TNeuralNetCell.h"
+#include "VNeuralNet.h"
 
 ClassImp(TNeuralNetCellParameters)
 

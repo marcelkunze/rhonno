@@ -10,8 +10,8 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TNeuralNetCell.h"
-#include "RhoNNO/VSupervisedNet.h"
+#include "TNeuralNetCell.h"
+#include "VSupervisedNet.h"
 
 class TSGNG : public VSupervisedNet {
 public:

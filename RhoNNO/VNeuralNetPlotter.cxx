@@ -9,14 +9,15 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include <TCanvas.h>
-#include <TFrame.h>
-#include <TGraph.h>
-#include <TH1.h>
-#include <TText.h>
-#include <TTree.h>
-#include <TBranch.h>
-#include "RhoNNO/VNeuralNetPlotter.h"
+#include "TCanvas.h"
+#include "TFrame.h"
+#include "TGraph.h"
+#include "TH1.h"
+#include "TText.h"
+#include "TTree.h"
+#include "TBranch.h"
+
+#include "VNeuralNetPlotter.h"
 
 #define NPMAX 500
 
@@ -30,7 +31,7 @@ VNeuralNetPlotter::VNeuralNetPlotter(string name) : TNamed(name.data(),name.data
 void VNeuralNetPlotter::DrawT(Text_t *text, float x, float y, float angle, int color)
 {
     TText *tText= new TText(x,y,text);
-    tText->SetNDC(kTRUE);
+    tText->SetNDC(true);
     tText->SetTextColor(color);
     tText->SetTextAngle(angle);
     tText->Draw();
@@ -43,7 +44,7 @@ TSimpleNeuralNetPlotter::TSimpleNeuralNetPlotter(string name)
 : VNeuralNetPlotter(name), fCanvas(0),
 fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0)
 {
-    fPlots = kFALSE;
+    fPlots = false;
     fXtrn = new double[NPMAX];
     fYtrn = new double[NPMAX];
     fXtst = new double[NPMAX];
@@ -98,7 +99,7 @@ void TSimpleNeuralNetPlotter::Initialize()
     fTstHistFalse = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
     fTstHistFalse->SetFillColor(kRed);
     
-    fPlots = kTRUE;
+    fPlots = true;
 }
 
 void TSimpleNeuralNetPlotter::AddTrainSample(double trn, bool good)
@@ -207,3 +208,4 @@ void TSimpleNeuralNetPlotter::Reset()
         fTstHistFalse->Reset();
     }
 }
+

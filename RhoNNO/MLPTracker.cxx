@@ -1,14 +1,14 @@
 // Read HITS spatial data and try a XMLP network to segment the tracks...
 
-#include <TROOT.h>
-#include <TCanvas.h>
-#include <TView.h>
-#include <TPolyMarker3D.h>
-#include <TAxis3D.h>
-#include <TPolyLine3D.h>
-#include <TFile.h>
-#include <TVector3.h>
-#include <TNtuple.h>
+#include "TROOT.h"
+#include "TCanvas.h"
+#include "TView.h"
+#include "TPolyMarker3D.h"
+#include "TAxis3D.h"
+#include "TPolyLine3D.h"
+#include "TFile.h"
+#include "TVector3.h"
+#include "TNtuple.h"
 
 #include <random>
 #include <iostream>
@@ -453,7 +453,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     return (int) track.size();
 }
 
-#include "RhoNNO/TXMLP.h"
+#include "TXMLP.h"
 
 #ifdef TRACKML
 // Recall function on normalised network input

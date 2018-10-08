@@ -10,8 +10,8 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/VSupervisedNet.h"
-#include "RhoNNO/TPerceptron.h"
+#include "VSupervisedNet.h"
+#include "TPerceptron.h"
 
 class TXMLP : public VSupervisedNet {
 private:
@@ -34,7 +34,7 @@ public:
     virtual void SetMomentumTerm(double f);
     
     TPerceptron** fPerc;    //! Temp.unit
-    
+
     ClassDef(TXMLP,1) // Multi-Layer Perceptron (extended)
 };
 

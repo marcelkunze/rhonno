@@ -11,10 +11,10 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include <TNtuple.h>
+#include "TNtuple.h"
 
-#include "RhoNNO/VNeuralNet.h"
-#include "RhoNNO/TNeuralNetCell.h"
+#include "VNeuralNet.h"
+#include "TNeuralNetCell.h"
 
 class VUnsupervisedNet : public VNeuralNet {
 protected:
@@ -33,7 +33,7 @@ public:
     const TNeuralNetCell* GetCell(int n) const { if (n<fXB.fCells) return &fU[n]; else return NULL;};
     virtual int GetWinnerCell(NNO_INTYPE* in) = 0;
     virtual long TrainEpoch (FILE* trainFile);  // returns number of records in LearnFile
-    virtual long TrainEpoch (TNtuple *tuple, bool random=kTRUE);    // learn the hits from the ntuple
+    virtual long TrainEpoch (TNtuple *tuple, bool random=true);    // learn the hits from the ntuple
     virtual void Draw (Option_t *option="");
     virtual void Print (Option_t *option="") const;
     

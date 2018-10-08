@@ -11,21 +11,20 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include <TNamed.h>
-
 class TH1D;
 class TGraph;
 class TCanvas;
 
-// Base class of all network plotterss
+// Base class of all network plotters
+#include <TNamed.h>
 class VNeuralNetPlotter : public TNamed {
 public:
     VNeuralNetPlotter(std::string name);
     virtual ~VNeuralNetPlotter() {}
     virtual void Initialize() = 0;
     virtual void Reset() = 0;
-    virtual void AddTrainSample(double trn, bool good = kTRUE) = 0;
-    virtual void AddTestSample(double tst, bool good = kTRUE) = 0;
+    virtual void AddTrainSample(double trn, bool good = true) = 0;
+    virtual void AddTestSample(double tst, bool good = true) = 0;
     virtual void AddTrainGraph(double trn) = 0;
     virtual void AddTestGraph(double tst) = 0;
     virtual void ShowPlots() = 0;
@@ -60,8 +59,8 @@ public:
     virtual ~TSimpleNeuralNetPlotter();
     void Initialize();
     void Reset();
-    void AddTrainSample(double trn, bool good = kTRUE);
-    void AddTestSample(double tst, bool good = kTRUE);
+    void AddTrainSample(double trn, bool good = true);
+    void AddTestSample(double tst, bool good = true);
     void AddTrainGraph(double trn);
     void AddTestGraph(double tst);
     void ShowPlots();

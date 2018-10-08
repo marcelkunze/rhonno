@@ -8,10 +8,11 @@
 // M.Kunze, Heidelberg University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include <TNtuple.h>
-#include "RhoNNO/TGNGTracker.h"
-#include "RhoNNO/VNeuralNetPlotter.h"
-#include "RhoNNO/Graph.h"
+#include "TNtuple.h"
+
+#include "TGNGTracker.h"
+#include "VNeuralNetPlotter.h"
+#include "Graph.h"
 
 #include <cfloat>
 #include <iostream>
@@ -325,7 +326,7 @@ double  TGNGTracker::Train(NNO_INTYPE* in,NNO_OUTTYPE*)
             fXB.fDeleteCount = 0;
         }
     
-    fShouldSave = kTRUE;
+    fShouldSave = true;
     
     return fUwin1->fID;
 }

@@ -71,7 +71,7 @@ namespace ROOT {
       ::VNeuralNetPlotter *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::VNeuralNetPlotter >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("VNeuralNetPlotter", ::VNeuralNetPlotter::Class_Version(), "VNeuralNetPlotter.h", 21,
+         instance("VNeuralNetPlotter", ::VNeuralNetPlotter::Class_Version(), "VNeuralNetPlotter.h", 20,
                   typeid(::VNeuralNetPlotter), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::VNeuralNetPlotter::Dictionary, isa_proxy, 16,
                   sizeof(::VNeuralNetPlotter) );
@@ -101,7 +101,7 @@ namespace ROOT {
       ::TSimpleNeuralNetPlotter *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSimpleNeuralNetPlotter >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("TSimpleNeuralNetPlotter", ::TSimpleNeuralNetPlotter::Class_Version(), "VNeuralNetPlotter.h", 38,
+         instance("TSimpleNeuralNetPlotter", ::TSimpleNeuralNetPlotter::Class_Version(), "VNeuralNetPlotter.h", 37,
                   typeid(::TSimpleNeuralNetPlotter), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::TSimpleNeuralNetPlotter::Dictionary, isa_proxy, 16,
                   sizeof(::TSimpleNeuralNetPlotter) );
@@ -133,7 +133,7 @@ namespace ROOT {
       ::TNeuralNetParameters *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TNeuralNetParameters >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("TNeuralNetParameters", ::TNeuralNetParameters::Class_Version(), "VNeuralNet.h", 27,
+         instance("TNeuralNetParameters", ::TNeuralNetParameters::Class_Version(), "VNeuralNet.h", 28,
                   typeid(::TNeuralNetParameters), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::TNeuralNetParameters::Dictionary, isa_proxy, 16,
                   sizeof(::TNeuralNetParameters) );
@@ -165,7 +165,7 @@ namespace ROOT {
       ::VNeuralNet *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::VNeuralNet >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("VNeuralNet", ::VNeuralNet::Class_Version(), "VNeuralNet.h", 51,
+         instance("VNeuralNet", ::VNeuralNet::Class_Version(), "VNeuralNet.h", 52,
                   typeid(::VNeuralNet), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::VNeuralNet::Dictionary, isa_proxy, 16,
                   sizeof(::VNeuralNet) );
@@ -2789,14 +2789,14 @@ namespace {
 extern int __Cling_Autoloading_Map;
 class __attribute__((annotate(R"ATTRDUMP(Base class of all network plotters)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$VNeuralNetPlotter.h")))  VNeuralNetPlotter;
 class __attribute__((annotate(R"ATTRDUMP(Base class of all network plotters)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$VNeuralNetPlotter.h")))  TSimpleNeuralNetPlotter;
-class __attribute__((annotate(R"ATTRDUMP(Parameters for all supervised networks)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$VNeuralNet.h")))  TNeuralNetParameters;
+class __attribute__((annotate(R"ATTRDUMP(Parameters for all supervised networks#endif)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$VNeuralNet.h")))  TNeuralNetParameters;
 class __attribute__((annotate(R"ATTRDUMP(Base class of all networks)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$VNeuralNet.h")))  VNeuralNet;
 class __attribute__((annotate(R"ATTRDUMP(Supervised training)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$VSupervisedNet.h")))  VSupervisedNet;
-class __attribute__((annotate(R"ATTRDUMP(Parameters for unsupervised networks)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$RhoNNO/TNeuralNetCell.h")))  __attribute__((annotate("$clingAutoload$VUnsupervisedNet.h")))  TNeuralNetCellParameters;
-class __attribute__((annotate(R"ATTRDUMP(Cell for unsupervised networks)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$RhoNNO/TNeuralNetCell.h")))  __attribute__((annotate("$clingAutoload$VUnsupervisedNet.h")))  TNeuralNetCell;
+class __attribute__((annotate(R"ATTRDUMP(Parameters for unsupervised networks)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$TNeuralNetCell.h")))  __attribute__((annotate("$clingAutoload$VUnsupervisedNet.h")))  TNeuralNetCellParameters;
+class __attribute__((annotate(R"ATTRDUMP(Cell for unsupervised networks)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$TNeuralNetCell.h")))  __attribute__((annotate("$clingAutoload$VUnsupervisedNet.h")))  TNeuralNetCell;
 class __attribute__((annotate(R"ATTRDUMP(Unsupervised training)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$VUnsupervisedNet.h")))  VUnsupervisedNet;
-class __attribute__((annotate(R"ATTRDUMP(Multilayer Perceptron)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$RhoNNO/TPerceptron.h")))  __attribute__((annotate("$clingAutoload$TFD.h")))  TPerceptron;
-class __attribute__((annotate(R"ATTRDUMP(Multi-Layer Perceptron (extended))ATTRDUMP"))) __attribute__((annotate("$clingAutoload$RhoNNO/TXMLP.h")))  __attribute__((annotate("$clingAutoload$TFD.h")))  TXMLP;
+class __attribute__((annotate(R"ATTRDUMP(Multilayer Perceptron)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$TPerceptron.h")))  __attribute__((annotate("$clingAutoload$TFD.h")))  TPerceptron;
+class __attribute__((annotate(R"ATTRDUMP(Multi-Layer Perceptron (extended))ATTRDUMP"))) __attribute__((annotate("$clingAutoload$TXMLP.h")))  __attribute__((annotate("$clingAutoload$TFD.h")))  TXMLP;
 class __attribute__((annotate(R"ATTRDUMP(Fisher discriminant)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$TFD.h")))  TFD;
 class __attribute__((annotate(R"ATTRDUMP(Supervised Growing Cell Structure)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$TSGCS.h")))  TSGCS;
 class __attribute__((annotate(R"ATTRDUMP(Supervised Growing Neural Gas)ATTRDUMP"))) __attribute__((annotate("$clingAutoload$TSGNG.h")))  TSGNG;

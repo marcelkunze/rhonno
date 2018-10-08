@@ -8,8 +8,8 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TGNG.h"
-#include "RhoNNO/VNeuralNetPlotter.h"
+#include "TGNG.h"
+#include "VNeuralNetPlotter.h"
 
 ClassImp(TGNG)
 
@@ -322,7 +322,7 @@ double  TGNG::Train(NNO_INTYPE* in,NNO_OUTTYPE*)
             fXB.fDeleteCount = 0;
         }
     
-    fShouldSave = kTRUE;
+    fShouldSave = true;
     
     return fUwin1->fID;
 }

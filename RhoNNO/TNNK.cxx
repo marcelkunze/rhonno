@@ -8,8 +8,8 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TNNK.h"
-#include "RhoNNO/VNeuralNetPlotter.h"
+#include "TNNK.h"
+#include "VNeuralNetPlotter.h"
 
 #include <iostream>
 using namespace std;
@@ -43,7 +43,7 @@ void TNNK::ReadBinary(void)
 TNNK::TNNK(double learn,double fse,double mu,int innodes,Text_t *hidnodes,int outnodes,string netFile)
 : VSupervisedNet("TNNK",innodes,outnodes,netFile) 
 {
-    fShouldSave = kTRUE;
+    fShouldSave = true;
     Text_t *name = (char *)"TNNK";
     fKernel = new TNNKernel(name,innodes,hidnodes,outnodes);
     fKernel->SetLearnParam(learn,fse,mu);
@@ -57,7 +57,7 @@ TNNK::TNNK(double learn,double fse,double mu,int innodes,Text_t *hidnodes,int ou
 TNNK::TNNK(string netFile)
 : VSupervisedNet("TNNK",5,10,netFile)
 {
-    fShouldSave = kFALSE;
+    fShouldSave = false;
     fKernel = new TNNKernel();
     ReadText();
 }
@@ -117,7 +117,7 @@ double* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
     }
     
     if (fPlotter) {
-        bool good = kTRUE;
+        bool good = true;
         if (out!=0) good = out[0]>fParm.fThreshold;
         fPlotter->AddTestSample(fKernel->GetOutput(),good);
     }

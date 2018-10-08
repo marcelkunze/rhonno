@@ -1,14 +1,15 @@
 // Read HITS spatial data and try a GNG network to segment the tracks...
 
-#include <TROOT.h>
-#include <TCanvas.h>
-#include <TView.h>
-#include <TPolyMarker3D.h>
-#include <TAxis3D.h>
-#include <TPolyLine3D.h>
-#include <TFile.h>
-#include <TVector3.h>
-#include "RhoNNO/TGNGTracker.h"
+#include "TROOT.h"
+#include "TCanvas.h"
+#include "TView.h"
+#include "TPolyMarker3D.h"
+#include "TAxis3D.h"
+#include "TPolyLine3D.h"
+#include "TFile.h"
+#include "TVector3.h"
+
+#include "TGNGTracker.h"
 
 #include <random>
 #include <iostream>
@@ -134,7 +135,7 @@ int main(int argc, char* argv[]) {
     while (n++ < MAXEPOCH) {
         cout << endl << "Epoch: " << n << endl << "Cells:" << net.GetNumberOfCells() << endl;
         // Set the input data
-        net.TrainEpoch(&nt1, kFALSE);
+        net.TrainEpoch(&nt1, false);
     }
     
     // Show the network

@@ -8,8 +8,8 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TXMLP.h"
-#include "RhoNNO/VNeuralNetPlotter.h"
+#include "TXMLP.h"
+#include "VNeuralNetPlotter.h"
 
 ClassImp(TXMLP)
 
@@ -177,7 +177,7 @@ double* TXMLP::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
     for (I=0;I<fParm.fOutNodes;++I) fOut[I] = fPerc[fParm.fLayers-1]->fOut[I];
     
     if (fPlotter) {
-        bool good = kTRUE;
+        bool good = true;
         if (out!=0) good = out[0]>fParm.fThreshold;
         fPlotter->AddTestSample(fOut[0],good);
     }
@@ -188,7 +188,7 @@ double* TXMLP::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
 double TXMLP::Train(NNO_INTYPE* in,NNO_OUTTYPE* trout) 
 {
     int I,J;
-    fShouldSave = kTRUE;
+    fShouldSave = true;
     
     // convert input
     NNO_INTYPE* i=in;

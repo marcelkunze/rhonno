@@ -11,9 +11,9 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include <TNtuple.h>
+#include "TNtuple.h"
 
-#include "RhoNNO/VNeuralNet.h"
+#include "VNeuralNet.h"
 
 class VSupervisedNet : public VNeuralNet {
 protected:
@@ -25,7 +25,7 @@ public:
     VSupervisedNet(std::string netFile) :
     VNeuralNet(netFile) {}
     virtual ~VSupervisedNet() {};
-    virtual long TrainEpoch (TNtuple *tuple, bool random=kTRUE);    // learn the hits from the ntuple
+    virtual long TrainEpoch (TNtuple *tuple, bool random=true);    // learn the hits from the ntuple
     
     ClassDef(VSupervisedNet,1) // Supervised training
 };

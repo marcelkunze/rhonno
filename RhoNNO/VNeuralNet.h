@@ -11,6 +11,7 @@
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include "TNamed.h"
+#include <string>
 
 // Define the precision
 typedef float NNO_INTYPE;
@@ -43,8 +44,8 @@ public:
 public:
     TNeuralNetParameters();
     virtual ~TNeuralNetParameters() {}
-    
-    ClassDef(TNeuralNetParameters,1)  // Parameters for all supervised networks
+
+    ClassDef(TNeuralNetParameters,1)  // Parameters for all supervised networks#endif
 };
 
 // Base class of all networks
@@ -71,7 +72,7 @@ public:
     double	TrainEpoch(std::string file, int nEpoch=1);
     double	TestEpoch(std::string file);
     double	Test(NNO_INTYPE* in,NNO_OUTTYPE* trn);        // returns squared error
-    void	BalanceSamples(bool yesNo = kTRUE) { fBalance = yesNo; }
+    void	BalanceSamples(bool yesNo = true) { fBalance = yesNo; }
     virtual void SetMomentumTerm(double f);
     virtual void SetFlatSpotElimination(double f);
     
@@ -132,7 +133,7 @@ public:
     void SetupPlots(VNeuralNetPlotter *plotter=0);
     void FillPlots(double trn=0.0, double tst=0.0);
     void ShowPlots();
-    
+
     ClassDef(VNeuralNet,1)  // Base class of all networks
 };
 

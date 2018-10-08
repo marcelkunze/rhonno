@@ -10,7 +10,7 @@
 // M.Kunze, Bochum University
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
-#include "RhoNNO/TXMLP.h"
+#include "TXMLP.h"
 
 class TMLP : public TXMLP {
 public:
