@@ -7,7 +7,7 @@ LIBS=-L../lib -lRhoNNO
 LDFLAGS=$(shell root-config --glibs)
 
 #SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx xmlp.cxx netbase.cxx percept.cxx net.cxx
-SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx
+SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx XMLP.cxx
 
 HEADERS=$(SRC:.cxx=.h)
 OBJECTS=$(SOURCES:.cxx=.o)
