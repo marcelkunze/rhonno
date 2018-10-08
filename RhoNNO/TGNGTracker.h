@@ -17,16 +17,16 @@ class TNtuple;
 class TGNGTracker : public VUnsupervisedNet {
 public:
     TGNGTracker() {}
-    TGNGTracker(Int_t innodes,
-                Int_t maxCells,
-                Double_t winStep,
-                Double_t neiStep,
-                Double_t aWinCount,
-                Double_t aEdgeCount,
-                Double_t minCount,
-                Int_t  connectors,
-                Long_t insertStep,
-                Long_t deleteStep,
+    TGNGTracker(int innodes,
+                int maxCells,
+                double winStep,
+                double neiStep,
+                double aWinCount,
+                double aEdgeCount,
+                double minCount,
+                int  connectors,
+                long insertStep,
+                long deleteStep,
                 const char* netFile);
     
     TGNGTracker(std::string netFile) : VUnsupervisedNet(netFile) {ReadNet("GNG");};
@@ -38,8 +38,8 @@ protected:
     TNeuralNetCell*  fUbound;	//! Temp. unit
     TNeuralNetCell*  fUwin1;	//! Temp. unit
     TNeuralNetCell*  fUwin2;	//! Temp. unit
-    Double_t fMinDistSquare1;
-    Double_t fMinDistSquare2;
+    double fMinDistSquare1;
+    double fMinDistSquare2;
     
     virtual void AllocNet(void);
     virtual void InitNet(void);
@@ -48,23 +48,25 @@ protected:
     virtual void ReadText(void);
     virtual void ReadBinary(void);
     
-    Int_t  CondDisconnect(TNeuralNetCell* up1,TNeuralNetCell* up2);
+    int  CondDisconnect(TNeuralNetCell* up1,TNeuralNetCell* up2);
     void Connect(TNeuralNetCell* up1,TNeuralNetCell* up2);
     virtual void UpdateConnector(TNeuralNetCell* up1,TNeuralNetCell* up2);
     
 public:
-    virtual Double_t  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin1->fVector; }
-    virtual Int_t GetWinnerCell(NNO_INTYPE* in);
+    virtual double  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    virtual double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin1->fVector; }
+    virtual int GetWinnerCell(NNO_INTYPE* in);
     
     void Deviation(void); // calculates s_dev of all cells
     void CopyData(const TGNGTracker& gng); // copies data from another gcs network
     
-    Int_t Insert(void);  // this function will be called automatically if insert_step>0
+    int Insert(void);  // this function will be called automatically if insert_step>0
     void Prune(void);  // this function will be called automatically if delete_step>0
     
     void SetHits(TNtuple* tuple) { fTuple = tuple; } // sets the input data
     TNtuple* GetHits(void) const { return fTuple; } // gets the input data
+    
+    int GetCluster(void); // Find a cluster
     
     ClassDef(TGNGTracker,1)	// Unsupervised Growing Neural Gas
 };

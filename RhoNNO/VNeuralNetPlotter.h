@@ -24,12 +24,12 @@ public:
     virtual ~VNeuralNetPlotter() {}
     virtual void Initialize() = 0;
     virtual void Reset() = 0;
-    virtual void AddTrainSample(Double_t trn, Bool_t good = kTRUE) = 0;
-    virtual void AddTestSample(Double_t tst, Bool_t good = kTRUE) = 0;
-    virtual void AddTrainGraph(Double_t trn) = 0;
-    virtual void AddTestGraph(Double_t tst) = 0;
+    virtual void AddTrainSample(double trn, bool good = kTRUE) = 0;
+    virtual void AddTestSample(double tst, bool good = kTRUE) = 0;
+    virtual void AddTrainGraph(double trn) = 0;
+    virtual void AddTestGraph(double tst) = 0;
     virtual void ShowPlots() = 0;
-    virtual void DrawT(Text_t *text, Float_t x, Float_t y, Float_t angle=0., Int_t color=1);
+    virtual void DrawT(Text_t *text, float x, float y, float angle=0., int color=1);
 
     ClassDef(VNeuralNetPlotter,1)  // Base class of all network plotters
 };
@@ -37,33 +37,33 @@ public:
 // Default plotter
 class TSimpleNeuralNetPlotter : public VNeuralNetPlotter {
 protected:
-    Bool_t	    fPlots;	    //!Show plots
+    bool	    fPlots;	    //!Show plots
     std::string fTrnPlot;	//!
     std::string fTstPlot;	//!
-    Int_t	    fIndex;	    //!the index number
+    int	    fIndex;	    //!the index number
     TCanvas*    fCanvas;    //!Drawing
     TH1D*	    fTrnHistTrue;   //!Training histogram
     TH1D*	    fTrnHistFalse;  //!Training histogram
     TH1D*	    fTstHistTrue;   //!Test histogram
     TH1D*	    fTstHistFalse;  //!Test histogram
     TGraph*	    fTrnCurve;	    //!Error plot
-    Int_t	    fNtrn;	    //!Number of points
-    Double_t*	fXtrn;	    //!
-    Double_t*	fYtrn;	    //!
+    int	    fNtrn;	    //!Number of points
+    double*	fXtrn;	    //!
+    double*	fYtrn;	    //!
     TGraph*	    fTstCurve;	//!Test plot
-    Int_t	    fNtst;	    //!Number of points
-    Double_t*	fXtst;	    //!
-    Double_t*	fYtst;	    //!
+    int	    fNtst;	    //!Number of points
+    double*	fXtst;	    //!
+    double*	fYtst;	    //!
 
 public:
     TSimpleNeuralNetPlotter(std::string name);
     virtual ~TSimpleNeuralNetPlotter();
     void Initialize();
     void Reset();
-    void AddTrainSample(Double_t trn, Bool_t good = kTRUE);
-    void AddTestSample(Double_t tst, Bool_t good = kTRUE);
-    void AddTrainGraph(Double_t trn);
-    void AddTestGraph(Double_t tst);
+    void AddTrainSample(double trn, bool good = kTRUE);
+    void AddTestSample(double tst, bool good = kTRUE);
+    void AddTrainGraph(double trn);
+    void AddTestGraph(double tst);
     void ShowPlots();
 
     ClassDef(TSimpleNeuralNetPlotter,1)  // Base class of all network plotters

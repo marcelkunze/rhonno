@@ -55,6 +55,7 @@ namespace std {} using namespace std;
 #include "TNNK.h"
 #include "TGNGTracker.h"
 #include "TRadon.h"
+#include "Graph.h"
 
 // Header files passed via #pragma extra_include
 
@@ -2771,6 +2772,7 @@ namespace {
 "TNNK.h",
 "TGNGTracker.h",
 "TRadon.h",
+"Graph.h",
 0
     };
     static const char* includePaths[] = {
@@ -2834,6 +2836,7 @@ class __attribute__((annotate(R"ATTRDUMP(Fuzzy Radon transform)ATTRDUMP"))) __at
 #include "TNNK.h"
 #include "TGNGTracker.h"
 #include "TRadon.h"
+#include "Graph.h"
 
 #undef  _BACKWARD_BACKWARD_WARNING_H
 )DICTPAYLOAD";

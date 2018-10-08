@@ -48,15 +48,15 @@ class NetworkTrainer
 public:
     enum PARITY {EVEN,ODD};
     
-    NetworkTrainer(Int_t nEpoch=100);
+    NetworkTrainer(int nEpoch=100);
     virtual ~NetworkTrainer() {}
     void AddNetwork(VNeuralNet *net) { fNets.Add(net); }
     void Train();
-    Int_t MakeData(NNO_INTYPE*, Bool_t randomize = kFALSE);
-    void MakeFile(const char*,Int_t, Bool_t randomize = kFALSE);
+    int MakeData(NNO_INTYPE*, bool randomize = kFALSE);
+    void MakeFile(const char*,int, bool randomize = kFALSE);
     PARITY Parity(NNO_INTYPE*);
 private:
-    Int_t fEpoch;
+    int fEpoch;
     TList fNets;
 };
 
@@ -64,7 +64,7 @@ private:
 // Program to train 5 supervised networks: TNNK, MLP, XMLP, TGCS and TGNG
 // (Parity problem)
 
-Int_t main() {
+int main() {
     
     cout << "NNO TEST PROGRAM" << endl;
     
@@ -190,9 +190,9 @@ Int_t main() {
     
     for (int i=0;i<10; i++) {
         NNO_INTYPE in[INNODES];
-        Int_t testData = trainer.MakeData(in,kTRUE);
+        int testData = trainer.MakeData(in,kTRUE);
         NetworkTrainer::PARITY parity = trainer.Parity(in);
-        Double_t *answer = testNet->Recall(in);
+        double *answer = testNet->Recall(in);
         if (parity == NetworkTrainer::EVEN)
             cout <<  testData << "\t(parity=EVEN) is classified " << answer[0] << endl;
         else
@@ -203,7 +203,7 @@ Int_t main() {
 }
 
 
-NetworkTrainer::NetworkTrainer(Int_t nEpoch) : fEpoch(nEpoch)
+NetworkTrainer::NetworkTrainer(int nEpoch) : fEpoch(nEpoch)
 {
     // Set up training and test files for the parity problem
     
@@ -238,13 +238,13 @@ NetworkTrainer::PARITY NetworkTrainer::Parity(NNO_INTYPE* Data)
 { 
     // computes parity: 1= odd, 0=even
     
-    Int_t I;
-    Int_t count=0;
+    int I;
+    int count=0;
     for(I=0; I<INNODES; ++I) if ( Data[I] > 0.5 ) ++count;
     return (PARITY) (count&1);   // last bit of 'Count' contains parity
 }
 
-Int_t NetworkTrainer::MakeData(NNO_INTYPE* in, Bool_t randomize) 
+int NetworkTrainer::MakeData(NNO_INTYPE* in, bool randomize) 
 {
     // There are two ways of operation (according to the state of the 'randomize' flag)
     // 1) Create all pattern and set inputs correspondingly (Shuffle the data set)
@@ -252,7 +252,7 @@ Int_t NetworkTrainer::MakeData(NNO_INTYPE* in, Bool_t randomize)
     
     const int ntrn = 1<<INNODES; // Number of patterns
     static int samples[ntrn];
-    static Bool_t initialized = kFALSE;
+    static bool initialized = kFALSE;
     if (!initialized) {
         
         for (int i=0;i<ntrn;i++) { // Generate all patterns
@@ -272,7 +272,7 @@ Int_t NetworkTrainer::MakeData(NNO_INTYPE* in, Bool_t randomize)
     
     // Choose an item and set up the input vector
     
-    Int_t value = 0;
+    int value = 0;
     
     if (randomize) {
         value = rand()%ntrn;
@@ -293,7 +293,7 @@ Int_t NetworkTrainer::MakeData(NNO_INTYPE* in, Bool_t randomize)
     return value;
 }
 
-void NetworkTrainer::MakeFile(const char* filename,Int_t Records, Bool_t randomize) 
+void NetworkTrainer::MakeFile(const char* filename,int Records, bool randomize) 
 {
     // Write a file that contains pairs of input and output vectors
     // for training of the parity
@@ -303,7 +303,7 @@ void NetworkTrainer::MakeFile(const char* filename,Int_t Records, Bool_t randomi
     
     // Out is 1 if parity is even, else -1
     
-    Int_t I;
+    int I;
     FILE* file = fopen(filename,"wb");
     for (I=0;I<Records;++I) {
         MakeData(Data, randomize);

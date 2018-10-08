@@ -15,7 +15,7 @@
 class TMLP : public TXMLP {
 public:
     TMLP() {}
-    TMLP(Double_t hidStep,Double_t outStep,Int_t innodes,Int_t hidnodes,Int_t outnodes,Double_t inputRange,
+    TMLP(double hidStep,double outStep,int innodes,int hidnodes,int outnodes,double inputRange,
          std::string netFile,TNeuralNetParameters::TRANSFER f=TNeuralNetParameters::TR_FERMI)
     : TXMLP(2,inputRange,netFile,innodes,hidnodes,outnodes,hidStep,outStep,TNeuralNetParameters::TR_FERMI,f) {}
     TMLP(std::string netFile) : TXMLP(netFile) {ReadNet("XMLP");};

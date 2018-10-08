@@ -33,7 +33,7 @@ void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double r
     double tau = 0.025;
     for (int i=0; i<np; i++,tau+=delta)
     {
-        Float_t X,Y,Z;
+        float X,Y,Z;
         X = radius * ( sin(phi + (signum(radius)) * tau) - sin(phi));
         Y = radius * (-cos(phi + (signum(radius)) * tau) + cos(phi));
         Z = gamma * tau;
@@ -75,9 +75,9 @@ int main(int argc, char* argv[]) {
     {
         // std::vector<TVector3>, int np, float delta tau, float radius, float phi, float gamma
         GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/1.0,0.5,SIGMA);
-        GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
-        GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/3.0,1.5,SIGMA);
-        GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/3.0,-1.2,SIGMA);
+ //       GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/2.0,1.0,SIGMA);
+ //       GenerateTrack(hits,NHITS,0.0125,1.0,M_PI/3.0,1.5,SIGMA);
+ //       GenerateTrack(hits,NHITS,0.0125,-1.0,M_PI/3.0,-1.2,SIGMA);
     }
     
     // Sort the hits according to distance from origin
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
     rulers.Draw();
     // draw hits as PolyMarker3D
     long nhits = hits.size();
-    TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
+    TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
     vector<TVector3>::iterator it;
     for(it = hits.begin(); it != hits.end(); it++)    {
         static int i = 0;
@@ -138,8 +138,11 @@ int main(int argc, char* argv[]) {
     }
     
     // Show the network
-    net.Print();
-    net.Draw();
+    //net.Print();
+    int nc = net.GetCluster();
+    cout << "Found " << nc << " Clusters" << endl;
+
+    //net.Draw();
 
     // TBD: Analyze the network
     // Sort out the tracks by following the network connections and fill the corresponding track hits into containers

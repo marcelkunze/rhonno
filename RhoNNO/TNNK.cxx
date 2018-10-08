@@ -40,7 +40,7 @@ void TNNK::ReadText(void)
 void TNNK::ReadBinary(void)
 {}
 
-TNNK::TNNK(Double_t learn,Double_t fse,Double_t mu,Int_t innodes,Text_t *hidnodes,Int_t outnodes,string netFile)
+TNNK::TNNK(double learn,double fse,double mu,int innodes,Text_t *hidnodes,int outnodes,string netFile)
 : VSupervisedNet("TNNK",innodes,outnodes,netFile) 
 {
     fShouldSave = kTRUE;
@@ -68,7 +68,7 @@ TNNK::~TNNK()
     delete fKernel;
 }
 
-Double_t TNNK::Train(NNO_INTYPE* in,NNO_OUTTYPE* out)
+double TNNK::Train(NNO_INTYPE* in,NNO_OUTTYPE* out)
 {
     int i;
     
@@ -81,7 +81,7 @@ Double_t TNNK::Train(NNO_INTYPE* in,NNO_OUTTYPE* out)
     }
     
     fKernel->Forward();
-    Double_t error = fKernel->Error1();
+    double error = fKernel->Error1();
     fKernel->LearnBackward();
     
     // Copy over to base class
@@ -96,7 +96,7 @@ Double_t TNNK::Train(NNO_INTYPE* in,NNO_OUTTYPE* out)
     return error;
 }
 
-Double_t* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
+double* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
 {
     int i;
     
@@ -109,7 +109,7 @@ Double_t* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
     }
     
     fKernel->GoThrough();
-    //Double_t error = fKernel->Error1();
+    //double error = fKernel->Error1();
     
     // Copy over to base class
     for (i=0;i<fParm.fOutNodes;i++) {
@@ -117,7 +117,7 @@ Double_t* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
     }
     
     if (fPlotter) {
-        Bool_t good = kTRUE;
+        bool good = kTRUE;
         if (out!=0) good = out[0]>fParm.fThreshold;
         fPlotter->AddTestSample(fKernel->GetOutput(),good);
     }
@@ -136,7 +136,7 @@ Double_t* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
 
 ClassImp(TNNKernel)
 
-TNNKernel::TNNKernel(Text_t *name, Int_t nInput, Text_t *hidden, Int_t nOutput):TNamed(name,"Neural Network"),
+TNNKernel::TNNKernel(Text_t *name, int nInput, Text_t *hidden, int nOutput):TNamed(name,"Neural Network"),
 fValues(0), fNUnits(0), fW(0), fArrayOut(0), fTeach(0), fArrayIn(0), fEventsList(0)
 {
     // constructor
@@ -195,14 +195,14 @@ TNNKernel::~TNNKernel()
 
 void TNNKernel::SetHidden(Text_t *ttext)
 {
-    Int_t i,j;
+    int i,j;
     Text_t text[100];
     strcpy(text,ttext);
     
     fNHiddL=1;
     for (i=0;text[i];i++)if(text[i]==':')fNHiddL++;
     if (fNUnits) delete [] fNUnits;
-    fNUnits = new Int_t[fNHiddL+2];
+    fNUnits = new int[fNHiddL+2];
     
     j=0;
     for (i=1;i<=fNHiddL;i++)
@@ -220,7 +220,7 @@ void TNNKernel::SetHidden(Text_t *ttext)
 
 void TNNKernel::FreeVW()
 {
-    Int_t i,l;
+    int i,l;
     
     // free of values
     
@@ -257,9 +257,9 @@ void TNNKernel::FreeVW()
     if (fNUnits){ delete [] fNUnits; fNUnits=0;}
 }
 
-void TNNKernel::AllocateVW(Int_t nInput, Text_t *hidden, Int_t nOutput)
+void TNNKernel::AllocateVW(int nInput, Text_t *hidden, int nOutput)
 {
-    Int_t i,l;
+    int i,l;
     
     if(fW){printf("free memory first !\n");return;}
     
@@ -269,17 +269,17 @@ void TNNKernel::AllocateVW(Int_t nInput, Text_t *hidden, Int_t nOutput)
     
     // allocation of values
     
-    fValues = new Float_t*[fNHiddL+2];
-    fErrors = new Double_t*[fNHiddL+2];
-    fBiases = new Double_t*[fNHiddL+2];
-    fDB = new Double_t*[fNHiddL+2];
+    fValues = new float*[fNHiddL+2];
+    fErrors = new double*[fNHiddL+2];
+    fBiases = new double*[fNHiddL+2];
+    fDB = new double*[fNHiddL+2];
     
     for (i=0;i<fNHiddL+2;i++)
     {
-        fValues[i]=new Float_t[fNUnits[i]];
-        fErrors[i]=new Double_t[fNUnits[i]];
-        fBiases[i]=new Double_t[fNUnits[i]];
-        fDB[i]=new Double_t[fNUnits[i]];
+        fValues[i]=new float[fNUnits[i]];
+        fErrors[i]=new double[fNUnits[i]];
+        fBiases[i]=new double[fNUnits[i]];
+        fDB[i]=new double[fNUnits[i]];
         for (int j=0;j<fNUnits[i];j++) {
             fValues[i][j] = 0.0;
             fErrors[i][j] = 0.0;
@@ -290,33 +290,33 @@ void TNNKernel::AllocateVW(Int_t nInput, Text_t *hidden, Int_t nOutput)
     
     // allocation of teaching
     
-    fTeach=new Float_t[fNUnits[fNHiddL+1]];
+    fTeach=new float[fNUnits[fNHiddL+1]];
     
     // allocation of weights
     
-    fW=new Double_t**[fNHiddL+1];
-    fDW=new Double_t**[fNHiddL+1];
+    fW=new double**[fNHiddL+1];
+    fDW=new double**[fNHiddL+1];
     
     for (i=0;i<fNHiddL+1;i++)
     {
-        fW[i]=new Double_t*[fNUnits[i]];
-        fDW[i]=new Double_t*[fNUnits[i]];
+        fW[i]=new double*[fNUnits[i]];
+        fDW[i]=new double*[fNUnits[i]];
         for (l=0;l<fNUnits[i];l++)
         {
-            fW[i][l]=new Double_t[fNUnits[i+1]];
-            fDW[i][l]=new Double_t[fNUnits[i+1]];
+            fW[i][l]=new double[fNUnits[i+1]];
+            fDW[i][l]=new double[fNUnits[i+1]];
         }
     }
     
 }
 
-void TNNKernel::SetKernel(Int_t nInput, Text_t *hidden, Int_t nOutput)
+void TNNKernel::SetKernel(int nInput, Text_t *hidden, int nOutput)
 {  
     FreeVW();
     AllocateVW(nInput,hidden,nOutput);
 }
 
-void TNNKernel::SetLearnParam(Double_t learnParam,Double_t fse,Double_t mu)
+void TNNKernel::SetLearnParam(double learnParam,double fse,double mu)
 {
     // Sets the learning parameters :
     // the main learning parameter is around 0.2 (in ]0,1])
@@ -333,10 +333,10 @@ void TNNKernel::SetLearnParam(Double_t learnParam,Double_t fse,Double_t mu)
     printf("Momentum set to : %6.2f\n",fMu);
 }
 
-void TNNKernel::SetInitParam(Float_t lowerInitWeight, Float_t upperInitWeight)
+void TNNKernel::SetInitParam(float lowerInitWeight, float upperInitWeight)
 {
     // Sets the initialisation parameters : max and min weights
-    Float_t temp;
+    float temp;
     
     fLowerInitWeight=lowerInitWeight;
     fUpperInitWeight=upperInitWeight;
@@ -354,19 +354,19 @@ void TNNKernel::SetInitParam(Float_t lowerInitWeight, Float_t upperInitWeight)
 }
 
 
-Float_t TNNKernel::Alea()
+float TNNKernel::Alea()
 {
-    return (Float_t) fLowerInitWeight+fRandom.Rndm()*(fUpperInitWeight-fLowerInitWeight);
+    return (float) fLowerInitWeight+fRandom.Rndm()*(fUpperInitWeight-fLowerInitWeight);
 }
 
 void TNNKernel::Init()
 {
     // initialisation of  biases and weights.
     // the init parameters can be changed by :
-    // SetInitParam(Float_t lowerInitWeight, Float_t upperInitWeight)
+    // SetInitParam(float lowerInitWeight, float upperInitWeight)
     // The default is -1 and 1
     
-    Int_t i,l,c;
+    int i,l,c;
     
     if(!fW){printf("allocate memory first !\n");return;}
     
@@ -374,7 +374,7 @@ void TNNKernel::Init()
     
     for (i=0;i<fNHiddL+1;i++)
         for (l=0;l<fNUnits[i];l++)
-            for (c=0;c<fNUnits[i+1];c++) fW[i][l][c]=(Double_t)Alea();
+            for (c=0;c<fNUnits[i+1];c++) fW[i][l][c]=(double)Alea();
     
     for(i=0;i<fNHiddL+1;i++)for(l=0;l<fNUnits[i];l++)for(c=0;c<fNUnits[i+1];c++)
         fDW[i][l][c]=0.;
@@ -382,7 +382,7 @@ void TNNKernel::Init()
     // init of biases
     
     for (i=1;i<fNHiddL+2;i++)
-        for (l=0;l<fNUnits[i];l++) fBiases[i][l]=(Double_t)(Alea())*fUseBiases;
+        for (l=0;l<fNUnits[i];l++) fBiases[i][l]=(double)(Alea())*fUseBiases;
     
     for(i=1;i<fNHiddL+2;i++)for(l=0;l<fNUnits[i];l++)fDB[i][l]=0.;
     
@@ -394,7 +394,7 @@ void TNNKernel::Init()
 void TNNKernel::PrintS()
 {
     // prints structure of network on screen
-    Int_t i,l,c;
+    int i,l,c;
     
     if(!fW){printf("no unit !\n");return;}
     
@@ -404,7 +404,7 @@ void TNNKernel::PrintS()
     if(fUseBiases)printf(">>>>>>> Biases USED");else printf(">>>>>>>Biases DUMMY");
     
     printf("\n ----------   Biases   ---------- \n");
-    Int_t maxl=0;
+    int maxl=0;
     for(i=0;i<fNHiddL+2;i++)if(fNUnits[i]>=maxl)maxl=fNUnits[i];
     for(i=0;i<fNHiddL+2;i++)printf("    %1i   | ",i);printf("\n");
     for(i=0;i<fNHiddL+2;i++)printf("--------|-");printf("\n");
@@ -449,8 +449,8 @@ void TNNKernel::Forward()
 {
     // general function to propagate the input activation
     //  The input activation array must be filled
-    Int_t i,l,c;
-    Double_t sum;
+    int i,l,c;
+    double sum;
     
     if(!fW){printf("no unit !\n");return;}
     
@@ -458,8 +458,8 @@ void TNNKernel::Forward()
         for (c=0;c<fNUnits[i+1];c++)
         {
             sum=0.;
-            for(l=0;l<fNUnits[i];l++)sum+=fW[i][l][c]*(Double_t)fValues[i][l];
-            fValues[i+1][c]=(Float_t)Sigmoide(sum+fBiases[i+1][c]*fUseBiases);
+            for(l=0;l<fNUnits[i];l++)sum+=fW[i][l][c]*(double)fValues[i][l];
+            fValues[i+1][c]=(float)Sigmoide(sum+fBiases[i+1][c]*fUseBiases);
         }
 }
 
@@ -470,8 +470,8 @@ void TNNKernel::LearnBackward()
     if(fNTrainEvents<1){printf("No event to train !!!\n");return;}
     if(!fW){printf("no unit !\n");return;}
     
-    Int_t i,l,c;
-    Double_t delta;
+    int i,l,c;
+    double delta;
     
     // weights
     
@@ -479,13 +479,13 @@ void TNNKernel::LearnBackward()
         for (l=0;l<fNUnits[i];l++)
             for(c=0;c<fNUnits[i+1];c++)
             {
-                delta=fLearnParam*fErrors[i+1][c]*(Double_t)fValues[i][l]+fMu*fDW[i][l][c];
+                delta=fLearnParam*fErrors[i+1][c]*(double)fValues[i][l]+fMu*fDW[i][l][c];
                 fW[i][l][c]+=delta;
                 fDW[i][l][c]=delta;
             }
     
     // biases
-    if(((Bool_t)fUseBiases))
+    if(((bool)fUseBiases))
     {
         for (i=1;i<fNHiddL+2;i++)
             for (l=0;l<fNUnits[i];l++)
@@ -497,23 +497,23 @@ void TNNKernel::LearnBackward()
     }
 }
 
-Double_t TNNKernel::Error1()
+double TNNKernel::Error1()
 {
     // function to compute the errors between forward propagation and teaching.
     // this error is = |teaching-computed| summed on NN outputs and divided by their number.
-    Int_t i,l,c;
-    Double_t sum,error=0,errorOneUnit;
+    int i,l,c;
+    double sum,error=0,errorOneUnit;
     if(!fW){printf("no unit !\n");return 0;}
     
     //  Error on Output Units
     
     for(l=0;l<fNUnits[fNHiddL+1];l++)
     {
-        errorOneUnit=(Double_t)(fTeach[l]-fValues[fNHiddL+1][l]);
+        errorOneUnit=(double)(fTeach[l]-fValues[fNHiddL+1][l]);
         error+=TMath::Abs(errorOneUnit);
         fErrors[fNHiddL+1][l]=errorOneUnit*(SigPrim(fValues[fNHiddL+1][l])+fFlatSE);
     }
-    error=error/(Double_t)fNUnits[fNHiddL+1];
+    error=error/(double)fNUnits[fNHiddL+1];
     
     //  Error on Hidden Units
     
@@ -523,32 +523,32 @@ Double_t TNNKernel::Error1()
         {
             sum=0.;
             for(c=0;c<fNUnits[i+1];c++) sum+=fW[i][l][c]*fErrors[i+1][c];
-            fErrors[i][l]=sum*(SigPrim((Double_t)fValues[i][l])+fFlatSE);
+            fErrors[i][l]=sum*(SigPrim((double)fValues[i][l])+fFlatSE);
         }
     }
     
     return error;
 }
 
-Double_t TNNKernel::ErrorO()
+double TNNKernel::ErrorO()
 {
     // function to compute the errors between forward propagation and teaching.
     // this error is = |teaching-computed| summed on NN outputs and divided by their number.
     //  Error on Output Units
     
-    Int_t l;
-    Double_t error=0;
+    int l;
+    double error=0;
     if(!fW){printf("no unit !\n");return 0;}
     for(l=0;l<fNUnits[fNHiddL+1];l++)
-        error+=TMath::Abs((Double_t)(fTeach[l]-fValues[fNHiddL+1][l]));
+        error+=TMath::Abs((double)(fTeach[l]-fValues[fNHiddL+1][l]));
     
-    error=error/(Double_t)fNUnits[fNHiddL+1];
+    error=error/(double)fNUnits[fNHiddL+1];
     
     return error;
     
 }  
 
-Double_t TNNKernel::TrainOneCycle()
+double TNNKernel::TrainOneCycle()
 {
     // one loop on internal events = one cycle.
     // takes each event from internal array in an order fixed by an array ( fEventsList ).
@@ -560,8 +560,8 @@ Double_t TNNKernel::TrainOneCycle()
     if(fNTrainEvents<1){printf("No event to train !!!\n");return 0.;}
     if(!fW){printf("no unit !\n");return 0.;}
     
-    Int_t i;
-    Double_t error=0.;
+    int i;
+    double error=0.;
     
     for(i=0;i<fNTrainEvents;i++)
     {
@@ -572,13 +572,13 @@ Double_t TNNKernel::TrainOneCycle()
     }
     
     fNTrainCycles++;
-    error=error/(Double_t)fNTrainEvents;
+    error=error/(double)fNTrainEvents;
     //  printf("cycle %i : E_t = %6.4f ",fNTrainCycles,error);
     
     return error;
 }
 /*
- Double_t TNNKernel::Valid()
+ double TNNKernel::Valid()
  {
  // one loop on valid events.
  // takes each event from validation tree.
@@ -589,29 +589,29 @@ Double_t TNNKernel::TrainOneCycle()
  
  // we will now pass all the validation events through the kernel, and
  // compute the mean error on output
- Double_t error=0.;
- for (Int_t j=0;j<fNValidEvents;j++)
+ double error=0.;
+ for (int j=0;j<fNValidEvents;j++)
  {
  fValidTree->GetEvent(GetInputAdr(),GetTeachAdr(),j);
  error+=GoThrough(); // forward propagation and error on one event
  }
- error=error/(Double_t)fNValidEvents; // mean
+ error=error/(double)fNValidEvents; // mean
  return error;
  }
  */
 /*
- void TNNKernel::TrainNCycles(TNNControlE *conte, Int_t period, Int_t nCycles)
+ void TNNKernel::TrainNCycles(TNNControlE *conte, int period, int nCycles)
  {
  // method to train on N cycles, with mixing and plot of errors
  // on the controller conte.
  
  if(!conte){printf("no controller !\n");return;}
- Float_t errt,errv;
- for(Int_t i=0;i<nCycles;i++)
+ float errt,errv;
+ for(int i=0;i<nCycles;i++)
  {
  Mix();
- errt=(Float_t)TrainOneCycle();
- errv=(Float_t)Valid();
+ errt=(float)TrainOneCycle();
+ errv=(float)Valid();
  printf("cycle %3i > train : %7.3f",fNTrainCycles,errt);
  if(fNValidEvents)printf(" and valid : %7.3f \n",errv);else printf("\n");
  if(!(i%period)||i==(nCycles-1))
@@ -631,7 +631,7 @@ void TNNKernel::Export(Text_t *fileName)
     // WARNING : the weights and biases are stored with 4 digits
     // in decimal part.
     // Learning parameters are not stored
-    Int_t i,l,c;
+    int i,l,c;
     
     if(!fW){printf("no unit !\n");return;}
     
@@ -660,7 +660,7 @@ void TNNKernel::Import(Text_t *fileName)
     // WARNING : the weights and biases are stored with 4 digits
     // in decimal part.
     // Learning parameteres are not stored.
-    Int_t i,l,c,newI,newHL,newO;
+    int i,l,c,newI,newHL,newO;
     Text_t hidden[100],piece[5];
     FILE *file;
     file=fopen(fileName,"r");
@@ -680,17 +680,17 @@ void TNNKernel::Import(Text_t *fileName)
     printf("New NN set to : %3i  %s  %3i \n",newI,hidden,newO);
     FreeVW();
     AllocateVW(newI,hidden,newO);
-    Float_t tmpfl;
+    float tmpfl;
     for(i=0;i<fNHiddL+2;i++)
-        for(l=0;l<fNUnits[i];l++){fDB[i][l]=0.;fscanf(file,"%f",&tmpfl);*(fBiases[i]+l)=(Double_t)tmpfl;}
+        for(l=0;l<fNUnits[i];l++){fDB[i][l]=0.;fscanf(file,"%f",&tmpfl);*(fBiases[i]+l)=(double)tmpfl;}
     
     for(i=0;i<fNHiddL+1;i++)
         for(l=0;l<fNUnits[i];l++)
-            for(c=0;c<fNUnits[i+1];c++){fDW[i][l][c]=0.;fscanf(file,"%f",&tmpfl);*(fW[i][l]+c)=(Double_t)tmpfl;}
+            for(c=0;c<fNUnits[i+1];c++){fDW[i][l][c]=0.;fscanf(file,"%f",&tmpfl);*(fW[i][l]+c)=(double)tmpfl;}
     
     
     fscanf(file,"%5i",&fNTrainCycles);
-    fscanf(file,"%f",&tmpfl);fUseBiases=(Double_t)tmpfl;
+    fscanf(file,"%f",&tmpfl);fUseBiases=(double)tmpfl;
     
     fclose(file);
 }
@@ -701,12 +701,12 @@ void TNNKernel::Mix()
     // is has to be used before  TrainOneCycle() ,
     // IT IS NOT used by TrainOneCycle() , you have to do the call yourself
     
-    Int_t i,i1,i2;
-    Int_t temp;
+    int i,i1,i2;
+    int temp;
     for (i=0;i<3*fNTrainEvents;i++)
     {
-        i1=(Int_t)(fRandom.Rndm()*(Float_t)fNTrainEvents);
-        i2=(Int_t)(fRandom.Rndm()*(Float_t)fNTrainEvents);
+        i1=(int)(fRandom.Rndm()*(float)fNTrainEvents);
+        i2=(int)(fRandom.Rndm()*(float)fNTrainEvents);
         temp=fEventsList[i1];
         fEventsList[i1]=fEventsList[i2];
         fEventsList[i2]=temp;
@@ -716,26 +716,26 @@ void TNNKernel::Mix()
     //  printf("Mixed ... ");
 }
 
-void TNNKernel::SetArraySize(Int_t size)
+void TNNKernel::SetArraySize(int size)
 {
     DeleteArray();
     if (fEventsList) delete [] fEventsList;
     if(!size)return;
-    Int_t i;
+    int i;
     fNTrainEvents=size;
-    fArrayIn  = new Float_t*[fNTrainEvents];
-    for (i=0;i<fNTrainEvents;i++) fArrayIn[i] = new Float_t[fNUnits[0]];
+    fArrayIn  = new float*[fNTrainEvents];
+    for (i=0;i<fNTrainEvents;i++) fArrayIn[i] = new float[fNUnits[0]];
     
-    fArrayOut = new Float_t*[fNTrainEvents];
-    for (i=0;i<fNTrainEvents;i++) fArrayOut[i] = new Float_t[fNUnits[fNHiddL+1]];
+    fArrayOut = new float*[fNTrainEvents];
+    for (i=0;i<fNTrainEvents;i++) fArrayOut[i] = new float[fNUnits[fNHiddL+1]];
     
-    fEventsList = new Int_t[fNTrainEvents];
+    fEventsList = new int[fNTrainEvents];
     for (i=0;i<fNTrainEvents;i++)fEventsList[i]=i;
 }
 
 void TNNKernel::DeleteArray()
 {
-    Int_t i;
+    int i;
     
     if(fArrayIn)
     {
@@ -760,11 +760,11 @@ void TNNKernel::DeleteArray()
  // array of the kernel.
  
  if(!t){printf("no tree !\n");return;}
- Int_t i;
+ int i;
  
  //allocation
  
- SetArraySize((Int_t)(t->GetTree()->GetEntries()));
+ SetArraySize((int)(t->GetTree()->GetEntries()));
  printf(" nbr evts for training : %i \n",GetNTrainEvents());
  
  // loop
@@ -773,7 +773,7 @@ void TNNKernel::DeleteArray()
  // GetEvent fills these adresses with event i of the train tree t
  // the method Fill(i) translates the filled arrays in the internal array
  
- for (i=0;i<(Int_t)(t->GetTree()->GetEntries());i++)
+ for (i=0;i<(int)(t->GetTree()->GetEntries());i++)
  {
  t->GetEvent(GetInputAdr(),GetTeachAdr(),i);
  Fill(i);
@@ -789,6 +789,6 @@ void TNNKernel::DeleteArray()
  
  if(!t){printf("no tree !\n");return;}
  fValidTree=t;
- fNValidEvents=(Int_t)(t->GetTree()->GetEntries());
+ fNValidEvents=(int)(t->GetTree()->GetEntries());
  }
  */

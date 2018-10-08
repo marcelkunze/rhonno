@@ -14,31 +14,31 @@
 ClassImp(TPerceptron)
 
 // Transferfunctions
-void TransferFermi(Double_t in,Double_t* out,Double_t* deriv) 
+void TransferFermi(double in,double* out,double* deriv) 
 {
     if (in < -10.0) in = -10.0;
     if (in >  10.0) in =  10.0;
-    Double_t O = 1. / (1. + exp(-in));
+    double O = 1. / (1. + exp(-in));
     *out   = O;
     *deriv = O * (1. - O);
 }
 
-void TransferSigmoid(Double_t in,Double_t* out,Double_t* deriv) 
+void TransferSigmoid(double in,double* out,double* deriv) 
 {
     if (in < -10.0) in = -10.0;
     if (in >  10.0) in =  10.0;
-    Double_t O = 1. - 2. / (1. + exp(-in));
+    double O = 1. - 2. / (1. + exp(-in));
     *out   = O;
     *deriv = 2. * O * (1. - O);
 }
 
-void TransferLinear(Double_t in,Double_t* out,Double_t* deriv) 
+void TransferLinear(double in,double* out,double* deriv) 
 {
     *out = in;
     *deriv = 1.0;
 }
 
-void TransferLinearBend(Double_t in,Double_t* out,Double_t* deriv) 
+void TransferLinearBend(double in,double* out,double* deriv) 
 {
     if (in < -1.0) {
 	*out = -0.9 + in * 0.1;
@@ -53,11 +53,11 @@ void TransferLinearBend(Double_t in,Double_t* out,Double_t* deriv)
 	}
 }
 
-TPerceptron::TPerceptron(Int_t inNodes,
-			 Int_t outNodes,
-			 Double_t learnStep,
+TPerceptron::TPerceptron(int inNodes,
+			 int outNodes,
+			 double learnStep,
 			 TNeuralNetParameters::TRANSFER transferId,
-			 Int_t perceptronId) 
+			 int perceptronId) 
 {
     
     fParm.fInNodes      = inNodes;
@@ -71,10 +71,10 @@ TPerceptron::TPerceptron(Int_t inNodes,
 }
 
 TPerceptron::TPerceptron(TPerceptron* prev,
-			 Int_t outNodes,
-			 Double_t learnStep,
+			 int outNodes,
+			 double learnStep,
 			 TNeuralNetParameters::TRANSFER transferId,
-			 Int_t perceptronId) 
+			 int perceptronId) 
 {
     
     fParm.fInNodes      = prev->fParm.fOutNodes;
@@ -101,10 +101,10 @@ void TPerceptron::AllocNet(void)
 {
     int I;
     fU       = new PerceptronUnit[fParm.fOutNodes]; TestPointer(fU);
-    fOut     = new Double_t[fParm.fOutNodes]; TestPointer(fOut);
-    fDiffSrc = new Double_t[fParm.fOutNodes]; TestPointer(fDiffSrc);
+    fOut     = new double[fParm.fOutNodes]; TestPointer(fOut);
+    fDiffSrc = new double[fParm.fOutNodes]; TestPointer(fDiffSrc);
     if (fPrev == 0) {
-	fIn      = new Double_t[fParm.fInNodes]; TestPointer(fIn);
+	fIn      = new double[fParm.fInNodes]; TestPointer(fIn);
 	fDiffDst = 0;
     } else {
 	fIn      = fPrev->fOut;
@@ -113,9 +113,9 @@ void TPerceptron::AllocNet(void)
     fUbound = &fU[fParm.fOutNodes];
     PerceptronUnit* up = fU;
     for (I=0;I<fParm.fOutNodes;++I) {
-	up->fVector = new Double_t[fParm.fInNodes]; 
+	up->fVector = new double[fParm.fInNodes]; 
 	TestPointer(up->fVector);
-	up->fDelta = new Double_t[fParm.fInNodes]; 
+	up->fDelta = new double[fParm.fInNodes]; 
 	TestPointer(up->fDelta);
 	up->fThreshold = 0;
 	up->fID = I;
@@ -165,7 +165,7 @@ void TPerceptron::WriteBinary()
     PerceptronUnit* up;
     fwrite(&fParm,sizeof(PerceptronBase),1,fFile);
     for(up=fU;up<fUbound;++up) {
-	fwrite(up->fVector,sizeof(Double_t),fParm.fInNodes,fFile);
+	fwrite(up->fVector,sizeof(double),fParm.fInNodes,fFile);
 	fwritevar(up->fThreshold);
 	fwritevar(up->fID);
     }
@@ -177,7 +177,7 @@ void TPerceptron::ReadBinary()
     fread(&fParm,sizeof(PerceptronBase),1,fFile);
     AllocNet();
     for(up=fU;up<fUbound;++up) {
-	fread(up->fVector,sizeof(Double_t),fParm.fInNodes,fFile);
+	fread(up->fVector,sizeof(double),fParm.fInNodes,fFile);
 	freadvar(up->fThreshold);
 	freadvar(up->fID);
     }
@@ -222,17 +222,17 @@ void TPerceptron::ReadText()
     }
 }
 
-Double_t* TPerceptron::Recall(NNO_INTYPE*,NNO_OUTTYPE*) 
+double* TPerceptron::Recall(NNO_INTYPE*,NNO_OUTTYPE*) 
 {
     int I;
     PerceptronUnit* up;
-    Double_t* o = fOut;
-    Double_t* ds = fDiffSrc;
+    double* o = fOut;
+    double* ds = fDiffSrc;
     if (Transfer==0) Errorf((char *)"(TPerceptron) undefined transferfunction");
     for(up=fU;up<fUbound;++up) {
-	Double_t* v = up->fVector;
-	Double_t* i = fIn;
-	Double_t  sum = 0.0;
+	double* v = up->fVector;
+	double* i = fIn;
+	double  sum = 0.0;
 	for (I=0;I<fParm.fInNodes;++I) sum += *i++ * *v++;
 	sum -= up->fThreshold;
 	Transfer(sum,o++,ds++);
@@ -241,20 +241,20 @@ Double_t* TPerceptron::Recall(NNO_INTYPE*,NNO_OUTTYPE*)
     return o;
 }
 
-Double_t TPerceptron::Train(NNO_INTYPE*,NNO_OUTTYPE*) 
+double TPerceptron::Train(NNO_INTYPE*,NNO_OUTTYPE*) 
 {
     int I;
     PerceptronUnit* up;
-    Double_t* ds;
+    double* ds;
     
     // modify weights
     ds = fDiffSrc;
     for(up=fU;up<fUbound;++up) {
-	Double_t* i = fIn;
-	Double_t* v = up->fVector;
-	Double_t* m = up->fDelta;
+	double* i = fIn;
+	double* v = up->fVector;
+	double* m = up->fDelta;
 	for (I=0;I<fParm.fInNodes;++I) {
-	    Double_t delta = *i++ * *ds;
+	    double delta = *i++ * *ds;
 	    *v++ += (delta + (*m * fParm.fMu)) * fParm.fLearnStep;
 	    *m++ = delta;
 	}
@@ -264,8 +264,8 @@ Double_t TPerceptron::Train(NNO_INTYPE*,NNO_OUTTYPE*)
     
     // propagate derivation backward if previous perceptron exists
     if (fDiffDst!=0) {
-	Double_t diff;
-	Double_t* dd = fDiffDst;
+	double diff;
+	double* dd = fDiffDst;
 	for (I=0;I<fParm.fInNodes;++I) {
 	    diff = 0.0;
 	    ds = fDiffSrc;

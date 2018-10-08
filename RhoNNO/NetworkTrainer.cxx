@@ -59,7 +59,7 @@ int main(int argc,char* argv[])
     return EXIT_SUCCESS;
 }
 
-NetworkTrainer::NetworkTrainer(string file,Int_t se,Int_t ee)
+NetworkTrainer::NetworkTrainer(string file,int se,int ee)
 : fPidDataServer(0), fTrainingServer(0), fVectorsEpoch(0), fNet(0), fMomentum(0.0), 
 fTrnMax(0), fTstMax(1000), fInNodes(NNODIMENSION), fHid1Nodes(10), fHid2Nodes(1), fOutNodes(1),
 fCells(1000), fBalance(kFALSE), fPlots(kFALSE), fScale(1.0), fAutoScale(kFALSE),
@@ -136,8 +136,8 @@ void NetworkTrainer::SetupDataServer(string file)
     
     // Set up a server cache for training data
     
-    Int_t i;
-    Int_t j;
+    int i;
+    int j;
     
     if (fAutoScale) {
         
@@ -149,7 +149,7 @@ void NetworkTrainer::SetupDataServer(string file)
         input += " ";
         istringstream inStream(input);
         
-        Float_t *inScale  = fPidDataServer->GetInputScale();
+        float *inScale  = fPidDataServer->GetInputScale();
         for (j=0;j<fInNodes;j++) {
             fInScale[j] = inScale[j];
             string token;
@@ -158,7 +158,7 @@ void NetworkTrainer::SetupDataServer(string file)
         }
         
         /*	cout << endl << "Scale factors for output:" << endl;
-         Float_t *outScale = fPidDataServer->GetOutputScale();
+         float *outScale = fPidDataServer->GetOutputScale();
          for (j=0;j<fOutNodes;j++) {
          fOutScale[j] = outScale[j];
          cout << fOutScale[j] << "\t";
@@ -174,10 +174,10 @@ void NetworkTrainer::SetupDataServer(string file)
     
     // Read the original vectors
     for (i=0;i<fVectorsEpoch+fTstMax;i++) {
-        Float_t *inv  = (Float_t *)fPidDataServer->GetInvecTrn(i);
-        Float_t *outv = (Float_t *)fPidDataServer->GetOutvecTrn(i);
-        for (j=0;j<fInNodes;j++) fInVector[j] = (Float_t) fInScale[j]*inv[j];
-        for (j=0;j<fOutNodes;j++) fOutVector[j] = (Float_t) fOutScale[j]*outv[j];
+        float *inv  = (float *)fPidDataServer->GetInvecTrn(i);
+        float *outv = (float *)fPidDataServer->GetOutvecTrn(i);
+        for (j=0;j<fInNodes;j++) fInVector[j] = (float) fInScale[j]*inv[j];
+        for (j=0;j<fOutNodes;j++) fOutVector[j] = (float) fOutScale[j]*outv[j];
         fTrainingServer->Putvec(fInVector,fOutVector);
         if (i>0&&i%10000==0) cout << i << endl;
     }
@@ -313,14 +313,14 @@ void NetworkTrainer::SetupNetworks()
     fNet->BalanceSamples(fBalance);
 }
 
-Double_t NetworkTrainer::Train()
+double NetworkTrainer::Train()
 {
     // Prepare drawing
     if (fPlots) fNet->SetupPlots();
     
-    Double_t error = 0.0;
+    double error = 0.0;
     
-    for (Int_t epo=fStartEpoch; epo<=fStopEpoch; epo++){
+    for (int epo=fStartEpoch; epo<=fStopEpoch; epo++){
         
         cout << endl << "epoch: " << epo << endl;
         
@@ -349,9 +349,9 @@ Double_t NetworkTrainer::Train()
     return error;
 }
 
-Double_t NetworkTrainer::Test()
+double NetworkTrainer::Test()
 {
-    Double_t tst = 100. * fNet->TestEpoch(fTrainingServer) / fTstMax; // ok in percent
+    double tst = 100. * fNet->TestEpoch(fTrainingServer) / fTstMax; // ok in percent
     return tst;
 }
 
@@ -368,7 +368,7 @@ void NetworkTrainer::PrintOn()
 
 // Generate names with epoch number extension
 
-string NetworkTrainer::Makename(Int_t z, string networkPath, string name){
+string NetworkTrainer::Makename(int z, string networkPath, string name){
     
     string number = to_string(z);
     if (z<10)
@@ -383,9 +383,9 @@ string NetworkTrainer::Makename(Int_t z, string networkPath, string name){
     return name;
 }
 
-Bool_t NetworkTrainer::ReadSteeringFile(string filename)
+bool NetworkTrainer::ReadSteeringFile(string filename)
 {
-    const Int_t len(1024);
+    const int len(1024);
     Char_t skip[len];
     
     ifstream  s(filename, ios::in);
@@ -530,7 +530,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(string filename)
         
         else if (key == "inscale") {
             cout << "inscale: " << endl;
-            for (Int_t i=0;i<fInNodes;i++) {
+            for (int i=0;i<fInNodes;i++) {
                 s >> fInScale[i];
                 cout << "\t" <<  fInScale[i] << endl;
             }
@@ -539,7 +539,7 @@ Bool_t NetworkTrainer::ReadSteeringFile(string filename)
         
         else if (key == "outscale") {
             cout << "outscale: " << endl;
-            for (Int_t i=0;i<fOutNodes;i++) {
+            for (int i=0;i<fOutNodes;i++) {
                 s >> fOutScale[i];
                 cout << "\t" <<  fOutScale[i] << endl;
             }
@@ -645,7 +645,7 @@ void NetworkTrainer::WriteSourceCode(string filename)
     f << "// " << fModel << " network trained with NNO NetworkTrainer at " << theTime.AsString() << endl;
     f << "// Input parameters  " << fInput << endl;
     f << "// Output parameters " << fOutput << endl;
-    Int_t i;
+    int i;
     f << "// Training files:" << endl;
     for (i=0;i<fAll.GetSize();i++) {
         string fileName = fDataPath + (((TObjString*)fAll.At(i))->GetString()).Data();
@@ -661,10 +661,10 @@ void NetworkTrainer::WriteSourceCode(string filename)
     }
     f << endl;
     f << "#include \"RhoNNO/" << fModel << ".h\"" << endl << endl;
-    f << "Double_t* Recall(Double_t *invec)" << endl;
+    f << "double* Recall(double *invec)" << endl;
     f << "{" << endl;
     f << "\tstatic " << fModel << " net(\"" << fModel << ".net\");" << endl;
-    f << "\tFloat_t x[" << fInNodes << "];" << endl;
+    f << "\tfloat x[" << fInNodes << "];" << endl;
     for (i=0;i<fInNodes;i++) {
         f << "\tx[" << i << "] \t= " << fInScale[i] << "\t*\tinvec[" << i << "];" ;
         string token;

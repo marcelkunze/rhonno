@@ -15,7 +15,7 @@
 class TFD : public TXMLP {
 public:
     TFD() {}
-    TFD(Int_t innodes,Int_t outnodes,TNeuralNetParameters::TRANSFER f,const char* netFile)
+    TFD(int innodes,int outnodes,TNeuralNetParameters::TRANSFER f,const char* netFile)
 	: TXMLP(1,1.0,netFile,innodes,outnodes,0.1,f) {}
     TFD(std::string netFile) : TXMLP(netFile) {ReadNet("XMLP");};
     virtual ~TFD() {}                          //destructor of network  (File will be saved)

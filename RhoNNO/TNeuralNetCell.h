@@ -18,25 +18,25 @@ public:
     virtual ~TNeuralNetCellParameters() {}
     
 private:
-    Double_t fWinStep;	    //learnstep of winner
-    Double_t fNeiStep;	    //learnstep of neighbour
-    Double_t fNeuStep;	    //learnstep of neuron
-    Int_t    fCells;	    //current used cells
-    Int_t    fConnectors;   //maximum number of neighbors
-    Double_t fWinCount;	    //decrement of win_count: win_count*=(1-fWinCount)
-    Int_t    fMinCells;	    //number of cells required for one simplex
-    Int_t    fMaxCells;	    //maximum number of used cells
-    Long_t   fInsertStep;   //Learnsteps between two Insertions (if 0: user controlled Insertion)
-    Long_t   fDeleteStep;   //Learnsteps between two Removals   (if 0: user controlled Removal)
-    Long_t   fInsertCount;
-    Long_t   fDeleteCount;
-    Double_t fEdgeCount;    //decrement of edge_count: edge_count*=(1-fEdgeCount)
-    Double_t fErrCount;	    //decrement of err_count: err_count*=(1-fErrCount)
-    Double_t fNeiCount;     //update of s_dev on neighbours: s_dev+=(s_dist-s_dev)*d_s_dev
-    Double_t fMinCount;	    //threshold for edge-removal
-    Double_t fMainWinCount;
-    Double_t fMainErrCount;
-    Double_t fMainEdgeCount;
+    double fWinStep;	    //learnstep of winner
+    double fNeiStep;	    //learnstep of neighbour
+    double fNeuStep;	    //learnstep of neuron
+    int    fCells;	    //current used cells
+    int    fConnectors;   //maximum number of neighbors
+    double fWinCount;	    //decrement of win_count: win_count*=(1-fWinCount)
+    int    fMinCells;	    //number of cells required for one simplex
+    int    fMaxCells;	    //maximum number of used cells
+    long   fInsertStep;   //Learnsteps between two Insertions (if 0: user controlled Insertion)
+    long   fDeleteStep;   //Learnsteps between two Removals   (if 0: user controlled Removal)
+    long   fInsertCount;
+    long   fDeleteCount;
+    double fEdgeCount;    //decrement of edge_count: edge_count*=(1-fEdgeCount)
+    double fErrCount;	    //decrement of err_count: err_count*=(1-fErrCount)
+    double fNeiCount;     //update of s_dev on neighbours: s_dev+=(s_dist-s_dev)*d_s_dev
+    double fMinCount;	    //threshold for edge-removal
+    double fMainWinCount;
+    double fMainErrCount;
+    double fMainEdgeCount;
 public:
     ClassDef(TNeuralNetCellParameters,1)  // Parameters for unsupervised networks
     
@@ -52,39 +52,39 @@ public:
 
 union connector {
     void* fPtr;   // ptr to another cell
-    Int_t fID;
+    int fID;
 };
 
 class TNeuralNetCell : public TObject {
 protected:
-    Double_t* fVector;	    // !vector
-    Int_t         fID;	    // cell ID
-    Double_t   fCount;	    // error or winning count
+    double* fVector;	    // !vector
+    int         fID;	    // cell ID
+    double   fCount;	    // error or winning count
     
     /* help variables */
-    Double_t* fDiff ;	    // !difference to input (help variable)
-    Int_t    fState ;	    // cell state
+    double* fDiff ;	    // !difference to input (help variable)
+    int    fState ;	    // cell state
     
     connector*   fC ;	    // !connections
-    Int_t        fNc;	    // number of connections
-    Double_t   fChi2;	    // squared deviation
+    int        fNc;	    // number of connections
+    double   fChi2;	    // squared deviation
     
-    Double_t* fWeight;	    // !neural weight
-    Double_t  fOut;	    // cell output
-    Double_t* fAge;	    // !age of connector
-    Int_t   fClass;	    // user_definable
+    double* fWeight;	    // !neural weight
+    double  fOut;	    // cell output
+    double* fAge;	    // !age of connector
+    int   fClass;	    // user_definable
     
 public:
     TNeuralNetCell();
     virtual ~TNeuralNetCell(void) {};
-    const Double_t *GetVector(void) const { return fVector; }
-    Int_t     GetID(void) const { return fID; }
-    Double_t  GetWinnerCount(void) const { return fCount; }
-    const Double_t *GetDifference(void) const { return fDiff; }
+    const double *GetVector(void) const { return fVector; }
+    int     GetID(void) const { return fID; }
+    double  GetWinnerCount(void) const { return fCount; }
+    const double *GetDifference(void) const { return fDiff; }
     const connector *GetConnectors(void) const { return fC; }
-    const TNeuralNetCell *GetConnectedCell(Int_t c) const { if (c<fNc) return (TNeuralNetCell *) (fC[c].fPtr); else return NULL;}
-    Int_t     GetNumberOfConnections(void) const { return fNc; }
-    Double_t  GetError() const { return fChi2; }
+    const TNeuralNetCell *GetConnectedCell(int c) const { if (c<fNc) return (TNeuralNetCell *) (fC[c].fPtr); else return NULL;}
+    int     GetNumberOfConnections(void) const { return fNc; }
+    double  GetError() const { return fChi2; }
     
     static void Disconnect(TNeuralNetCell* up1,TNeuralNetCell* up2);
     static void Connect   (TNeuralNetCell* up1,TNeuralNetCell* up2,TNeuralNetCellParameters* XB);

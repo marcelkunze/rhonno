@@ -21,15 +21,15 @@ using namespace std;
 
 ClassImp(VUnsupervisedNet)
 
-Long_t  VUnsupervisedNet::TrainEpoch(FILE* file) 
+long  VUnsupervisedNet::TrainEpoch(FILE* file) 
 {
     if (file==0) return -1;
     NNO_INTYPE* Buf = new NNO_INTYPE[fParm.fInNodes];
     TestPointer(Buf);
-    Long_t records = 0;
+    long records = 0;
     rewind(file);
     while(!feof(file)) {
-        if ((Int_t) fread(Buf,sizeof(NNO_INTYPE),fParm.fInNodes,file)==fParm.fInNodes) {
+        if ((int) fread(Buf,sizeof(NNO_INTYPE),fParm.fInNodes,file)==fParm.fInNodes) {
             Train(Buf);
             ++records;
         }
@@ -38,15 +38,15 @@ Long_t  VUnsupervisedNet::TrainEpoch(FILE* file)
     return records;
 }
 
-Long_t VUnsupervisedNet::TrainEpoch(TNtuple *tuple, Bool_t randomize) {
+long VUnsupervisedNet::TrainEpoch(TNtuple *tuple, bool randomize) {
     fTuple = tuple;
     if (fTuple == 0) return 0;
-    Long_t nhits = fTuple->GetEntries();
+    long nhits = fTuple->GetEntries();
     for (int i=0;i<nhits;i++) {
-        Long_t index = i;
+        long index = i;
         if (randomize) index = rand()%nhits;
         fTuple->GetEvent(index,1);
-        Float_t *x=fTuple->GetArgs();
+        float *x=fTuple->GetArgs();
         Learnstep(x);
     }
     return nhits;
@@ -54,12 +54,12 @@ Long_t VUnsupervisedNet::TrainEpoch(TNtuple *tuple, Bool_t randomize) {
 
 void VUnsupervisedNet::Draw (Option_t *option) {
     // Draw the network
-    Int_t numberCells = GetNumberOfCells();
+    int numberCells = GetNumberOfCells();
     TPolyMarker3D *cellmarker = new TPolyMarker3D(numberCells);
     
-    for (Int_t i=0;i<numberCells;++i) {
+    for (int i=0;i<numberCells;++i) {
         const TNeuralNetCell *c = GetCell(i);
-        const Double_t *x1 = c->GetVector();
+        const double *x1 = c->GetVector();
         // Draw the cell location X1
         int dimension = fParm.fInNodes;
         if (dimension >= 3) {
@@ -73,10 +73,10 @@ void VUnsupervisedNet::Draw (Option_t *option) {
         cellmarker->SetMarkerStyle(kFullDotLarge);
         cellmarker->Draw(option);
 
-        Int_t numberConnections = c->GetNumberOfConnections();
-        for (Int_t j=0;j<numberConnections;j++) {
+        int numberConnections = c->GetNumberOfConnections();
+        for (int j=0;j<numberConnections;j++) {
             const TNeuralNetCell *u = c->GetConnectedCell(j);
-            const Double_t *x2 = u->GetVector();
+            const double *x2 = u->GetVector();
             // Draw the cell connections (X1->X2)
             TPolyLine3D *connector = new TPolyLine3D(2);
             if (dimension >= 3) {
@@ -101,18 +101,18 @@ void VUnsupervisedNet::Print (Option_t *option) const {
     cout << endl << "Neural Network Object "<< fParm.fNetId << endl;
     cout << option << endl;
     int dimension = fParm.fInNodes;
-    Int_t numberCells = GetNumberOfCells();
-    for (Int_t i=0;i<numberCells;++i) {
+    int numberCells = GetNumberOfCells();
+    for (int i=0;i<numberCells;++i) {
         const TNeuralNetCell *c = GetCell(i);
-        const Double_t *x1 = c->GetVector();
+        const double *x1 = c->GetVector();
         cout << "Cell " << i << ": X1(";
         for (int d=0;d<dimension-1;d++) cout << x1[d] << ",";
         cout << x1[dimension-1] << ")" << endl;
-        Int_t numberConnections = c->GetNumberOfConnections();
-        for (Int_t j=0;j<numberConnections;j++) {
+        int numberConnections = c->GetNumberOfConnections();
+        for (int j=0;j<numberConnections;j++) {
             const TNeuralNetCell *u = c->GetConnectedCell(j);
-            const Double_t *x2 = u->GetVector();
-            const Int_t id = u->GetID();
+            const double *x2 = u->GetVector();
+            const int id = u->GetID();
             cout << "\t -> " << id << ". X2(";
             for (int d=0;d<dimension-1;d++) cout << x2[d] << ",";
             cout << x2[dimension-1] << ")" << endl;

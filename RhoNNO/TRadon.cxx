@@ -79,7 +79,7 @@ std::vector<RADON>& TRadon::Transform(std::vector<TVector3> &points)
                 
                 if (t.density > threshold && nhits > 3) {
                     printf("\nDensity: %f",t.density);
-                    TH2D *h = (TH2D *) Hlist[(Int_t) g];
+                    TH2D *h = (TH2D *) Hlist[(int) g];
                     h->Fill(1./kappa,phi,t.density);
                     rt.push_back(t);  // Note the candidate track parameters
                 }
@@ -166,7 +166,7 @@ void TRadon::GenerateTrack(std::vector<TVector3> &points, int np, double delta, 
     double tau = 0.025;
     for (int i=0; i<np; i++,tau+=delta)
     {
-        Float_t X,Y,Z;
+        float X,Y,Z;
         X = radius * ( sin(phi + (signum(radius)) * tau) - sin(phi));
         Y = radius * (-cos(phi + (signum(radius)) * tau) + cos(phi));
         Z = gamma * tau;

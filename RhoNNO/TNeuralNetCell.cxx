@@ -105,12 +105,12 @@ void TNeuralNetCell::InitVector(TNeuralNetCell* unew,TNeuralNetCell* U1,TNeuralN
 void TNeuralNetCell::InitWgt(TNeuralNetCell* unew,TNeuralNetParameters* B) 
 {
      int I,J;
-     Double_t fract=1.0 / (1.0 + unew->fNc);
+     double fract=1.0 / (1.0 + unew->fNc);
      for (I=0;I<B->fOutNodes;++I) unew->fWeight[I]=0;
      for (J=0;J<unew->fNc;++J) {
 	TNeuralNetCell* unei = (TNeuralNetCell*) unew->fC[J].fPtr;
 	for (I=0;I<B->fOutNodes;++I) {
-	    Double_t WgtFract = unei->fWeight[I] * fract;
+	    double WgtFract = unei->fWeight[I] * fract;
 	    unew->fWeight[I] += WgtFract;
 	    unei->fWeight[I] -= WgtFract;
 	}
@@ -123,9 +123,9 @@ void TNeuralNetCell::GetSDev(TNeuralNetCell* unit,TNeuralNetParameters* B)
      unit->fChi2=0;
      for (I=0;I<unit->fNc;++I) {
 	TNeuralNetCell* unei=(TNeuralNetCell*)unit->fC[I].fPtr;
-	Double_t sdist = 0.0;
+	double sdist = 0.0;
 	for (J=0;J<B->fInNodes;++J) { 
-	  Double_t d = unei->fVector[J] - unit->fVector[J]; 
+	  double d = unei->fVector[J] - unit->fVector[J]; 
 	  sdist += d * d; 
 	}
 	unit->fChi2 += sdist;
@@ -143,11 +143,11 @@ void TNeuralNetCell::InitSDev(TNeuralNetCell* unew,TNeuralNetParameters* B)
 void TNeuralNetCell::InitCount(TNeuralNetCell* unew) 
 {
     int I;
-    Double_t fract = 1.0 / (Double_t) (unew->fNc+1);
+    double fract = 1.0 / (double) (unew->fNc+1);
     unew->fCount=0;
     for (I=0;I<unew->fNc;++I) {
 	TNeuralNetCell* unei=(TNeuralNetCell*)unew->fC[I].fPtr;
-	Double_t errFract=((TNeuralNetCell*)unew->fC[I].fPtr)->fCount * fract;
+	double errFract=((TNeuralNetCell*)unew->fC[I].fPtr)->fCount * fract;
 	unei->fCount -= errFract;
 	unew->fCount += errFract;
     }
@@ -206,11 +206,11 @@ void TNeuralNetCell::WriteUnitBinary(FILE* file,TNeuralNetCell* unit,TNeuralNetP
      fwrite(&unit->fID,sizeof(unit->fID),1,file);
      fwrite(&unit->fChi2,sizeof(unit->fChi2),1,file);
      fwrite(&unit->fCount,sizeof(unit->fCount),1,file);
-     fwrite(unit->fVector,sizeof(Double_t),B->fInNodes,file);
+     fwrite(unit->fVector,sizeof(double),B->fInNodes,file);
      fwrite(&unit->fNc,sizeof(unit->fNc),1,file);
      int I;
      for (I=0;I<unit->fNc;++I) {
-	 Int_t i = ((TNeuralNetCell*)(unit->fC[I].fPtr))->fID;
+	 int i = ((TNeuralNetCell*)(unit->fC[I].fPtr))->fID;
 	 fwrite(&i,sizeof(i),1,file);
      }
 }
@@ -220,7 +220,7 @@ void TNeuralNetCell::ReadUnitBinary(FILE* file,TNeuralNetCell* unit,TNeuralNetPa
      fread(&unit->fID,sizeof(unit->fID),1,file);
      fread(&unit->fChi2,sizeof(unit->fChi2),1,file);
      fread(&unit->fCount,sizeof(unit->fCount),1,file);
-     fread(unit->fVector,sizeof(Double_t),B->fInNodes,file);
+     fread(unit->fVector,sizeof(double),B->fInNodes,file);
      fread(&unit->fNc,sizeof(unit->fNc),1,file);
      fread(unit->fC,sizeof(connector),unit->fNc,file);
 }

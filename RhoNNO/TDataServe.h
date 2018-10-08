@@ -30,91 +30,91 @@ class TNtuple;
 class TDataServe : public TNamed {
     
 private:  		
-    UInt_t	fInvecLen;	//length of inputvector
-    UInt_t	fOutvecLen;	//length of outputvectors
-    UInt_t	fMaxvecs;
-    Float_t**	fInvecAr;	//array of inputputvectors
-    Float_t*	fInvecMean;	//mean values
-    Float_t*	fInvecScale;//input scale
-    Float_t**	fOutvecAr;	//array of outputvectors
-    Float_t*	fOutvecMean;//mean values
-    Float_t*	fOutvecScale;//output scale
+    unsigned int	fInvecLen;	//length of inputvector
+    unsigned int	fOutvecLen;	//length of outputvectors
+    unsigned int	fMaxvecs;
+    float**	fInvecAr;	//array of inputputvectors
+    float*	fInvecMean;	//mean values
+    float*	fInvecScale;//input scale
+    float**	fOutvecAr;	//array of outputvectors
+    float*	fOutvecMean;//mean values
+    float*	fOutvecScale;//output scale
     
-    UInt_t	fNumTrnvecs;//Number of trainvectors
-    UInt_t	fNumTstvecs;//Number of testvevtors
-    UInt_t	fNumvecs;	//Number of all vectors
-    UInt_t* fIndexTrn;	//index array
-    UInt_t*	fIndexTst;	//index array
-    Bool_t	fData_OK;
-    Bool_t	fBalance;	//!Balance samples
+    unsigned int	fNumTrnvecs;//Number of trainvectors
+    unsigned int	fNumTstvecs;//Number of testvevtors
+    unsigned int	fNumvecs;	//Number of all vectors
+    unsigned int* fIndexTrn;	//index array
+    unsigned int*	fIndexTst;	//index array
+    bool	fData_OK;
+    bool	fBalance;	//!Balance samples
     
-    void	Mix(UInt_t*, const UInt_t);
-    void	BlastAr2DD(Float_t**& ar,const UInt_t oldlen1,const UInt_t newlen1,const UInt_t len2);
-    void	DelAr2DD(Float_t**& ar,const UInt_t len);
+    void	Mix(unsigned int*, const unsigned int);
+    void	BlastAr2DD(float**& ar,const unsigned int oldlen1,const unsigned int newlen1,const unsigned int len2);
+    void	DelAr2DD(float**& ar,const unsigned int len);
     
 public:
     TDataServe();
-    TDataServe(std::string name,std::string title,const UInt_t,const UInt_t);
+    TDataServe(std::string name,std::string title,const unsigned int,const unsigned int);
     virtual ~TDataServe();
     void	MixTrn();
-    void	Init(const UInt_t);
-    void	DataRead(std::string name, const Float_t*, const UInt_t=0, const UInt_t=0);
-    UInt_t	GetNumAllvecs() const { return fNumTrnvecs+fNumTstvecs; }
-    UInt_t	GetNumTrnvecs() const { return fNumTrnvecs; }
-    UInt_t	GetNumTstvecs() const { return fNumTstvecs; }
-    UInt_t	GetNumvecs() const { return fNumvecs; }
+    void	Init(const unsigned int);
+    void	DataRead(std::string name, const float*, const unsigned int=0, const unsigned int=0);
+    unsigned int	GetNumAllvecs() const { return fNumTrnvecs+fNumTstvecs; }
+    unsigned int	GetNumTrnvecs() const { return fNumTrnvecs; }
+    unsigned int	GetNumTstvecs() const { return fNumTstvecs; }
+    unsigned int	GetNumvecs() const { return fNumvecs; }
     void	FillTNtuple(TNtuple&) const;
     void	Reset();
     
-    Bool_t	TTreeDataRead(std::string file,std::string tree,std::string in,std::string out,std::string cut="");
+    bool	TTreeDataRead(std::string file,std::string tree,std::string in,std::string out,std::string cut="");
     
-    void	TNtupleDataRead(TNtuple&,const UInt_t=0,UInt_t=0);
+    void	TNtupleDataRead(TNtuple&,const unsigned int=0,unsigned int=0);
     
-    void	TNtupleXDataRead(TNtuple&,const UInt_t,const UInt_t,const UInt_t*,
-                             const UInt_t*,const UInt_t=0,UInt_t=0);
-    void	SetInvecElem(const UInt_t, const UInt_t, const Float_t);
-    void	SetOutvecElem(const UInt_t, const UInt_t, const Float_t);
-    void	Putvec(const Float_t*, const Float_t*);
-    void	Deletevec(const UInt_t);
-    UInt_t	GetInvecLen() const {return fInvecLen;}
-    UInt_t	GetOutvecLen() const {return fOutvecLen;}
-    Float_t*	GetOutputMean();
-    Float_t*	GetOutputScale();
-    Float_t*	GetInputMean();
-    Float_t*	GetInputScale();
+    void	TNtupleXDataRead(TNtuple&,const unsigned int,const unsigned int,const unsigned int*,
+                             const unsigned int*,const unsigned int=0,unsigned int=0);
+    void	SetInvecElem(const unsigned int, const unsigned int, const float);
+    void	SetOutvecElem(const unsigned int, const unsigned int, const float);
+    void	Putvec(const float*, const float*);
+    void	Deletevec(const unsigned int);
+    unsigned int	GetInvecLen() const {return fInvecLen;}
+    unsigned int	GetOutvecLen() const {return fOutvecLen;}
+    float*	GetOutputMean();
+    float*	GetOutputScale();
+    float*	GetInputMean();
+    float*	GetInputScale();
     
     
-    Float_t* GetInvec(const UInt_t i) const
+    float* GetInvec(const unsigned int i) const
     {
         assert(i<fNumvecs);
         return fInvecAr[i];
     }
     
-    Float_t* GetOutvec(const UInt_t i) const
+    float* GetOutvec(const unsigned int i) const
     {
         assert(i<fNumvecs);
         return fOutvecAr[i];
     }
     
-    Float_t* GetInvecTrn(const UInt_t i) const
+    float* GetInvecTrn(const unsigned int i) const
     {
         assert(fData_OK && i<fNumTrnvecs);
         return fInvecAr[fIndexTrn[i]];
     }
     
-    Float_t* GetInvecTst(const UInt_t i) const
+    float* GetInvecTst(const unsigned int i) const
     {
         assert(fData_OK && i<fNumTstvecs);
         return fInvecAr[fIndexTst[i]];
     }
     
-    Float_t* GetOutvecTrn(const UInt_t i) const
+    float* GetOutvecTrn(const unsigned int i) const
     {
         assert(fData_OK && i<fNumTrnvecs);
         return fOutvecAr[fIndexTrn[i]];
     }
     
-    Float_t* GetOutvecTst(const UInt_t i) const {
+    float* GetOutvecTst(const unsigned int i) const {
         assert(fData_OK && i<fNumTstvecs);
         return fOutvecAr[fIndexTst[i]];
     }

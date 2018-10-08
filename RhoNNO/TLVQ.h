@@ -15,7 +15,7 @@
 class TLVQ : public VUnsupervisedNet {
 public:
     TLVQ() {}
-    TLVQ(Int_t innodes,Int_t cells,Double_t winStep,std::string netFile);
+    TLVQ(int innodes,int cells,double winStep,std::string netFile);
     TLVQ(std::string netFile) : VUnsupervisedNet(netFile) {ReadNet("LVQ");};
     TLVQ(const TLVQ& lvq,std::string netFile); // copy constructor
     
@@ -32,11 +32,11 @@ private:
     virtual void ReadBinary(void);
     
 public:
-    virtual Double_t  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    virtual Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin->fVector; }
-    virtual Int_t GetWinnerCell(NNO_INTYPE* in);
+    virtual double  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    virtual double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin->fVector; }
+    virtual int GetWinnerCell(NNO_INTYPE* in);
     
-    void Implant(Int_t nr,Int_t Class,NNO_INTYPE* in);
+    void Implant(int nr,int Class,NNO_INTYPE* in);
     void CopyData(const TLVQ& lvq); // copies data from another lvq network
     
     ClassDef(TLVQ,1)	// Learning Vector Quantization

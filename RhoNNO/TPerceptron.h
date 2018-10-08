@@ -14,10 +14,10 @@
 
 class PerceptronUnit {
 public:   
-    Double_t*  fVector;    // synaptic vector
-    Double_t*  fDelta;	   // modification vector
-    Double_t   fThreshold; // activity threshold
-    Int_t      fID;        // ID of this element
+    double*  fVector;    // synaptic vector
+    double*  fDelta;	   // modification vector
+    double   fThreshold; // activity threshold
+    int      fID;        // ID of this element
 };
 
 class PerceptronBase {
@@ -26,17 +26,17 @@ public:
 
 class TPerceptron : public VSupervisedNet {
 public:
-    TPerceptron(Int_t fInNodes,       // constructor for first perceptron
-	Int_t fOutNodes,
-	Double_t fLearnStep,
+    TPerceptron(int fInNodes,       // constructor for first perceptron
+	int fOutNodes,
+	double fLearnStep,
 	TNeuralNetParameters::TRANSFER fTransferId,
-	Int_t fPerceptronId);
+	int fPerceptronId);
     
     TPerceptron(TPerceptron* Prev,    // constructor for linked perceptron
-	Int_t fOutNodes,
-	Double_t learnstep,
+	int fOutNodes,
+	double learnstep,
 	TNeuralNetParameters::TRANSFER fTransferId,
-	Int_t fPerceptronId);
+	int fPerceptronId);
     
     TPerceptron(void);                // constructor for first perceptron (data from file)
     
@@ -45,12 +45,12 @@ public:
     virtual ~TPerceptron();           // destructor of network
     
     PerceptronUnit* fU;	//! Temp. unit
-    void (*Transfer)(Double_t in,Double_t* out,Double_t* deriv);	//! Transfer function
+    void (*Transfer)(double in,double* out,double* deriv);	//! Transfer function
     
-    Double_t* fIn;   //!inputvector:  in[fInNodes]
-    Double_t* fOut;  //!outputvector: out[fOutNodes];
-    Double_t* fDiffSrc; //!error derivation from following net: fDiffSrc[fOutNodes]
-    Double_t* fDiffDst; //!error derivation to previous net:    fDiffDst[fInNodes]
+    double* fIn;   //!inputvector:  in[fInNodes]
+    double* fOut;  //!outputvector: out[fOutNodes];
+    double* fDiffSrc; //!error derivation from following net: fDiffSrc[fOutNodes]
+    double* fDiffDst; //!error derivation to previous net:    fDiffDst[fInNodes]
     
 private:
     TPerceptron* fPrev;    //! previous perceptron
@@ -65,8 +65,8 @@ public:
     virtual void ReadText();
     virtual void ReadBinary();
     
-    Double_t Train(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);  // calling Learnstep, Recallstep must have been performed already
-    Double_t* Recall(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);
+    double Train(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);  // calling Learnstep, Recallstep must have been performed already
+    double* Recall(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);
     //void CopyData(const TPerceptron& PERC); // copies data from another perceptron
     
     ClassDef(TPerceptron,1)	// Multilayer Perceptron

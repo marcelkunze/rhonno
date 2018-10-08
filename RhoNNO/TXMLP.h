@@ -23,15 +23,15 @@ private:
     void ReadBinary(void);
 public:
     TXMLP() {};
-    TXMLP(Int_t layers,Double_t inputRange,std::string netFile,Int_t innodes,...);
-    TXMLP(Int_t layers,Double_t inputRange,std::string netFile,Int_t innodes,Int_t n1,Int_t n2,Int_t n3,Double_t s1,Double_t s2,Double_t s3,
+    TXMLP(int layers,double inputRange,std::string netFile,int innodes,...);
+    TXMLP(int layers,double inputRange,std::string netFile,int innodes,int n1,int n2,int n3,double s1,double s2,double s3,
           TNeuralNetParameters::TRANSFER f1,TNeuralNetParameters::TRANSFER f2,TNeuralNetParameters::TRANSFER f3);
     TXMLP(std::string netFile) : VSupervisedNet(netFile) {ReadNet("XMLP");};
     virtual ~TXMLP();
-    Double_t Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    TPerceptron* GetPerceptron(Int_t i) { return fPerc[i]; }
-    virtual void SetMomentumTerm(Double_t f);
+    double Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    TPerceptron* GetPerceptron(int i) { return fPerc[i]; }
+    virtual void SetMomentumTerm(double f);
     
     TPerceptron** fPerc;    //! Temp.unit
     

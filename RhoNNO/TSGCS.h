@@ -16,16 +16,16 @@
 class TSGCS : public VSupervisedNet {
 public:
     TSGCS() {};
-    TSGCS(Int_t   innodes,
-          Int_t    cells,
-          Int_t    outnodes,
-          Int_t    maxCells,
-          Double_t winStep,
-          Double_t neiStep,
-          Double_t neuStep,
-          Double_t aErrCount,
-          Double_t bSDev,
-          Int_t    connectors,
+    TSGCS(int   innodes,
+          int    cells,
+          int    outnodes,
+          int    maxCells,
+          double winStep,
+          double neiStep,
+          double neuStep,
+          double aErrCount,
+          double bSDev,
+          int    connectors,
           long   insertStep,
           long   deleteStep,
           std::string  netFile);
@@ -51,14 +51,14 @@ private:
     
 public:
     TNeuralNetCellParameters &GetParameters() { return fXB; }
-    Int_t GetNumberOfCells() const { return fXB.fCells; }
-    Double_t Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    int GetNumberOfCells() const { return fXB.fCells; }
+    double Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
     
     void CopyData(const TSGCS& sgcs); // copies data from another sgcs network
     
-    Int_t Insert(void); // this function will be called automatically if insert_step>0
-    Int_t Prune(void);  // this function will be called automatically if delete_step>0
+    int Insert(void); // this function will be called automatically if insert_step>0
+    int Prune(void);  // this function will be called automatically if delete_step>0
     
     ClassDef(TSGCS,1) // Supervised Growing Cell Structure
 };

@@ -16,19 +16,19 @@
 class TSGNG : public VSupervisedNet {
 public:
     TSGNG() {};
-    TSGNG(Int_t innodes,
-	Int_t outnodes,
-	Int_t maxCells,
-	Double_t winStep,
-	Double_t neiStep,
-	Double_t neuStep,
-	Double_t aErrCount,
-	Double_t aEdgeCount,
-	Double_t bSDev,
-	Double_t minCount,
-	Int_t  connectors,
-	Long_t insertStep,
-	Long_t deleteStep,
+    TSGNG(int innodes,
+	int outnodes,
+	int maxCells,
+	double winStep,
+	double neiStep,
+	double neuStep,
+	double aErrCount,
+	double aEdgeCount,
+	double bSDev,
+	double minCount,
+	int  connectors,
+	long insertStep,
+	long deleteStep,
 	std::string netFile);
     TSGNG(std::string netFile) : VSupervisedNet(netFile), fXB() {ReadNet("SGNG");};
     TSGNG(const TSGNG& sgng,std::string netFile); // copy constructor
@@ -40,8 +40,8 @@ private:
     TNeuralNetCell*  fUbound;	//! Temp. Cell
     TNeuralNetCell*  fUwin1;	//! Temp. Cell
     TNeuralNetCell*  fUwin2;	//! Temp. Cell
-    Double_t fMinDistSquare1;
-    Double_t fMinDistSquare2;
+    double fMinDistSquare1;
+    double fMinDistSquare2;
     
     void AllocNet(void);
     void InitNet(void);
@@ -50,18 +50,18 @@ private:
     void ReadText(void);
     void ReadBinary(void);
     
-    Int_t  CondDisconnect(TNeuralNetCell* Up1,TNeuralNetCell* Up2);
+    int  CondDisconnect(TNeuralNetCell* Up1,TNeuralNetCell* Up2);
     void Connect(TNeuralNetCell* Up1,TNeuralNetCell* Up2);
     void UpdateConnector(TNeuralNetCell* Up1,TNeuralNetCell* Up2);
     
 public:
     TNeuralNetCellParameters &GetParameters() { return fXB; }
-    Int_t GetNumberOfCells() const { return fXB.fCells; }
-    Double_t Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    Double_t* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    int GetNumberOfCells() const { return fXB.fCells; }
+    double Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
     void   CopyData(const TSGNG& SGNG); // copies data from another sgng network
     
-    Int_t Insert(void);  // this function will be called automatically if insert_step>0
+    int Insert(void);  // this function will be called automatically if insert_step>0
     void Prune(void);  // this function will be called automatically if delete_step>0
     
     ClassDef(TSGNG,1)	// Supervised Growing Neural Gas

@@ -16,8 +16,8 @@ ClassImp(TGNG)
 #include <cfloat>
 using namespace std;
 
-TGNG::TGNG(Int_t innodes,Int_t maxCells,Double_t winStep,Double_t neiStep,
-           Double_t aWinCount,Double_t aEdgeCount,Double_t minCount,Int_t connectors,
+TGNG::TGNG(int innodes,int maxCells,double winStep,double neiStep,
+           double aWinCount,double aEdgeCount,double minCount,int connectors,
            Long_t insertStep,Long_t deleteStep,string netFile)
 : VUnsupervisedNet("GNG",innodes,maxCells,netFile)
 {
@@ -85,10 +85,10 @@ void TGNG::ReadBinary(void)
     fread(&fXB,sizeof(TNeuralNetCellParameters),1,fFile);
     AllocNet();
     TNeuralNetCell* up;
-    Int_t I;
+    int I;
     for(up=fU;up<fUbound;++up) {
         TNeuralNetCell::ReadUnitBinary(fFile,(TNeuralNetCell*)up,&fParm);
-        fread(up->fAge,sizeof(Double_t),fXB.fConnectors,fFile);
+        fread(up->fAge,sizeof(double),fXB.fConnectors,fFile);
         freadvar(up->fClass);
         for (I=0;I<up->fNc;++I) up->fC[I].fPtr = &fU[up->fC[I].fID];
     }
@@ -114,7 +114,7 @@ void TGNG::ReadText(void)
     
     AllocNet();
     TNeuralNetCell* up;
-    Int_t I;
+    int I;
     for(up=fU;up<fUbound;++up) {
         TNeuralNetCell::ReadUnitText(fFile,(TNeuralNetCell*)up,&fParm);
         fscanf(fFile,"\nedge count ");
@@ -130,7 +130,7 @@ void TGNG::WriteBinary(void)
     fwrite(&fXB,sizeof(TNeuralNetCellParameters),1,fFile);
     for(up=fU;up<fUbound;++up) {
         TNeuralNetCell::WriteUnitBinary(fFile,(TNeuralNetCell*)up,&fParm);
-        fwrite(up->fAge,sizeof(Double_t),fXB.fConnectors,fFile);
+        fwrite(up->fAge,sizeof(double),fXB.fConnectors,fFile);
         fwritevar(up->fClass);
     }
 }
@@ -153,7 +153,7 @@ void TGNG::WriteText(void)
     fprintf(fFile,"main_edge_count %le\n",fXB.fMainEdgeCount);
     
     TNeuralNetCell* up;
-    Int_t I;
+    int I;
     for(up=fU;up<fUbound;++up) {
         TNeuralNetCell::WriteUnitText(fFile,(TNeuralNetCell*)up,&fParm);
         fprintf(fFile,"\nedge count ");
@@ -166,13 +166,13 @@ void TGNG::AllocNet(void)
 {
     fU = new TNeuralNetCell[fParm.fOutNodes]; TestPointer(fU);
     fUbound=&fU[fXB.fCells];
-    Int_t I;
+    int I;
     TNeuralNetCell* up = fU;
     for (I=0;I<fParm.fOutNodes;++I) {
-        up->fVector    = new Double_t[fParm.fInNodes];  TestPointer(up->fVector);
-        up->fDiff      = new Double_t[fParm.fInNodes];  TestPointer(up->fDiff);
+        up->fVector    = new double[fParm.fInNodes];  TestPointer(up->fVector);
+        up->fDiff      = new double[fParm.fInNodes];  TestPointer(up->fDiff);
         up->fC         = new connector[fXB.fConnectors]; TestPointer(up->fC);
-        up->fAge = new Double_t[fXB.fConnectors];  TestPointer(up->fAge);
+        up->fAge = new double[fXB.fConnectors];  TestPointer(up->fAge);
         up->fNc = 0;
         up->fCount = 0;
         up->fID = I;
@@ -183,7 +183,7 @@ void TGNG::AllocNet(void)
 void TGNG::InitNet(void) 
 {
     TNeuralNetCell* up;
-    Int_t J;
+    int J;
     for(up=fU;up<fUbound;++up) {
         for (J=0;J<fParm.fInNodes;++J) up->fVector[J]=Random();
         up->fNc = 0;
@@ -198,7 +198,7 @@ void TGNG::CopyData(const TGNG& gng)
 {
     TNeuralNetCell* thisup = fU;
     TNeuralNetCell* fromup = gng.fU;
-    Int_t I,J;
+    int I,J;
     
     //check integrity
     if (fParm.fInNodes    !=gng.fParm.fInNodes)     Errorf((char *)"cannot copy data; innodes not identical");
@@ -208,7 +208,7 @@ void TGNG::CopyData(const TGNG& gng)
     fXB = gng.fXB;
     fUbound = &fU[fXB.fCells];
     for (I=0;I<fXB.fCells;++I) {
-        memcpy(thisup->fVector,fromup->fVector,sizeof(Double_t)*fParm.fInNodes);
+        memcpy(thisup->fVector,fromup->fVector,sizeof(double)*fParm.fInNodes);
         thisup->fNc = fromup->fNc;
         for (J=0;J<thisup->fNc;++J) {
             thisup->fC[J].fPtr=&fU[((TNeuralNetCell*)(fromup->fC[J].fPtr))->fID];
@@ -222,9 +222,9 @@ void TGNG::CopyData(const TGNG& gng)
 }
 
 //Disconnect only if both units have more than one connectors
-Int_t  TGNG::CondDisconnect(TNeuralNetCell* up1,TNeuralNetCell* up2) 
+int  TGNG::CondDisconnect(TNeuralNetCell* up1,TNeuralNetCell* up2) 
 {
-    Int_t I;
+    int I;
     if ((up1->fNc==1) || (up2->fNc==1)) return 0;
     for (I=0;I<up1->fNc;++I) if ((TNeuralNetCell*)up1->fC[I].fPtr==up2) break;
     if (I<up1->fNc) up1->fC[I]=up1->fC[--up1->fNc]; else return 0;
@@ -244,7 +244,7 @@ void TGNG::Connect(TNeuralNetCell* up1,TNeuralNetCell* up2)
 
 void TGNG::UpdateConnector(TNeuralNetCell* up1,TNeuralNetCell* up2) 
 {
-    Int_t I,J;
+    int I,J;
     for (I=0;I<up1->fNc;++I) if ((TNeuralNetCell*)up1->fC[I].fPtr==up2) break;
     if (I==up1->fNc) { Connect(up1,up2); return; }
     up1->fAge[I] += fXB.fEdgeCount;
@@ -252,17 +252,17 @@ void TGNG::UpdateConnector(TNeuralNetCell* up1,TNeuralNetCell* up2)
     up2->fAge[J] = up1->fAge[I];
 }
 
-Int_t  TGNG::GetWinnerCell(NNO_INTYPE* in) 
+int  TGNG::GetWinnerCell(NNO_INTYPE* in) 
 {
-    Int_t I,J;
-    Double_t s_dist;
+    int I,J;
+    double s_dist;
     fMinDistSquare1 = DBL_MAX;
     fMinDistSquare2 = DBL_MAX;
     TNeuralNetCell* up;
     J = 0;
     for(up=fU;up<fUbound;++up){
-        Double_t* v = up->fVector;
-        Double_t* d = up->fDiff;
+        double* v = up->fVector;
+        double* d = up->fDiff;
         NNO_INTYPE* i = in;
         s_dist = 0.0;
         for (I=0;I<fParm.fInNodes;++I) {
@@ -291,18 +291,18 @@ Int_t  TGNG::GetWinnerCell(NNO_INTYPE* in)
     return fUwin1->fID;
 }
 
-Double_t  TGNG::Train(NNO_INTYPE* in,NNO_OUTTYPE*) 
+double  TGNG::Train(NNO_INTYPE* in,NNO_OUTTYPE*) 
 {
-    Int_t I,J;
+    int I,J;
     Recall(in);  //make output of all cells and neurons find the winners
     TNeuralNetCell* unei;
-    Double_t* vwin = fUwin1->fVector;
-    Double_t* dwin = fUwin1->fDiff;
+    double* vwin = fUwin1->fVector;
+    double* dwin = fUwin1->fDiff;
     for (J=0;J<fParm.fInNodes;++J) *vwin++ += *dwin++ * fXB.fWinStep;
     for (I=0;I<fUwin1->fNc;++I) {
         unei = (TNeuralNetCell*)fUwin1->fC[I].fPtr;
-        Double_t* v = unei->fVector;
-        Double_t* d = unei->fDiff;
+        double* v = unei->fVector;
+        double* d = unei->fDiff;
         for (J=0;J<fParm.fInNodes;++J) *v++ += *d++ * fXB.fNeiStep;
     }
     UpdateConnector(fUwin1,fUwin2); //update edge_count of connector; if Uwin1,Uwin2 are not connected, connect them
@@ -333,9 +333,9 @@ void TGNG::Deviation(void)
     for(up=fU;up<fUbound;++up) TNeuralNetCell::GetSDev((TNeuralNetCell*)up,&fParm);
 }
 
-Int_t TGNG::Insert(void) 
+int TGNG::Insert(void) 
 {
-    Int_t I,J;
+    int I,J;
     TNeuralNetCell* up = nullptr;
     TNeuralNetCell* umax1 = nullptr;
     TNeuralNetCell* umax2 = nullptr;
@@ -343,7 +343,7 @@ Int_t TGNG::Insert(void)
     
     if (fXB.fCells==fParm.fOutNodes) return 0; //break if there are no cells availiable
     //find cell with highest win_count
-    Double_t win_count=-1;
+    double win_count=-1;
     for(up=fU;up<fUbound;++up)
         if (up->fCount>win_count) {
             win_count = up->fCount;
@@ -397,7 +397,7 @@ Int_t TGNG::Insert(void)
 
 void TGNG::Prune(void) 
 { // remove edges
-    Int_t I;
+    int I;
     TNeuralNetCell* up;
     
     //transfom fMainWinCount, fMainEdgeCount

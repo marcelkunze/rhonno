@@ -19,8 +19,8 @@ using namespace std;
 //cell states
 #define REMOVE 1
 
-TGCS::TGCS (Int_t innodes,Int_t cells,Int_t maxCells,Double_t winStep,Double_t neiStep,
-            Double_t aWinCount,Int_t connectors,
+TGCS::TGCS (int innodes,int cells,int maxCells,double winStep,double neiStep,
+            double aWinCount,int connectors,
             Long_t insertStep,Long_t deleteStep,string netFile)
 : VUnsupervisedNet("GCS",innodes,maxCells,netFile)
 {
@@ -71,7 +71,7 @@ void TGCS::ReadBinary(void)
     fread(&fXB,sizeof(TNeuralNetCellParameters),1,fFile);
     AllocNet();
     TNeuralNetCell* up;
-    Int_t I;
+    int I;
     for(up=fU;up<fUbound;++up) {
         TNeuralNetCell::ReadUnitBinary(fFile,(TNeuralNetCell*)up,&fParm);
         freadvar(up->fClass);
@@ -95,7 +95,7 @@ void TGCS::ReadText(void)
     
     AllocNet();
     TNeuralNetCell* up;
-    Int_t I;
+    int I;
     for(up=fU;up<fUbound;++up) {
         TNeuralNetCell::ReadUnitText(fFile,(TNeuralNetCell*)up,&fParm);
         fscanf(fFile,"\nclass            %i\n",&up->fClass);
@@ -138,11 +138,11 @@ void TGCS::AllocNet(void)
 {
     fU = new TNeuralNetCell[fParm.fOutNodes]; TestPointer(fU);
     fUbound = &fU[fXB.fCells];
-    Int_t I;
+    int I;
     TNeuralNetCell* up = fU;
     for (I=0;I<fParm.fOutNodes;++I) {
-        up->fVector = new Double_t[fParm.fInNodes]; TestPointer(up->fVector);
-        up->fDiff   = new Double_t[fParm.fInNodes]; TestPointer(up->fDiff);
+        up->fVector = new double[fParm.fInNodes]; TestPointer(up->fVector);
+        up->fDiff   = new double[fParm.fInNodes]; TestPointer(up->fDiff);
         up->fC      = new connector[fXB.fConnectors]; TestPointer(up->fC);
         up->fNc     = 0;
         up->fCount  = 0;
@@ -155,7 +155,7 @@ void TGCS::AllocNet(void)
 void TGCS::InitNet(void) 
 {
     TNeuralNetCell* up;
-    Int_t I,J;
+    int I,J;
     for(up=fU;up<fUbound;++up) {
         for (J=0;J<fParm.fInNodes;++J) up->fVector[J] = Random();
         up->fNc = 0;
@@ -169,7 +169,7 @@ void TGCS::CopyData(const TGCS& gcs)
 {
     TNeuralNetCell* thisup = fU;
     TNeuralNetCell* fromup = gcs.fU;
-    Int_t I,J;
+    int I,J;
     
     //check integrity
     if (fParm.fInNodes    !=gcs.fParm.fInNodes)     Errorf((char *)"cannot copy data: fInNodes not identical");
@@ -179,7 +179,7 @@ void TGCS::CopyData(const TGCS& gcs)
     fXB = gcs.fXB;
     fUbound=&fU[fXB.fCells];
     for (I=0;I<fXB.fCells;++I) {
-        memcpy(thisup->fVector,fromup->fVector,sizeof(Double_t)*fParm.fInNodes);
+        memcpy(thisup->fVector,fromup->fVector,sizeof(double)*fParm.fInNodes);
         thisup->fNc = fromup->fNc;
         for (J=0;J<thisup->fNc;++J) thisup->fC[J].fPtr = &fU[((TNeuralNetCell*)(fromup->fC[J].fPtr))->fID];
         thisup->fCount = fromup->fCount;
@@ -189,20 +189,20 @@ void TGCS::CopyData(const TGCS& gcs)
     }
 }
 
-Int_t TGCS::GetWinnerCell(NNO_INTYPE* in) 
+int TGCS::GetWinnerCell(NNO_INTYPE* in) 
 {
-    Int_t I,J;
+    int I,J;
     //get distance of all cells: performed in the learnstep before
     //compute deviation for all cells: dito
     
     //make output of all cells and get the winner
-    Double_t s_dist;
-    Double_t min_s_dist = DBL_MAX;
+    double s_dist;
+    double min_s_dist = DBL_MAX;
     TNeuralNetCell* up;
     J=0;
     for(up=fU;up<fUbound;++up) {
-        Double_t* v = up->fVector;
-        Double_t* d = up->fDiff;
+        double* v = up->fVector;
+        double* d = up->fDiff;
         NNO_INTYPE* i = in;
         
         s_dist = 0.0;
@@ -225,24 +225,24 @@ Int_t TGCS::GetWinnerCell(NNO_INTYPE* in)
     return fUwin->fID;
 }
 
-Double_t TGCS::Train(NNO_INTYPE* in,NNO_OUTTYPE*) 
+double TGCS::Train(NNO_INTYPE* in,NNO_OUTTYPE*) 
 {
-    Int_t I,J;
+    int I,J;
     Recall(in);  //make output of all cells and neurons find the winner
     TNeuralNetCell* unei;
     TNeuralNetCell* up;
-    Double_t* vwin = fUwin->fVector;
-    Double_t* dwin = fUwin->fDiff;
+    double* vwin = fUwin->fVector;
+    double* dwin = fUwin->fDiff;
     for (J=0;J<fParm.fInNodes;++J) *vwin++ += *dwin++ * fXB.fWinStep;
     for (I=0;I<fUwin->fNc;++I) {
         unei = (TNeuralNetCell*)fUwin->fC[I].fPtr;
-        Double_t* v = unei->fVector;
-        Double_t* d = unei->fDiff;
+        double* v = unei->fVector;
+        double* d = unei->fDiff;
         for (J=0;J<fParm.fInNodes;++J) *v++ += *d++ * fXB.fNeiStep;
     }
     
     ++fUwin->fCount;
-    Double_t m_win_count = 1.0 - fXB.fWinCount;
+    double m_win_count = 1.0 - fXB.fWinCount;
     for(up=fU;up<fUbound;++up) {
         up->fCount *= m_win_count;
     }
@@ -272,9 +272,9 @@ void TGCS::Deviation(void)
 }
 
 
-Int_t TGCS::Insert(void) 
+int TGCS::Insert(void) 
 {
-    Int_t I,J;
+    int I,J;
     TNeuralNetCell* up = nullptr;
     TNeuralNetCell* umax = nullptr;
     TNeuralNetCell* udst = nullptr;
@@ -282,7 +282,7 @@ Int_t TGCS::Insert(void)
     
     if (fXB.fCells==fParm.fOutNodes) return 0; //break if there are no cells availiable
     //find cell with most win_count
-    Double_t win_count = -1;
+    double win_count = -1;
     for(up=fU;up<fUbound;++up)
         if (up->fCount>win_count) {
             win_count = up->fCount;
@@ -296,14 +296,14 @@ Int_t TGCS::Insert(void)
     unew->fState = 0;
     
     //find cell with highest distance to MaxCount
-    Double_t s_dist;
-    Double_t max_s_dist = -1;
+    double s_dist;
+    double max_s_dist = -1;
     TNeuralNetCell* unei;
     for (I=0;I<umax->fNc;++I) {
         s_dist = 0.0;
         unei=(TNeuralNetCell*)umax->fC[I].fPtr;
         for (J=0;J<fParm.fInNodes;++J) {
-            Double_t diff = umax->fVector[J] - unei->fVector[J];
+            double diff = umax->fVector[J] - unei->fVector[J];
             s_dist += diff*diff;
         }
         
@@ -324,11 +324,11 @@ Int_t TGCS::Insert(void)
 
 void TGCS::Remove(TNeuralNetCell* urem) 
 {
-    Int_t I;
+    int I;
     TNeuralNetCell* ulast = --fUbound;
     --fXB.fCells;
     while(urem->fNc)  TNeuralNetCell::Disconnect((TNeuralNetCell*)urem->fC[0].fPtr,(TNeuralNetCell*)urem); //disconnect all neighbours of urem from urem    //copy ulast into urem
-    memmove(urem->fVector,ulast->fVector,fParm.fInNodes*sizeof(Double_t));
+    memmove(urem->fVector,ulast->fVector,fParm.fInNodes*sizeof(double));
     memmove(urem->fC,ulast->fC,fXB.fConnectors*sizeof(connector));
     urem->fNc = ulast->fNc;
     urem->fCount = ulast->fCount;
@@ -341,16 +341,16 @@ void TGCS::Remove(TNeuralNetCell* urem)
     }
 }
 
-Int_t TGCS::Prune(void) 
+int TGCS::Prune(void) 
 {
-    Int_t I,J;
+    int I,J;
     TNeuralNetCell* up =  nullptr;
     TNeuralNetCell* umax =  nullptr;;
     TNeuralNetCell* unei =  nullptr;;
     
     //find cell with maximal fChi2
     Deviation();
-    Double_t max_s_dev = -1;
+    double max_s_dev = -1;
     for(up=fU;up<fUbound;++up) {
         if (up->fChi2>max_s_dev) {
             max_s_dev = up->fChi2;
@@ -358,13 +358,13 @@ Int_t TGCS::Prune(void)
         }
     }
     
-    Int_t RemoveCount = 1;
+    int RemoveCount = 1;
     umax->fState |= REMOVE;
     for (I=0;I<umax->fNc;++I) {
         unei = (TNeuralNetCell*)umax->fC[I].fPtr;
-        Int_t xnei = 0;
+        int xnei = 0;
         for (J=0;J<unei->fNc;++J) {
-            Int_t II;
+            int II;
             TNeuralNetCell* uneinei = (TNeuralNetCell*)unei->fC[J].fPtr;
             if (uneinei!=umax) {
                 for (II=0;II<umax->fNc;++II)

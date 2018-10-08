@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Fill a Graph
-    UInt_t numberCells = net.GetNumberOfCells();
+    unsigned int numberCells = net.GetNumberOfCells();
     TCanvas *c = new TCanvas("c","Graph2D example",-8000,-8000,8000,8000);
     c->Divide(2,1);
     TGraph2D *graph2d = new TGraph2D(numberCells);
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
     
     for (unsigned long i=0;i<numberCells;++i) {
         const TNeuralNetCell *cell = net.GetCell(i);
-        const Double_t *x = cell->GetVector();
+        const double *x = cell->GetVector();
         printf("\n Cell %ld: (%f,%f) \n",i,x[0],x[1]);
         graph2d->SetPoint(i,x[0],x[1],0.0);
     }

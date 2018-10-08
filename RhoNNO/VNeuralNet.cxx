@@ -47,7 +47,7 @@ VNeuralNet::VNeuralNet()
     fOut = 0;
 }
 
-VNeuralNet::VNeuralNet(string netID,Int_t innodes,Int_t outnodes,string netFile)
+VNeuralNet::VNeuralNet(string netID,int innodes,int outnodes,string netFile)
 : TNamed(netID.data(),netID.data()), fBalance(kFALSE), fOwnPlotter(kFALSE), fParm(), fPlotter(0)
 {
 #ifndef NNORAND
@@ -62,7 +62,7 @@ VNeuralNet::VNeuralNet(string netID,Int_t innodes,Int_t outnodes,string netFile)
     fFile   = 0;
     fOut    = 0;
     if (outnodes>0) {
-        fOut = new Double_t[fParm.fOutNodes];
+        fOut = new double[fParm.fOutNodes];
         TestPointer(fOut);
     }
 }
@@ -149,7 +149,7 @@ void VNeuralNet::ReadNet(const char* netID)
     else
         ReadText();
     
-    fOut = new Double_t[fParm.fOutNodes];
+    fOut = new double[fParm.fOutNodes];
     
     TestPointer(fOut);
     
@@ -238,7 +238,7 @@ void VNeuralNet::SetupPlots(VNeuralNetPlotter *plotter)
     fPlotter->Initialize();
 }
 
-void VNeuralNet::FillPlots(Double_t trn, Double_t tst)
+void VNeuralNet::FillPlots(double trn, double tst)
 {
     if (fPlotter==0) return;
     fPlotter->AddTrainSample(trn,kTRUE);
@@ -251,35 +251,35 @@ void VNeuralNet::ShowPlots()
     fPlotter->ShowPlots();
 }
 
-Double_t VNeuralNet::TrainEpoch(TDataServe *server, Int_t nEpoch)
+double VNeuralNet::TrainEpoch(TDataServe *server, int nEpoch)
 {
     double       error = 0.0;			// squared error collector
     unsigned int classError;		// classification Error
     unsigned int n;			// number of samples
     
-    const Int_t samples = server->GetNumTrnvecs();
-    const Int_t tests   = server->GetNumTstvecs();
+    const int samples = server->GetNumTrnvecs();
+    const int tests   = server->GetNumTstvecs();
     
-    for (Int_t epo=0; epo<nEpoch; epo++){
+    for (int epo=0; epo<nEpoch; epo++){
         error = 0.0;
         classError = 0;
         n = 0;
         
         server->MixTrn(); // Shuffle the dataset
         
-        for (Int_t i=0; i<samples; i++){
+        for (int i=0; i<samples; i++){
             
-            Int_t trnind = i;
+            int trnind = i;
             if (fBalance) trnind = BalancedTrnIndex(server);
             
-            Float_t *inv  = (Float_t *) server->GetInvecTrn(trnind);
-            Float_t *outv = (Float_t *) server->GetOutvecTrn(trnind);
+            float *inv  = (float *) server->GetInvecTrn(trnind);
+            float *outv = (float *) server->GetOutvecTrn(trnind);
             
             error += Train(inv,outv);
             n++;
         }
         
-        classError = (UInt_t) TestEpoch(server);
+        classError = (unsigned int) TestEpoch(server);
         double percentage = 100. * classError;
         if (tests>0) percentage /= tests; else percentage = 0;
         
@@ -306,27 +306,27 @@ Double_t VNeuralNet::TrainEpoch(TDataServe *server, Int_t nEpoch)
 
 // Check the network performance
 
-Double_t VNeuralNet::TestEpoch(TDataServe *server)
+double VNeuralNet::TestEpoch(TDataServe *server)
 {
     unsigned int classError = 0;    // classification Error
-    const Int_t samples = server->GetNumTstvecs();
+    const int samples = server->GetNumTstvecs();
     TNeuralNetParameters &parm = GetParameters();
     
     int i;
     
     for (i=0; i<samples; i++){
         
-        Int_t tstind = i;
+        int tstind = i;
         if (fBalance) tstind = BalancedTstIndex(server);
         
-        Float_t *inv  = server->GetInvecTst(tstind);
-        Float_t *outv = server->GetOutvecTst(tstind);
+        float *inv  = server->GetInvecTst(tstind);
+        float *outv = server->GetOutvecTst(tstind);
         
         // compare network recall with server
         Recall(inv,outv);
         
         for (int ii=0;ii<parm.fOutNodes;++ii) {
-            Double_t answer = GetOutput()[ii];
+            double answer = GetOutput()[ii];
             if ((answer>parm.fThreshold && outv[ii]<=parm.fThreshold) ||
                 (answer<=parm.fThreshold && outv[ii]>parm.fThreshold) )
                 ++classError; // classification ok ?
@@ -337,12 +337,12 @@ Double_t VNeuralNet::TestEpoch(TDataServe *server)
     return classError;
 }
 
-Double_t  VNeuralNet::Test(NNO_INTYPE* in,NNO_OUTTYPE* out) 
+double  VNeuralNet::Test(NNO_INTYPE* in,NNO_OUTTYPE* out) 
 {
     Recall(in,out);
     int I;
-    Double_t* o = fOut;
-    Double_t diff,totalError = 0.0;
+    double* o = fOut;
+    double diff,totalError = 0.0;
     for (I=0;I<fParm.fOutNodes;++I) {
         diff = *out++ - *o++;
         totalError += diff * diff;
@@ -350,7 +350,7 @@ Double_t  VNeuralNet::Test(NNO_INTYPE* in,NNO_OUTTYPE* out)
     return totalError;
 }
 
-Double_t VNeuralNet::TrainEpoch(string file, Int_t nEpoch)
+double VNeuralNet::TrainEpoch(string file, int nEpoch)
 {
     FILE* ftrn=fopen(file.data(),"rb");
     if (ftrn==0) {
@@ -358,9 +358,9 @@ Double_t VNeuralNet::TrainEpoch(string file, Int_t nEpoch)
         return 0.0;
     }
     
-    Int_t epoch=0;		// epoch counter
+    int epoch=0;		// epoch counter
     double error;		// squared error collector
-    UInt_t classError;		// classification Error
+    unsigned int classError;		// classification Error
     
     NNO_INTYPE   *in  = new NNO_INTYPE[fParm.fInNodes];	    // inputvector
     NNO_OUTTYPE  *out = new NNO_OUTTYPE[fParm.fOutNodes];   // outputvector
@@ -372,13 +372,13 @@ Double_t VNeuralNet::TrainEpoch(string file, Int_t nEpoch)
         
         while ( fread(in,sizeof(NNO_INTYPE),fParm.fInNodes,ftrn) ) {  // read inputvector
             fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftrn);      // read outputvector
-            //Double_t output = out[0];
+            //double output = out[0];
             
             error += Train(in,out);                // perform learnstep
             
             // compare network output with 'Out'
-            Double_t *net = GetOutput();
-            //Double_t answer = net[0];
+            double *net = GetOutput();
+            //double answer = net[0];
             for (int I=0;I<fParm.fOutNodes;++I) {
                 if ((net[I]>fParm.fThreshold && out[I]<=fParm.fThreshold) ||
                     (net[I]<=fParm.fThreshold && out[I]>fParm.fThreshold) )
@@ -411,7 +411,7 @@ Double_t VNeuralNet::TrainEpoch(string file, Int_t nEpoch)
     return error;
 }
 
-Double_t VNeuralNet::TestEpoch(string file)
+double VNeuralNet::TestEpoch(string file)
 {
     FILE* ftst=fopen(file.data(),"rb");
     if (ftst==0) {
@@ -427,7 +427,7 @@ Double_t VNeuralNet::TestEpoch(string file)
         fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftst);		    // read outputvector
         
         // compare network recall with file
-        Double_t *net = Recall(in,out);
+        double *net = Recall(in,out);
         for (int I=0;I<fParm.fOutNodes;++I) {
             if ((net[I]>fParm.fThreshold && out[I]<=fParm.fThreshold) ||
                 (net[I]<=fParm.fThreshold && out[I]>fParm.fThreshold) )
@@ -443,12 +443,12 @@ Double_t VNeuralNet::TestEpoch(string file)
     return classError;
 }
 
-UInt_t VNeuralNet::BalancedTrnIndex(TDataServe *server)
+unsigned int VNeuralNet::BalancedTrnIndex(TDataServe *server)
 {
     static ULong_t ngood=0, nbad=0;
-    UInt_t samples = server->GetNumTrnvecs();
-    UInt_t index = (UInt_t) (gRandom->Rndm()*samples);
-    Float_t *outv = server->GetOutvecTrn(index);
+    unsigned int samples = server->GetNumTrnvecs();
+    unsigned int index = (unsigned int) (gRandom->Rndm()*samples);
+    float *outv = server->GetOutvecTrn(index);
     
     if (ngood<nbad)
         while (outv[0]<=0.0) {
@@ -461,12 +461,12 @@ UInt_t VNeuralNet::BalancedTrnIndex(TDataServe *server)
     return index%samples;
 }
 
-UInt_t VNeuralNet::BalancedTstIndex(TDataServe *server)
+unsigned int VNeuralNet::BalancedTstIndex(TDataServe *server)
 {
     static ULong_t ngood=0, nbad=0;
-    UInt_t samples = server->GetNumTstvecs();
-    UInt_t index = (UInt_t) (gRandom->Rndm()*samples);
-    Float_t *outv = server->GetOutvecTst(index);
+    unsigned int samples = server->GetNumTstvecs();
+    unsigned int index = (unsigned int) (gRandom->Rndm()*samples);
+    float *outv = server->GetOutvecTst(index);
     
     if (ngood<nbad)
         while (outv[0]<=0.0) {
@@ -479,12 +479,12 @@ UInt_t VNeuralNet::BalancedTstIndex(TDataServe *server)
     return index%samples;
 }
 
-void VNeuralNet::SetMomentumTerm(Double_t f) 
+void VNeuralNet::SetMomentumTerm(double f) 
 { 
     fParm.fMu = f;
 }
 
-void VNeuralNet::SetFlatSpotElimination(Double_t f) 
+void VNeuralNet::SetFlatSpotElimination(double f) 
 { 
     fParm.fFse = f;
 }

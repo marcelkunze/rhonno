@@ -44,7 +44,7 @@ ClassImp(TDataServe)
 void TDataServe::Streamer(TBuffer &b)
 {
     // Streamer
-    UInt_t i;
+    unsigned int i;
     
     if (b.IsReading()){
         //Version_t v=b.ReadVersion();
@@ -56,8 +56,8 @@ void TDataServe::Streamer(TBuffer &b)
         b >> fNumvecs;
         b >> fData_OK;
         fMaxvecs=fNumvecs;
-        if (fNumTstvecs) { fIndexTst=new UInt_t [fNumTstvecs]; assert(fIndexTst!=0); }
-        if (fNumTrnvecs) { fIndexTrn=new UInt_t [fNumTrnvecs]; assert(fIndexTrn!=0); }
+        if (fNumTstvecs) { fIndexTst=new unsigned int [fNumTstvecs]; assert(fIndexTst!=0); }
+        if (fNumTrnvecs) { fIndexTrn=new unsigned int [fNumTrnvecs]; assert(fIndexTrn!=0); }
         if (fNumTrnvecs) b.ReadFastArray(fIndexTrn, fNumTrnvecs);
         if (fNumTstvecs) b.ReadFastArray(fIndexTst, fNumTstvecs);
         BlastAr2DD(fInvecAr, 0, fNumvecs, fInvecLen);
@@ -111,7 +111,7 @@ fData_OK(kFALSE),
 fBalance(kFALSE)
 {}
 
-TDataServe::TDataServe(string name,string title,const UInt_t in,const  UInt_t out):
+TDataServe::TDataServe(string name,string title,const unsigned int in,const  unsigned int out):
 TNamed(name.data(),title.data()),
 fInvecLen(in),
 fOutvecLen(out),
@@ -139,9 +139,9 @@ void TDataServe::FillTNtuple(TNtuple& tup) const
 {
     // fill tup with input and outputvectors
     // e.g. TNtuple tup("tup","in out","i1:i2:i3:i4... :o1:o2:o3");
-    Float_t* helpar=new Float_t [fInvecLen+fOutvecLen];
+    float* helpar=new float [fInvecLen+fOutvecLen];
     assert(helpar!=0);
-    UInt_t i,j;
+    unsigned int i,j;
     for (i=0; i<fNumvecs; i++){
         for (j=0; j<fInvecLen; j++) helpar[j]=fInvecAr[i][j];
         for (j=0; j<fOutvecLen; j++) helpar[j+fInvecLen]=fOutvecAr[i][j];
@@ -179,40 +179,40 @@ void TDataServe::Reset()
     fMaxvecs=0;
 }
 
-void TDataServe::DelAr2DD(Float_t**& ar,const UInt_t len)
+void TDataServe::DelAr2DD(float**& ar,const unsigned int len)
 {
     if (ar==0) return;
-    for (UInt_t i=0; i<len; i++) delete [] ar[i];
+    for (unsigned int i=0; i<len; i++) delete [] ar[i];
     delete [] ar;
 }
 
-void TDataServe::BlastAr2DD(Float_t**& ar,
-                            const UInt_t oldlen1,
-                            const UInt_t newlen1,
-                            const UInt_t len2)
+void TDataServe::BlastAr2DD(float**& ar,
+                            const unsigned int oldlen1,
+                            const unsigned int newlen1,
+                            const unsigned int len2)
 {
-    UInt_t i;
-    Float_t** temp = ar;
+    unsigned int i;
+    float** temp = ar;
     assert(newlen1>=oldlen1);
-    ar = new Float_t* [newlen1];
+    ar = new float* [newlen1];
     assert(ar!=0);
     for (i=0; i<oldlen1; i++) ar[i] = temp[i];
     delete [] temp;
     for (i=oldlen1; i<newlen1; i++){
-        ar[i] = new Float_t [len2];
+        ar[i] = new float [len2];
         assert(ar[i]!=0);
     }
 }
 
-void TDataServe::Mix(UInt_t* vec, const UInt_t len)
+void TDataServe::Mix(unsigned int* vec, const unsigned int len)
 {
-    UInt_t i;
-    UInt_t temp;
-    UInt_t x1=0,x2=0;
+    unsigned int i;
+    unsigned int temp;
+    unsigned int x1=0,x2=0;
     
     for (i=0; i<len; i++){
-        x1 = (UInt_t) (gRandom->Rndm(x2)*len);
-        x2 = (UInt_t) (gRandom->Rndm(x1)*len);
+        x1 = (unsigned int) (gRandom->Rndm(x2)*len);
+        x2 = (unsigned int) (gRandom->Rndm(x1)*len);
         temp = vec[x1];
         vec[x1] = vec[x2];
         vec[x2] = temp;
@@ -226,24 +226,24 @@ void TDataServe::MixTrn()
     Mix(fIndexTrn, fNumTrnvecs);
 }
 
-void TDataServe::Init(const UInt_t tst)
+void TDataServe::Init(const unsigned int tst)
 {
     // Init(number of testvectors)
     // Call Init after every change of data.
-    UInt_t i;
+    unsigned int i;
     assert(tst<=fNumvecs);
-    UInt_t* helpvec = new UInt_t [fNumvecs];
+    unsigned int* helpvec = new unsigned int [fNumvecs];
     assert(helpvec!=0);
     if (fIndexTrn!=0) { delete [] fIndexTrn; fIndexTrn=0; }
     if (fIndexTst!=0) { delete [] fIndexTst; fIndexTst=0; }
     if (fInvecMean!=0) { delete [] fInvecMean; fInvecMean=0; }
     if (fOutvecMean!=0) { delete [] fOutvecMean; fOutvecMean=0; }
-    if (fInvecMean) { fInvecMean=new Float_t [fInvecLen]; assert(fInvecMean!=0); }
-    if (fOutvecMean) { fOutvecMean=new Float_t [fOutvecLen]; assert(fOutvecMean!=0); }
+    if (fInvecMean) { fInvecMean=new float [fInvecLen]; assert(fInvecMean!=0); }
+    if (fOutvecMean) { fOutvecMean=new float [fOutvecLen]; assert(fOutvecMean!=0); }
     fNumTstvecs=tst;
     fNumTrnvecs=fNumvecs-tst;
-    if (fNumTstvecs) { fIndexTst=new UInt_t [fNumTstvecs]; assert(fIndexTst!=0); }
-    if (fNumTrnvecs) { fIndexTrn=new UInt_t [fNumTrnvecs]; assert(fIndexTrn!=0); }
+    if (fNumTstvecs) { fIndexTst=new unsigned int [fNumTstvecs]; assert(fIndexTst!=0); }
+    if (fNumTrnvecs) { fIndexTrn=new unsigned int [fNumTrnvecs]; assert(fIndexTrn!=0); }
     gRandom->SetSeed(); // Randomize the numbers
     for (i=0; i<fNumvecs; i++) helpvec[i]=i;
     Mix(helpvec, fNumvecs);
@@ -254,12 +254,12 @@ void TDataServe::Init(const UInt_t tst)
 }
 
 void TDataServe::DataRead(string name,
-                          const Float_t* out,
-                          const UInt_t start,
-                          const UInt_t laenge)
+                          const float* out,
+                          const unsigned int start,
+                          const unsigned int laenge)
 {
     // forget it
-    UInt_t len,i,j;
+    unsigned int len,i,j;
     ifstream f(name, ios::in);
     if (!f){
         cerr << "CAN'T OPEN FILE: " << name;
@@ -267,15 +267,15 @@ void TDataServe::DataRead(string name,
     }
     cerr << "reading file: " << name << endl;
     f.seekg(0L, ios::end);
-    len= (UInt_t) f.tellg();
+    len= (unsigned int) f.tellg();
     f.seekg((long)(start*4*fInvecLen), ios::beg);
     len-=f.tellg();
-    len = (UInt_t) 0.25 * len;
+    len = (unsigned int) 0.25 * len;
     if (laenge>0){
         assert(laenge*fInvecLen<=len);
         len=laenge*fInvecLen;
     }
-    Float_t* fvec=new Float_t [len];
+    float* fvec=new float [len];
     assert(fvec!=0);
     f.read((char*)(fvec), len*4);
     if (f.fail()){
@@ -296,12 +296,12 @@ void TDataServe::DataRead(string name,
 }
 
 void TDataServe::TNtupleXDataRead(TNtuple& tup,
-                                  const UInt_t inlen,
-                                  const UInt_t outlen,
-                                  const UInt_t* inselect,
-                                  const UInt_t* outselect,
-                                  const UInt_t start,
-                                  UInt_t len)
+                                  const unsigned int inlen,
+                                  const unsigned int outlen,
+                                  const unsigned int* inselect,
+                                  const unsigned int* outselect,
+                                  const unsigned int start,
+                                  unsigned int len)
 {
     // fill TDataServe from TNtuple
     //
@@ -313,9 +313,9 @@ void TDataServe::TNtupleXDataRead(TNtuple& tup,
     // start=0: startevent of TNtuple
     // len=0: Number of events   if len=0, tup is read from
     //	    start position to last row of Ntuple.
-    UInt_t i,j;
-    Float_t* val;
-    if (len==0) len=(UInt_t)tup.GetEntries()-start;
+    unsigned int i,j;
+    float* val;
+    if (len==0) len=(unsigned int)tup.GetEntries()-start;
     assert(start+len<=tup.GetEntries() && inlen<=fInvecLen && outlen<=fOutvecLen);
     BlastAr2DD(fInvecAr, fNumvecs, fNumvecs+len, fInvecLen);
     BlastAr2DD(fOutvecAr, fNumvecs, fNumvecs+len, fOutvecLen);
@@ -335,17 +335,17 @@ void TDataServe::TNtupleXDataRead(TNtuple& tup,
 }
 
 void TDataServe::TNtupleDataRead(TNtuple& tup,
-                                 const UInt_t start,
-                                 UInt_t len)
+                                 const unsigned int start,
+                                 unsigned int len)
 {
     // fill TDataServe from TNtuple
     // tup("tup","in out","i1:i2:i3:i4... :o1:o2:o3");
     // start=0: startevent of TNtuple
     // len=0: Number of events   if len=0, TNuple is read, from
     //	    startposition to the last row of Ntuple.
-    UInt_t i;
-    UInt_t* iv=new UInt_t [fInvecLen];
-    UInt_t* ov=new UInt_t [fOutvecLen];
+    unsigned int i;
+    unsigned int* iv=new unsigned int [fInvecLen];
+    unsigned int* ov=new unsigned int [fOutvecLen];
     for (i=0; i<fInvecLen; i++) iv[i]=i;
     for (i=0; i<fOutvecLen; i++) ov[i]=fInvecLen+i;
     TNtupleXDataRead(tup, fInvecLen, fOutvecLen, iv, ov, start, len);
@@ -353,9 +353,9 @@ void TDataServe::TNtupleDataRead(TNtuple& tup,
     delete [] ov;
 }
 
-void TDataServe::SetInvecElem(const UInt_t ind1,
-                              const UInt_t ind2,
-                              const Float_t val)
+void TDataServe::SetInvecElem(const unsigned int ind1,
+                              const unsigned int ind2,
+                              const float val)
 {
     // set single inputvector element
     // ind1: number of vector
@@ -364,9 +364,9 @@ void TDataServe::SetInvecElem(const UInt_t ind1,
     fInvecAr[ind1][ind2]=val;
 }
 
-void TDataServe::SetOutvecElem(const UInt_t ind1,
-                               const UInt_t ind2,
-                               const Float_t val)
+void TDataServe::SetOutvecElem(const unsigned int ind1,
+                               const unsigned int ind2,
+                               const float val)
 {
     // set single inputvector element
     // ind1: number of vector
@@ -375,31 +375,31 @@ void TDataServe::SetOutvecElem(const UInt_t ind1,
     fOutvecAr[ind1][ind2]=val;
 }
 
-void TDataServe::Putvec(const Float_t* invec, const Float_t* outvec)
+void TDataServe::Putvec(const float* invec, const float* outvec)
 {
     //Add new input and outputvector
-    UInt_t i;
+    unsigned int i;
     if (fNumvecs+1>fMaxvecs)
     {
         fMaxvecs+=100;
-        Float_t** temp = fInvecAr;
-        fInvecAr = new Float_t* [fMaxvecs];
+        float** temp = fInvecAr;
+        fInvecAr = new float* [fMaxvecs];
         assert(fInvecAr!=0);
         for (i=0; i<fNumvecs; i++) fInvecAr[i] = temp[i];
         delete [] temp;
         temp=fOutvecAr;
-        fOutvecAr = new Float_t* [fMaxvecs];
+        fOutvecAr = new float* [fMaxvecs];
         assert(fOutvecAr!=0);
         for (i=0; i<fNumvecs; i++) fOutvecAr[i] = temp[i];
         delete [] temp;
     }
-    fInvecAr[fNumvecs]=new Float_t [fInvecLen];
+    fInvecAr[fNumvecs]=new float [fInvecLen];
     assert(fInvecAr[fNumvecs]!=0);
-    fOutvecAr[fNumvecs]=new Float_t [fOutvecLen];
+    fOutvecAr[fNumvecs]=new float [fOutvecLen];
     assert(fOutvecAr[fNumvecs]!=0);
-    fInvecMean=new Float_t [fInvecLen];
+    fInvecMean=new float [fInvecLen];
     assert(fInvecMean!=0);
-    fOutvecMean=new Float_t [fOutvecLen];
+    fOutvecMean=new float [fOutvecLen];
     assert(fOutvecMean!=0);
     for (i=0; i<fInvecLen; i++) fInvecAr[fNumvecs][i]=invec[i];
     for (i=0; i<fOutvecLen; i++) fOutvecAr[fNumvecs][i]=outvec[i];
@@ -407,7 +407,7 @@ void TDataServe::Putvec(const Float_t* invec, const Float_t* outvec)
     fData_OK=kFALSE;
 }
 
-void TDataServe::Deletevec(const UInt_t ind)
+void TDataServe::Deletevec(const unsigned int ind)
 {
     // Deletes input and outputvector
     assert(ind<fNumvecs);
@@ -420,7 +420,7 @@ void TDataServe::Deletevec(const UInt_t ind)
 }
 
 
-Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,string cut)
+bool TDataServe::TTreeDataRead(string file,string tree,string in,string out,string cut)
 {
     TFile f(file.data());
     TTree *t = (TTree*) f.Get(tree.data());
@@ -440,7 +440,7 @@ Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,st
     TTreeFormula *inForm[100];
     istringstream inStream(input);
     string inName;
-    UInt_t nInputs = 0;
+    unsigned int nInputs = 0;
     while (inStream >> inName && nInputs<fInvecLen){
         inForm[nInputs++] = new TTreeFormula("Input",inName.data(),t);
     }
@@ -450,13 +450,13 @@ Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,st
     replace( output.begin(), output.end(), ':', ' ');
     output += " ";
     
-    Bool_t tag = (output=="-1" || output=="0" || output=="1");
-    Int_t value = 0;
+    bool tag = (output=="-1" || output=="0" || output=="1");
+    int value = 0;
     if (output=="-1") value = -1;
     if (output=="1")  value =  1;
     
     TTreeFormula *outForm[100];
-    UInt_t nOutputs = 0;
+    unsigned int nOutputs = 0;
     if (!tag) {
         istringstream outStream(output);
         string outName;
@@ -467,8 +467,8 @@ Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,st
     else
         nOutputs = 1;
     
-    Float_t *inValues = new Float_t[fInvecLen];
-    Float_t *outValues = new Float_t[fOutvecLen];
+    float *inValues = new float[fInvecLen];
+    float *outValues = new float[fOutvecLen];
     
     Stat_t nEntries = t->GetEntries();
     for (int n=0;n<nEntries;n++) {
@@ -477,14 +477,14 @@ Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,st
         
         if (cutForm!=0 && cutForm->EvalInstance(0)!=0.0) continue; // No good sample
         
-        for (UInt_t i=0;i<nInputs;i++)
-            inValues[i] = (Float_t) inForm[i]->EvalInstance(0);
+        for (unsigned int i=0;i<nInputs;i++)
+            inValues[i] = (float) inForm[i]->EvalInstance(0);
         
-        for (UInt_t o=0;o<nOutputs;o++)
+        for (unsigned int o=0;o<nOutputs;o++)
             if (!tag)
-                outValues[o] = (Float_t) outForm[o]->EvalInstance(0);
+                outValues[o] = (float) outForm[o]->EvalInstance(0);
             else
-                outValues[o] = (Float_t) value;
+                outValues[o] = (float) value;
         
         Putvec(inValues,outValues);
     }
@@ -497,10 +497,10 @@ Bool_t TDataServe::TTreeDataRead(string file,string tree,string in,string out,st
     return kTRUE;
 }
 
-Float_t* TDataServe::GetInputMean()
+float* TDataServe::GetInputMean()
 {
-    UInt_t i,j;
-    if (fInvecMean==0) fInvecMean = new Float_t[fInvecLen];
+    unsigned int i,j;
+    if (fInvecMean==0) fInvecMean = new float[fInvecLen];
     for (i=0; i<fInvecLen; i++) fInvecMean[i] = 0.0;
     if (fNumvecs<=0) return fInvecMean;
     
@@ -513,10 +513,10 @@ Float_t* TDataServe::GetInputMean()
     return fInvecMean;
 }
 
-Float_t* TDataServe::GetOutputMean()
+float* TDataServe::GetOutputMean()
 {
-    UInt_t i,j;
-    if (fOutvecMean==0) fOutvecMean = new Float_t[fOutvecLen];
+    unsigned int i,j;
+    if (fOutvecMean==0) fOutvecMean = new float[fOutvecLen];
     for (i=0; i<fOutvecLen; i++) fOutvecMean[i] = 0.0;
     if (fNumvecs<=0) return fOutvecMean;
     
@@ -529,10 +529,10 @@ Float_t* TDataServe::GetOutputMean()
     return fOutvecMean;
 }
 
-Float_t* TDataServe::GetInputScale()
+float* TDataServe::GetInputScale()
 {
-    UInt_t i,j;
-    if (fInvecScale==0) fInvecScale = new Float_t[fInvecLen];
+    unsigned int i,j;
+    if (fInvecScale==0) fInvecScale = new float[fInvecLen];
     for (i=0; i<fInvecLen; i++) fInvecScale[i] = 1.0;
     if (fNumvecs<=0) return fInvecScale;
     
@@ -542,9 +542,9 @@ Float_t* TDataServe::GetInputScale()
     pmain->Draw();
     pmain->Divide(3,3);
     for (j=0; j<fInvecLen; j++) {
-        Float_t max=FLT_MIN,min=FLT_MAX;
+        float max=FLT_MIN,min=FLT_MAX;
         for (i=0; i<fNumvecs; i++){
-            Float_t vec = fInvecAr[i][j];
+            float vec = fInvecAr[i][j];
             if (vec>max) max = vec;
             else if (vec<min) min = vec;
         }
@@ -561,7 +561,7 @@ Float_t* TDataServe::GetInputScale()
         hist->Fit("g");
         hist->Draw();
         c1->Update();
-        Double_t par[3];
+        double par[3];
         fit.GetParameters(par);
         fInvecScale[j] = 1. / fabs(par[1]); // Position of peak
         
@@ -570,17 +570,17 @@ Float_t* TDataServe::GetInputScale()
     return fInvecScale;
 }
 
-Float_t* TDataServe::GetOutputScale()
+float* TDataServe::GetOutputScale()
 {
-    UInt_t i,j;
-    if (fOutvecScale==0) fOutvecScale = new Float_t[fOutvecLen];
+    unsigned int i,j;
+    if (fOutvecScale==0) fOutvecScale = new float[fOutvecLen];
     for (i=0; i<fOutvecLen; i++) fOutvecScale[i] = 1.0;
     if (fNumvecs<=0) return fOutvecScale;
     
     for (j=0; j<fOutvecLen; j++) {
-        Float_t max=FLT_MIN,min=FLT_MAX;
+        float max=FLT_MIN,min=FLT_MAX;
         for (i=0; i<fNumvecs; i++){
-            Float_t vec = fInvecAr[i][j];
+            float vec = fInvecAr[i][j];
             if (vec>100 || vec<-100) continue;
             if (vec>max) max = vec;
             else if (vec<min) min = vec;

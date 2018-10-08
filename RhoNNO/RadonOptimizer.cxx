@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
     rulers.Draw();
     // draw hits as PolyMarker3D
     long nhits = hits.size();
-    TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
+    TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
     vector<TVector3>::iterator it;
     for(it = hits.begin(); it != hits.end(); it++)    {
         static int i = 0;

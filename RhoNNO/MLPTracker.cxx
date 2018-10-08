@@ -8,17 +8,18 @@
 #include <TPolyLine3D.h>
 #include <TFile.h>
 #include <TVector3.h>
-#include "RhoNNO/TXMLP.h"
+#include <TNtuple.h>
 
 #include <random>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <set>
 
 using namespace std;
 
-#define TRACKML
+//#define TRACKML
 
 #define NHITS 5
 #define SIGMA 0.001
@@ -49,7 +50,7 @@ std::vector<int> tracks[20000];
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
 int findTracks(int nhits, float *x, float *y, float *z, int* labels);
-Double_t* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist);
+double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist);
 
 bool sortFunc( const vector<int>& p1,
               const vector<int>& p2 ) {
@@ -85,7 +86,7 @@ void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double r
     double tau = 0.025;
     for (int i=0; i<np; i++,tau+=delta)
     {
-        Float_t X,Y,Z;
+        float X,Y,Z;
         X = radius * ( sin(phi + (signum(radius)) * tau) - sin(phi));
         Y = radius * (-cos(phi + (signum(radius)) * tau) + cos(phi));
         Z = gamma * tau;
@@ -217,7 +218,7 @@ int main(int argc, char* argv[]) {
         TAxis3D rulers;
         rulers.Draw();
         // draw hits as PolyMarker3D
-        TPolyMarker3D *hitmarker = new TPolyMarker3D((UInt_t) nhits);
+        TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
         vector<TVector3>::iterator it;
         for(it = hits.begin(); it != hits.end(); it++)    {
             static int i = 0;
@@ -232,7 +233,7 @@ int main(int argc, char* argv[]) {
         hitmarker->Draw();
         
         // Draw the tracks
-        TPolyMarker3D *trackmarker = new TPolyMarker3D((UInt_t) hits.size());
+        TPolyMarker3D *trackmarker = new TPolyMarker3D((unsigned int) hits.size());
         static int n = 0;
         for (int i=0;i<nt;i++) {
             vector<int> h = tracks[i];
@@ -264,7 +265,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
 
 #ifdef LOOKUP
-    Double_t in1[7], in2[7];
+    double in1[7], in2[7];
     
     // Allocate a nhits*nhits hit pair matrix as one continuous memory block
     int **m = new int*[nhits];
@@ -452,6 +453,8 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     return (int) track.size();
 }
 
+#include "RhoNNO/TXMLP.h"
+
 #ifdef TRACKML
 // Recall function on normalised network input
 double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist)
@@ -464,7 +467,7 @@ double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float
     x[3]     = 0.775527    *    x2;    // x2
     x[4]     = 0.71624     *    y2;    // y2
     x[5]     = 0.100536    *    z2;    // z2
-    x[6]     = 0.0000245   *    dist;
+    x[6]     = 0.00215027  *    dist;
     return net.Recallstep(x);
 }
 #else
@@ -472,7 +475,7 @@ double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float
 double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist)
 {
     static TXMLP net(NETFILE);
-    Float_t x[7];
+    float x[7];
     x[0]     = 2631.15    *    x1;    // x1
     x[1]     = 383.788    *    y1;    // y1
     x[2]     = 490.839    *    z1;    // z1

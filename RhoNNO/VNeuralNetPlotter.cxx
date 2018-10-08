@@ -27,7 +27,7 @@ ClassImp(VNeuralNetPlotter)
 VNeuralNetPlotter::VNeuralNetPlotter(string name) : TNamed(name.data(),name.data())
 {}
 
-void VNeuralNetPlotter::DrawT(Text_t *text, Float_t x, Float_t y, Float_t angle, Int_t color)
+void VNeuralNetPlotter::DrawT(Text_t *text, float x, float y, float angle, int color)
 {
     TText *tText= new TText(x,y,text);
     tText->SetNDC(kTRUE);
@@ -44,10 +44,10 @@ TSimpleNeuralNetPlotter::TSimpleNeuralNetPlotter(string name)
 fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0)
 {
     fPlots = kFALSE;
-    fXtrn = new Double_t[NPMAX];
-    fYtrn = new Double_t[NPMAX];
-    fXtst = new Double_t[NPMAX];
-    fYtst = new Double_t[NPMAX];
+    fXtrn = new double[NPMAX];
+    fYtrn = new double[NPMAX];
+    fXtst = new double[NPMAX];
+    fYtst = new double[NPMAX];
 }
 
 TSimpleNeuralNetPlotter::~TSimpleNeuralNetPlotter() 
@@ -101,7 +101,7 @@ void TSimpleNeuralNetPlotter::Initialize()
     fPlots = kTRUE;
 }
 
-void TSimpleNeuralNetPlotter::AddTrainSample(Double_t trn, Bool_t good)
+void TSimpleNeuralNetPlotter::AddTrainSample(double trn, bool good)
 {
     if (good)
         fTrnHistTrue->Fill(trn);
@@ -109,7 +109,7 @@ void TSimpleNeuralNetPlotter::AddTrainSample(Double_t trn, Bool_t good)
         fTrnHistFalse->Fill(trn);
 }
 
-void TSimpleNeuralNetPlotter::AddTestSample(Double_t tst, Bool_t good)
+void TSimpleNeuralNetPlotter::AddTestSample(double tst, bool good)
 {
     if (good)
         fTstHistTrue->Fill(tst);
@@ -117,10 +117,10 @@ void TSimpleNeuralNetPlotter::AddTestSample(Double_t tst, Bool_t good)
         fTstHistFalse->Fill(tst);
 }
 
-void TSimpleNeuralNetPlotter::AddTrainGraph(Double_t trn) 
+void TSimpleNeuralNetPlotter::AddTrainGraph(double trn) 
 {
-    Int_t n = fNtrn%NPMAX;
-    fXtrn[n] = (Double_t) fNtrn;
+    int n = fNtrn%NPMAX;
+    fXtrn[n] = (double) fNtrn;
     fYtrn[n] = trn;
     fNtrn++;
     if (fTrnCurve==0) {
@@ -135,10 +135,10 @@ void TSimpleNeuralNetPlotter::AddTrainGraph(Double_t trn)
     }
 }
 
-void TSimpleNeuralNetPlotter::AddTestGraph(Double_t tst) 
+void TSimpleNeuralNetPlotter::AddTestGraph(double tst) 
 {
-    Int_t n = fNtst%NPMAX;
-    fXtst[n] = (Double_t) fNtst;
+    int n = fNtst%NPMAX;
+    fXtst[n] = (double) fNtst;
     fYtst[n] = tst;
     fNtst++;
     if (fTstCurve==0) {

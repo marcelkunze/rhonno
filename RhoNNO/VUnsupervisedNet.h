@@ -24,16 +24,16 @@ protected:
     
 public:
     VUnsupervisedNet()  :  VNeuralNet(), fXB() {};
-    VUnsupervisedNet(std::string netID,Int_t innodes,Int_t outnodes,std::string netFile) :
+    VUnsupervisedNet(std::string netID,int innodes,int outnodes,std::string netFile) :
     VNeuralNet(netID,innodes,outnodes,netFile), fXB() {}
     VUnsupervisedNet(std::string netFile) :
     VNeuralNet(netFile), fXB() {}
     TNeuralNetCellParameters &GetParameters() { return fXB; }
-    Int_t GetNumberOfCells() const { return fXB.fCells; }
-    const TNeuralNetCell* GetCell(Int_t n) const { if (n<fXB.fCells) return &fU[n]; else return NULL;};
-    virtual Int_t GetWinnerCell(NNO_INTYPE* in) = 0;
-    virtual Long_t TrainEpoch (FILE* trainFile);  // returns number of records in LearnFile
-    virtual Long_t TrainEpoch (TNtuple *tuple, Bool_t random=kTRUE);    // learn the hits from the ntuple
+    int GetNumberOfCells() const { return fXB.fCells; }
+    const TNeuralNetCell* GetCell(int n) const { if (n<fXB.fCells) return &fU[n]; else return NULL;};
+    virtual int GetWinnerCell(NNO_INTYPE* in) = 0;
+    virtual long TrainEpoch (FILE* trainFile);  // returns number of records in LearnFile
+    virtual long TrainEpoch (TNtuple *tuple, bool random=kTRUE);    // learn the hits from the ntuple
     virtual void Draw (Option_t *option="");
     virtual void Print (Option_t *option="") const;
     
