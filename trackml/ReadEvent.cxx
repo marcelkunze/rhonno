@@ -11,7 +11,7 @@
 
 #include "DataStructures.h"
 #include "Geo.h"
-#include "RhoNNO/TXMLP.h"
+#include "XMLP.h"
 
 using namespace std;
 
@@ -22,21 +22,19 @@ std::vector<int> tracks[200000];
 
 int layerNHits[Geo::NLayers];
 
-#define NEVENTS 10
+#define NEVENTS 1
 #define MAXPARTICLES 200000
 
 #define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0098.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
-#define MAXHITS 10000
+#define MAXHITS 200000
 #define TRACKLET 3
-#define DISTANCE 5000
+#define DISTANCE 10000
 #define THRESHOLD 65
 
 #define VERBOSE false
 
 Double_t* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist);
-int bestMatchingHit(size_t nhits, int **m, int row);
-int bestHitPair(size_t nhits, int **m, int &row, int &col);
 int findTracks(int nhits, float *x, float *y, float *z, int* labels);
 
 bool sortFunc( const vector<int>& p1,
@@ -489,6 +487,13 @@ int main()
     //const int firstEvent=1000;
     TString dir = "/Users/marcel/workspace/train_sample/";
     
+    ofstream out("mysubmission.csv");
+    if( !out.is_open() ){
+        cout<<"Can not open output file"<<endl;
+        exit(0);
+    }
+
+    out<<"event_id,hit_id,track_id"<<endl;
     
     long nParticles = 0;
     
@@ -527,36 +532,47 @@ int main()
         }
         f->Write();
         delete ntuple;
+        
+        size_t nhits = mHits.size(); //mHits.size();
+        if (nhits > MAXHITS) nhits = MAXHITS;
+        
+        float x[MAXHITS],y[MAXHITS],z[MAXHITS];
+        Point p[MAXHITS];
+        int labels[MAXHITS];
+        int nt;
+        for (int i=0; i<nhits; i++) {
+            x[i] = mHits[i].x;
+            y[i] = mHits[i].y;
+            z[i] = mHits[i].z;
+            p[i].x = mHits[i].x;
+            p[i].y = mHits[i].y;
+            p[i].z = mHits[i].z;
+        }
+        
+        cout << "Find tracks..." << endl;
+        nt = findTracks(nhits,x,y,z,labels);
+        
+        cout << "Number of tracks:" << nt << endl;
+        if (VERBOSE)
+        for(int i=0; i<nt; i++) {
+            cout << "Track " << i << ":";
+            print(tracks[i]);
+            cout << endl;
+        }
+        
+        if (VERBOSE) {
+            cout << "Labels: ";
+            for (int i=0;i<nhits;i++) cout << labels[i] << " ";
+            cout << endl;
+        }
+        
+        cout << "Write submission file..." << endl;
+        for( int ih=0; ih<nhits; ih++ ){
+            out<<event<<","<<ih+1<<","<<labels[ih]<<endl;
+        }
     }
     
-    size_t nhits = MAXHITS; //mHits.size();
-    float x[nhits],y[nhits],z[nhits];
-    Point p[nhits];
-    int labels[nhits];
-    int nt;
-    for (int i=0; i<nhits; i++) {
-        x[i] = mHits[i].x;
-        y[i] = mHits[i].y;
-        z[i] = mHits[i].z;
-        p[i].x = mHits[i].x;
-        p[i].y = mHits[i].y;
-        p[i].z = mHits[i].z;
-    }
-    
-    cout << "Find tracks:" << endl;
-    nt = findTracks(nhits,x,y,z,labels);
-    
-    cout << "Number of tracks:" << nt << endl;
-    for(int i=0; i<nt; i++) {
-        cout << "Track " << i << ":";
-        print(tracks[i]);
-        cout << endl;
-    }
-    
-    cout << "Labels: ";
-    for (int i=0;i<nhits;i++) cout << labels[i] << " ";
-    cout << endl;
-    
+    out.close();
 }
 
 // Assign track labels to hits (x,y,z)
@@ -589,6 +605,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             }
         }
         
+        if (tmpvec.size() < TRACKLET) continue; // Perform a cut on tracklet size
         tracklet.push_back(tmpvec);
     }
     
@@ -605,7 +622,9 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             for( int j=0; j<tracklet[i].size(); j++ ) {
                 int row = tracklet[i][0];
                 int col = tracklet[i][j];
-                double dist = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
+                double d = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
+                int dist = 1000.*d;
+                if (dist > DISTANCE) continue;
                 int recall1 = (int) 100. * Recall(x[row],y[row],z[row],x[col],y[col],z[col],dist)[0]; // Recall the hit pair matching quality
                 int recall2 = (int) 100. * Recall(x[col],y[col],z[col],x[row],y[row],z[row],dist)[0]; // Recall the hit pair matching quality
                 if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
@@ -619,7 +638,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
     
     cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
-    
+/*
     // Prune the tracklets by removing short tracks
     for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
         vector<int> row = *it;
@@ -635,7 +654,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
         cout << "Pruned tracklets (remove short paths):" << endl;
         for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
     }
-    
+*/
     // Prune the tracklets by removing rows with identical entries
     // Assemble tracks from the corresponding tracklets
     vector<vector<int>> track;
@@ -667,9 +686,11 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
     
     // Print out the tracks vector
-    cout << "Tracks:" << endl;
-    for( int i=0; i<track.size(); i++ ) print(track[i]);
-    
+    if (VERBOSE) {
+        cout << "Tracks:" << endl;
+        for( int i=0; i<track.size(); i++ ) print(track[i]);
+    }
+
     for (int i=0;i<track.size();i++) {
         tracks[i] = track[i]; // Save the results
         for (int j=0;j<track[i].size();j++) {
@@ -688,7 +709,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 // Recall function on normalised network input
 double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist)
 {
-    static TXMLP net(NETFILE);
+    static XMLP net(NETFILE);
     float x[7];
     x[0]     = 1.05776     *    x1;    // x1
     x[1]     = 0.80706     *    y1;    // y1
