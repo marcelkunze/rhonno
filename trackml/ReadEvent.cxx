@@ -22,15 +22,15 @@ std::vector<int> tracks[200000];
 
 int layerNHits[Geo::NLayers];
 
-#define NEVENTS 1
+#define NEVENTS 10
 #define MAXPARTICLES 200000
 
 #define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0098.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
 #define MAXHITS 200000
 #define TRACKLET 3
-#define DISTANCE 10000
-#define THRESHOLD 65
+#define DISTANCE 5000
+#define THRESHOLD 80
 
 #define VERBOSE false
 
@@ -470,6 +470,7 @@ void combine(Particle &p1, Particle &p2, Double_t truth)
     for(int i=0; i<nhits1; i++)    {
         Hit &hit1 = mHits[p1.hits[i]];
         for(int j=0; j<nhits2; j++)    {
+            if (nhits1 == nhits2 && i == j) continue; // Do not combine the hit with itself
             Hit &hit2 = mHits[p2.hits[j]];
             //printf("%i %i: x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f, v1=%8f, v2=%8f, v=%8f, l=%8f, m=%8f, t=%8f \n",i,j,hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.values,hit2.values,(double)hit1.volume,(double)hit1.layer,(double)hit1.module,truth);
             double dist = sqrt((hit1.x-hit2.x)*(hit1.x-hit2.x) + (hit1.y-hit2.y)*(hit1.y-hit2.y) + (hit1.z-hit2.z)*(hit1.z-hit2.z));
@@ -522,13 +523,12 @@ int main()
         for (int ip=0; ip<mParticles.size(); ip++ ) {
             if (nParticles++ > MAXPARTICLES) break;
             int jp = r.Rndm() * mParticles.size();
+            if (ip == jp) continue; // Do not combine the particle with itself
             if (VERBOSE) cout << "Combine " << ip << " " << jp << endl;
             Particle &p1 = mParticles[ip];
             Particle &p2 = mParticles[jp];
             combine(p1,p1,1.0); // wright pairs
-            combine(p2,p2,1.0); // wright pairs
             combine(p1,p2,0.0); // wrong pairs
-            combine(p2,p1,0.0); // wrong pairs
         }
         f->Write();
         delete ntuple;
