@@ -39,7 +39,7 @@ using namespace std;
 #endif
 
 #define DRAW true
-#define VERBOSE false
+#define VERBOSE true
 //#define LOOKUP
 
 // The user member function processes one event
@@ -286,25 +286,28 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
     
     for(int i=0; i<nhits-1; i++)    {
-        in1[0] = x[i];
-        in1[1] = y[i];
-        in1[2] = z[i];
-        in2[3] = x[i];
-        in2[4] = y[i];
-        in2[5] = z[i];
+        float r1 = sqrt(x[i]*x[i]+y[i]*y[i]+z[i]*z[i]);
+        float phi1 = atan2(y[i],x[i]);
+        float theta1 = acos(z[i]/r1);
+        in1[0] = r1; //x[i];
+        in1[1] = phi1; //y[i];
+        in1[2] = theta1; //z[i];
+        in2[3] = r1; //x[i];
+        in2[4] = phi1; //y[i];
+        in2[5] = theta1; //z[i];
         d[i][i] = 0;
         m[i][i] = 0;
         // Polar coordinates
-        //double phi = atan2(y[i],x[i]);
-        //double r = sqrt(x[i]*x[i]+y[i]*y[i]);
-        //double zz = z[i];
         for(int j=i+1; j<nhits; j++)    {
-            in1[3] = x[j];
-            in1[4] = y[j];
-            in1[5] = z[j];
-            in2[0] = x[j];
-            in2[1] = y[j];
-            in2[2] = z[j];
+            float r2 = sqrt(x[j]*x[j]+y[j]*y[j]+z[j]*z[j]);
+            float phi2 = atan2(y[j],x[j]);
+            float theta2 = acos(z[j]/r2);
+            in1[3] = r2; //x[j];
+            in1[4] = phi2; //y[j];
+            in1[5] = theta2; //z[j];
+            in2[0] = r2; //x[j];
+            in2[1] = phi2; //y[j];
+            in2[2] = theta2; //z[j];
             double dist = sqrt((in1[0]-in2[0])*(in1[0]-in2[0]) + (in1[1]-in2[1])*(in1[1]-in2[1]) + (in1[2]-in2[2])*(in1[2]-in2[2]));
             in1[6] = dist;
             in2[6] = dist;
@@ -334,8 +337,14 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             double d = sqrt((x[i]-x[j])*(x[i]-x[j]) + (y[i]-y[j])*(y[i]-y[j]) + (z[i]-z[j])*(z[i]-z[j]));
             int dist = 1000.*d;
             if (dist > DISTANCE) continue;
-            int recall1 = (int) 100. * Recall(x[i],y[i],z[i],x[j],y[j],z[j],d)[0]; // Recall the hit pair matching quality
-            int recall2 = (int) 100. * Recall(x[j],y[j],z[j],x[i],y[i],z[i],d)[0]; // Recall the hit pair matching quality
+            float r1 = sqrt(x[i]*x[i]+y[i]*y[i]+z[i]*z[i]);
+            float phi1 = atan2(y[i],x[i]);
+            float theta1 = acos(z[i]/r1);
+            float r2 = sqrt(x[j]*x[j]+y[j]*y[j]+z[j]*z[j]);
+            float phi2 = atan2(y[j],x[j]);
+            float theta2 = acos(z[j]/r2);
+            int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
+            int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
             if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
             if (recall2 < THRESHOLD) recall2 = 0;
             int recall  = (recall1>recall2) ? recall1:recall2;
@@ -345,10 +354,12 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             }
         }
         
+        if (tmpvec.size() < TRACKLET) continue; // Perform a cut on tracklet size
         tracklet.push_back(tmpvec);
     }
     
     cout << "Number of tracklets: " << tracklet.size() << endl;
+    if (tracklet.size() == 0) exit(0);
     
     // Sort the tracklet vector according to the tracklet length
     
@@ -364,9 +375,17 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 #ifdef LOOKUP
                 cout << tracklet[i][j] << "(" << m[row][col] << ") ";
 #else
-                double dist = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
-                int recall1 = (int) 100. * Recall(x[row],y[row],z[row],x[col],y[col],z[col],dist)[0]; // Recall the hit pair matching quality
-                int recall2 = (int) 100. * Recall(x[col],y[col],z[col],x[row],y[row],z[row],dist)[0]; // Recall the hit pair matching quality
+                double d = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
+                int dist = 1000.*d;
+                if (dist > DISTANCE) continue;
+                float r1 = sqrt(x[row]*x[row]+y[row]*y[row]+z[row]*z[row]);
+                float phi1 = atan2(y[row],x[row]);
+                float theta1 = acos(z[row]/r1);
+                float r2 = sqrt(x[col]*x[col]+y[col]*y[col]+z[col]*z[col]);
+                float phi2 = atan2(y[col],x[col]);
+                float theta2 = acos(z[col]/r2);
+                int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
+                int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
                 if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
                 if (recall2 < THRESHOLD) recall2 = 0;
                 int recall  = (recall1>recall2) ? recall1:recall2;
@@ -379,7 +398,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
 
     cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
-    
+ /*
     // Prune the tracklets by removing short tracks
     for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
         vector<int> row = *it;
@@ -389,13 +408,13 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             continue;
         }
     }
-    
+
     // Print out the pruned vector
     if (VERBOSE) {
         cout << "Pruned tracklets (remove short paths):" << endl;
         for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
     }
-
+ */
     // Prune the tracklets by removing rows with identical entries
     // Assemble tracks from the corresponding tracklets
     vector<vector<int>> track;
@@ -476,12 +495,12 @@ double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float
 {
     static TXMLP net(NETFILE);
     float x[7];
-    x[0]     = 2631.15    *    x1;    // x1
-    x[1]     = 383.788    *    y1;    // y1
-    x[2]     = 490.839    *    z1;    // z1
-    x[3]     = 2631.15    *    x2;    // x2
-    x[4]     = 383.788    *    y2;    // y2
-    x[5]     = 490.839    *    z2;    // z2
+    x[0]     = 1.98932    *    x1;    // r1
+    x[1]     = 1.48747    *    y1;    // phi1
+    x[2]     = 0.0427916  *    z1;    // theta1
+    x[3]     = 1.98932    *    x2;    // r2
+    x[4]     = 1.48747    *    y2;    // phi2
+    x[5]     = 0.0427916  *    z2;    // theta2
     x[6]     = 126.061    *    dist;
     return net.Recallstep(x);
 }
