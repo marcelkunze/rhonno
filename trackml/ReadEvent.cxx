@@ -22,15 +22,15 @@ std::vector<int> tracks[200000];
 
 int layerNHits[Geo::NLayers];
 
-#define NEVENTS 10
+#define NEVENTS 1
 #define MAXPARTICLES 200000
 
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0190-6-50-25-1.TXMLP"
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
-#define MAXHITS 10000
+#define MAXHITS 200000
 #define TRACKLET 3
-#define DISTANCE 100
-#define THRESHOLD 65
+#define DISTANCE 5
+#define THRESHOLD 80
 
 #define VERBOSE false
 
@@ -499,9 +499,16 @@ int main()
         cout<<"Can not open output file"<<endl;
         exit(0);
     }
-
-    out<<"event_id,hit_id,track_id"<<endl;
     
+    ofstream outtrack("tracks.csv");
+    if( !outtrack.is_open() ){
+        cout<<"Can not open output file"<<endl;
+        exit(0);
+    }
+    
+    out<<"event_id,hit_id,track_id"<<endl;
+    outtrack<<"event_id,track_id: hits"<<endl;
+
     long nParticles = 0;
     
     for( int event = firstEvent; event<firstEvent+nEvents; event++){
@@ -572,13 +579,22 @@ int main()
             cout << endl;
         }
         
+        cout << "Write track file..." << endl;
+        for( int ip=0; ip<mParticles.size(); ip++ ){
+            Particle &p1 = mParticles[ip];
+            outtrack<<event<<","<<ip<<": ";
+            for (int j=0;j<p1.hits.size();j++) outtrack<<p1.hits[j]<<" ";
+            outtrack << endl;
+        }
+
         cout << "Write submission file..." << endl;
         for( int ih=0; ih<nhits; ih++ ){
             out<<event<<","<<ih+1<<","<<labels[ih]<<endl;
         }
-    }
+}
     
     out.close();
+    outtrack.close();
 }
 
 // Assign track labels to hits (x,y,z)
@@ -728,12 +744,12 @@ double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float
 {
     static XMLP net(NETFILE);
     float x[7];
-    x[0]     = 6.89738e-05  *    x1;    // r1
-    x[1]     = 1.0322       *    y1;    // phi1
-    x[2]     = 0.0284244    *    z1;    // theta1
-    x[3]     = 6.9763e-05   *    x2;    // r2
-    x[4]     = 1.04455      *    y2;    // phi2
-    x[5]     = 0.0348934    *    z2;    // theta2
-    x[6]     = 0.00215027   *    dist;
+    x[0]     = x1;    // r1
+    x[1]     = y1;    // phi1
+    x[2]     = z1;    // theta1
+    x[3]     = x2;    // r2
+    x[4]     = y2;    // phi2
+    x[5]     = z2;    // theta2
+    x[6]     = dist;
     return net.Recallstep(x);
 }
