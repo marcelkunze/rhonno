@@ -26,21 +26,26 @@ using namespace std;
 
 #ifdef TRACKML
 #define MAXHITS 10000
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0100.TXMLP"
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
 #define TRACKLET 3
-#define DISTANCE 5000
-#define THRESHOLD 65
+#define DISTANCE 5
+#define DELTAR   0.1
+#define DELTAPHI 0.1
+#define DELTATHETA 0.1
+#define THRESHOLD 80
 #else
 #define MAXHITS 500
-#define NETFILE "/Users/marcel/workspace/rhonno/RhoNNO/NNO0069.TXMLP"
+#define NETFILE "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
 #define TRACKLET 3
 #define DISTANCE 100
+#define DELTAR   0.1
+#define DELTAPHI 0.1
+#define DELTATHETA 0.1
 #define THRESHOLD 65
 #endif
 
 #define DRAW true
 #define VERBOSE true
-//#define LOOKUP
 
 // The user member function processes one event
 
@@ -133,7 +138,7 @@ int main(int argc, char* argv[]) {
                 exit(0);
             }
             TVector3 hit(h[1],h[2],h[3]);
-            //hit *= 0.001; // convert mm to m
+            hit *= 0.001; // convert mm to m
             hits.push_back(hit);
             if (hits.size()%1000 == 0) cout << hits.size() << endl;
         }
@@ -264,76 +269,12 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 
     for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
 
-#ifdef LOOKUP
-    double in1[7], in2[7];
-    
-    // Allocate a nhits*nhits hit pair matrix as one continuous memory block
-    int **m = new int*[nhits];
-    if (nhits)
-    {
-        m[0] = new int[nhits * nhits];
-        for (int i = 1; i < nhits; ++i)
-            m[i] = m[0] + i * nhits;
-    }
-    
-    // Allocate a nhits*nhits hit pair distance matrix as one continuous memory block
-    int **d = new int*[nhits];
-    if (nhits)
-    {
-        d[0] = new int[nhits * nhits];
-        for (int i = 1; i < nhits; ++i)
-            d[i] = d[0] + i * nhits;
-    }
-    
-    for(int i=0; i<nhits-1; i++)    {
-        float r1 = sqrt(x[i]*x[i]+y[i]*y[i]+z[i]*z[i]);
-        float phi1 = atan2(y[i],x[i]);
-        float theta1 = acos(z[i]/r1);
-        in1[0] = r1; //x[i];
-        in1[1] = phi1; //y[i];
-        in1[2] = theta1; //z[i];
-        in2[3] = r1; //x[i];
-        in2[4] = phi1; //y[i];
-        in2[5] = theta1; //z[i];
-        d[i][i] = 0;
-        m[i][i] = 0;
-        // Polar coordinates
-        for(int j=i+1; j<nhits; j++)    {
-            float r2 = sqrt(x[j]*x[j]+y[j]*y[j]+z[j]*z[j]);
-            float phi2 = atan2(y[j],x[j]);
-            float theta2 = acos(z[j]/r2);
-            in1[3] = r2; //x[j];
-            in1[4] = phi2; //y[j];
-            in1[5] = theta2; //z[j];
-            in2[0] = r2; //x[j];
-            in2[1] = phi2; //y[j];
-            in2[2] = theta2; //z[j];
-            double dist = sqrt((in1[0]-in2[0])*(in1[0]-in2[0]) + (in1[1]-in2[1])*(in1[1]-in2[1]) + (in1[2]-in2[2])*(in1[2]-in2[2]));
-            in1[6] = dist;
-            in2[6] = dist;
-            d[i][j] = 1000.*dist; // Cache the distance between the points
-            d[j][i] = 1000.*dist;
-            d[j][j] = 0;
-            m[j][j] = 0;
-            m[i][j] = (int) 100. * Recall(in1[0],in1[1],in1[2],in1[3],in1[4],in1[5],in1[6])[0]; // Recall the hit pair matching quality
-            m[j][i] = (int) 100. * Recall(in2[0],in2[1],in2[2],in2[3],in2[4],in2[5],in2[6])[0];
-            if (m[i][j]< THRESHOLD) m[i][j] = 0; // Apply a cut on the quality
-            if (m[j][i]< THRESHOLD) m[j][i] = 0;
-        }
-    }
-#endif
-    
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     vector<vector<int>> tracklet;
     for(int i=0; i<nhits-1; i++)    {
         vector<int> tmpvec;
         tmpvec.push_back(i); //Note the row in the first place
         for(int j=i+1; j<nhits; j++)    {
-#ifdef LOOKUP
-            int dist = d[i][j];
-            if (dist > DISTANCE) continue;
-            int recall  = (m[i][j]>m[j][i]) ? m[i][j]:m[j][i];
-#else
             double d = sqrt((x[i]-x[j])*(x[i]-x[j]) + (y[i]-y[j])*(y[i]-y[j]) + (z[i]-z[j])*(z[i]-z[j]));
             int dist = 1000.*d;
             if (dist > DISTANCE) continue;
@@ -343,12 +284,17 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             float r2 = sqrt(x[j]*x[j]+y[j]*y[j]+z[j]*z[j]);
             float phi2 = atan2(y[j],x[j]);
             float theta2 = acos(z[j]/r2);
+            float deltar = abs(r1-r2);
+            if (deltar > DELTAR) continue;
+            float deltaphi = abs(abs(phi1)-abs(phi2));
+            if (deltaphi > DELTAPHI) continue;
+            float deltatheta = abs(theta1-theta2);
+            if (deltatheta > DELTATHETA) continue;
             int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
             int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
             if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
             if (recall2 < THRESHOLD) recall2 = 0;
             int recall  = (recall1>recall2) ? recall1:recall2;
-#endif
             if (recall>THRESHOLD) {
                 tmpvec.push_back(j); // Note the columns with a good combination
             }
@@ -372,9 +318,6 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             for( int j=0; j<tracklet[i].size(); j++ ) {
                 int row = tracklet[i][0];
                 int col = tracklet[i][j];
-#ifdef LOOKUP
-                cout << tracklet[i][j] << "(" << m[row][col] << ") ";
-#else
                 double d = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
                 int dist = 1000.*d;
                 if (dist > DISTANCE) continue;
@@ -391,7 +334,6 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 int recall  = (recall1>recall2) ? recall1:recall2;
                 if (j==0) recall = 0.;
                 cout << tracklet[i][j] << "(" << recall << ") ";
-#endif
             }
             cout << endl;
         }
@@ -449,14 +391,6 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Tracks:" << endl;
     for( int i=0; i<track.size(); i++ ) print(track[i]);
     
-#ifdef LOOKUP
-    if (nhits) delete [] m[0]; // Clean up the memory
-    delete [] m;
-    
-    if (nhits) delete [] d[0]; // Clean up the memory
-    delete [] d;
-#endif
-
     for (int i=0;i<track.size();i++) {
         tracks[i] = track[i]; // Save the results
         for (int j=0;j<track[i].size();j++) {
@@ -480,13 +414,13 @@ double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float
 {
     static TXMLP net(NETFILE);
     float x[7];
-    x[0]     = 0.775527    *    x1;    // x1
-    x[1]     = 0.71624     *    y1;    // y1
-    x[2]     = 0.100536    *    z1;    // z1
-    x[3]     = 0.775527    *    x2;    // x2
-    x[4]     = 0.71624     *    y2;    // y2
-    x[5]     = 0.100536    *    z2;    // z2
-    x[6]     = 0.00215027  *    dist;
+    x[0]     = x1;    // x1
+    x[1]     = y1;    // y1
+    x[2]     = z1;    // z1
+    x[3]     = x2;    // x2
+    x[4]     = y2;    // y2
+    x[5]     = z2;    // z2
+    x[6]     = dist;
     return net.Recallstep(x);
 }
 #else
