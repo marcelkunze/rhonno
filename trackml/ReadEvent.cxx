@@ -25,12 +25,16 @@ int layerNHits[Geo::NLayers];
 #define NEVENTS 1
 #define MAXPARTICLES 200000
 
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
+#define MAXHITS 150000
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
+//#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
-#define MAXHITS 200000
 #define TRACKLET 3
-#define DISTANCE 5
-#define THRESHOLD 80
+#define THRESHOLD 90
+#define DISTANCE 100
+#define DELTAR   0.1
+#define DELTAPHI 0.1
+#define DELTATHETA 0.1
 
 #define VERBOSE false
 
@@ -44,9 +48,11 @@ bool sortFunc( const vector<int>& p1,
 
 struct Point
 {
-    int val;         // Group of point
-    double x, y, z;  // Co-ordinate of point
-    double distance; // Distance from test point
+    int id;             // Hit id of point
+    int val;            // Group of point
+    double x, y, z;     // Cartesian coordinate of point
+    double r,phi,theta; // Spherical coordinates of point
+    double distance;    // Distance from test point
 };
 
 // Used to sort an array of points by increasing
@@ -548,6 +554,7 @@ int main()
         
         size_t nhits = mHits.size(); //mHits.size();
         if (nhits > MAXHITS) nhits = MAXHITS;
+        cout << "Hits: " << nhits << endl;
         
         float x[MAXHITS],y[MAXHITS],z[MAXHITS];
         Point p[MAXHITS];
@@ -604,39 +611,67 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
     std::clock_t c_start = std::clock();
     
-    for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
+    Point *p = new Point[nhits];
+    vector<Point> points;
+    
+    // Set up a cache for the point coordinates
+    //cout << "Set up points cache..." << endl;
+    for (int i=0;i<nhits;i++) {
+        labels[i] = 0;
+        p[i].id = i;
+        p[i].val = -1; // Preset group with no match
+        p[i].x = x[i]; // Cache the point coordinates
+        p[i].y = y[i];
+        p[i].z = z[i];
+        p[i].r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+        p[i].phi = atan2(p[i].y,p[i].x);
+        p[i].theta = acos(p[i].z/p[i].r);
+        p[i].distance = 0.0;
+        points.push_back(p[i]);
+    }
     
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
+    cout << "Find tracklets..." << endl;
     vector<vector<int>> tracklet;
-    for(int i=0; i<nhits-1; i++)    {
+    for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
+        Point point1 = *it1;
+        int i = point1.id;
         vector<int> tmpvec;
-        tmpvec.push_back(i); //Note the row in the first place
-        for(int j=i+1; j<nhits; j++)    {
+        tmpvec.push_back(i); //Note the index of point in the first place
+        for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
+            Point point2 = *it2;
+            int j = point2.id; // Index of second point
             double d = sqrt((x[i]-x[j])*(x[i]-x[j]) + (y[i]-y[j])*(y[i]-y[j]) + (z[i]-z[j])*(z[i]-z[j]));
             int dist = 1000.*d;
             if (dist > DISTANCE) continue;
-            float r1 = sqrt(x[i]*x[i]+y[i]*y[i]+z[i]*z[i]); // convert to m
-            float phi1 = atan2(y[i],x[i]);
-            float theta1 = acos(z[i]/r1);
-            float r2 = sqrt(x[j]*x[j]+y[j]*y[j]+z[j]*z[j]); // convert to m
-            float phi2 = atan2(y[j],x[j]);
-            float theta2 = acos(z[j]/r2);
-            int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
-            int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
+            float deltar = abs(p[i].r-p[j].r);
+            if (deltar > DELTAR) continue;
+            float deltaphi = abs(abs(p[i].phi)-abs(p[j].phi));
+            if (deltaphi > DELTAPHI) continue;
+            float deltatheta = abs(p[i].theta-p[j].theta);
+            if (deltatheta > DELTATHETA) continue;
+            int recall1 = (int) 100. * Recall(p[i].r,p[i].phi,p[i].theta,p[j].r,p[j].phi,p[j].theta,d)[0]; // Recall the hit pair matching quality
+            int recall2 = (int) 100. * Recall(p[j].r,p[j].phi,p[j].theta,p[i].r,p[i].phi,p[i].theta,d)[0]; // Recall the hit pair matching quality
             if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
             if (recall2 < THRESHOLD) recall2 = 0;
             int recall  = (recall1>recall2) ? recall1:recall2;
             if (recall>THRESHOLD) {
                 tmpvec.push_back(j); // Note the columns with a good combination
+                points.erase(it2);  // Remove the corresponding point from the set
+                *it2--;
+                continue;
             }
         }
+        points.erase(it1);  // Remove the corresponding point from the set
+        *it1--;
         
         if (tmpvec.size() < TRACKLET) continue; // Perform a cut on tracklet size
         tracklet.push_back(tmpvec);
     }
     
+    cout << "Number of unassigned points:" << points.size() << endl;
     cout << "Number of tracklets: " << tracklet.size() << endl;
-    if (tracklet.size() == 0) return 0;
+    if (tracklet.size() == 0) exit(0);
     
     // Sort the tracklet vector according to the tracklet length
     
@@ -645,98 +680,45 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Print out the sorted vector
     if (VERBOSE) {
         cout << "Sorted tracklets:" << endl;
-        for( int i=0; i<tracklet.size(); i++ ) {
-            for( int j=0; j<tracklet[i].size(); j++ ) {
-                int row = tracklet[i][0];
-                int col = tracklet[i][j];
-                double d = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
-                int dist = 1000.*d;
-                if (dist > DISTANCE) continue;
-                float r1 = sqrt(x[row]*x[row]+y[row]*y[row]+z[row]*z[row]); // convert to m
-                float phi1 = atan2(y[row],x[row]);
-                float theta1 = acos(z[row]/r1);
-                float r2 = sqrt(x[col]*x[col]+y[col]*y[col]+z[col]*z[col]); // convert to m
-                float phi2 = atan2(y[col],x[col]);
-                float theta2 = acos(z[col]/r2);
-                int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
-                int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
-                if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
-                if (recall2 < THRESHOLD) recall2 = 0;
+        for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
+            Point point1 = *it1;
+            int i = point1.id;
+            vector<int> tmpvec;
+            tmpvec.push_back(i); //Note the index of point in the first place
+            for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
+                Point point2 = *it2;
+                int j = point2.id; // Index of second point
+                int recall1 = (int) 100. * Recall(p[i].r,p[i].phi,p[i].theta,p[j].r,p[j].phi,p[j].theta,0)[0]; // Recall the hit pair matching quality
+                int recall2 = (int) 100. * Recall(p[j].r,p[j].phi,p[j].theta,p[i].r,p[i].phi,p[i].theta,0)[0]; // Recall the hit pair matching quality
                 int recall  = (recall1>recall2) ? recall1:recall2;
-                if (j==0) recall = 0.;
                 cout << tracklet[i][j] << "(" << recall << ") ";
             }
             cout << endl;
         }
     }
-    
-    cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
-/*
-    // Prune the tracklets by removing short tracks
-    for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
-        vector<int> row = *it;
-        if (row.size() < TRACKLET) { // Remove short tracklets
-            tracklet.erase(it);
-            *it--;
-            continue;
-        }
-    }
-    
-    // Print out the pruned vector
-    if (VERBOSE) {
-        cout << "Pruned tracklets (remove short paths):" << endl;
-        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
-    }
-*/
-    // Prune the tracklets by removing rows with identical entries
-    // Assemble tracks from the corresponding tracklets
-    vector<vector<int>> track;
-    for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
-        vector<int> row = *it;
-        vector<int> tmpvec = row; // Vector to assemble the track
-        for (vector<int>::iterator it2 = row.begin(); it2 != row.end(); ++it2) { // Search next seeding hits in remainder tracklet list
-            int prune = *it2;
-            for (vector<vector<int>>::iterator it3 = it+1; it3 != tracklet.end(); ++it3) {
-                vector<int> nextrow = *it3;
-                bool hitExists = find(nextrow.begin(),nextrow.end(),prune) != nextrow.end();
-                if (hitExists) {
-                    for (int j=0;j<nextrow.size();j++) tmpvec.push_back(nextrow[j]); // Append the hits to track before erasing the row
-                    tracklet.erase(it3);
-                    *it3--;
-                    continue;
-                }
-            }
-        }
-        set<int> s( tmpvec.begin(), tmpvec.end() ); // Remove duplicates
-        tmpvec.assign( s.begin(), s.end() );
-        track.push_back(tmpvec);
-    }
-    
-    // Print out the pruned vector
-    if (VERBOSE) {
-        cout << "Pruned tracklets (Removed duplicates):" << endl;
-        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
-    }
-    
+
     // Print out the tracks vector
     if (VERBOSE) {
         cout << "Tracks:" << endl;
-        for( int i=0; i<track.size(); i++ ) print(track[i]);
+        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
     }
-
-    for (int i=0;i<track.size();i++) {
-        tracks[i] = track[i]; // Save the results
-        for (int j=0;j<track[i].size();j++) {
-            int hit = track[i][j];
-            labels[hit] = i;
+    
+    for (int i=0;i<tracklet.size();i++) {
+        tracks[i] = tracklet[i]; // Save the results
+        for (int j=0;j<tracklet[i].size();j++) {
+            int hit = tracklet[i][j];
+            labels[hit] = i+1;
+            p[hit].val = i+1;
         }
     }
+    
+    delete [] p;
     
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n";
     
-    return (int) track.size();
+    return (int) tracklet.size();
 }
 
 // Recall function on normalised network input
