@@ -25,27 +25,28 @@ using namespace std;
 #define SIGMA 0.001
 
 #ifdef TRACKML
-#define MAXHITS 10000
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
+#define MAXHITS 150000
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define TRACKLET 3
-#define DISTANCE 5
-#define DELTAR   0.1
-#define DELTAPHI 0.1
-#define DELTATHETA 0.1
-#define THRESHOLD 80
-#else
-#define MAXHITS 500
-#define NETFILE "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
-#define TRACKLET 3
+#define THRESHOLD 90
 #define DISTANCE 100
 #define DELTAR   0.1
 #define DELTAPHI 0.1
 #define DELTATHETA 0.1
-#define THRESHOLD 65
+
+#else
+#define MAXHITS 500
+#define NETFILE "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
+#define TRACKLET 2
+#define THRESHOLD 50
+#define DISTANCE 100
+#define DELTAR   0.1
+#define DELTAPHI 0.1
+#define DELTATHETA 0.1
 #endif
 
 #define DRAW true
-#define VERBOSE true
+#define VERBOSE false
 
 // The user member function processes one event
 
@@ -64,6 +65,7 @@ bool sortFunc( const vector<int>& p1,
 
 struct Point
 {
+    int id;             // Hit id of point
     int val;            // Group of point
     double x, y, z;     // Cartesian coordinate of point
     double r,phi,theta; // Spherical coordinates of point
@@ -241,17 +243,26 @@ int main(int argc, char* argv[]) {
         y[i] = hit.Y();
         z[i] = hit.Z();
     }
+    
     nt = findTracks((int)nhits,x,y,z,labels);
+    
+#define MAXTRACK 25
     cout << "Number of tracks:" << nt << endl;
     for(int i=0; i<nt; i++) {
-        cout << "Track " << i << ":";
-        print(tracks[i]);
+        if (i<MAXTRACK || i>nt-MAXTRACK) {
+            cout << "Track " << i+1 << ":";
+            print(tracks[i]);
+        }
+        if (i == MAXTRACK) cout << endl << "..." << endl;
     }
     
-    
+#define MAXLABEL 250
     cout << "Labels: ";
-    for (int i=0;i<nhits;i++) cout << labels[i] << " ";
-    
+    for (int i=0;i<nhits;i++) {
+        if (i<MAXLABEL || i>nhits-MAXLABEL) cout << labels[i] << " ";
+        if (i == MAXLABEL) cout << endl << "..." << endl;
+    }
+
     //TBD: Fit the helix tracks from the hits in the containers
     
     // Initialize a 3D canvas and draw the hits and tracks
@@ -313,12 +324,14 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
     std::clock_t c_start = std::clock();
     
-    Point p[nhits];
+    Point *p = new Point[nhits];
     vector<Point> points;
 
     // Set up a cache for the point coordinates
-    cout << "Set up points cache..." << endl;
+    //cout << "Set up points cache..." << endl;
     for (int i=0;i<nhits;i++) {
+        labels[i] = 0;
+        p[i].id = i;
         p[i].val = -1; // Preset group with no match
         p[i].x = x[i]; // Cache the point coordinates
         p[i].y = y[i];
@@ -333,10 +346,14 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     cout << "Find tracklets..." << endl;
     vector<vector<int>> tracklet;
-    for(int i=0; i<nhits-1; i++)    {
+    for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
+        Point point1 = *it1;
+        int i = point1.id;
         vector<int> tmpvec;
-        tmpvec.push_back(i); //Note the row in the first place
-        for(int j=i+1; j<nhits; j++)    {
+        tmpvec.push_back(i); //Note the index of point in the first place
+        for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
+            Point point2 = *it2;
+            int j = point2.id; // Index of second point
             double d = sqrt((x[i]-x[j])*(x[i]-x[j]) + (y[i]-y[j])*(y[i]-y[j]) + (z[i]-z[j])*(z[i]-z[j]));
             int dist = 1000.*d;
             if (dist > DISTANCE) continue;
@@ -353,13 +370,19 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             int recall  = (recall1>recall2) ? recall1:recall2;
             if (recall>THRESHOLD) {
                 tmpvec.push_back(j); // Note the columns with a good combination
+                points.erase(it2);  // Remove the corresponding point from the set
+                *it2--;
+                continue;
             }
         }
-        
+        points.erase(it1);  // Remove the corresponding point from the set
+        *it1--;
+
         if (tmpvec.size() < TRACKLET) continue; // Perform a cut on tracklet size
         tracklet.push_back(tmpvec);
     }
     
+    cout << "Number of unassigned points:" << points.size() << endl;
     cout << "Number of tracklets: " << tracklet.size() << endl;
     if (tracklet.size() == 0) exit(0);
     
@@ -370,25 +393,25 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Print out the sorted vector
     if (VERBOSE) {
         cout << "Sorted tracklets:" << endl;
-        for( int i=0; i<tracklet.size(); i++ ) {
-            for( int j=0; j<tracklet[i].size(); j++ ) {
-                int row = tracklet[i][0];
-                int col = tracklet[i][j];
-                double d = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
-                int recall1 = (int) 100. * Recall(p[i].r,p[i].phi,p[i].theta,p[j].r,p[j].phi,p[j].theta,d)[0]; // Recall the hit pair matching quality
-                int recall2 = (int) 100. * Recall(p[j].r,p[j].phi,p[j].theta,p[i].r,p[i].phi,p[i].theta,d)[0]; // Recall the hit pair matching quality
-                if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
-                if (recall2 < THRESHOLD) recall2 = 0;
+        for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
+            Point point1 = *it1;
+            int i = point1.id;
+            vector<int> tmpvec;
+            tmpvec.push_back(i); //Note the index of point in the first place
+            for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
+                Point point2 = *it2;
+                int j = point2.id; // Index of second point
+                int recall1 = (int) 100. * Recall(p[i].r,p[i].phi,p[i].theta,p[j].r,p[j].phi,p[j].theta,0)[0]; // Recall the hit pair matching quality
+                int recall2 = (int) 100. * Recall(p[j].r,p[j].phi,p[j].theta,p[i].r,p[i].phi,p[i].theta,0)[0]; // Recall the hit pair matching quality
                 int recall  = (recall1>recall2) ? recall1:recall2;
-                if (j==0) recall = 0.;
                 cout << tracklet[i][j] << "(" << recall << ") ";
             }
             cout << endl;
         }
     }
-
+/*
     cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
- /*
+ 
     // Prune the tracklets by removing short tracks
     for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
         vector<int> row = *it;
@@ -404,7 +427,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
         cout << "Pruned tracklets (remove short paths):" << endl;
         for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
     }
- */
+ 
     // Prune the tracklets by removing rows with identical entries
     // Assemble tracks from the corresponding tracklets
     vector<vector<int>> track;
@@ -434,25 +457,29 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
         cout << "Pruned tracklets (Removed duplicates):" << endl;
         for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
     }
-
+*/
     // Print out the tracks vector
-    cout << "Tracks:" << endl;
-    for( int i=0; i<track.size(); i++ ) print(track[i]);
+    if (VERBOSE) {
+        cout << "Tracks:" << endl;
+        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
+    }
     
-    for (int i=0;i<track.size();i++) {
-        tracks[i] = track[i]; // Save the results
-        for (int j=0;j<track[i].size();j++) {
-            int hit = track[i][j];
-            labels[hit] = i;
-            p[hit].val = i;
+    for (int i=0;i<tracklet.size();i++) {
+        tracks[i] = tracklet[i]; // Save the results
+        for (int j=0;j<tracklet[i].size();j++) {
+            int hit = tracklet[i][j];
+            labels[hit] = i+1;
+            p[hit].val = i+1;
         }
     }
+    
+    delete [] p;
     
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n";
 
-    return (int) track.size();
+    return (int) tracklet.size();
 }
 
 #include "TXMLP.h"
