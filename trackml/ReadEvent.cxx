@@ -25,12 +25,12 @@ int layerNHits[Geo::NLayers];
 #define NEVENTS 10
 #define MAXPARTICLES 200000
 
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0098.TXMLP"
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0190-6-50-25-1.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
-#define MAXHITS 200000
+#define MAXHITS 10000
 #define TRACKLET 3
 #define DISTANCE 5000
-#define THRESHOLD 80
+#define THRESHOLD 65
 
 #define VERBOSE false
 
@@ -469,12 +469,18 @@ void combine(Particle &p1, Particle &p2, Double_t truth)
     
     for(int i=0; i<nhits1; i++)    {
         Hit &hit1 = mHits[p1.hits[i]];
+        float r1 = 0.001 * sqrt(hit1.x*hit1.x+hit1.y*hit1.y+hit1.z*hit1.z); // convert to m
+        float phi1 = atan2(hit1.y,hit1.x);
+        float theta1 = acos(hit1.z/1000.*r1);
         for(int j=0; j<nhits2; j++)    {
             if (nhits1 == nhits2 && i == j) continue; // Do not combine the hit with itself
             Hit &hit2 = mHits[p2.hits[j]];
-            //printf("%i %i: x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f, v1=%8f, v2=%8f, v=%8f, l=%8f, m=%8f, t=%8f \n",i,j,hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.values,hit2.values,(double)hit1.volume,(double)hit1.layer,(double)hit1.module,truth);
-            double dist = sqrt((hit1.x-hit2.x)*(hit1.x-hit2.x) + (hit1.y-hit2.y)*(hit1.y-hit2.y) + (hit1.z-hit2.z)*(hit1.z-hit2.z));
-            if (i!=j) ntuple->Fill(hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.phi,hit2.phi,hit1.values,hit2.values,dist,truth,p1.p);
+            float r2 = 0.001 * sqrt(hit2.x*hit2.x+hit2.y*hit2.y+hit2.z*hit2.z); // convert to m
+            float phi2 = atan2(hit2.y,hit2.x);
+            float theta2 = acos(hit2.z/1000.*r2);
+           //printf("%i %i: x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f, v1=%8f, v2=%8f, v=%8f, l=%8f, m=%8f, t=%8f \n",i,j,hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.values,hit2.values,(double)hit1.volume,(double)hit1.layer,(double)hit1.module,truth);
+            //double dist = sqrt((hit1.x-hit2.x)*(hit1.x-hit2.x) + (hit1.y-hit2.y)*(hit1.y-hit2.y) + (hit1.z-hit2.z)*(hit1.z-hit2.z));
+            if (i!=j) ntuple->Fill(hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,r1,phi1,theta1,r2,phi2,theta2,hit1.values,hit2.values,truth);
         }
     }
 }
@@ -507,7 +513,7 @@ int main()
         TString fname = filePrefix+".root";
         auto f = TFile::Open(fname,"RECREATE");
         cout << "Writing training data to " << fname << endl;
-        ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:phi1:phi2:v1:v2:d:truth:p");
+        ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:r1:phi1:theta1:r2:phi2:theta2:v1:v2:truth");
         
         for( int ih=0; ih<mHitsMC.size(); ih++ ){
             HitMC &h = mHitsMC[ih];
@@ -584,8 +590,6 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
     
-    
-    
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     vector<vector<int>> tracklet;
     for(int i=0; i<nhits-1; i++)    {
@@ -595,8 +599,14 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             double d = sqrt((x[i]-x[j])*(x[i]-x[j]) + (y[i]-y[j])*(y[i]-y[j]) + (z[i]-z[j])*(z[i]-z[j]));
             int dist = 1000.*d;
             if (dist > DISTANCE) continue;
-            int recall1 = (int) 100. * Recall(x[i],y[i],z[i],x[j],y[j],z[j],d)[0]; // Recall the hit pair matching quality
-            int recall2 = (int) 100. * Recall(x[j],y[j],z[j],x[i],y[i],z[i],d)[0]; // Recall the hit pair matching quality
+            float r1 = 0.001 * sqrt(x[i]*x[i]+y[i]*y[i]+z[i]*z[i]); // convert to m
+            float phi1 = atan2(y[i],x[i]);
+            float theta1 = acos(z[i]/1000.*r1);
+            float r2 = 0.001 * sqrt(x[j]*x[j]+y[j]*y[j]+z[j]*z[j]); // convert to m
+            float phi2 = atan2(y[j],x[j]);
+            float theta2 = acos(z[j]/1000.*r2);
+            int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
+            int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
             if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
             if (recall2 < THRESHOLD) recall2 = 0;
             int recall  = (recall1>recall2) ? recall1:recall2;
@@ -610,6 +620,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
     
     cout << "Number of tracklets: " << tracklet.size() << endl;
+    if (tracklet.size() == 0) return 0;
     
     // Sort the tracklet vector according to the tracklet length
     
@@ -625,8 +636,14 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 double d = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
                 int dist = 1000.*d;
                 if (dist > DISTANCE) continue;
-                int recall1 = (int) 100. * Recall(x[row],y[row],z[row],x[col],y[col],z[col],dist)[0]; // Recall the hit pair matching quality
-                int recall2 = (int) 100. * Recall(x[col],y[col],z[col],x[row],y[row],z[row],dist)[0]; // Recall the hit pair matching quality
+                float r1 = 0.001 * sqrt(x[row]*x[row]+y[row]*y[row]+z[row]*z[row]); // convert to m
+                float phi1 = atan2(y[row],x[row]);
+                float theta1 = acos(z[row]/1000.*r1);
+                float r2 = 0.001 * sqrt(x[col]*x[col]+y[col]*y[col]+z[col]*z[col]); // convert to m
+                float phi2 = atan2(y[col],x[col]);
+                float theta2 = acos(z[col]/1000.*r2);
+                int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
+                int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
                 if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
                 if (recall2 < THRESHOLD) recall2 = 0;
                 int recall  = (recall1>recall2) ? recall1:recall2;
@@ -711,12 +728,12 @@ double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float
 {
     static XMLP net(NETFILE);
     float x[7];
-    x[0]     = 1.05776     *    x1;    // x1
-    x[1]     = 0.80706     *    y1;    // y1
-    x[2]     = 0.240051    *    z1;    // z1
-    x[3]     = 1.05776     *    x2;    // x2
-    x[4]     = 0.80706     *    y2;    // y2
-    x[5]     = 0.240051    *    z2;    // z2
-    x[6]     = 0.00215027  *    dist;
+    x[0]     = 6.89738e-05  *    x1;    // r1
+    x[1]     = 1.0322       *    y1;    // phi1
+    x[2]     = 0.0284244    *    z1;    // theta1
+    x[3]     = 6.9763e-05   *    x2;    // r2
+    x[4]     = 1.04455      *    y2;    // phi2
+    x[5]     = 0.0348934    *    z2;    // theta2
+    x[6]     = 0.00215027   *    dist;
     return net.Recallstep(x);
 }
