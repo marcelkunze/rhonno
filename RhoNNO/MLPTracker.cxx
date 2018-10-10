@@ -62,6 +62,52 @@ bool sortFunc( const vector<int>& p1,
     return p1.size() > p2.size();
 }
 
+struct Point
+{
+    int val;            // Group of point
+    double x, y, z;     // Cartesian coordinate of point
+    double r,phi,theta; // Spherical coordinates of point
+    double distance;    // Distance from test point
+};
+
+// Used to sort an array of points by increasing
+// order of distance
+bool comparison(const Point &a,const Point &b)
+{
+    return (a.distance < b.distance);
+}
+
+// This function finds classification of point p using
+// k nearest neighbour algorithm. It assumes only two
+// groups and returns 0 if p belongs to group 0, else
+// 1 (belongs to group 1).
+int classifyAPoint(Point arr[], int n, int k, Point p)
+{
+    // Fill distances of all points from p
+    for (int i = 0; i < n; i++)
+        arr[i].distance =
+        sqrt((arr[i].x - p.x) * (arr[i].x - p.x) +
+             (arr[i].y - p.y) * (arr[i].y - p.y) +
+             (arr[i].z - p.z) * (arr[i].z - p.z));
+    
+    // Sort the Points by distance from p
+    sort(arr, arr+n, comparison);
+    
+    // Now consider the first k elements and only
+    // two groups
+    int freq1 = 0;     // Frequency of group 0
+    int freq2 = 0;     // Frequency of group 1
+    for (int i = 0; i < k; i++)
+    {
+        if (arr[i].val == 0)
+            freq1++;
+        else if (arr[i].val == 1)
+            freq2++;
+    }
+    
+    return (freq1 > freq2 ? 0 : 1);
+}
+
 void print(vector<int> const &input)
 {
     for (int i = 0; i < input.size(); i++) {
@@ -266,10 +312,26 @@ int main(int argc, char* argv[]) {
 int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
     std::clock_t c_start = std::clock();
+    
+    Point p[nhits];
+    vector<Point> points;
 
-    for (int i=0;i<nhits;i++) labels[i] = -1; // Preset with no match
+    // Set up a cache for the point coordinates
+    cout << "Set up points cache..." << endl;
+    for (int i=0;i<nhits;i++) {
+        p[i].val = -1; // Preset group with no match
+        p[i].x = x[i]; // Cache the point coordinates
+        p[i].y = y[i];
+        p[i].z = z[i];
+        p[i].r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+        p[i].phi = atan2(p[i].y,p[i].x);
+        p[i].theta = acos(p[i].z/p[i].r);
+        p[i].distance = 0.0;
+        points.push_back(p[i]);
+    }
 
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
+    cout << "Find tracklets..." << endl;
     vector<vector<int>> tracklet;
     for(int i=0; i<nhits-1; i++)    {
         vector<int> tmpvec;
@@ -278,20 +340,14 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             double d = sqrt((x[i]-x[j])*(x[i]-x[j]) + (y[i]-y[j])*(y[i]-y[j]) + (z[i]-z[j])*(z[i]-z[j]));
             int dist = 1000.*d;
             if (dist > DISTANCE) continue;
-            float r1 = sqrt(x[i]*x[i]+y[i]*y[i]+z[i]*z[i]);
-            float phi1 = atan2(y[i],x[i]);
-            float theta1 = acos(z[i]/r1);
-            float r2 = sqrt(x[j]*x[j]+y[j]*y[j]+z[j]*z[j]);
-            float phi2 = atan2(y[j],x[j]);
-            float theta2 = acos(z[j]/r2);
-            float deltar = abs(r1-r2);
+            float deltar = abs(p[i].r-p[j].r);
             if (deltar > DELTAR) continue;
-            float deltaphi = abs(abs(phi1)-abs(phi2));
+            float deltaphi = abs(abs(p[i].phi)-abs(p[j].phi));
             if (deltaphi > DELTAPHI) continue;
-            float deltatheta = abs(theta1-theta2);
+            float deltatheta = abs(p[i].theta-p[j].theta);
             if (deltatheta > DELTATHETA) continue;
-            int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
-            int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
+            int recall1 = (int) 100. * Recall(p[i].r,p[i].phi,p[i].theta,p[j].r,p[j].phi,p[j].theta,d)[0]; // Recall the hit pair matching quality
+            int recall2 = (int) 100. * Recall(p[j].r,p[j].phi,p[j].theta,p[i].r,p[i].phi,p[i].theta,d)[0]; // Recall the hit pair matching quality
             if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
             if (recall2 < THRESHOLD) recall2 = 0;
             int recall  = (recall1>recall2) ? recall1:recall2;
@@ -319,16 +375,8 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 int row = tracklet[i][0];
                 int col = tracklet[i][j];
                 double d = sqrt((x[row]-x[col])*(x[row]-x[col]) + (y[row]-y[col])*(y[row]-y[col]) + (z[row]-z[col])*(z[row]-z[col]));
-                int dist = 1000.*d;
-                if (dist > DISTANCE) continue;
-                float r1 = sqrt(x[row]*x[row]+y[row]*y[row]+z[row]*z[row]);
-                float phi1 = atan2(y[row],x[row]);
-                float theta1 = acos(z[row]/r1);
-                float r2 = sqrt(x[col]*x[col]+y[col]*y[col]+z[col]*z[col]);
-                float phi2 = atan2(y[col],x[col]);
-                float theta2 = acos(z[col]/r2);
-                int recall1 = (int) 100. * Recall(r1,phi1,theta1,r2,phi2,theta2,d)[0]; // Recall the hit pair matching quality
-                int recall2 = (int) 100. * Recall(r2,phi2,theta2,r1,phi1,theta1,d)[0]; // Recall the hit pair matching quality
+                int recall1 = (int) 100. * Recall(p[i].r,p[i].phi,p[i].theta,p[j].r,p[j].phi,p[j].theta,d)[0]; // Recall the hit pair matching quality
+                int recall2 = (int) 100. * Recall(p[j].r,p[j].phi,p[j].theta,p[i].r,p[i].phi,p[i].theta,d)[0]; // Recall the hit pair matching quality
                 if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
                 if (recall2 < THRESHOLD) recall2 = 0;
                 int recall  = (recall1>recall2) ? recall1:recall2;
@@ -396,6 +444,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
         for (int j=0;j<track[i].size();j++) {
             int hit = track[i][j];
             labels[hit] = i;
+            p[hit].val = i;
         }
     }
     
