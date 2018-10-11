@@ -1,7 +1,7 @@
 # Training of tracks with NNO
 
 #define the network topology
-xmlp 6 20 10 1
+xmlp 6 40 20 1
 transfer TR_FERMI
 momentum 0.2
 balance true
