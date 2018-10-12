@@ -25,13 +25,13 @@ int layerNHits[Geo::NLayers];
 #define NEVENTS 1
 #define MAXPARTICLES 200000
 
-#define MAXHITS 150000
+#define MAXHITS 1000
 #define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 90
-#define DISTANCE 100
+#define DISTANCE 1.0
 #define DELTAR   0.1
 #define DELTAPHI 0.1
 #define DELTATHETA 0.1
@@ -55,11 +55,65 @@ struct Point
     double distance;    // Distance from test point
 };
 
+// Calculate the circle center through 3 points
+Point circleCenter(const Point &p1,const Point &p2,const Point &p3)
+{
+    Point center;
+    center.x = 0.0;
+    center.y = 0.0;
+    center.z = 0.0;
+    
+    static double TOL = 0.0000001;
+    double offset = pow(p2.x,2) + pow(p2.y,2);
+    double bc =   ( pow(p1.x,2) + pow(p1.y,2) - offset )/2.0;
+    double cd =   (offset - pow(p3.x, 2) - pow(p3.y, 2))/2.0;
+    double det =  (p1.x - p2.x) * (p2.y - p3.y) - (p2.x - p3.x)* (p1.y - p2.y);
+    
+    if (abs(det) < TOL) { return center; }
+    
+    double idet = 1/det;
+    
+    center.x =  (bc * (p2.y - p3.y) - cd * (p1.y - p2.y)) * idet;
+    center.y =  (cd * (p1.x - p2.x) - bc * (p2.x - p3.x)) * idet;
+    
+    return center;
+}
+
+// Calculate the circle radius through 3 points
+double circleRadius(const Point &p1,const Point &p2,const Point &p3)
+{
+    Point center = circleCenter(p1,p2,p3);
+    double radius = sqrt( pow(p2.x - center.x,2) + pow(p2.y-center.y,2));
+    return radius;
+}
+
+// Used to sort an array of points by increasing
+// order of distance from origin
+bool sortDist(const Point &a,const Point &b)
+{
+    return (a.r < b.r);
+}
+
+// Used to sort an array of points by increasing
+// order of distance from origin
+bool sortId(const Point &a,const Point &b)
+{
+    return (a.id < b.id);
+}
+
 // Used to sort an array of points by increasing
 // order of distance
-bool comparison(Point a, Point b)
+bool comparison(const Point &a,const Point &b)
 {
     return (a.distance < b.distance);
+}
+
+double distance(const Point &a,const Point &b)
+{
+    double d =  sqrt((a.x - b.x) * (a.x - b.x) +
+                     (a.y - b.y) * (a.y - b.y) +
+                     (a.z - b.z) * (a.z - b.z));
+    return d;
 }
 
 // This function finds classification of point p using
@@ -69,11 +123,7 @@ bool comparison(Point a, Point b)
 int classifyAPoint(Point arr[], int n, int k, Point p)
 {
     // Fill distances of all points from p
-    for (int i = 0; i < n; i++)
-        arr[i].distance =
-        sqrt((arr[i].x - p.x) * (arr[i].x - p.x) +
-             (arr[i].y - p.y) * (arr[i].y - p.y) +
-             (arr[i].z - p.z) * (arr[i].z - p.z));
+    for (int i = 0; i < n; i++) arr[i].distance = distance(arr[i],p);
     
     // Sort the Points by distance from p
     sort(arr, arr+n, comparison);
@@ -93,6 +143,7 @@ int classifyAPoint(Point arr[], int n, int k, Point p)
     return (freq1 > freq2 ? 0 : 1);
 }
 
+
 TRandom r;
 TNtuple *ntuple;
 
@@ -101,6 +152,7 @@ void print(vector<int> const &input)
     for (int i = 0; i < input.size(); i++) {
         cout << input.at(i) << ' ';
     }
+    cout << endl;
 }
 
 inline bool readLine( std::ifstream &in, float f[], int n)
@@ -484,7 +536,7 @@ void combine(Particle &p1, Particle &p2, Double_t truth)
             float r2 = sqrt(hit2.x*hit2.x+hit2.y*hit2.y+hit2.z*hit2.z); // convert to m
             float phi2 = atan2(hit2.y,hit2.x);
             float theta2 = acos(hit2.z/r2);
-           //printf("%i %i: x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f, v1=%8f, v2=%8f, v=%8f, l=%8f, m=%8f, t=%8f \n",i,j,hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.values,hit2.values,(double)hit1.volume,(double)hit1.layer,(double)hit1.module,truth);
+            //printf("%i %i: x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f, v1=%8f, v2=%8f, v=%8f, l=%8f, m=%8f, t=%8f \n",i,j,hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.values,hit2.values,(double)hit1.volume,(double)hit1.layer,(double)hit1.module,truth);
             //double dist = sqrt((hit1.x-hit2.x)*(hit1.x-hit2.x) + (hit1.y-hit2.y)*(hit1.y-hit2.y) + (hit1.z-hit2.z)*(hit1.z-hit2.z));
             if (i!=j) ntuple->Fill(hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,r1,phi1,theta1,r2,phi2,theta2,hit1.values,hit2.values,truth);
         }
@@ -496,6 +548,7 @@ int main()
     bool analyseTruth = true;
     
     const int nEvents = NEVENTS;
+    //const int firstEvent=100021100;
     const int firstEvent=21100;
     //const int firstEvent=1000;
     TString dir = "/Users/marcel/workspace/train_sample/";
@@ -506,18 +559,18 @@ int main()
         exit(0);
     }
     
-    ofstream outtrack("tracks.csv");
-    if( !outtrack.is_open() ){
-        cout<<"Can not open output file"<<endl;
+    ofstream outtracks("tracks.csv");
+    if( !outtracks.is_open() ){
+        cout<<"Can not open tracks file"<<endl;
         exit(0);
     }
     
     out<<"event_id,hit_id,track_id"<<endl;
-    outtrack<<"event_id,track_id: hits"<<endl;
-
+    outtracks<<"event_id,track_id: hits"<<endl;
+    
     long nParticles = 0;
     
-    for( int event = firstEvent; event<firstEvent+nEvents; event++){
+    for (int event = firstEvent; event<firstEvent+nEvents; event++){
         cout<<"read event "<<event<<endl;
         readEvent( dir.Data(),  event, analyseTruth );
         
@@ -527,6 +580,11 @@ int main()
         auto f = TFile::Open(fname,"RECREATE");
         cout << "Writing training data to " << fname << endl;
         ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:r1:phi1:theta1:r2:phi2:theta2:v1:v2:truth");
+        
+        filePrefix.Form("%sevent%09d",dir.Data(),event+100000000);
+        TString hname = filePrefix+"-hits.csv";
+        ofstream outhits(hname);
+        cout << "Writing hits data to " << hname << endl;
         
         for( int ih=0; ih<mHitsMC.size(); ih++ ){
             HitMC &h = mHitsMC[ih];
@@ -572,36 +630,54 @@ int main()
         cout << "Find tracks..." << endl;
         nt = findTracks(nhits,x,y,z,labels);
         
+#define MAXTRACK 25
         cout << "Number of tracks:" << nt << endl;
-        if (VERBOSE)
         for(int i=0; i<nt; i++) {
-            cout << "Track " << i << ":";
-            print(tracks[i]);
-            cout << endl;
+            if (i<MAXTRACK || i>nt-MAXTRACK) {
+                cout << "Track " << i+1 << ": ";
+                print(tracks[i]);
+            }
+            if (i == MAXTRACK) cout << endl << "..." << endl;
         }
         
-        if (VERBOSE) {
-            cout << "Labels: ";
-            for (int i=0;i<nhits;i++) cout << labels[i] << " ";
-            cout << endl;
-        }
-        
-        cout << "Write track file..." << endl;
-        for( int ip=0; ip<mParticles.size(); ip++ ){
-            Particle &p1 = mParticles[ip];
-            outtrack<<event<<","<<ip<<": ";
-            for (int j=0;j<p1.hits.size();j++) outtrack<<p1.hits[j]<<" ";
-            outtrack << endl;
+#define MAXLABEL 250
+        cout << "Labels: ";
+        for (int i=0;i<nhits;i++) {
+            if (i<MAXLABEL || i>nhits-MAXLABEL) cout << labels[i] << " ";
+            if (i == MAXLABEL) cout << endl << "..." << endl;
         }
 
+        // Wite a hits file with hits sorted by tracks
+        cout << "Write hits file..." << endl;
+        //outhits<<"hit_id,x,y,z,volume_id,layer_id,module_id"<<endl;
+        int nh = 0;
+        for( int ip=0; ip<mParticles.size(); ip++ ){
+            Particle &p1 = mParticles[ip];
+            for (int j=0;j<p1.hits.size();j++) {
+                if (nh++>MAXHITS) break;
+                int index = p1.hits[j];
+                Hit h = mHits[index];
+                outhits<<100.*h.x<<"\t"<<100.*h.y<<"\t"<<100.*h.z<<endl; // Coordinates in cm
+                //outhits<<h.volume<<","<<h.layer<<","<<h.module<<endl;
+            }
+        }
+        
+        cout << "Write tracks file..." << endl;
+        for( int ip=0; ip<mParticles.size(); ip++ ){
+            Particle &p1 = mParticles[ip];
+            outtracks<<event<<","<<ip<<": ";
+            for (int j=0;j<p1.hits.size();j++) outtracks<<p1.hits[j]<<" ";
+            outtracks << endl;
+        }
+        
         cout << "Write submission file..." << endl;
         for( int ih=0; ih<nhits; ih++ ){
             out<<event<<","<<ih+1<<","<<labels[ih]<<endl;
         }
-}
+    }
     
     out.close();
-    outtrack.close();
+    outtracks.close();
 }
 
 // Assign track labels to hits (x,y,z)
@@ -630,87 +706,107 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
         points.push_back(p[i]);
     }
     
+    // Sort the hits according to distance from origin
+    cout << "Sorting hits..." << endl;
+    sort(points.begin(),points.end(),sortDist);
+    
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     cout << "Find tracklets..." << endl;
+    int nd(0), nr(0), np(0), nt(0);
+    Point vertex;
+    vertex.x = 0;
+    vertex.y = 0;
+    vertex.z = 0;
     vector<vector<int>> tracklet;
     for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
-        Point point1 = *it1;
-        int i = point1.id;
-        vector<int> tmpvec;
-        tmpvec.push_back(i); //Note the index of point in the first place
+        Point p1 = *it1; // Seeding point
+        vector<Point> pvec;
+        // Conformal mapping of circle to straight line
+        pvec.push_back(p1); //Note the seeding point in the first place
+        double r1 = 0.0;
+        if (VERBOSE) cout << endl << p1.id << "(0) ";
         for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
-            Point point2 = *it2;
-            int j = point2.id; // Index of second point
-            double d = sqrt((x[i]-x[j])*(x[i]-x[j]) + (y[i]-y[j])*(y[i]-y[j]) + (z[i]-z[j])*(z[i]-z[j]));
-            int dist = 1000.*d;
-            if (dist > DISTANCE) continue;
-            float deltar = abs(p[i].r-p[j].r);
-            if (deltar > DELTAR) continue;
-            float deltaphi = abs(abs(p[i].phi)-abs(p[j].phi));
-            if (deltaphi > DELTAPHI) continue;
-            float deltatheta = abs(p[i].theta-p[j].theta);
-            if (deltatheta > DELTATHETA) continue;
-            int recall1 = (int) 100. * Recall(p[i].r,p[i].phi,p[i].theta,p[j].r,p[j].phi,p[j].theta,d)[0]; // Recall the hit pair matching quality
-            int recall2 = (int) 100. * Recall(p[j].r,p[j].phi,p[j].theta,p[i].r,p[i].phi,p[i].theta,d)[0]; // Recall the hit pair matching quality
+            Point p2 = *it2;
+            double dist = distance(p1,p2); // Only consider points in the neighborhood
+            double r2 = 0.0;
+            if (pvec.size()==2) r1 = circleRadius(pvec[0],pvec[1],p2);
+            if (pvec.size()>=2)  r2 = circleRadius(pvec[0],pvec[1],p2);
+            double deltar = abs(r1-r2);
+            double deltaphi = abs(abs(p1.phi)-abs(p2.phi));
+            double deltatheta = abs(p1.theta-p2.theta);
+            //cout << endl << p1.id << " " << p2.id << " " << dist << " " << deltar << " " << deltaphi << " " << deltatheta << endl;
+            if (dist > DISTANCE) {
+                //if (VERBOSE) cout << p1.id << " " << p2.id << " dist:" << dist << endl;
+                nd++;
+                continue;
+            }
+            if (deltar > DELTAR) {
+                //if (VERBOSE && pvec.size()>=2) cout << pvec[0].id << " " << pvec[1].id << " " << p2.id << " deltar:" << deltar << endl;
+                nr++;
+                continue;
+            }
+            if (deltaphi > DELTAPHI) {
+                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltaphi:" << deltaphi << endl;
+                np++;
+                continue;
+            }
+            if (deltatheta > DELTATHETA) {
+                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltatheta:" << deltatheta << endl;
+                nt++;
+                continue;
+            }
+            int recall1 = (int) 100. * Recall(p1.r,p1.phi,p1.theta,p2.r,p2.phi,p2.theta,dist)[0]; // Recall the hit pair matching quality
+            int recall2 = (int) 100. * Recall(p2.r,p2.phi,p2.theta,p1.r,p1.phi,p1.theta,dist)[0]; // Recall the hit pair matching quality
             if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
             if (recall2 < THRESHOLD) recall2 = 0;
             int recall  = (recall1>recall2) ? recall1:recall2;
             if (recall>THRESHOLD) {
-                tmpvec.push_back(j); // Note the columns with a good combination
+                pvec.push_back(p2); // Note the columns with a good combination
+                if (VERBOSE) cout << p2.id << "(" << recall << ") ";
                 points.erase(it2);  // Remove the corresponding point from the set
                 *it2--;
+                p1 = p2; // Note the assigned hit
                 continue;
             }
         }
         points.erase(it1);  // Remove the corresponding point from the set
         *it1--;
         
-        if (tmpvec.size() < TRACKLET) continue; // Perform a cut on tracklet size
+        if (pvec.size() < TRACKLET) continue; // Perform a cut on tracklet size
+        sort(pvec.begin(), pvec.end(), sortId); // Sort the hits acording to the Id
+        vector<int> tmpvec;
+        for (int ip=0;ip<pvec.size();ip++) tmpvec.push_back(pvec[ip].id); // Note the hit indices
         tracklet.push_back(tmpvec);
     }
     
-    cout << "Number of unassigned points:" << points.size() << endl;
-    cout << "Number of tracklets: " << tracklet.size() << endl;
+    cout << endl << "Number of tracklets: " << tracklet.size() << endl;
     if (tracklet.size() == 0) exit(0);
     
     // Sort the tracklet vector according to the tracklet length
     
     sort(tracklet.begin(), tracklet.end(), sortFunc);
     
-    // Print out the sorted vector
-    if (VERBOSE) {
-        cout << "Sorted tracklets:" << endl;
-        for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
-            Point point1 = *it1;
-            int i = point1.id;
-            vector<int> tmpvec;
-            tmpvec.push_back(i); //Note the index of point in the first place
-            for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
-                Point point2 = *it2;
-                int j = point2.id; // Index of second point
-                int recall1 = (int) 100. * Recall(p[i].r,p[i].phi,p[i].theta,p[j].r,p[j].phi,p[j].theta,0)[0]; // Recall the hit pair matching quality
-                int recall2 = (int) 100. * Recall(p[j].r,p[j].phi,p[j].theta,p[i].r,p[i].phi,p[i].theta,0)[0]; // Recall the hit pair matching quality
-                int recall  = (recall1>recall2) ? recall1:recall2;
-                cout << tracklet[i][j] << "(" << recall << ") ";
-            }
-            cout << endl;
-        }
-    }
-
-    // Print out the tracks vector
     if (VERBOSE) {
         cout << "Tracks:" << endl;
         for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
     }
     
+    int n = 0;
     for (int i=0;i<tracklet.size();i++) {
         tracks[i] = tracklet[i]; // Save the results
         for (int j=0;j<tracklet[i].size();j++) {
             int hit = tracklet[i][j];
             labels[hit] = i+1;
             p[hit].val = i+1;
+            n++;
         }
     }
+    
+    cout << "Number of assigned points: " << n << endl;
+    cout << "Distance <" << DISTANCE << ": " << nd <<endl;
+    cout << "Radius   <" << DELTAR << ": " << nr <<endl;
+    cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
+    cout << "Theta    <" << DELTATHETA << ": " << nt <<endl;
     
     delete [] p;
     
