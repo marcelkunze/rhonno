@@ -39,10 +39,10 @@ using namespace std;
 #define NETFILE "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 90
-#define DISTANCE 0.15
+#define DISTANCE 0.5
 #define DELTAR   100.
-#define DELTAPHI 0.1
-#define DELTATHETA 0.1
+#define DELTAPHI 0.075
+#define DELTATHETA 0.075
 #endif
 
 #define DRAW true
