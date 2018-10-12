@@ -21,28 +21,29 @@ using namespace std;
 
 //#define TRACKML
 
-#define NHITS 20
-#define SIGMA 0.001
+#define NHITS 10
+#define SIGMA 0.0
 
 #ifdef TRACKML
 #define MAXHITS 150000
 #define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define TRACKLET 3
-#define THRESHOLD 90
+#define THRESHOLD 98
 #define DISTANCE 1.0
-#define DELTAR   0.1
-#define DELTAPHI 0.1
-#define DELTATHETA 0.1
+#define DELTAR   100.
+#define DELTAPHI 0.01
+#define DELTATHETA 0.05
 
 #else
-#define MAXHITS 500
+#define MAXHITS 150000
+//#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define NETFILE "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 90
-#define DISTANCE 0.5
-#define DELTAR   100.
-#define DELTAPHI 0.075
-#define DELTATHETA 0.075
+#define DISTANCE 1.0
+#define DELTAR   0.1
+#define DELTAPHI 0.043
+#define DELTATHETA 0.08
 #endif
 
 #define DRAW true
@@ -67,11 +68,51 @@ struct Point
     double distance;    // Distance from test point
 };
 
+// Calculate the circle center through 3 points
+Point circleCenter(const Point &p1,const Point &p2,const Point &p3)
+{
+    Point center;
+    center.x = 0.0;
+    center.y = 0.0;
+    center.z = 0.0;
+    
+    static double TOL = 0.0000001;
+    double offset = pow(p2.x,2) + pow(p2.y,2);
+    double bc =   ( pow(p1.x,2) + pow(p1.y,2) - offset )/2.0;
+    double cd =   (offset - pow(p3.x, 2) - pow(p3.y, 2))/2.0;
+    double det =  (p1.x - p2.x) * (p2.y - p3.y) - (p2.x - p3.x)* (p1.y - p2.y);
+    
+    if (abs(det) < TOL) { return center; }
+    
+    double idet = 1/det;
+    
+    center.x =  (bc * (p2.y - p3.y) - cd * (p1.y - p2.y)) * idet;
+    center.y =  (cd * (p1.x - p2.x) - bc * (p2.x - p3.x)) * idet;
+    
+    return center;
+}
+
+// Calculate the circle radius through 3 points
+double circleRadius(const Point &p1,const Point &p2,const Point &p3)
+{
+    Point center = circleCenter(p1,p2,p3);
+    double radius = sqrt( pow(p2.x - center.x,2) + pow(p2.y-center.y,2));
+    return radius;
+}
+
+
 // Used to sort an array of points by increasing
 // order of distance from origin
 bool sortDist(const Point &a,const Point &b)
 {
     return (a.r < b.r);
+}
+
+// Used to sort an array of points by increasing
+// order of distance from origin
+bool sortId(const Point &a,const Point &b)
+{
+    return (a.id < b.id);
 }
 
 // Used to sort an array of points by increasing
@@ -205,8 +246,10 @@ int main(int argc, char* argv[]) {
             if (hits.size()%1000 == 0) cout << hits.size() << endl;
         }
 #else
+        int n = 0;
         double X,Y,Z;
         while (in >> X >> Y >> Z) {
+            if (n++ >= MAXHITS) break;
             Point point;
             point.x = X * 0.01; // convert cm to m
             point.y = Y * 0.01; // convert cm to m
@@ -221,10 +264,10 @@ int main(int argc, char* argv[]) {
     else
     {
         // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
-        GenerateTrack(hits,NHITS,0.025, 0.5,M_PI/2.0, 1.0,SIGMA);  // 00
-        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/4.0, 1.0,SIGMA); // 20
-        GenerateTrack(hits,NHITS,0.025, 0.5,M_PI/3.0,-1.0,SIGMA); // 40
-        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/3.0,-1.0,SIGMA); // 60
+        GenerateTrack(hits,NHITS,0.025, 0.5,M_PI/2.0, 1.0,SIGMA); // 00
+        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/4.0, 1.0,SIGMA); // 10
+        GenerateTrack(hits,NHITS,0.025, 1.5,M_PI/3.0,-1.0,SIGMA); // 20
+        GenerateTrack(hits,NHITS,0.025,-2.0,M_PI/3.0,-1.0,SIGMA); // 30
     }
     
     unsigned long nhits = hits.size();
@@ -247,7 +290,7 @@ int main(int argc, char* argv[]) {
     cout << "Number of tracks:" << nt << endl;
     for(int i=0; i<nt; i++) {
         if (i<MAXTRACK || i>nt-MAXTRACK) {
-            cout << "Track " << i+1 << ":";
+            cout << "Track " << i+1 << ": ";
             print(tracks[i]);
         }
         if (i == MAXTRACK) cout << endl << "..." << endl;
@@ -292,11 +335,13 @@ int main(int argc, char* argv[]) {
         
         // Draw the tracks
         for (int i=0;i<nt;i++) {
+            //cout << endl << "Drawing track " << i+1 << ": ";
             vector<int> h = tracks[i];
             int n = 0;
             TPolyLine3D *connector = new TPolyLine3D((int)h.size());
             for (vector<int>::iterator it = h.begin(); it != h.end(); it++)    {
                 int index = *it;
+                //cout << index << " ";
                 Point hit = hits[index];
                 connector->SetPoint(n++, hit.x, hit.y, hit.z);
             }
@@ -345,33 +390,45 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     cout << "Find tracklets..." << endl;
     int nd(0), nr(0), np(0), nt(0);
+    Point vertex;
+    vertex.x = 0;
+    vertex.y = 0;
+    vertex.z = 0;
     vector<vector<int>> tracklet;
     for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
-        Point p0 = *it1; // Seeding point
-        Point p1 = *it1;
+        Point p1 = *it1; // Seeding point
         vector<Point> pvec;
-        pvec.push_back(p0); //Note the seeding point in the first place
-        if (VERBOSE) cout << endl << p0.id << "(0) ";
+        // Conformal mapping of circle to straight line
+        pvec.push_back(p1); //Note the seeding point in the first place
+        double r1 = 0.0;
+        if (VERBOSE) cout << endl << p1.id << "(0) ";
         for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
             Point p2 = *it2;
             double dist = distance(p1,p2); // Only consider points in the neighborhood
-            float deltar = abs(p1.r-p2.r);
-            float deltaphi = abs(abs(p1.phi)-abs(p2.phi));
-            float deltatheta = abs(p1.theta-p2.theta);
+            double r2 = 0.0;
+            if (pvec.size()==2) r1 = circleRadius(pvec[0],pvec[1],p2);
+            if (pvec.size()>=2)  r2 = circleRadius(pvec[0],pvec[1],p2);
+            double deltar = abs(r1-r2);
+            double deltaphi = abs(abs(p1.phi)-abs(p2.phi));
+            double deltatheta = abs(p1.theta-p2.theta);
             //cout << endl << p1.id << " " << p2.id << " " << dist << " " << deltar << " " << deltaphi << " " << deltatheta << endl;
             if (dist > DISTANCE) {
+                //if (VERBOSE) cout << p1.id << " " << p2.id << " dist:" << dist << endl;
                 nd++;
                 continue;
             }
             if (deltar > DELTAR) {
+                //if (VERBOSE && pvec.size()>=2) cout << pvec[0].id << " " << pvec[1].id << " " << p2.id << " deltar:" << deltar << endl;
                 nr++;
                 continue;
             }
             if (deltaphi > DELTAPHI) {
+                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltaphi:" << deltaphi << endl;
                 np++;
                 continue;
             }
             if (deltatheta > DELTATHETA) {
+                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltatheta:" << deltatheta << endl;
                 nt++;
                 continue;
             }
@@ -393,7 +450,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
         *it1--;
         
         if (pvec.size() < TRACKLET) continue; // Perform a cut on tracklet size
-        //sort(pvec.begin(), pvec.end(), sortDist); // Sort the hits acording to the distance from origin
+        sort(pvec.begin(), pvec.end(), sortId); // Sort the hits acording to the Id
         vector<int> tmpvec;
         for (int ip=0;ip<pvec.size();ip++) tmpvec.push_back(pvec[ip].id); // Note the hit indices
         tracklet.push_back(tmpvec);
