@@ -7,12 +7,11 @@
 
 using namespace std;
 
-//#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define TRACKLET 3
-#define THRESHOLD 90
+#define THRESHOLD 98
 #define DISTANCE 1.0
-#define DELTAR   0.05
+#define DELTAR   0.1
 #define DELTAPHI 0.043
 #define DELTATHETA 0.08
 
@@ -146,7 +145,7 @@ double* Recall(float x1, float x2, float x3, float x4, float x5, float x6, const
 // Assign track labels to hits (x,y,z)
 // The hit pair quality is assessed by the neural network
 // The quality is noted in the hit pair matrix m[nhits][nhits]
-int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance=DISTANCE,float deltar=DELTAR,float deltaphi=DELTAPHI,float deltatheta=DELTATHETA,const char *netfile=NETFILE)
+int findTracks(int nhits,float *x,float *y,float *z,int* labels,float threshold=THRESHOLD,float distance=DISTANCE,float deltar=DELTAR,float deltaphi=DELTAPHI,float deltatheta=DELTATHETA,const char *netfile=NETFILE)
 {
     std::clock_t c_start = std::clock();
     
@@ -174,8 +173,8 @@ int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance=D
     sort(points.begin(),points.end(),sortDist);
     
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
-    cout << "Find tracklets..." << endl;
-    int nd(0), nr(0), np(0), nt(0);
+    cout << "Finding tracklets..." << endl;
+    int nd(0), nr(0), np(0), nt(0), nn(0);
     Point vertex;
     vertex.x = 0;
     vertex.y = 0;
@@ -204,26 +203,26 @@ int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance=D
                 continue;
             }
             if (dr > deltar) {
-                //if (VERBOSE && pvec.size()>=2) cout << pvec[0].id << " " << pvec[1].id << " " << p2.id << " deltar:" << deltar << endl;
+                //if (VERBOSE && pvec.size()>=2) cout << pvec[0].id << " " << pvec[1].id << " " << p2.id << " deltar:" << dr << endl;
                 nr++;
                 continue;
             }
             if (dphi > deltaphi) {
-                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltaphi:" << deltaphi << endl;
+                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltaphi:" << dphi << endl;
                 np++;
                 continue;
             }
             if (dtheta > deltatheta) {
-                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltatheta:" << deltatheta << endl;
+                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltatheta:" << dtheta << endl;
                 nt++;
                 continue;
             }
             int recall1 = (int) 100. * Recall(p1.r,p1.phi,p1.theta,p2.r,p2.phi,p2.theta,netfile)[0]; // Recall the hit pair matching quality
             int recall2 = (int) 100. * Recall(p2.r,p2.phi,p2.theta,p1.r,p1.phi,p1.theta,netfile)[0]; // Recall the hit pair matching quality
-            if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
-            if (recall2 < THRESHOLD) recall2 = 0;
+            if (recall1 < threshold) recall1 = 0; // Apply a cut on the quality
+            if (recall2 < threshold) recall2 = 0;
             int recall  = (recall1>recall2) ? recall1:recall2;
-            if (recall>THRESHOLD) {
+            if (recall>threshold) {
                 pvec.push_back(p2); // Note the columns with a good combination
                 if (VERBOSE) cout << p2.id << "(" << recall << ") ";
                 points.erase(it2);  // Remove the corresponding point from the set
@@ -231,6 +230,8 @@ int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance=D
                 p1 = p2; // Note the assigned hit
                 continue;
             }
+            else
+                nn++;
         }
         points.erase(it1);  // Remove the corresponding point from the set
         *it1--;
@@ -266,10 +267,11 @@ int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance=D
     }
     
     cout << "Number of assigned points: " << n << endl;
-    cout << "Distance <" << DISTANCE << ": " << nd <<endl;
-    cout << "Radius   <" << DELTAR << ": " << nr <<endl;
-    cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
-    cout << "Theta    <" << DELTATHETA << ": " << nt <<endl;
+    cout << "Threshold <" << threshold << ": " << nn <<endl;
+    cout << "Distance  <" << distance << ": " << nd <<endl;
+    cout << "Radius    <" << deltar << ": " << nr <<endl;
+    cout << "Phi       <" << deltaphi << ": " << np <<endl;
+    cout << "Theta     <" << deltatheta << ": " << nt <<endl;
     
     delete [] p;
     
@@ -281,10 +283,10 @@ int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance=D
 }
 
 extern "C" {
-    int processHits(int nhits,float *x,float *y,float *z,int* labels,float distance=DISTANCE,float deltar=DELTAR,float deltaphi=DELTAPHI,float deltatheta=DELTATHETA,const char *netfile=NETFILE)
+    int processHits(int nhits,float *x,float *y,float *z,int* labels,float threshold=THRESHOLD,float distance=DISTANCE,float deltar=DELTAR,float deltaphi=DELTAPHI,float deltatheta=DELTATHETA)
     {
-        return findTracks(nhits,x,y,z,labels,distance,deltar,deltaphi,deltatheta,netfile);
-
+        const char *netfile(NETFILE);
+        return findTracks(nhits,x,y,z,labels,threshold,distance,deltar,deltaphi,deltatheta,netfile);
     }
     
     float processRecall(float x1, float x2, float x3, float x4, float x5, float x6, const char *netfile=NETFILE)

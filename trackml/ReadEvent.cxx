@@ -24,16 +24,16 @@ int layerNHits[Geo::NLayers];
 #define NEVENTS 1
 #define MAXPARTICLES 200000
 
-#define MAXHITS 10000
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
+#define MAXHITS 50000
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define TRACKLET 3
-#define THRESHOLD 90
+#define THRESHOLD 98
 #define DISTANCE 1.0
-#define DELTAR   0.05
+#define DELTAR   0.1
 #define DELTAPHI 0.043
 #define DELTATHETA 0.08
 
-int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance,float radius,float phi,float theta,const char *netfile);
+int findTracks(int nhits,float *x,float *y,float *z,int* labels,float threshold,float distance,float radius,float phi,float theta,const char *netfile);
 
 TRandom r;
 TNtuple *ntuple;
@@ -514,10 +514,10 @@ int main()
         }
         
         cout << "Find tracks..." << endl;
-        nt = findTracks(nhits,x,y,z,labels,DISTANCE,DELTAR,DELTAPHI,DELTATHETA,NETFILE);
+        nt = findTracks(nhits,x,y,z,labels,THRESHOLD,DISTANCE,DELTAR,DELTAPHI,DELTATHETA,NETFILE);
         
 #define MAXTRACK 25
-        cout << "Number of tracks:" << nt << endl;
+        cout << endl << "Number of tracks:" << nt << endl;
         for(int i=0; i<nt; i++) {
             int track = i+1;
             if (i == MAXTRACK) cout << endl << "..." << endl;
@@ -539,7 +539,7 @@ int main()
         }
 
         // Wite a hits file with hits sorted by tracks
-        cout << "Write hits file..." << endl;
+        cout << endl << "Write hits file..." << endl;
         //outhits<<"hit_id,x,y,z,volume_id,layer_id,module_id"<<endl;
         int nh = 0;
         for( int ip=0; ip<mParticles.size(); ip++ ){
