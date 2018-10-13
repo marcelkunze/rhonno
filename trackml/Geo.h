@@ -2,7 +2,6 @@
 #define GEO_H
 
 
-#include "util.h"
 #include <iostream>
 #include <vector>
 #include <math.h>
