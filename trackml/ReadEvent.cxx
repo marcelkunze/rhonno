@@ -25,21 +25,21 @@ int layerNHits[Geo::NLayers];
 #define NEVENTS 1
 #define MAXPARTICLES 200000
 
-#define MAXHITS 1000
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
-//#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
+#define MAXHITS 10000
+//#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
+#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
 //#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 90
 #define DISTANCE 1.0
-#define DELTAR   0.1
-#define DELTAPHI 0.1
-#define DELTATHETA 0.1
+#define DELTAR   0.05
+#define DELTAPHI 0.043
+#define DELTATHETA 0.08
 
 #define VERBOSE false
 
-Double_t* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist);
-int findTracks(int nhits, float *x, float *y, float *z, int* labels);
+int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance,float radius,float phi,float theta,const char *netfile);
+double* Recall(float x1,float y1,float z1,float x2,float y2,float z2,const char *netfile);
 
 bool sortFunc( const vector<int>& p1,
               const vector<int>& p2 ) {
@@ -108,7 +108,7 @@ bool comparison(const Point &a,const Point &b)
     return (a.distance < b.distance);
 }
 
-double distance(const Point &a,const Point &b)
+double distanceBetween(const Point &a,const Point &b)
 {
     double d =  sqrt((a.x - b.x) * (a.x - b.x) +
                      (a.y - b.y) * (a.y - b.y) +
@@ -123,7 +123,7 @@ double distance(const Point &a,const Point &b)
 int classifyAPoint(Point arr[], int n, int k, Point p)
 {
     // Fill distances of all points from p
-    for (int i = 0; i < n; i++) arr[i].distance = distance(arr[i],p);
+    for (int i = 0; i < n; i++) arr[i].distance = distanceBetween(arr[i],p);
     
     // Sort the Points by distance from p
     sort(arr, arr+n, comparison);
@@ -628,7 +628,7 @@ int main()
         }
         
         cout << "Find tracks..." << endl;
-        nt = findTracks(nhits,x,y,z,labels);
+        nt = findTracks(nhits,x,y,z,labels,DISTANCE,DELTAR,DELTAPHI,DELTATHETA,NETFILE);
         
 #define MAXTRACK 25
         cout << "Number of tracks:" << nt << endl;
@@ -680,154 +680,3 @@ int main()
     outtracks.close();
 }
 
-// Assign track labels to hits (x,y,z)
-// The hit pair quality is assessed by the neural network
-// The quality is noted in the hit pair matrix m[nhits][nhits]
-int findTracks(int nhits, float *x, float *y, float *z, int* labels)
-{
-    std::clock_t c_start = std::clock();
-    
-    Point *p = new Point[nhits];
-    vector<Point> points;
-    
-    // Set up a cache for the point coordinates
-    //cout << "Set up points cache..." << endl;
-    for (int i=0;i<nhits;i++) {
-        labels[i] = 0;
-        p[i].id = i;
-        p[i].val = -1; // Preset group with no match
-        p[i].x = x[i]; // Cache the point coordinates
-        p[i].y = y[i];
-        p[i].z = z[i];
-        p[i].r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
-        p[i].phi = atan2(p[i].y,p[i].x);
-        p[i].theta = acos(p[i].z/p[i].r);
-        p[i].distance = 0.0;
-        points.push_back(p[i]);
-    }
-    
-    // Sort the hits according to distance from origin
-    cout << "Sorting hits..." << endl;
-    sort(points.begin(),points.end(),sortDist);
-    
-    // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
-    cout << "Find tracklets..." << endl;
-    int nd(0), nr(0), np(0), nt(0);
-    Point vertex;
-    vertex.x = 0;
-    vertex.y = 0;
-    vertex.z = 0;
-    vector<vector<int>> tracklet;
-    for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
-        Point p1 = *it1; // Seeding point
-        vector<Point> pvec;
-        // Conformal mapping of circle to straight line
-        pvec.push_back(p1); //Note the seeding point in the first place
-        double r1 = 0.0;
-        if (VERBOSE) cout << endl << p1.id << "(0) ";
-        for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
-            Point p2 = *it2;
-            double dist = distance(p1,p2); // Only consider points in the neighborhood
-            double r2 = 0.0;
-            if (pvec.size()==2) r1 = circleRadius(pvec[0],pvec[1],p2);
-            if (pvec.size()>=2)  r2 = circleRadius(pvec[0],pvec[1],p2);
-            double deltar = abs(r1-r2);
-            double deltaphi = abs(abs(p1.phi)-abs(p2.phi));
-            double deltatheta = abs(p1.theta-p2.theta);
-            //cout << endl << p1.id << " " << p2.id << " " << dist << " " << deltar << " " << deltaphi << " " << deltatheta << endl;
-            if (dist > DISTANCE) {
-                //if (VERBOSE) cout << p1.id << " " << p2.id << " dist:" << dist << endl;
-                nd++;
-                continue;
-            }
-            if (deltar > DELTAR) {
-                //if (VERBOSE && pvec.size()>=2) cout << pvec[0].id << " " << pvec[1].id << " " << p2.id << " deltar:" << deltar << endl;
-                nr++;
-                continue;
-            }
-            if (deltaphi > DELTAPHI) {
-                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltaphi:" << deltaphi << endl;
-                np++;
-                continue;
-            }
-            if (deltatheta > DELTATHETA) {
-                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltatheta:" << deltatheta << endl;
-                nt++;
-                continue;
-            }
-            int recall1 = (int) 100. * Recall(p1.r,p1.phi,p1.theta,p2.r,p2.phi,p2.theta,dist)[0]; // Recall the hit pair matching quality
-            int recall2 = (int) 100. * Recall(p2.r,p2.phi,p2.theta,p1.r,p1.phi,p1.theta,dist)[0]; // Recall the hit pair matching quality
-            if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
-            if (recall2 < THRESHOLD) recall2 = 0;
-            int recall  = (recall1>recall2) ? recall1:recall2;
-            if (recall>THRESHOLD) {
-                pvec.push_back(p2); // Note the columns with a good combination
-                if (VERBOSE) cout << p2.id << "(" << recall << ") ";
-                points.erase(it2);  // Remove the corresponding point from the set
-                *it2--;
-                p1 = p2; // Note the assigned hit
-                continue;
-            }
-        }
-        points.erase(it1);  // Remove the corresponding point from the set
-        *it1--;
-        
-        if (pvec.size() < TRACKLET) continue; // Perform a cut on tracklet size
-        sort(pvec.begin(), pvec.end(), sortId); // Sort the hits acording to the Id
-        vector<int> tmpvec;
-        for (int ip=0;ip<pvec.size();ip++) tmpvec.push_back(pvec[ip].id); // Note the hit indices
-        tracklet.push_back(tmpvec);
-    }
-    
-    cout << endl << "Number of tracklets: " << tracklet.size() << endl;
-    if (tracklet.size() == 0) exit(0);
-    
-    // Sort the tracklet vector according to the tracklet length
-    
-    sort(tracklet.begin(), tracklet.end(), sortFunc);
-    
-    if (VERBOSE) {
-        cout << "Tracks:" << endl;
-        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
-    }
-    
-    int n = 0;
-    for (int i=0;i<tracklet.size();i++) {
-        tracks[i] = tracklet[i]; // Save the results
-        for (int j=0;j<tracklet[i].size();j++) {
-            int hit = tracklet[i][j];
-            labels[hit] = i+1;
-            p[hit].val = i+1;
-            n++;
-        }
-    }
-    
-    cout << "Number of assigned points: " << n << endl;
-    cout << "Distance <" << DISTANCE << ": " << nd <<endl;
-    cout << "Radius   <" << DELTAR << ": " << nr <<endl;
-    cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
-    cout << "Theta    <" << DELTATHETA << ": " << nt <<endl;
-    
-    delete [] p;
-    
-    std::clock_t c_end = std::clock();
-    double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n";
-    
-    return (int) tracklet.size();
-}
-
-// Recall function on normalised network input
-double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist)
-{
-    static XMLP net(NETFILE);
-    float x[7];
-    x[0]     = x1;    // r1
-    x[1]     = y1;    // phi1
-    x[2]     = z1;    // theta1
-    x[3]     = x2;    // r2
-    x[4]     = y2;    // phi2
-    x[5]     = z2;    // theta2
-    x[6]     = dist;
-    return net.Recallstep(x);
-}
