@@ -26,9 +26,7 @@ int layerNHits[Geo::NLayers];
 #define MAXPARTICLES 200000
 
 #define MAXHITS 10000
-//#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0128-6-20-10-1.TXMLP"
-//#define NETFILE "/Users/marcel/workspace/rhonno/Networks/NNO0100.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 90
 #define DISTANCE 1.0
@@ -36,113 +34,7 @@ int layerNHits[Geo::NLayers];
 #define DELTAPHI 0.043
 #define DELTATHETA 0.08
 
-#define VERBOSE false
-
 int findTracks(int nhits,float *x,float *y,float *z,int* labels,float distance,float radius,float phi,float theta,const char *netfile);
-double* Recall(float x1,float y1,float z1,float x2,float y2,float z2,const char *netfile);
-
-bool sortFunc( const vector<int>& p1,
-              const vector<int>& p2 ) {
-    return p1.size() > p2.size();
-}
-
-struct Point
-{
-    int id;             // Hit id of point
-    int val;            // Group of point
-    double x, y, z;     // Cartesian coordinate of point
-    double r,phi,theta; // Spherical coordinates of point
-    double distance;    // Distance from test point
-};
-
-// Calculate the circle center through 3 points
-Point circleCenter(const Point &p1,const Point &p2,const Point &p3)
-{
-    Point center;
-    center.x = 0.0;
-    center.y = 0.0;
-    center.z = 0.0;
-    
-    static double TOL = 0.0000001;
-    double offset = pow(p2.x,2) + pow(p2.y,2);
-    double bc =   ( pow(p1.x,2) + pow(p1.y,2) - offset )/2.0;
-    double cd =   (offset - pow(p3.x, 2) - pow(p3.y, 2))/2.0;
-    double det =  (p1.x - p2.x) * (p2.y - p3.y) - (p2.x - p3.x)* (p1.y - p2.y);
-    
-    if (abs(det) < TOL) { return center; }
-    
-    double idet = 1/det;
-    
-    center.x =  (bc * (p2.y - p3.y) - cd * (p1.y - p2.y)) * idet;
-    center.y =  (cd * (p1.x - p2.x) - bc * (p2.x - p3.x)) * idet;
-    
-    return center;
-}
-
-// Calculate the circle radius through 3 points
-double circleRadius(const Point &p1,const Point &p2,const Point &p3)
-{
-    Point center = circleCenter(p1,p2,p3);
-    double radius = sqrt( pow(p2.x - center.x,2) + pow(p2.y-center.y,2));
-    return radius;
-}
-
-// Used to sort an array of points by increasing
-// order of distance from origin
-bool sortDist(const Point &a,const Point &b)
-{
-    return (a.r < b.r);
-}
-
-// Used to sort an array of points by increasing
-// order of distance from origin
-bool sortId(const Point &a,const Point &b)
-{
-    return (a.id < b.id);
-}
-
-// Used to sort an array of points by increasing
-// order of distance
-bool comparison(const Point &a,const Point &b)
-{
-    return (a.distance < b.distance);
-}
-
-double distanceBetween(const Point &a,const Point &b)
-{
-    double d =  sqrt((a.x - b.x) * (a.x - b.x) +
-                     (a.y - b.y) * (a.y - b.y) +
-                     (a.z - b.z) * (a.z - b.z));
-    return d;
-}
-
-// This function finds classification of point p using
-// k nearest neighbour algorithm. It assumes only two
-// groups and returns 0 if p belongs to group 0, else
-// 1 (belongs to group 1).
-int classifyAPoint(Point arr[], int n, int k, Point p)
-{
-    // Fill distances of all points from p
-    for (int i = 0; i < n; i++) arr[i].distance = distanceBetween(arr[i],p);
-    
-    // Sort the Points by distance from p
-    sort(arr, arr+n, comparison);
-    
-    // Now consider the first k elements and only
-    // two groups
-    int freq1 = 0;     // Frequency of group 0
-    int freq2 = 0;     // Frequency of group 1
-    for (int i = 0; i < k; i++)
-    {
-        if (arr[i].val == 0)
-            freq1++;
-        else if (arr[i].val == 1)
-            freq2++;
-    }
-    
-    return (freq1 > freq2 ? 0 : 1);
-}
-
 
 TRandom r;
 TNtuple *ntuple;
@@ -601,7 +493,6 @@ int main()
             if (nParticles++ > MAXPARTICLES) break;
             int jp = r.Rndm() * mParticles.size();
             if (ip == jp) continue; // Do not combine the particle with itself
-            if (VERBOSE) cout << "Combine " << ip << " " << jp << endl;
             Particle &p1 = mParticles[ip];
             Particle &p2 = mParticles[jp];
             combine(p1,p1,1.0); // wright pairs
@@ -615,16 +506,12 @@ int main()
         cout << "Hits: " << nhits << endl;
         
         float x[MAXHITS],y[MAXHITS],z[MAXHITS];
-        Point p[MAXHITS];
         int labels[MAXHITS];
         int nt;
         for (int i=0; i<nhits; i++) {
             x[i] = mHits[i].x;
             y[i] = mHits[i].y;
             z[i] = mHits[i].z;
-            p[i].x = mHits[i].x;
-            p[i].y = mHits[i].y;
-            p[i].z = mHits[i].z;
         }
         
         cout << "Find tracks..." << endl;
