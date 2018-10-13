@@ -18,7 +18,6 @@ using namespace std;
 std::vector<Hit> mHits;
 std::vector<HitMC> mHitsMC;
 std::vector<Particle> mParticles;
-std::vector<int> tracks[200000];
 
 int layerNHits[Geo::NLayers];
 
@@ -520,11 +519,16 @@ int main()
 #define MAXTRACK 25
         cout << "Number of tracks:" << nt << endl;
         for(int i=0; i<nt; i++) {
-            if (i<MAXTRACK || i>nt-MAXTRACK) {
-                cout << "Track " << i+1 << ": ";
-                print(tracks[i]);
-            }
+            int track = i+1;
             if (i == MAXTRACK) cout << endl << "..." << endl;
+            if (i<MAXTRACK || i>nt-MAXTRACK) {
+                cout << "Track " << track << ": ";
+                for (int j=0;j<nhits;j++) {
+                    if (track!=labels[j]) continue;
+                    cout << j << " ";
+                }
+                cout << endl;
+            }
         }
         
 #define MAXLABEL 250
