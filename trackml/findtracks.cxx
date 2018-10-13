@@ -287,10 +287,10 @@ extern "C" {
 
     }
     
-//    float processRecall(float x1, float x2, float x3, float x4, float x5, float x6, const char *netfile=NETFILE)
-//    {
-//        return (float) Recall(x1,x2,x3,x4,x5,x6,netfile)[0];
-//    }
+    float processRecall(float x1, float x2, float x3, float x4, float x5, float x6, const char *netfile=NETFILE)
+    {
+        return (float) Recall(x1,x2,x3,x4,x5,x6,netfile)[0];
+    }
 
 }
 
