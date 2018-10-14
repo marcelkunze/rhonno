@@ -1,7 +1,7 @@
 # Training of tracks with NNO
 
 #define the network topology
-xmlp 6 20 10 1
+xmlp 9 20 10 1
 transfer TR_FERMI
 momentum 0.2
 balance true
@@ -17,7 +17,7 @@ file tracks.root
 
 #set up the input layer (use branch names)
 tree tracks
-input r1:phi1:theta1:r2:phi2:theta2
+input r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3
 #autoscale true
 #cut p<2.0
 
