@@ -30,7 +30,7 @@ using namespace std;
 #define TRACKLET 3
 #define THRESHOLD 0.98
 #define DISTANCE 1.0
-#define DELTAR   0.1
+#define DELTAR   1.0
 #define DELTAPHI 0.01
 #define DELTATHETA 0.05
 
@@ -39,9 +39,9 @@ using namespace std;
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0099.TXMLP"
 #define TRACKLET 3
-#define THRESHOLD 0.9
-#define DISTANCE 1.0
-#define DELTAR   0.1
+#define THRESHOLD 0.95
+#define DISTANCE 2.0
+#define DELTAR   0.5
 #endif
 
 #define DRAW true
@@ -394,13 +394,10 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     cout << "Find tracklets..." << endl;
     int nd(0), nr(0), nn(0);
-    Point vertex;
-    vertex.x = 0;
-    vertex.y = 0;
-    vertex.z = 0;
     vector<vector<int> > tracklet;
     for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
-        Point p1 = *it1; // Seeding point
+        Point p0 = *it1; // Seeding point
+	Point p1 = *it1;
         vector<Point> pvec;
         // Conformal mapping of circle to straight line
         pvec.push_back(p1); //Note the seeding point in the first place
@@ -414,10 +411,13 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             }
 
             double recall = Recall2(p1,p2)[0]; // Get network track quality of 2 points
-            if (recall <= 0.0) { nr++; break; } // Out of bounds
+            if (recall < 0.0) { nr++; break; } // Out of bounds; finish tracklet
+	    if (recall < THRESHOLD) continue;  // Hit pair does not match
+	    if (VERBOSE) cout << p2.id << "(" << (int) 100*recall << "/";
+	    if (pvec.size() >=2) recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 points
             if (recall>THRESHOLD) {
                 pvec.push_back(p2); // Note the columns with a good combination
-                if (VERBOSE) cout << p2.id << "(" << (int) 100.*recall << ") ";
+                if (VERBOSE) cout << (int) 100*recall << ") ";
                 points.erase(it2);  // Remove the corresponding point from the set
                 *it2--;
                 p1 = p2; // Note the assigned hit
