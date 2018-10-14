@@ -25,19 +25,19 @@ using namespace std;
 #define SIGMA 0.0
 
 #ifdef TRACKML
-#define MAXHITS 150000
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
+#define MAXHITS 50000
+#define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 98
 #define DISTANCE 1.0
-#define DELTAR   100.
+#define DELTAR   0.1
 #define DELTAPHI 0.01
 #define DELTATHETA 0.05
 
 #else
 #define MAXHITS 150000
-//#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
-#define NETFILE "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
+#define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
+#define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0099.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 90
 #define DISTANCE 1.0
@@ -52,7 +52,8 @@ using namespace std;
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
 int findTracks(int nhits, float *x, float *y, float *z, int* labels);
-double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist);
+double* Recall2(float,float,float,float,float,float);
+double* Recall3(float,float,float,float,float,float,float,float,float);
 
 bool sortFunc( const vector<int>& p1,
               const vector<int>& p2 ) {
@@ -389,7 +390,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     cout << "Find tracklets..." << endl;
-    int nd(0), nr(0), np(0), nt(0);
+    int nd(0), nr(0), np(0), nt(0), nn(0);
     Point vertex;
     vertex.x = 0;
     vertex.y = 0;
@@ -432,8 +433,8 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 nt++;
                 continue;
             }
-            int recall1 = (int) 100. * Recall(p1.r,p1.phi,p1.theta,p2.r,p2.phi,p2.theta,dist)[0]; // Recall the hit pair matching quality
-            int recall2 = (int) 100. * Recall(p2.r,p2.phi,p2.theta,p1.r,p1.phi,p1.theta,dist)[0]; // Recall the hit pair matching quality
+            int recall1 = (int) 100. * Recall2(p1.r,p1.phi,p1.theta,p2.r,p2.phi,p2.theta)[0]; // Recall the hit pair matching quality
+            int recall2 = (int) 100. * Recall2(p2.r,p2.phi,p2.theta,p1.r,p1.phi,p1.theta)[0]; // Recall the hit pair matching quality
             if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
             if (recall2 < THRESHOLD) recall2 = 0;
             int recall  = (recall1>recall2) ? recall1:recall2;
@@ -445,6 +446,9 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 p1 = p2; // Note the assigned hit
                 continue;
             }
+            else
+                nn++;
+
         }
         points.erase(it1);  // Remove the corresponding point from the set
         *it1--;
@@ -530,6 +534,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
     
     cout << "Number of assigned points: " << n << endl;
+    cout << "Threshold <" << THRESHOLD << ": " << nn <<endl;
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
     cout << "Radius   <" << DELTAR << ": " << nr <<endl;
     cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
@@ -539,41 +544,41 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n";
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     return (int) tracklet.size();
 }
 
 #include "TXMLP.h"
 
-#ifdef TRACKML
-// Recall function on normalised network input
-double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist)
+// Recall function for 2 points
+double* Recall2(float x1,float x2,float x3,float x4,float x5,float x6)
 {
-    static TXMLP net(NETFILE);
-    float x[7];
-    x[0]     = x1;    // x1
-    x[1]     = y1;    // y1
-    x[2]     = z1;    // z1
-    x[3]     = x2;    // x2
-    x[4]     = y2;    // y2
-    x[5]     = z2;    // z2
-    x[6]     = dist;
+    static TXMLP net(NETFILE2);
+    float x[6];
+    x[0]     = x1;    // r1
+    x[1]     = x2;    // phi1
+    x[2]     = x3;    // theta1
+    x[3]     = x4;    // r2
+    x[4]     = x5;    // phi2
+    x[5]     = x6;    // theta2
     return net.Recallstep(x);
 }
-#else
-// Recall function on normalised network input
-double* Recall(float x1, float y1, float z1, float x2, float y2, float z2, float dist)
+
+// Recall function for 3 points
+double* Recall3(float x1,float x2,float x3,float x4,float x5,float x6,float x7, float x8, float x9)
 {
-    static TXMLP net(NETFILE);
-    float x[7];
-    x[0]     = 0.738805   *    x1;    // r1
-    x[1]     = 1.16697    *    y1;    // phi1
-    x[2]     = 0.0289626  *    z1;    // theta1
-    x[3]     = 0.738805   *    x2;    // r2
-    x[4]     = 1.16697    *    y2;    // phi2
-    x[5]     = 0.0289626  *    z2;    // theta2
-    x[6]     = 126.061    *    dist;
+    static TXMLP net(NETFILE3);
+    float x[9];
+    x[0]     = x1;    // r1
+    x[1]     = x2;    // phi1
+    x[2]     = x3;    // theta1
+    x[3]     = x4;    // r2
+    x[4]     = x5;    // phi2
+    x[5]     = x6;    // theta2
+    x[6]     = x7;    // r3
+    x[7]     = x8;    // phi3
+    x[8]     = x9;    // theta3
     return net.Recallstep(x);
 }
-#endif
+
