@@ -28,7 +28,7 @@ using namespace std;
 #define MAXHITS 50000
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define TRACKLET 3
-#define THRESHOLD 98
+#define THRESHOLD 0.98
 #define DISTANCE 1.0
 #define DELTAR   0.1
 #define DELTAPHI 0.01
@@ -39,21 +39,15 @@ using namespace std;
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0099.TXMLP"
 #define TRACKLET 3
-#define THRESHOLD 90
+#define THRESHOLD 0.9
 #define DISTANCE 1.0
 #define DELTAR   0.1
-#define DELTAPHI 0.043
-#define DELTATHETA 0.08
 #endif
 
 #define DRAW true
 #define VERBOSE true
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
-
-int findTracks(int nhits, float *x, float *y, float *z, int* labels);
-double* Recall2(float,float,float,float,float,float);
-double* Recall3(float,float,float,float,float,float,float,float,float);
 
 bool sortFunc( const vector<int>& p1,
               const vector<int>& p2 ) {
@@ -207,8 +201,12 @@ void GenerateTrack(std::vector<Point> &points, int np, double delta, double radi
     }
 }
 
+int findTracks(int nhits, float *x, float *y, float *z, int* labels);
+double* Recall2(Point &p1, Point &p2);
+double* Recall3(Point &p1, Point &p2, Point &p3);
+
 std::vector<Point> hits;
-std::vector<int> tracks[20000];
+std::vector<Point> tracks[150000];
 
 int main(int argc, char* argv[]) {
     
@@ -287,17 +285,23 @@ int main(int argc, char* argv[]) {
     
     nt = findTracks((int)nhits,x,y,z,labels);
     
-#define MAXTRACK 25
-    cout << "Number of tracks:" << nt << endl;
+#define MAXTRACK 10
+    cout << endl << "Number of tracks:" << nt << endl;
     for(int i=0; i<nt; i++) {
-        if (i<MAXTRACK || i>nt-MAXTRACK) {
-            cout << "Track " << i+1 << ": ";
-            print(tracks[i]);
-        }
+        int track = i+1;
         if (i == MAXTRACK) cout << endl << "..." << endl;
+        if (i<MAXTRACK || i>nt-MAXTRACK) {
+            cout << "Track " << track << ": ";
+            for (int j=0;j<nhits;j++) {
+                if (track!=labels[j]) continue;
+                tracks[i].push_back(hits[j]); // Save the results
+                cout << j << " ";
+            }
+            cout << endl;
+        }
     }
-    
-#define MAXLABEL 250
+
+#define MAXLABEL 100
     cout << "Labels: ";
     for (int i=0;i<nhits;i++) {
         if (i<MAXLABEL || i>nhits-MAXLABEL) cout << labels[i] << " ";
@@ -337,13 +341,11 @@ int main(int argc, char* argv[]) {
         // Draw the tracks
         for (int i=0;i<nt;i++) {
             //cout << endl << "Drawing track " << i+1 << ": ";
-            vector<int> h = tracks[i];
+            vector<Point> track = tracks[i];
             int n = 0;
-            TPolyLine3D *connector = new TPolyLine3D((int)h.size());
-            for (vector<int>::iterator it = h.begin(); it != h.end(); it++)    {
-                int index = *it;
-                //cout << index << " ";
-                Point hit = hits[index];
+            TPolyLine3D *connector = new TPolyLine3D((int)track.size());
+            for (vector<Point>::iterator it = track.begin(); it != track.end(); it++)    {
+                Point hit = *it;
                 connector->SetPoint(n++, hit.x, hit.y, hit.z);
             }
             connector->SetLineWidth(1);
@@ -367,6 +369,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     Point *p = new Point[nhits];
     vector<Point> points;
+    points.reserve(150000);
     
     // Set up a cache for the point coordinates
     //cout << "Set up points cache..." << endl;
@@ -390,57 +393,31 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     cout << "Find tracklets..." << endl;
-    int nd(0), nr(0), np(0), nt(0), nn(0);
+    int nd(0), nr(0), nn(0);
     Point vertex;
     vertex.x = 0;
     vertex.y = 0;
     vertex.z = 0;
-    vector<vector<int>> tracklet;
+    vector<vector<int> > tracklet;
     for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
         Point p1 = *it1; // Seeding point
         vector<Point> pvec;
         // Conformal mapping of circle to straight line
         pvec.push_back(p1); //Note the seeding point in the first place
-        double r1 = 0.0;
         if (VERBOSE) cout << endl << p1.id << "(0) ";
         for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
             Point p2 = *it2;
             double dist = distance(p1,p2); // Only consider points in the neighborhood
-            double r2 = 0.0;
-            if (pvec.size()==2) r1 = circleRadius(pvec[0],pvec[1],p2);
-            if (pvec.size()>=2)  r2 = circleRadius(pvec[0],pvec[1],p2);
-            double deltar = abs(r1-r2);
-            double deltaphi = abs(abs(p1.phi)-abs(p2.phi));
-            double deltatheta = abs(p1.theta-p2.theta);
-            //cout << endl << p1.id << " " << p2.id << " " << dist << " " << deltar << " " << deltaphi << " " << deltatheta << endl;
             if (dist > DISTANCE) {
-                //if (VERBOSE) cout << p1.id << " " << p2.id << " dist:" << dist << endl;
                 nd++;
                 continue;
             }
-            if (deltar > DELTAR) {
-                //if (VERBOSE && pvec.size()>=2) cout << pvec[0].id << " " << pvec[1].id << " " << p2.id << " deltar:" << deltar << endl;
-                nr++;
-                continue;
-            }
-            if (deltaphi > DELTAPHI) {
-                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltaphi:" << deltaphi << endl;
-                np++;
-                continue;
-            }
-            if (deltatheta > DELTATHETA) {
-                //if (VERBOSE) cout << p1.id << " " << p2.id << " deltatheta:" << deltatheta << endl;
-                nt++;
-                continue;
-            }
-            int recall1 = (int) 100. * Recall2(p1.r,p1.phi,p1.theta,p2.r,p2.phi,p2.theta)[0]; // Recall the hit pair matching quality
-            int recall2 = (int) 100. * Recall2(p2.r,p2.phi,p2.theta,p1.r,p1.phi,p1.theta)[0]; // Recall the hit pair matching quality
-            if (recall1 < THRESHOLD) recall1 = 0; // Apply a cut on the quality
-            if (recall2 < THRESHOLD) recall2 = 0;
-            int recall  = (recall1>recall2) ? recall1:recall2;
+
+            double recall = Recall2(p1,p2)[0]; // Get network track quality of 2 points
+            if (recall <= 0.0) { nr++; break; } // Out of bounds
             if (recall>THRESHOLD) {
                 pvec.push_back(p2); // Note the columns with a good combination
-                if (VERBOSE) cout << p2.id << "(" << recall << ") ";
+                if (VERBOSE) cout << p2.id << "(" << (int) 100.*recall << ") ";
                 points.erase(it2);  // Remove the corresponding point from the set
                 *it2--;
                 p1 = p2; // Note the assigned hit
@@ -448,7 +425,7 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             }
             else
                 nn++;
-
+            
         }
         points.erase(it1);  // Remove the corresponding point from the set
         *it1--;
@@ -467,55 +444,6 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     sort(tracklet.begin(), tracklet.end(), sortFunc);
     
-    /*
-     cout << "Seed: " << tracklet[0][0] << " length: " << tracklet[0].size() << endl;
-     
-     // Prune the tracklets by removing short tracks
-     for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
-     vector<int> row = *it;
-     if (row.size() < TRACKLET) { // Remove short tracklets
-     tracklet.erase(it);
-     *it--;
-     continue;
-     }
-     }
-     
-     // Print out the pruned vector
-     if (VERBOSE) {
-     cout << "Pruned tracklets (remove short paths):" << endl;
-     for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
-     }
-     
-     // Prune the tracklets by removing rows with identical entries
-     // Assemble tracks from the corresponding tracklets
-     vector<vector<int>> track;
-     for (vector<vector<int>>::iterator it = tracklet.begin(); it != tracklet.end(); ++it) {
-     vector<int> row = *it;
-     vector<int> tmpvec = row; // Vector to assemble the track
-     for (vector<int>::iterator it2 = row.begin(); it2 != row.end(); ++it2) { // Search next seeding hits in remainder tracklet list
-     int prune = *it2;
-     for (vector<vector<int>>::iterator it3 = it+1; it3 != tracklet.end(); ++it3) {
-     vector<int> nextrow = *it3;
-     bool hitExists = find(nextrow.begin(),nextrow.end(),prune) != nextrow.end();
-     if (hitExists) {
-     for (int j=0;j<nextrow.size();j++) tmpvec.push_back(nextrow[j]); // Append the hits to track before erasing the row
-     tracklet.erase(it3);
-     *it3--;
-     continue;
-     }
-     }
-     }
-     set<int> s( tmpvec.begin(), tmpvec.end() ); // Remove duplicates
-     tmpvec.assign( s.begin(), s.end() );
-     track.push_back(tmpvec);
-     }
-     
-     // Print out the pruned vector
-     if (VERBOSE) {
-     cout << "Pruned tracklets (Removed duplicates):" << endl;
-     for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
-     }
-     */
     // Print out the tracks vector
     if (VERBOSE) {
         cout << "Tracks:" << endl;
@@ -524,7 +452,6 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     int n = 0;
     for (int i=0;i<tracklet.size();i++) {
-        tracks[i] = tracklet[i]; // Save the results
         for (int j=0;j<tracklet[i].size();j++) {
             int hit = tracklet[i][j];
             labels[hit] = i+1;
@@ -537,8 +464,6 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Threshold <" << THRESHOLD << ": " << nn <<endl;
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
     cout << "Radius   <" << DELTAR << ": " << nr <<endl;
-    cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
-    cout << "Theta    <" << DELTATHETA << ": " << nt <<endl;
 
     delete [] p;
     
@@ -552,33 +477,43 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
 #include "TXMLP.h"
 
 // Recall function for 2 points
-double* Recall2(float x1,float x2,float x3,float x4,float x5,float x6)
+double* Recall2(Point &p1, Point &p2)
 {
     static TXMLP net(NETFILE2);
-    float x[6];
-    x[0]     = x1;    // r1
-    x[1]     = x2;    // phi1
-    x[2]     = x3;    // theta1
-    x[3]     = x4;    // r2
-    x[4]     = x5;    // phi2
-    x[5]     = x6;    // theta2
+    static float x[6]={0.,0.,0.,0.,0.,0.};
+    static double bad[1]={-1.0};
+    
+    double deltar = abs(p1.r-p2.r); // Check the radial distance
+    if (deltar > DELTAR) return bad;
+    
+    x[0]     = p1.r;     // r1
+    x[1]     = p1.phi;   // phi1
+    x[2]     = p1.theta; // theta1
+    x[3]     = p2.r;     // r2
+    x[4]     = p2.phi;   // phi2
+    x[5]     = p2.theta; // theta2
     return net.Recallstep(x);
 }
 
 // Recall function for 3 points
-double* Recall3(float x1,float x2,float x3,float x4,float x5,float x6,float x7, float x8, float x9)
+double* Recall3(Point &p1, Point &p2, Point &p3)
 {
     static TXMLP net(NETFILE3);
-    float x[9];
-    x[0]     = x1;    // r1
-    x[1]     = x2;    // phi1
-    x[2]     = x3;    // theta1
-    x[3]     = x4;    // r2
-    x[4]     = x5;    // phi2
-    x[5]     = x6;    // theta2
-    x[6]     = x7;    // r3
-    x[7]     = x8;    // phi3
-    x[8]     = x9;    // theta3
+    static float x[9]={0.,0.,0.,0.,0.,0.,0.,0.,0.};
+    static double bad[1]={-1.0};
+    
+    double deltar = abs(p2.r-p3.r); // Check the radial distance
+    if (deltar > DELTAR) return bad;
+
+    x[0]     = p1.r;     // r1
+    x[1]     = p1.phi;   // phi1
+    x[2]     = p1.theta; // theta1
+    x[3]     = p2.r;     // r2
+    x[4]     = p2.phi;   // phi2
+    x[5]     = p2.theta; // theta2
+    x[6]     = p3.r;     // r3
+    x[7]     = p3.phi;   // phi3
+    x[8]     = p3.theta; // theta3
     return net.Recallstep(x);
 }
 
