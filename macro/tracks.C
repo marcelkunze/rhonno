@@ -4,7 +4,7 @@
 
 using namespace std;
 
-#define NHITS 10
+#define NHITS 20
 #define SIGMA 0.0
 
 void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double radius, double phi, double gamma, double error);
@@ -33,28 +33,28 @@ void tracks(long n=5) {
         //in >> x >> y >> z;
         //if (!in.good()) break;
         std::vector<TVector3> t1,t2,t3;
-        int nhits = NHITS * r.Rndm() + 3; // min. 3 hits
+        int nhits = NHITS*r.Rndm()+3;
         Double_t p1 = 0.0;
         while (fabs(p1)<0.1) p1 = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
         h7.Fill(p1);
         Double_t phi1 = 2.*(0.5-r.Rndm())*M_PI;
         Double_t gamma1 = 4.*(0.5-r.Rndm());
         cout << "Generate track with " << nhits << " hits, p1 = " << p1 << endl;
-        GenerateTrack(t1,nhits,0.025,1./p1,phi1,gamma1,SIGMA);
+        GenerateTrack(t1,nhits,0.0125,1./p1,phi1,gamma1,SIGMA);
         Double_t p2 = 0.0;
         while (fabs(p2)<0.1) p2 = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
         h7.Fill(p2);
         Double_t phi2 = 2.*(0.5-r.Rndm())*M_PI;
         Double_t gamma2 = 4.*(0.5-r.Rndm());
         cout << "Generate track with " << nhits << " hits, p2 = " << p2 << endl;
-        GenerateTrack(t2,nhits,0.025,1./p2,phi2,gamma2,SIGMA);
+        GenerateTrack(t2,nhits,0.0125,1./p2,phi2,gamma2,SIGMA);
         Double_t p3 = 0.0;
         while (fabs(p3)<0.1) p3 = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
         h7.Fill(p3);
         Double_t phi3 = 2.*(0.5-r.Rndm())*M_PI;
         Double_t gamma3 = 4.*(0.5-r.Rndm());
         cout << "Generate track with " << nhits << " hits, p3 = " << p3 << endl;
-        GenerateTrack(t3,nhits,0.025,1./p2,phi3,gamma3,SIGMA);
+        GenerateTrack(t3,nhits,0.0125,1./p2,phi3,gamma3,SIGMA);
 
         Double_t truth = 1.0;
         for (int i=0; i<nhits-2; i++)    {
@@ -78,7 +78,7 @@ void tracks(long n=5) {
                     float phi3 = atan2(hit3.y(),hit3.x());
                     float r3 = sqrt(hit3.x()*hit3.x()+hit3.y()*hit3.y()+hit3.z()*hit3.z());
                     float theta3 = acos(hit3.z()/r3);
-                    ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,r2,phi2,theta2,truth);
+                    ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,r3,phi3,theta3,truth);
                 }
             }
         }
@@ -105,7 +105,7 @@ void tracks(long n=5) {
                     float phi3 = atan2(hit3.y(),hit3.x());
                     float r3 = sqrt(hit3.x()*hit3.x()+hit3.y()*hit3.y()+hit3.z()*hit3.z());
                     float theta3 = acos(hit3.z()/r3);
-                    ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,r2,phi2,theta2,truth);
+                    ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,r3,phi3,theta3,truth);
                 }
             }
         }
