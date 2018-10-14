@@ -4,8 +4,8 @@
 
 using namespace std;
 
-#define NHITS 20
-#define SIGMA 0.001
+#define NHITS 10
+#define SIGMA 0.0
 
 void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double radius, double phi, double gamma, double error);
 
@@ -27,12 +27,12 @@ void tracks(long n=5) {
     TH1F h5("h5","phi distribution",100,-3,3);
     TH1F h6("h6","theta distribution",100,-3,3);
     TH1F h7("h7","p distribution",100,-10,10);
-    TNtuple ntuple("tracks","training data","x1:y1:z1:x2:y2:z2:r1:phi1:theta1:r2:phi2:theta2:truth");
+    TNtuple ntuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:truth");
     TRandom r;
-    while (nlines<n) {
+    while (nlines++<n) {
         //in >> x >> y >> z;
         //if (!in.good()) break;
-        std::vector<TVector3> t1,t2;
+        std::vector<TVector3> t1,t2,t3;
         int nhits = NHITS * r.Rndm() + 3; // min. 3 hits
         Double_t p1 = 0.0;
         while (fabs(p1)<0.1) p1 = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
@@ -48,9 +48,16 @@ void tracks(long n=5) {
         Double_t gamma2 = 4.*(0.5-r.Rndm());
         cout << "Generate track with " << nhits << " hits, p2 = " << p2 << endl;
         GenerateTrack(t2,nhits,0.025,1./p2,phi2,gamma2,SIGMA);
-        
+        Double_t p3 = 0.0;
+        while (fabs(p3)<0.1) p3 = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
+        h7.Fill(p3);
+        Double_t phi3 = 2.*(0.5-r.Rndm())*M_PI;
+        Double_t gamma3 = 4.*(0.5-r.Rndm());
+        cout << "Generate track with " << nhits << " hits, p3 = " << p3 << endl;
+        GenerateTrack(t3,nhits,0.025,1./p2,phi3,gamma3,SIGMA);
+
         Double_t truth = 1.0;
-        for(int i=0; i<nhits-1; i++)    {
+        for (int i=0; i<nhits-2; i++)    {
             TVector3 hit1 = t1[i];
             float phi1 = atan2(hit1.y(),hit1.x());
             float r1 = sqrt(hit1.x()*hit1.x()+hit1.y()*hit1.y()+hit1.z()*hit1.z());
@@ -61,41 +68,23 @@ void tracks(long n=5) {
             h4.Fill(r1);
             h5.Fill(phi1);
             h6.Fill(theta1);
-            for(int j=i+1; j<nhits; j++)    {
+            for (int j=i+1; j<nhits-1; j++)    {
                 TVector3 hit2 = t1[j];
                 float phi2 = atan2(hit2.y(),hit2.x());
                 float r2 = sqrt(hit2.x()*hit2.x()+hit2.y()*hit2.y()+hit2.z()*hit2.z());
                 float theta2 = acos(hit2.z()/r2);
-                if (nlines < 5) printf("x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f t=%8f\n",hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth);
-                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),r1,phi1,theta1,r2,phi2,theta2,truth);
-                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),r2,phi2,theta2,r1,phi1,theta1,truth);
-            }
-        }
-        for(int i=0; i<nhits-1; i++)    {
-            TVector3 hit1 = t2[i];
-            float phi1 = atan2(hit1.y(),hit1.x());
-            float r1 = sqrt(hit1.x()*hit1.x()+hit1.y()*hit1.y()+hit1.z()*hit1.z());
-            float theta1 = acos(hit1.z()/r1);
-            h1.Fill(hit1.x());
-            h2.Fill(hit1.y());
-            h3.Fill(hit1.z());
-            h4.Fill(r1);
-            h5.Fill(phi1);
-            h6.Fill(theta1);
-            for(int j=i+1; j<nhits; j++)    {
-                TVector3 hit2 = t2[j];
-                float phi2 = atan2(hit2.y(),hit2.x());
-                float r2 = sqrt(hit2.x()*hit2.x()+hit2.y()*hit2.y()+hit2.z()*hit2.z());
-                float theta2 = acos(hit2.z()/r2);
-                if (nlines < 5) printf("x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f t=%8f\n",hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth);
-                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),r1,phi1,theta1,r2,phi2,theta2,truth);
-                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),r2,phi2,theta2,r1,phi1,theta1,truth);
-                
+                for (int k=j+1; k<nhits; k++)    {
+                    TVector3 hit3 = t1[k];
+                    float phi3 = atan2(hit3.y(),hit3.x());
+                    float r3 = sqrt(hit3.x()*hit3.x()+hit3.y()*hit3.y()+hit3.z()*hit3.z());
+                    float theta3 = acos(hit3.z()/r3);
+                    ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,r2,phi2,theta2,truth);
+                }
             }
         }
         
         truth = 0.0;
-        for(int i=0; i<nhits-1; i++)    {
+        for (int i=0; i<nhits-2; i++)    {
             TVector3 hit1 = t1[i];
             float phi1 = atan2(hit1.y(),hit1.x());
             float r1 = sqrt(hit1.x()*hit1.x()+hit1.y()*hit1.y()+hit1.z()*hit1.z());
@@ -106,41 +95,23 @@ void tracks(long n=5) {
             h4.Fill(r1);
             h5.Fill(phi1);
             h6.Fill(theta1);
-            for(int j=i+1; j<nhits; j++)    {
+            for (int j=i+1; j<nhits-1; j++)    {
                 TVector3 hit2 = t2[j];
                 float phi2 = atan2(hit2.y(),hit2.x());
                 float r2 = sqrt(hit2.x()*hit2.x()+hit2.y()*hit2.y()+hit2.z()*hit2.z());
                 float theta2 = acos(hit2.z()/r2);
-                if (nlines < 5) printf("x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f t=%8f\n",hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth);
-                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),r1,phi1,theta1,r2,phi2,theta2,truth);
-                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),r2,phi2,theta2,r1,phi1,theta1,truth);
+                for (int k=j+1; k<nhits; k++)    {
+                    TVector3 hit3 = t3[k];
+                    float phi3 = atan2(hit3.y(),hit3.x());
+                    float r3 = sqrt(hit3.x()*hit3.x()+hit3.y()*hit3.y()+hit3.z()*hit3.z());
+                    float theta3 = acos(hit3.z()/r3);
+                    ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,r2,phi2,theta2,truth);
+                }
             }
         }
-        for(int i=0; i<nhits-1; i++)    {
-            TVector3 hit1 = t2[i];
-            float phi1 = atan2(hit1.y(),hit1.x());
-            float r1 = sqrt(hit1.x()*hit1.x()+hit1.y()*hit1.y()+hit1.z()*hit1.z());
-            float theta1 = acos(hit1.z()/r1);
-            h1.Fill(hit1.x());
-            h2.Fill(hit1.y());
-            h3.Fill(hit1.z());
-            h4.Fill(r1);
-            h5.Fill(phi1);
-            h6.Fill(theta1);
-            for(int j=i+1; j<nhits; j++)    {
-                TVector3 hit2 = t1[j];
-                float phi2 = atan2(hit2.y(),hit2.x());
-                float r2 = sqrt(hit2.x()*hit2.x()+hit2.y()*hit2.y()+hit2.z()*hit2.z());
-                float theta2 = acos(hit2.z()/r2);
-                if (nlines < 5) printf("x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f t=%8f\n",hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),truth);
-                ntuple.Fill(hit1.x(),hit1.y(),hit1.z(),hit2.x(),hit2.y(),hit2.z(),r1,phi1,theta1,r2,phi2,theta2,truth);
-                ntuple.Fill(hit2.x(),hit2.y(),hit2.z(),hit1.x(),hit1.y(),hit1.z(),r2,phi2,theta2,r1,phi1,theta1,truth);
-            }
-        }
-        
-        nlines++;
     }
-    printf(" generated %d tracks\n",2*nlines);
+    
+    printf(" generated %d tracks\n",nlines-1);
     //in.close();
     f->Write();
 }
