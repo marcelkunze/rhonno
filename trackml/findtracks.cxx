@@ -1,3 +1,4 @@
+#include <ctime>
 #include <cmath>
 #include <iostream>
 #include <algorithm>
@@ -7,7 +8,7 @@
 
 using namespace std;
 
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
+#define NETFILE "~/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 98
 #define DISTANCE 1.0

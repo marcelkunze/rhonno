@@ -6,6 +6,10 @@ LIBDIRS=-L/usr/lib
 LIBS=-L../lib -lRhoNNO
 LDFLAGS=$(shell root-config --glibs)
 
+ROOTCFLAGS    = $(shell root-config --cflags)
+ROOTLIBS      = $(shell root-config --libs)
+ROOTGLIBS     = $(shell root-config --glibs)
+
 #SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx xmlp.cxx netbase.cxx percept.cxx net.cxx
 SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx 
 SHLIB=findTracks.cxx XMLP.cxx
@@ -18,7 +22,7 @@ LIBRARY=libprocess.so
 all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
 $(LIBRARY): findtracks.o XMLP.o
 	clang++ -fPIC -shared -o $(LIBRARY) XMLP.cxx findtracks.cxx

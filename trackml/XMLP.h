@@ -11,6 +11,7 @@
 // (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
 
 #include <string>
+#include <cstdio>
 
 // Define the precision
 typedef float NNO_INTYPE;

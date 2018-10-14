@@ -24,8 +24,8 @@ int layerNHits[Geo::NLayers];
 #define NEVENTS 1
 #define MAXPARTICLES 200000
 
-#define MAXHITS 50000
-#define NETFILE "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
+#define MAXHITS 150000
+#define NETFILE "/home/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
 #define TRACKLET 3
 #define THRESHOLD 98
 #define DISTANCE 1.0
@@ -442,7 +442,7 @@ int main()
     //const int firstEvent=100021100;
     const int firstEvent=21100;
     //const int firstEvent=1000;
-    TString dir = "/Users/marcel/workspace/train_sample/";
+    TString dir = "/home/marcel/workspace/train_sample/";
     
     ofstream out("mysubmission.csv");
     if( !out.is_open() ){
