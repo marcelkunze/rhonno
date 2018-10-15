@@ -9,14 +9,7 @@ using namespace std;
 
 void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double radius, double phi, double gamma, double error);
 
-void tracks(long n=5) {
-    // read file $ROOTSYS/tutorials/tree/basic.dat
-    // this file has 3 columns of float data
-    //TString dir = gROOT->GetTutorialDir();
-    //dir.Append("/tree/");
-    //dir.ReplaceAll("/./","/");
-    //ifstream in;
-    //in.open(Form("%sbasic.dat",dir.Data()));
+void tracks(long n=1000) {
     Float_t x,y,z;
     Int_t nlines = 0;
     auto f = TFile::Open("tracks.root","RECREATE");
@@ -24,43 +17,32 @@ void tracks(long n=5) {
     TH1F h2("h2","y distribution",100,-3,3);
     TH1F h3("h3","z distribution",100,-3,3);
     TH1F h4("h4","r distribution",100,-3,3);
-    TH1F h5("h5","phi distribution",100,-3,3);
-    TH1F h6("h6","theta distribution",100,-3,3);
-    TH1F h7("h7","p distribution",100,-10,10);
-    TNtuple ntuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:truth");
+    TH1F h5("h5","phi distribution",100,-4,4);
+    TH1F h6("h6","theta distribution",100,-4,4);
+    TH1F h7("h7","phi distribution",100,-4,4);
+    TH1F h8("h8","theta distribution",100,-4,4);
+    TH1F h9("h9","p distribution",100,-10,10);
+    TNtuple ntuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:truth");
+    TNtuple ntuple3("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:truth");
     TRandom r;
     while (nlines++<n) {
-        //in >> x >> y >> z;
-        //if (!in.good()) break;
-        std::vector<TVector3> t1,t2,t3;
+        std::vector<TVector3> hits1,hits2;
         int nhits = NHITS*r.Rndm()+3;
-        Double_t p1 = 0.0;
-        while (fabs(p1)<0.1) p1 = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
-        h7.Fill(p1);
+        Double_t p = 0.0;
+        while (fabs(p)<0.1) p = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
+        h9.Fill(p);
         Double_t phi1 = 2.*(0.5-r.Rndm())*M_PI;
-        Double_t gamma1 = 4.*(0.5-r.Rndm());
-        cout << "Generate track with " << nhits << " hits, p1 = " << p1 << endl;
-        GenerateTrack(t1,nhits,0.0125,1./p1,phi1,gamma1,SIGMA);
-        Double_t p2 = 0.0;
-        while (fabs(p2)<0.1) p2 = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
-        h7.Fill(p2);
+        Double_t gamma1 = 10.*(0.5-r.Rndm());
         Double_t phi2 = 2.*(0.5-r.Rndm())*M_PI;
-        Double_t gamma2 = 4.*(0.5-r.Rndm());
-        cout << "Generate track with " << nhits << " hits, p2 = " << p2 << endl;
-        GenerateTrack(t2,nhits,0.0125,1./p2,phi2,gamma2,SIGMA);
-        Double_t p3 = 0.0;
-        while (fabs(p3)<0.1) p3 = 10.*(0.5-r.Rndm()); // 0.1...5 GeV
-        h7.Fill(p3);
-        Double_t phi3 = 2.*(0.5-r.Rndm())*M_PI;
-        Double_t gamma3 = 4.*(0.5-r.Rndm());
-        cout << "Generate track with " << nhits << " hits, p3 = " << p3 << endl;
-        GenerateTrack(t3,nhits,0.0125,1./p2,phi3,gamma3,SIGMA);
+        Double_t gamma2 = 10.*(0.5-r.Rndm());
+        cout << "Generate track with " << nhits << " hits, p = " << p << endl;
+        GenerateTrack(hits1,nhits,0.0125,1./p,phi1,gamma1,SIGMA);
+        GenerateTrack(hits2,nhits,0.0125,1./p,phi2,gamma2,SIGMA);
 
-        Double_t truth = 1.0;
-        for (int i=0; i<nhits-2; i++)    {
-            TVector3 hit1 = t1[i];
-            float phi1 = atan2(hit1.y(),hit1.x());
+        for (int i=0; i<nhits-1; i++)    {
+            TVector3 hit1 = hits1[i];
             float r1 = sqrt(hit1.x()*hit1.x()+hit1.y()*hit1.y()+hit1.z()*hit1.z());
+            float phi1 = atan2(hit1.y(),hit1.x());
             float theta1 = acos(hit1.z()/r1);
             h1.Fill(hit1.x());
             h2.Fill(hit1.y());
@@ -68,26 +50,24 @@ void tracks(long n=5) {
             h4.Fill(r1);
             h5.Fill(phi1);
             h6.Fill(theta1);
-            for (int j=i+1; j<nhits-1; j++)    {
-                TVector3 hit2 = t1[j];
-                float phi2 = atan2(hit2.y(),hit2.x());
+            for (int j=i+1; j<nhits; j++)    {
+                TVector3 hit2 = hits1[j];
                 float r2 = sqrt(hit2.x()*hit2.x()+hit2.y()*hit2.y()+hit2.z()*hit2.z());
+                float phi2 = atan2(hit2.y(),hit2.x());
                 float theta2 = acos(hit2.z()/r2);
-                for (int k=j+1; k<nhits; k++)    {
-                    TVector3 hit3 = t1[k];
-                    float phi3 = atan2(hit3.y(),hit3.x());
-                    float r3 = sqrt(hit3.x()*hit3.x()+hit3.y()*hit3.y()+hit3.z()*hit3.z());
-                    float theta3 = acos(hit3.z()/r3);
-                    ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,r3,phi3,theta3,truth);
-                }
+                ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,1.0); //true combination
+                hit2 = hits2[j];
+                r2 = sqrt(hit2.x()*hit2.x()+hit2.y()*hit2.y()+hit2.z()*hit2.z());
+                phi2 = atan2(hit2.y(),hit2.x());
+                theta2 = acos(hit2.z()/r2);
+                ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,0.0); // wrong combination
             }
         }
         
-        truth = 0.0;
         for (int i=0; i<nhits-2; i++)    {
-            TVector3 hit1 = t1[i];
-            float phi1 = atan2(hit1.y(),hit1.x());
+            TVector3 hit1 = hits1[i];
             float r1 = sqrt(hit1.x()*hit1.x()+hit1.y()*hit1.y()+hit1.z()*hit1.z());
+            float phi1 = atan2(hit1.y(),hit1.x());
             float theta1 = acos(hit1.z()/r1);
             h1.Fill(hit1.x());
             h2.Fill(hit1.y());
@@ -96,19 +76,23 @@ void tracks(long n=5) {
             h5.Fill(phi1);
             h6.Fill(theta1);
             for (int j=i+1; j<nhits-1; j++)    {
-                TVector3 hit2 = t2[j];
-                float phi2 = atan2(hit2.y(),hit2.x());
+                TVector3 hit2 = hits1[j];
                 float r2 = sqrt(hit2.x()*hit2.x()+hit2.y()*hit2.y()+hit2.z()*hit2.z());
+                float phi2 = atan2(hit2.y(),hit2.x());
                 float theta2 = acos(hit2.z()/r2);
-                for (int k=j+1; k<nhits; k++)    {
-                    TVector3 hit3 = t3[k];
-                    float phi3 = atan2(hit3.y(),hit3.x());
-                    float r3 = sqrt(hit3.x()*hit3.x()+hit3.y()*hit3.y()+hit3.z()*hit3.z());
-                    float theta3 = acos(hit3.z()/r3);
-                    ntuple.Fill(r1,phi1,theta1,r2,phi2,theta2,r3,phi3,theta3,truth);
-                }
+                TVector3 hit3 = hits1[j+1];
+                float r3 = sqrt(hit3.x()*hit3.x()+hit3.y()*hit3.y()+hit3.z()*hit3.z());
+                float phi3 = atan2(hit3.y(),hit3.x());
+                float theta3 = acos(hit3.z()/r3);
+                ntuple3.Fill(r1,phi1,theta1,r2,phi2,theta2,r3,phi3,theta3,1.0); //true combination
+                phi3 = 2.*(0.5-r.Rndm())*M_PI;
+                theta3 = r.Rndm()*M_PI;
+                h7.Fill(phi3);
+                h8.Fill(theta3);
+                ntuple3.Fill(r1,phi1,theta1,r2,phi2,theta2,r3,phi3,theta3,0.0); // wrong combination
             }
         }
+        
     }
     
     printf(" generated %d tracks\n",nlines-1);
@@ -120,7 +104,7 @@ void tracks(long n=5) {
 
 void GenerateTrack(std::vector<TVector3> &points, int np, double delta, double radius, double phi, double gamma, double error) {
     default_random_engine generator;
-    double tau = 0.025;
+    double tau = 0.0125;
     for (int i=0; i<np; i++,tau+=delta)
     {
         Float_t X,Y,Z;
