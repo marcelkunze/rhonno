@@ -1,3 +1,8 @@
+// Read the trackml data files and extract neural network training data
+// M.Kunze, Heidelberg University, 2018
+
+#define TRACKML
+
 #include "TString.h"
 #include "TFile.h"
 #include "TH1.h"
@@ -12,6 +17,7 @@
 #include "DataStructures.h"
 #include "Geo.h"
 #include "XMLP.h"
+#include "Tracker.h"
 
 using namespace std;
 
@@ -24,19 +30,8 @@ int layerNHits[Geo::NLayers];
 #define NEVENTS 1
 #define MAXPARTICLES 200000
 
-#define MAXHITS 150000
-#define NETFILE "/home/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
-#define TRACKLET 3
-#define THRESHOLD 98
-#define DISTANCE 1.0
-#define DELTAR   0.1
-#define DELTAPHI 0.043
-#define DELTATHETA 0.08
-
-int findTracks(int nhits,float *x,float *y,float *z,int* labels,float threshold,float distance,float radius,float phi,float theta,const char *netfile);
-
 TRandom r;
-TNtuple *ntuple;
+TNtuple *ntuple,*ntuple3;
 
 void print(vector<int> const &input)
 {
@@ -413,25 +408,21 @@ void combine(Particle &p1, Particle &p2, Double_t truth)
     int nhits1 = p1.hits.size();
     int nhits2 = p2.hits.size();
     
-    //if (nhits1 > 3) nhits1 = 3;
-    //if (nhits2 > 3) nhits2 = 3;
-    
-    for(int i=0; i<nhits1; i++)    {
-        Hit &hit1 = mHits[p1.hits[i]];
-        float r1 = sqrt(hit1.x*hit1.x+hit1.y*hit1.y+hit1.z*hit1.z); // convert to m
-        float phi1 = atan2(hit1.y,hit1.x);
-        float theta1 = acos(hit1.z/r1);
-        for(int j=0; j<nhits2; j++)    {
-            if (nhits1 == nhits2 && i == j) continue; // Do not combine the hit with itself
-            Hit &hit2 = mHits[p2.hits[j]];
-            float r2 = sqrt(hit2.x*hit2.x+hit2.y*hit2.y+hit2.z*hit2.z); // convert to m
-            float phi2 = atan2(hit2.y,hit2.x);
-            float theta2 = acos(hit2.z/r2);
-            //printf("%i %i: x1=%8f, y1=%8f, z1=%8f x2=%8f, y2=%8f, z2=%8f, v1=%8f, v2=%8f, v=%8f, l=%8f, m=%8f, t=%8f \n",i,j,hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,hit1.values,hit2.values,(double)hit1.volume,(double)hit1.layer,(double)hit1.module,truth);
-            //double dist = sqrt((hit1.x-hit2.x)*(hit1.x-hit2.x) + (hit1.y-hit2.y)*(hit1.y-hit2.y) + (hit1.z-hit2.z)*(hit1.z-hit2.z));
-            if (i!=j) ntuple->Fill(hit1.x,hit1.y,hit1.z,hit2.x,hit2.y,hit2.z,r1,phi1,theta1,r2,phi2,theta2,hit1.values,hit2.values,truth);
+        for (int i=0; i<nhits1; i++)    {
+            Hit &hit1 = mHits[p1.hits[i]];
+            float r1 = sqrt(hit1.x*hit1.x+hit1.y*hit1.y+hit1.z*hit1.z);
+            float phi1 = atan2(hit1.y,hit1.x);
+            float theta1 = acos(hit1.z/r1);
+            for (int j=0; j<nhits2; j++)    {
+                Hit &hit2 = mHits[p2.hits[j]];
+                float r2 = sqrt(hit2.x*hit2.x+hit2.y*hit2.y+hit2.z*hit2.z);
+                float phi2 = atan2(hit2.y,hit2.x);
+                float theta2 = acos(hit2.z/r2);
+                if (i!=j) ntuple->Fill(r1,phi1,theta1,r2,phi2,theta2,hit1.values,hit2.values,truth);
+            }
         }
-    }
+
+	//ntuple3->Fill(r1,phi1,theta1,r2,phi2,theta2,r3,phi3,theta3,hit1.values,hit2.values,hit3.values,truth);
 }
 
 int main()
@@ -442,7 +433,7 @@ int main()
     //const int firstEvent=100021100;
     const int firstEvent=21100;
     //const int firstEvent=1000;
-    TString dir = "/home/marcel/workspace/train_sample/";
+    TString dir = "/Users/marcel/workspace/train_sample/";
     
     ofstream out("mysubmission.csv");
     if( !out.is_open() ){
@@ -470,7 +461,8 @@ int main()
         TString fname = filePrefix+".root";
         auto f = TFile::Open(fname,"RECREATE");
         cout << "Writing training data to " << fname << endl;
-        ntuple = new TNtuple("tracks","training data","x1:y1:z1:x2:y2:z2:r1:phi1:theta1:r2:phi2:theta2:v1:v2:truth");
+        ntuple = new TNtuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:v1:v2:truth");
+	ntuple3 = new TNtuple("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:v1:v2:v3:truth");
         
         filePrefix.Form("%sevent%09d",dir.Data(),event+100000000);
         TString hname = filePrefix+"-hits.csv";
@@ -499,6 +491,7 @@ int main()
         }
         f->Write();
         delete ntuple;
+	delete ntuple3;
         
         size_t nhits = mHits.size(); //mHits.size();
         if (nhits > MAXHITS) nhits = MAXHITS;
@@ -514,7 +507,7 @@ int main()
         }
         
         cout << "Find tracks..." << endl;
-        nt = findTracks(nhits,x,y,z,labels,THRESHOLD,DISTANCE,DELTAR,DELTAPHI,DELTATHETA,NETFILE);
+        nt = Tracker::findTracks(nhits,x,y,z,labels);
         
 #define MAXTRACK 25
         cout << endl << "Number of tracks:" << nt << endl;

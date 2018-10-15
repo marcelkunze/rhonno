@@ -5,16 +5,12 @@
 //
 // Author List:
 // Johannes Steffens, Bochum University
-// M.Kunze, Bochum University
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
+// M.Kunze, Bochum University, 1995
 
 #include "XMLP.h"
 
 #include <iostream>
 #include <cmath>
-#include <cstdarg>
-#include <cstring>
-
 using namespace std;
 
 XMLP:: XMLP(int layers,double inputRange,string netFile,int innodes,...)
@@ -233,8 +229,7 @@ void XMLP::SetMomentumTerm(double f)
 //
 // Author List:
 // Johannes Steffens, Bochum University
-// M.Kunze, Bochum University
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
+// M.Kunze, Bochum University, 1995
 
 static const char* NNO_VERSION="2.0ROOT";
 
@@ -724,8 +719,7 @@ void VNeuralNet::SetFlatSpotElimination(double f)
 //
 // Author List:
 // Johannes Steffens, Bochum University
-// M.Kunze, Bochum University
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
+// M.Kunze, Bochum University, 1995
 
 long VSupervisedNet::TrainEpoch(float *tuple, bool randomize) {
     /*
@@ -750,8 +744,7 @@ long VSupervisedNet::TrainEpoch(float *tuple, bool randomize) {
 //
 // Author List:
 // Johannes Steffens, Bochum University
-// M.Kunze, Bochum University
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
+// M.Kunze, Bochum University, 1995
 
 // Transferfunctions
 void TransferFermi(double in,double* out,double* deriv)
