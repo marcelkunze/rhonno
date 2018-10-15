@@ -1,4 +1,5 @@
 // Read HITS spatial data and try a XMLP network to segment the tracks...
+// M.Kunze, Heidelberg university, 2018
 
 #include "TROOT.h"
 #include "TCanvas.h"

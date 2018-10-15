@@ -1,6 +1,8 @@
 // C++ Implementation of Kosaraju's algorithm to print all SCCs
+// M.Kunze, Heidelberg University, 2018
+
 #include <iostream>
-#include "RhoNNO/Graph.h"
+#include "Graph.h"
 using namespace std;
   
 Graph::Graph(int V)

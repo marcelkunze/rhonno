@@ -1,7 +1,6 @@
 // radon_function
-//
-// various functions for performing the
-// fuzzy Radon transform
+// various functions for performing the fuzzy Radon transform
+// M.Kunze, Heidelberg University, 2018
 
 #include <stdlib.h>
 #include <math.h>
@@ -16,6 +15,7 @@
 #include <string>
 #include <iostream>
 #include <random>
+
 using namespace std;
 
 ClassImp(TRadon)

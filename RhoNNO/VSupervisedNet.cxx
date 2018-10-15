@@ -6,8 +6,7 @@
 //
 // Author List:
 // Johannes Steffens, Bochum University
-// M.Kunze, Bochum University
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
+// M.Kunze, Bochum University, 1995
 
 #include "VSupervisedNet.h"
 #include "VNeuralNetPlotter.h"
@@ -19,7 +18,7 @@ using namespace std;
 
 ClassImp(VSupervisedNet)
 
-Long_t VSupervisedNet::TrainEpoch(TNtuple *tuple, bool randomize) {
+long VSupervisedNet::TrainEpoch(TNtuple *tuple, bool randomize) {
     fTuple = tuple;
     if (fTuple == 0) return 0;
     long nhits = fTuple->GetEntries();

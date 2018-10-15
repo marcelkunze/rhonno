@@ -1,7 +1,7 @@
 // This example illustrates unsupervised training by use of a Growing Cell Structure (GCS).
 // The input data file comprises 2D-vectors describing kinematics of three-body particle decays 
 // (Dalitz-plot). It is the task of the GCS network to fit the input density distribution.
-// (C) Marcel Kunze, Experimentalphysik 1, Bochum University
+// Marcel Kunze, Experimentalphysik 1, Bochum University
 //
 // For further information see
 // http://www.ep1.ruhr-uni-bochum.de/~marcel/tutorial.html

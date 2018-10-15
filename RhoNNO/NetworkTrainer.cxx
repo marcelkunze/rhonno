@@ -2,9 +2,8 @@
 // Part of the Neural Network Objects package (NNO)
 //
 // Author List:
-// M.Kunze, Bochum University
-// (C) Copyright M.Kunze 1997-2001, Ruhr-University Bochum.
-//
+// M.Kunze, Bochum University, 1997-2001
+///
 // Usage: NetworkTrainer <file> <start> <end>
 // file          = steering file
 // start         = epoch to start with (Default 1)

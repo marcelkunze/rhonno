@@ -5,8 +5,7 @@
 //
 // Author List:
 // Johannes Steffens, Bochum University
-// M.Kunze, Heidelberg University
-// (C) Copyright Johannes Steffens 1995, Ruhr-University Bochum.
+// M.Kunze, Heidelberg University, 1995
 
 #include "TNtuple.h"
 

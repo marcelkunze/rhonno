@@ -1,18 +1,7 @@
+// Neural Network based tracker
+// M.Kunze, Heidelberg University, 2018
+
 #include "Tracker.h"
-
-// Used to sort an array of points by increasing
-// order of distance from origin
-static bool sortDist(const Point &a,const Point &b)
-{
-    return (a.r < b.r);
-}
-
-// Used to sort an array of points by increasing
-// order of distance from origin
-static bool sortId(const Point &a,const Point &b)
-{
-    return (a.id < b.id);
-}
 
 // Assign track labels to hits (x,y,z)
 // Hits are sorted according to their distance from the origin
@@ -21,8 +10,6 @@ static bool sortId(const Point &a,const Point &b)
 // The tracklet quality is assessed by neural network function recall3
 // The tracklets are extended until no further suiting hit is found
 // Corresponding labels are assigned to hits
-
-// M.Kunze, Hedelberg University
 
 #include "TXMLP.h"
 #include <cmath>
