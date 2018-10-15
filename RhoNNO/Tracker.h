@@ -1,5 +1,7 @@
-#ifndef _POINT_H_
-#define _POINT_H_
+#ifndef _TRACKER_H_
+#define _TRACKER_H_
+// Neural Network based tracker
+// M.Kunze, Heidelberg University, 2018
 
 #include <cmath>
 #include <algorithm>
@@ -12,6 +14,21 @@ struct Point
     double r,phi,theta; // Spherical coordinates of point
     double distance;    // Distance from test point
 };
+
+// Used to sort an array of points by increasing
+// order of distance from origin
+inline bool sortDist(const Point &a,const Point &b)
+{
+    return (a.r < b.r);
+}
+
+// Used to sort an array of points by increasing
+// order of distance from origin
+inline bool sortId(const Point &a,const Point &b)
+{
+    return (a.id < b.id);
+}
+
 
 // Calculate the angle between two vectors defined by (a,b) and (a,c)
 inline

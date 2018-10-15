@@ -1,5 +1,7 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
+// C++ Implementation of Kosaraju's algorithm to print all SCCs
+// M.Kunze, Heidelberg University, 2018
 
 #include <list>
 #include <stack>

@@ -18,7 +18,6 @@
 // Author List:
 // H.Schmuecker, Bochum University
 // M.Kunze, Bochum University, Feb. 01
-// Copyright (C) 1999-2001, Ruhr-University Bochum.
 
 #include <assert.h>
 #include "TNamed.h"

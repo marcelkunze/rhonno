@@ -1,13 +1,8 @@
-//
-//  radon.h
-//  RhoNNOLib
-//
-//  Created by Marcel Kunze on 03.04.18.
-//  Copyright © 2018 Marcel Kunze. All rights reserved.
-//
-
 #ifndef TRadon_h
 #define TRadon_h
+// radon_function
+// various functions for performing the fuzzy Radon transform
+// M.Kunze, Heidelberg University, 2018
 
 #include "TObject.h"
 #include "TObjArray.h"
