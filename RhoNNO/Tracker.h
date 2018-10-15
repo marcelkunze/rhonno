@@ -3,6 +3,32 @@
 // Neural Network based tracker
 // M.Kunze, Heidelberg University, 2018
 
+//#define TRACKML
+
+#ifdef TRACKML
+#define MAXHITS 50000
+#define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/NNO0200-6-25-15-1.TXMLP"
+#define TRACKLET 3
+#define THRESHOLD 0.98
+#define DISTANCE 1.0
+#define DELTAR   1.0
+#define DELTAPHI 0.01
+#define DELTATHETA 0.05
+
+#else
+#define MAXHITS 150000
+#define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
+#define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0099.TXMLP"
+#define TRACKLET 2
+#define THRESHOLD 0.8
+#define DISTANCE 10.0
+#define DELTAR   0.5
+#define DELTAPHI 0.05
+#endif
+
+#define VERBOSE true
+
+
 #include <cmath>
 #include <algorithm>
 
