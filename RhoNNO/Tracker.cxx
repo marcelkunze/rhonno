@@ -48,11 +48,11 @@ using namespace std;
 #define MAXHITS 150000
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0099.TXMLP"
-#define TRACKLET 3
-#define THRESHOLD 0.80
-#define DISTANCE 2.0
-#define DELTAR   1.0
-#define DELTAPHI 0.01
+#define TRACKLET 2
+#define THRESHOLD 0.8
+#define DISTANCE 10.0
+#define DELTAR   0.5
+#define DELTAPHI 0.05
 #endif
 
 #define VERBOSE true
@@ -97,7 +97,6 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
     static double bad[1]={-1.0};
     
     double angle = angleBetween(p2,p1,p3); // Check angle between the vectors (p2,p1) and (p2,p3)
-    cout << angle << endl;
     if (angle > DELTAPHI) return bad;
     
     x[0]     = p1.r;     // r1
@@ -118,7 +117,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     Point *p = new Point[nhits];
     vector<Point> points;
-    points.reserve(150000);
+    points.reserve(nhits);
     
     // Set up a cache for the point coordinates
     //cout << "Set up points cache..." << endl;

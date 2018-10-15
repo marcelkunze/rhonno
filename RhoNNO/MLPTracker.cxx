@@ -21,7 +21,7 @@
 using namespace std;
 
 #define MAXHITS 150000
-#define NHITS 20
+#define NHITS 10
 #define SIGMA 0.0
 #define DRAW true
 #define VERBOSE true
@@ -61,6 +61,7 @@ inline bool readLine( std::ifstream &in, double f[], int n)
 void GenerateTrack(std::vector<Point> &points, int np, double delta, double radius, double phi, double gamma, double error) {
     default_random_engine generator;
     double tau = 0.1;
+    static int n = 0;
     for (int i=0; i<np; i++,tau+=delta)
     {
         float X,Y,Z;
@@ -75,11 +76,17 @@ void GenerateTrack(std::vector<Point> &points, int np, double delta, double radi
             normal_distribution<float> distribution2(Z,error);
             Z = distribution2(generator);
         }
-        Point point;
-        point.x = X;
-        point.y = Y;
-        point.z = Z;
-        points.push_back(point);
+        Point p;
+        p.x = X;
+        p.y = Y;
+        p.z = Z;
+        p.id = n++;
+        p.val = -1; // Preset group with no match
+        p.r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
+        p.phi = atan2(p.y,p.x);
+        p.theta = acos(p.z/p.r);
+        p.distance = 0.0;
+        points.push_back(p);
     }
 }
 
@@ -105,6 +112,7 @@ int main(int argc, char* argv[]) {
             exit(0);
         }
 #ifdef TRACKML
+        int n = 0;
         char tmpLine[256];
         in.getline(tmpLine,256);
         cout<<tmpLine<<endl;
@@ -115,24 +123,35 @@ int main(int argc, char* argv[]) {
                 cout<<"Hit index is wrong: "<<h[0]<<endl;
                 exit(0);
             }
-            Point point;
-            point.x = h[1] * 0.001; // convert mm to m
-            point.y = h[2] * 0.001; // convert mm to m
-            point.z = h[3] * 0.001; // convert mm to m
-            hits.push_back(point);
+            Point p;
+            p.x = h[1] * 0.001; // convert mm to m
+            p.y = h[2] * 0.001; // convert mm to m
+            p.z = h[3] * 0.001; // convert mm to m
+            p.id = n++;
+            p.val = -1; // Preset group with no match
+            p.r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
+            p.phi = atan2(p.y,p.x);
+            p.theta = acos(p.z/p.r);
+            p.distance = 0.0;
+            hits.push_back(p);
             if (hits.size()%1000 == 0) cout << hits.size() << endl;
         }
 #else
         int n = 0;
         double X,Y,Z;
         while (in >> X >> Y >> Z) {
-            if (n++ >= MAXHITS) break;
-            Point point;
-            point.x = X * 0.01; // convert cm to m
-            point.y = Y * 0.01; // convert cm to m
-            point.z = Z * 0.01; // convert cm to m
-            hits.push_back(point);
-            //cout << point.x() << "\t" << point.y() << "\t" << point.z() << "\t"<< point.d() << endl;
+            if (n >= MAXHITS) break;
+            Point p;
+            p.x = X * 0.01; // convert cm to m
+            p.y = Y * 0.01; // convert cm to m
+            p.z = Z * 0.01; // convert cm to m
+            p.id = n++;
+            p.val = -1; // Preset group with no match
+            p.r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
+            p.phi = atan2(p.y,p.x);
+            p.theta = acos(p.z/p.r);
+            p.distance = 0.0;
+            hits.push_back(p);
         }
 #endif
         cout<<" loaded "<<hits.size()<<" hits "<<endl;
@@ -162,18 +181,27 @@ int main(int argc, char* argv[]) {
     }
     
     nt = Tracker::findTracks((int)nhits,x,y,z,labels);
-    
+
+    // Assemble the tracks from label information
+    for(int i=0; i<nt; i++) {
+        int track = i+1;
+        for (int j=0;j<nhits;j++) {
+            if (track != labels[j]) continue;
+            hits[j].val = labels[j];
+            tracks[i].push_back(hits[j]); // Save the results
+        }
+    }
+
 #define MAXTRACK 10
     cout << endl << "Number of tracks:" << nt << endl;
     for(int i=0; i<nt; i++) {
-        int track = i+1;
+        vector<Point> t = tracks[i];
         if (i == MAXTRACK) cout << endl << "..." << endl;
         if (i<MAXTRACK || i>nt-MAXTRACK) {
-            cout << "Track " << track << ": ";
-            for (int j=0;j<nhits;j++) {
-                if (track!=labels[j]) continue;
-                tracks[i].push_back(hits[j]); // Save the results
-                cout << j << " ";
+            cout << "Track " << i+1 << ": ";
+            for (vector<Point>::iterator it = t.begin(); it != t.end(); ++it) {
+                Point p = *it;
+                cout << p.id << " ";
             }
             cout << endl;
         }
@@ -237,3 +265,4 @@ int main(int argc, char* argv[]) {
     
     return EXIT_SUCCESS;
 }
+
