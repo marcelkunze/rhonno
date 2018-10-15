@@ -10,9 +10,8 @@ ROOTCFLAGS    = $(shell root-config --cflags)
 ROOTLIBS      = $(shell root-config --libs)
 ROOTGLIBS     = $(shell root-config --glibs)
 
-#SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx xmlp.cxx netbase.cxx percept.cxx net.cxx
 SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx 
-SHLIB=findTracks.cxx XMLP.cxx
+SHLIB=Tracker.cxx XMLP.cxx
 
 HEADERS=$(SRC:.cxx=.h)
 OBJECTS=$(SOURCES:.cxx=.o)
@@ -21,11 +20,11 @@ LIBRARY=libprocess.so
 
 all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
+$(EXECUTABLE): $(OBJECTS) $(LIBRARY)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
-$(LIBRARY): findtracks.o XMLP.o
-	clang++ -fPIC -shared -o $(LIBRARY) XMLP.cxx findtracks.cxx
+$(LIBRARY): Tracker.o XMLP.o XMLP.h Tracker.h
+	clang++ -fPIC -shared -o $(LIBRARY) XMLP.cxx Tracker.cxx
 
 %.o: %.cxx $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ 
