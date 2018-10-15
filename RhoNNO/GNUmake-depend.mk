@@ -6,7 +6,7 @@ LIBSO	= lib$(PACKAGE).so
 
 # Lists of objects to include in library:
 NAMELIST = VNeuralNetPlotter VNeuralNet VSupervisedNet VUnsupervisedNet TFD TSGCS TSGNG TPerceptron TMLP TXMLP \
-           TNeuralNetCell TGCS TGNG TLVQ TDataServe TNNK TGNGTracker TRadon Graph
+           TNeuralNetCell TGCS TGNG TLVQ TDataServe TNNK TGNGTracker TRadon Graph Tracker
 
 HDRS    = $(addsuffix .h, $(NAMELIST) )
 OBJS    = $(addsuffix .o, $(NAMELIST) )
