@@ -516,6 +516,7 @@ double VNeuralNet::TrainEpoch(TDataServe *server, int nEpoch)
     
     return error;
 */
+    return 0.0;
 }
 
 // Check the network performance
@@ -551,6 +552,7 @@ double VNeuralNet::TestEpoch(TDataServe *server)
     
     return classError;
 */
+    return 0.0;
 }
 
 double  VNeuralNet::Test(NNO_INTYPE* in,NNO_OUTTYPE* out)
@@ -679,6 +681,7 @@ unsigned int VNeuralNet::BalancedTrnIndex(TDataServe *server)
     
     return index%samples;
      */
+    return 0;
 }
 
 unsigned int VNeuralNet::BalancedTstIndex(TDataServe *server)
@@ -699,6 +702,7 @@ unsigned int VNeuralNet::BalancedTstIndex(TDataServe *server)
     
     return index%samples;
      */
+    return 0;
 }
 
 void VNeuralNet::SetMomentumTerm(double f)
@@ -735,6 +739,7 @@ long VSupervisedNet::TrainEpoch(float *tuple, bool randomize) {
     }
     return nhits;
      */
+    return 0;
 }
 
 // TPerceptron

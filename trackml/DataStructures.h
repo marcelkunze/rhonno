@@ -10,6 +10,7 @@ using namespace std;
 
 struct Hit // container for hit information
 {
+    int hitID; // hit id
     double x;
     double y;
     double z;

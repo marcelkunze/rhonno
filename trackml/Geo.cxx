@@ -62,7 +62,7 @@ void Geo::init()
 
   // read layer sizes
   {
-    ifstream in("geoLayerSizes.txt");    
+    ifstream in("/Users/marcel/workspace/rhonno/trackml/geoLayerSizes.txt");    
     if( !in.is_open() ){
       cout<<"Geo:: Can not open geoLayerSizes.txt file"<<endl;
       exit(0);
@@ -82,7 +82,7 @@ void Geo::init()
    // read layer field
   {
    static constexpr double CLight = 0.000299792458; // speed of light 
-   ifstream in("geoLayerField.txt");    
+   ifstream in("/Users/marcel/workspace/rhonno/trackml/geoLayerField.txt");
     if( !in.is_open() ){
       cout<<"Geo:: Can not open geoLayerField.txt file"<<endl;
       exit(0);
