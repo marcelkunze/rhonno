@@ -126,19 +126,22 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 continue;
             }
             
-            double recall = Recall2(p1,p2)[0]; // Get network track quality of 2 points
-            if (recall < 0.0) { nr++; break; } // Out of bounds; finish tracklet
-            n2++;
-            if (recall < THRESHOLD) continue;  // Hit pair does not match
-            if (VERBOSE) cout << p2.id << "(" << (int) 100*recall << "/";
-            if (pvec.size() >=2) {
+            double recall = 0.0;
+            if (pvec.size() <2) {
+                recall = Recall2(p1,p2)[0]; // Get network track quality of 2 points
+                if (recall < 0.0) { nr++; break; } // Out of bounds; finish tracklet
+                n2++;
+            }
+            else
+            {
                 recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 points
                 if (recall < 0.0) { np++; continue; } // No straight conection between the three points
                 n3++;
             }
+
             if (recall>THRESHOLD) {
                 pvec.push_back(p2); // Note the columns with a good combination
-                if (VERBOSE) cout << (int) 100*recall << ") ";
+                if (VERBOSE) cout << p2.id << "(" << (int) 100*recall << ") ";
                 points.erase(it2);  // Remove the corresponding point from the set
                 *it2--;
                 p1 = p2; // Note the assigned hit

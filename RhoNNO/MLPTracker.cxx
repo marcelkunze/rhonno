@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
         // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
         GenerateTrack(hits,NHITS,0.025, 0.5,M_PI/2.0, 1.0,SIGMA); // 00
         GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/4.0, 1.0,SIGMA); // 10
-        GenerateTrack(hits,NHITS,0.025, 1.5,M_PI/3.0,-1.0,SIGMA); // 20
+        GenerateTrack(hits,NHITS,0.025, 1.5,M_PI/1.0,-1.0,SIGMA); // 20
         GenerateTrack(hits,NHITS,0.025,-2.0,M_PI/3.0,-1.0,SIGMA); // 30
     }
     
