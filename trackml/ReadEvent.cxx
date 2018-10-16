@@ -35,7 +35,7 @@ int layerNHits[Geo::NLayers];
 
 #define NEVENTS 1
 #define MAXHITS 100000
-#define MAXPARTICLES 5
+#define MAXPARTICLES 10
 #define MCHITS true
 
 TRandom r;
@@ -151,11 +151,6 @@ void readEvent( const char *directory, int event, bool loadMC )
             hit.BzFwd = Geo::OriginBzkG;
             hit.BzMid = Geo::OriginBzkG;
             hit.BzBck = Geo::OriginBzkG;
-            if( 1|| ( hit.volume==4 || hit.volume==5 || hit.volume==7 || hit.volume==8 ) ){
-                hit.BzFwd = Geo::layers[hit.layerID].getFieldFwd(hit.phi, hit.t);
-                hit.BzMid = Geo::layers[hit.layerID].getFieldMid(hit.phi, hit.t);
-                hit.BzBck = Geo::layers[hit.layerID].getFieldBck(hit.phi, hit.t);
-            }
             hit.cells = 0;
             hit.values = 0.0;
             mHits.push_back(hit);
@@ -229,7 +224,7 @@ void readEvent( const char *directory, int event, bool loadMC )
             p.p  = sqrt(f[5]*f[5] + f[6]*f[6] + f[7]*f[7]);
             p.prim = fabs(p.z)<1.2 && p.r<0.05;
             p.w = 0;
-            partIDmap[ (unsigned long long int) f[0] ] = mParticles.size();
+            partIDmap[ (unsigned long long int) f[0] ] = (int)mParticles.size();
             mParticles.push_back(p);
         }
         cout <<" loaded "<<mParticles.size() <<" particles in event "<<event<<endl;
@@ -263,7 +258,7 @@ void readEvent( const char *directory, int event, bool loadMC )
             HitMC hitmc;
             Hit &hit = mHits[mHitsMC.size()];
             
-            hitmc.hitID = mHitsMC.size();
+            hitmc.hitID = (int)mHitsMC.size();
             hitmc.x = 0.001 * mc[2]; // convert to [m]
             hitmc.y = 0.001 * mc[3]; // convert to [m]
             hitmc.z = 0.001 * mc[4]; // convert to [m]
@@ -356,19 +351,7 @@ void readEvent( const char *directory, int event, bool loadMC )
             p.zl = mc.z;
             p.rl = sqrt(mc.x*mc.x+mc.y*mc.y);
         }
-        if( 0 && ipart==467 ){
-            for( int i=0; i<p.hits.size(); i++ ){
-                Hit &h = mHits[p.hits[i]];
-                h.Print();
-            }
-            for( int i=0; i<p.hits.size(); i++ ){
-                HitMC &mc = mHitsMC[p.hits[i]];
-                mc.Print();
-            }
-        }
     }
-    //exit(0);
-    
     
     for( unsigned int ipart=0; ipart<mParticles.size(); ipart++ ){
         Particle &p = mParticles[ipart];
@@ -412,7 +395,7 @@ void readEvent( const char *directory, int event, bool loadMC )
 }
 
 void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
-    int nhits = particle.hits.size();
+    int nhits = (int)particle.hits.size();
     if (!mc) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
@@ -449,8 +432,8 @@ void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
 
 void combine(Particle &p1, Particle &p2)
 {
-    int nhits1 = p1.hits.size();
-    int nhits2 = p2.hits.size();
+    int nhits1 = (int)p1.hits.size();
+    int nhits2 = (int)p2.hits.size();
     
     for (int i=0; i<nhits1; i++)    {
         Hit &hit1 = mHits[p1.hits[i]];
@@ -477,13 +460,13 @@ void combine(Particle &p1, Particle &p2)
 
 void combine3(Particle &p1, Particle &p2)
 {
-    int nhits1 = p1.hits.size();
-    int nhits2 = p2.hits.size();
+    int nhits1 = (int)p1.hits.size();
+    int nhits2 = (int)p2.hits.size();
     
     vector<Point> hits1, hits2;
     transform(p1,hits1,MCHITS);
     transform(p2,hits2,MCHITS);
-
+    
     for (int i=0; i<nhits1; i++)    {
         Hit &h1 = mHits[p1.hits[i]];
         Point &hit1 = hits1[i];
@@ -570,7 +553,7 @@ int main()
             Hit &h = mHits[ih];
             if (ih<10) h.Print();
         }
- 
+        
         std::vector<Point> hits;
         hits.reserve(MAXHITS);
         
@@ -619,7 +602,7 @@ int main()
         }
         
         cout << "Find tracks..." << endl;
-        nt = Tracker::findTracks(nhits,x,y,z,labels);
+        nt = Tracker::findTracks((int)nhits,x,y,z,labels);
         
         // Assemble the tracks from label information
         std::vector<Point> tracks[MAXHITS];
@@ -733,7 +716,7 @@ int main()
             c1->Write();
             output.Close();
         }
-
+        
     }
     
 }
