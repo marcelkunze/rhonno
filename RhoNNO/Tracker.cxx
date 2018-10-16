@@ -50,6 +50,7 @@ double* Tracker::Recall2(Point &p1, Point &p2)
     x[3]     = p2.r;     // r2
     x[4]     = p2.phi;   // phi2
     x[5]     = p2.theta; // theta2
+    
     return net.Recallstep(x);
 }
 
@@ -72,6 +73,7 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
     x[6]     = p3.r;     // r3
     x[7]     = p3.phi;   // phi3
     x[8]     = p3.theta; // theta3
+    
     return net.Recallstep(x);
 }
 
@@ -83,6 +85,8 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     vector<Point> points;
     points.reserve(nhits);
     
+    unsigned long n2(0), n3(0);
+
     // Set up a cache for the point coordinates
     //cout << "Set up points cache..." << endl;
     for (int i=0;i<nhits;i++) {
@@ -124,11 +128,13 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
             
             double recall = Recall2(p1,p2)[0]; // Get network track quality of 2 points
             if (recall < 0.0) { nr++; break; } // Out of bounds; finish tracklet
+            n2++;
             if (recall < THRESHOLD) continue;  // Hit pair does not match
             if (VERBOSE) cout << p2.id << "(" << (int) 100*recall << "/";
             if (pvec.size() >=2) {
                 recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 points
                 if (recall < 0.0) { np++; continue; } // No straight conection between the three points
+                n3++;
             }
             if (recall>THRESHOLD) {
                 pvec.push_back(p2); // Note the columns with a good combination
@@ -180,7 +186,9 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
     cout << "Radius   <" << DELTAR << ": " << nr <<endl;
     cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
-    
+    cout << "Recalls2 : " << n2 << endl;
+    cout << "Recalls3 : " << n3 << endl;
+
     delete [] p;
     
     std::clock_t c_end = std::clock();
