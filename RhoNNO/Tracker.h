@@ -14,13 +14,13 @@
 #define DELTAR   2.0
 #define DELTAPHI 0.8
 #else
-#define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0100.TXMLP"
-#define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/NNO0099.TXMLP"
+#define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
+#define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
 #define TRACKLET 2
-#define THRESHOLD 0.9
-#define DISTANCE 0.5
-#define DELTAR   0.1
-#define DELTAPHI 0.01
+#define THRESHOLD 0.6
+#define DISTANCE 0.2
+#define DELTAR   0.2
+#define DELTAPHI 0.02
 #endif
 
 #define VERBOSE true

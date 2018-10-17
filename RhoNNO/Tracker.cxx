@@ -144,7 +144,8 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 if (VERBOSE) cout << p2.id << "(" << (int) 100*recall << ") ";
                 points.erase(it2);  // Remove the corresponding point from the set
                 *it2--;
-                p1 = p2; // Note the assigned hit
+                p0 = p1;// Note the assigned hits
+                p1 = p2;
                 continue;
             }
             else
