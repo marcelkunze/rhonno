@@ -670,6 +670,7 @@ int main()
         
         // Initialize a 3D canvas and draw the hits and tracks
         if (DRAW) {
+            filePrefix.Form("%sevent%09d",dir.Data(),event);
             TString cname = filePrefix+"-canvas.root";
             TFile output(cname,"RECREATE");
             TCanvas *c1 = new TCanvas("c1","NNO Tracking: XMLP",200,10,700,500);
