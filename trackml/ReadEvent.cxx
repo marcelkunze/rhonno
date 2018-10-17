@@ -33,9 +33,9 @@ std::vector<Particle> mParticles;
 
 int layerNHits[Geo::NLayers];
 
-#define NEVENTS 1
-#define MAXHITS 100000
-#define MAXPARTICLES 10
+#define NEVENTS 10
+#define MAXHITS 150000
+#define MAXPARTICLES 10000
 #define MCHITS true
 
 TRandom r;
@@ -435,34 +435,6 @@ void combine(Particle &p1, Particle &p2)
     int nhits1 = (int)p1.hits.size();
     int nhits2 = (int)p2.hits.size();
     
-    for (int i=0; i<nhits1; i++)    {
-        Hit &hit1 = mHits[p1.hits[i]];
-        float r1 = sqrt(hit1.x*hit1.x+hit1.y*hit1.y+hit1.z*hit1.z);
-        float phi1 = atan2(hit1.y,hit1.x);
-        float theta1 = acos(hit1.z/r1);
-        for (int j=0; j<nhits1; j++)    {
-            Hit &hit2 = mHits[p1.hits[j]];
-            float r2 = sqrt(hit2.x*hit2.x+hit2.y*hit2.y+hit2.z*hit2.z);
-            float phi2 = atan2(hit2.y,hit2.x);
-            float theta2 = acos(hit2.z/r2);
-            if (i!=j) ntuple->Fill(r1,phi1,theta1,r2,phi2,theta2,hit1.values,hit2.values,1.0); //true combination
-        }
-        for (int j=0; j<nhits2; j++)    {
-            Hit &hit2 = mHits[p2.hits[j]];
-            float r2 = sqrt(hit2.x*hit2.x+hit2.y*hit2.y+hit2.z*hit2.z);
-            float phi2 = atan2(hit2.y,hit2.x);
-            float theta2 = acos(hit2.z/r2);
-            if (i!=j) ntuple->Fill(r1,phi1,theta1,r2,phi2,theta2,hit1.values,hit2.values,0.0); // wrong combination
-        }
-    }
-    
-}
-
-void combine3(Particle &p1, Particle &p2)
-{
-    int nhits1 = (int)p1.hits.size();
-    int nhits2 = (int)p2.hits.size();
-    
     vector<Point> hits1, hits2;
     transform(p1,hits1,MCHITS);
     transform(p2,hits2,MCHITS);
@@ -481,23 +453,50 @@ void combine3(Particle &p1, Particle &p2)
             if (i!=j) ntuple->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,h1.values,h2.values,0.0); // wrong combination
         }
     }
+}
+
+void combine2(Particle &p)
+{
+    vector<Point> hits;
+    transform(p,hits,MCHITS);
     
     // Sort the hits according to distance from origin
-    sort(hits1.begin(),hits1.end(),sortDist);
-    sort(hits2.begin(),hits2.end(),sortDist);
-    
-    for (int i=0; i<nhits1; i++)    {
-        Hit &h1 = mHits[p1.hits[i]];
-        Point &hit1 = hits1[i];
-        for (int j=0; j<nhits1-1; j++)    {
-            Hit &h2 = mHits[p1.hits[j]];
-            Point &hit2 = hits1[j];
-            Point &hit3 = hits1[j+1];
-            ntuple3->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,hit3.r,hit3.phi,hit3.theta,h1.values,h2.values,1.0); //true combination
-            float phi3 = 2.*(0.5-r.Rndm())*M_PI;
-            float theta3 = r.Rndm()*M_PI;
-            ntuple3->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,hit3.r,phi3,theta3,h1.values,h2.values,0.0); // wrong combination
-        }
+    sort(hits.begin(),hits.end(),sortDist);
+
+    int nhits = (int)hits.size();
+    for (int i=0; i<nhits-1; i++)    {
+        Hit &h1 = mHits[p.hits[i]];
+        Point &hit1 = hits[i];
+        Hit &h2 = mHits[p.hits[i+1]];
+        Point &hit2 = hits[i+1];
+        ntuple->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,h1.values,h2.values,1.0); //true combination
+        float phi2 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r2
+        float theta2 = r.Rndm()*M_PI;
+        ntuple->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,phi2,theta2,h1.values,h2.values,0.0); // wrong combination
+    }
+}
+
+void combine3(Particle &p)
+{
+    vector<Point> hits;
+    transform(p,hits,MCHITS);
+
+    // Sort the hits according to distance from origin
+    sort(hits.begin(),hits.end(),sortDist);
+
+    // Combine 3 hits
+    int nhits = (int)hits.size();
+    for (int i=0; i<nhits-2; i++)    {
+        Hit &h1 = mHits[p.hits[i]];
+        Hit &h2 = mHits[p.hits[i+1]];
+        Hit &h3 = mHits[p.hits[i+2]];
+        Point &hit1 = hits[i];
+        Point &hit2 = hits[i+1];
+        Point &hit3 = hits[i+2];
+        ntuple3->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,hit3.r,hit3.phi,hit3.theta,h1.values,h2.values,h3.values,1.0); //true combination
+        float phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
+        float theta3 = r.Rndm()*M_PI;
+        ntuple3->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,hit3.r,phi3,theta3,h1.values,h2.values,h3.values,0.0); // wrong combination
     }
     
 }
@@ -537,7 +536,7 @@ int main()
         auto f = TFile::Open(fname,"RECREATE");
         cout << "Writing training data to " << fname << endl;
         ntuple = new TNtuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:v1:v2:truth");
-        ntuple3 = new TNtuple("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:v1:v2:truth");
+        ntuple3 = new TNtuple("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:v1:v2:v3:truth");
         
         filePrefix.Form("%sevent%09d",dir.Data(),event+100000000);
         TString hname = filePrefix+"-hits.csv";
@@ -568,9 +567,11 @@ int main()
             while (ip == jp) jp = r.Rndm() * nParticles; // Do not combine the particle with itself
             Particle &p1 = mParticles[ip];
             Particle &p2 = mParticles[jp];
-            combine3(p1,p2); // Produce training data
-            transform(p1,hits,MCHITS);
+            combine2(p1); // Produce training data (2 hits)
+            combine3(p1); // Produce training data (3 hits)
+
             // Print the hit ids
+            transform(p1,hits,MCHITS);
             if (ip == 10) cout << endl << "..." << endl;
             if (ip<10 || ip>nParticles-10) {
                 cout << "Track " << ip+1 << ": ";

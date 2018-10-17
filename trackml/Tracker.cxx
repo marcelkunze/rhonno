@@ -86,7 +86,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     points.reserve(nhits);
     
     unsigned long n2(0), n3(0);
-
+    
     // Set up a cache for the point coordinates
     //cout << "Set up points cache..." << endl;
     for (int i=0;i<nhits;i++) {
@@ -120,7 +120,6 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
         if (VERBOSE) cout << endl << p1.id << "(0) ";
         for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
             Point p2 = *it2;
-
             double dist = distanceBetween(p1,p2); // Only consider points in the neighborhood
             if (dist > DISTANCE) {
                 nd++;
@@ -139,13 +138,14 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 if (recall < 0.0) { np++; continue; } // No straight conection between the three points
                 n3++;
             }
-
+            
             if (recall>THRESHOLD) {
                 pvec.push_back(p2); // Note the columns with a good combination
-                if (VERBOSE) cout << (int) 100*recall << ") ";
+                if (VERBOSE) cout << p2.id << "(" << (int) 100*recall << ") ";
                 points.erase(it2);  // Remove the corresponding point from the set
                 *it2--;
-                p1 = p2; // Note the assigned hit
+                p0 = p1;// Note the assigned hits
+                p1 = p2;
                 continue;
             }
             else
@@ -192,7 +192,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
     cout << "Recalls2 : " << n2 << endl;
     cout << "Recalls3 : " << n3 << endl;
-
+    
     delete [] p;
     
     std::clock_t c_end = std::clock();
