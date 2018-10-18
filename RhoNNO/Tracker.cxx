@@ -19,7 +19,7 @@
 
 using namespace std;
 
-Point::Point(double x, double y, double z, int id=-1, int val=-1)
+Point::Point(double x, double y, double z, int id, int val)
 {
     _id = id;
     _val = val;
@@ -103,9 +103,12 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
     static TXMLP net(NETFILE3);
     static float x[9]={0.,0.,0.,0.,0.,0.,0.,0.,0.};
     static double bad[1]={-1.0};
-    
-    double angle = Point::angleBetween(p2,p1,p3); // Check angle between the vectors (p2,p1) and (p2,p3)
-    if (angle > DELTAPHI3) return bad;
+    static double null[1]={0.0};
+
+    Point v1 = p2 - p1;
+    Point v2 = p3 - p1;
+    double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
+    if (angle > DELTAPHI) return null;
     
     x[0]     = p1.r();     // r1
     x[1]     = p1.phi();   // phi1
@@ -150,9 +153,9 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
         Point p0 = *it1; // Seeding point
         Point p1 = *it1;
         vector<Point> pvec;
-        // Conformal mapping of circle to straight line
         pvec.push_back(p1); //Note the seeding point in the first place
         if (VERBOSE) cout << endl << p1.id() << "(0) ";
+        int ntry = 0;
         for (vector<Point>::iterator it2 = it1+1; it2 != points.end(); ++it2) { //
             Point p2 = *it2;
             double dist = p2.distance(p1); // Only consider points in the neighborhood
@@ -161,24 +164,19 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 continue;
             }
             
-            // Get network track quality of 2 points
+            // Seeding a second point: Get network track quality of 2 points
             double recall = 0.0;
             if (pvec.size() <2) {
-/*
-                while ((recall = Recall2(p1,p2)[0]) == 0.0 && ++it2 != points.end()) {
-                    p2 = *it2;
-                    n2++;
-                }
- */
-                recall = Recall2(p1,p2)[0];
+                recall = Recall2(p1,p2)[0]; // try the initial pair
                 n2++;
+                if (recall == 0 && ntry++<5) { np++; continue; } // try the next 5 points
                 if (recall < 0.0) { nr++; break; } // Out of bounds; finish tracklet
             }
             else
             {
-                recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 points
-                if (recall < 0.0) { np++; continue; } // No straight conection between the three points
+                recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 consecutive points
                 n3++;
+                if (recall <= 0.0) { np++; continue; } // No straight conection between the three points
             }
 
             if (recall>THRESHOLD) {
@@ -231,7 +229,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Threshold <" << THRESHOLD << ": " << nn <<endl;
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
     cout << "Radius   <" << DELTAR << ": " << nr <<endl;
-    cout << "Phi      <" << DELTAPHI3 << ": " << np <<endl;
+    cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
     cout << "Recalls2 : " << n2 << endl;
     cout << "Recalls3 : " << n3 << endl;
 

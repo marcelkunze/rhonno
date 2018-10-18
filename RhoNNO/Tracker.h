@@ -17,11 +17,10 @@
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
 #define TRACKLET 2
-#define THRESHOLD 0.9
+#define THRESHOLD 0.7
 #define DISTANCE 1.0
 #define DELTAR   1.0
-#define DELTAPHI 0.02
-#define DELTAPHI3 10.0
+#define DELTAPHI 0.05
 #endif
 
 #define VERBOSE true
@@ -40,8 +39,10 @@ private:
 public:
     Point(void):_id(0),_val(0),_x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_distance(0) {}
     Point(const Point &p);
-    Point(double x, double y, double z, int id, int val);
+    Point(double x, double y, double z, int id=-1, int val=-1);
     Point(float x, float y, float z, int id, int val);
+    Point operator+(const Point p) const { return Point(_x+p._x,_y+p._y,_z+p._z);}
+    Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
     static bool sortDist(const Point &a,const Point &b);
     static bool sortId(const Point &a,const Point &b);
     static double angleBetween(const Point &a,const Point &b,const Point &c);
@@ -87,19 +88,9 @@ bool Point::sortId(const Point &a,const Point &b)
 inline
 double Point::angleBetween(const Point &a,const Point &b,const Point &c)
 {
-    double x1 = b._x - a._x;
-    double y1 = b._y - a._y;
-    double z1 = b._z - a._z;
-    double r1 = sqrt(x1*x1 + y1*y1 + z1*z1);
-
-    double x2 = c._x - a._x;
-    double y2 = c._y - a._y;
-    double z2 = c._z - a._z;
-    double r2 = sqrt(x2*x2 + y2*y2 + z2*z2);
-
-    double product = x1*x2 + y1*y2 + z1*z2;
-    double angle = acos(product / (r1 * r2));
-    
+    Point v1 = b - a;
+    Point v2 = c - a;
+    double angle = acos(dot(v1,v2));
     return angle;
 }
 
@@ -199,6 +190,7 @@ private:
     static double* Recall2(Point &p1, Point &p2);
     static double* Recall3(Point &p1, Point &p2, Point &p3);
 public:
+    Tracker() {}
     static int findTracks(int nhits, float *x, float *y, float *z, int* labels);
 };
 
