@@ -77,16 +77,7 @@ void GenerateTrack(std::vector<Point> &points, int np, double delta, double radi
             normal_distribution<float> distribution2(Z,error);
             Z = distribution2(generator);
         }
-        Point p;
-        p.x = X;
-        p.y = Y;
-        p.z = Z;
-        p.id = n++;
-        p.val = -1; // Preset group with no match
-        p.r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
-        p.phi = atan2(p.y,p.x);
-        p.theta = acos(p.z/p.r);
-        p.distance = 0.0;
+        Point p(X,Y,Z,n++,-1);
         points.push_back(p);
     }
 }
@@ -124,16 +115,10 @@ int main(int argc, char* argv[]) {
                 cout<<"Hit index is wrong: "<<h[0]<<endl;
                 exit(0);
             }
-            Point p;
-            p.x = h[1] * 0.001; // convert mm to m
-            p.y = h[2] * 0.001; // convert mm to m
-            p.z = h[3] * 0.001; // convert mm to m
-            p.id = n++;
-            p.val = -1; // Preset group with no match
-            p.r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
-            p.phi = atan2(p.y,p.x);
-            p.theta = acos(p.z/p.r);
-            p.distance = 0.0;
+            double X = h[1] * 0.001; // convert mm to m
+            double Y = h[2] * 0.001; // convert mm to m
+            double Z = h[3] * 0.001; // convert mm to m
+            Point p(X,Y,Z,n++,-1);
             hits.push_back(p);
             if (hits.size()%1000 == 0) cout << hits.size() << endl;
         }
@@ -142,16 +127,10 @@ int main(int argc, char* argv[]) {
         double X,Y,Z;
         while (in >> X >> Y >> Z) {
             if (n >= MAXHITS) break;
-            Point p;
-            p.x = X * 0.01; // convert cm to m
-            p.y = Y * 0.01; // convert cm to m
-            p.z = Z * 0.01; // convert cm to m
-            p.id = n++;
-            p.val = -1; // Preset group with no match
-            p.r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
-            p.phi = atan2(p.y,p.x);
-            p.theta = acos(p.z/p.r);
-            p.distance = 0.0;
+            X = X * 0.01; // convert cm to m
+            Y = Y * 0.01; // convert cm to m
+            Z = Z * 0.01; // convert cm to m
+            Point p(X,Y,Z,n++,-1);
             hits.push_back(p);
         }
 #endif
@@ -161,8 +140,8 @@ int main(int argc, char* argv[]) {
     else
     {
         // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
-        GenerateTrack(hits,NHITS,0.025, 0.5,M_PI/2.0, 1.0,SIGMA); // 00
-        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/4.0, 1.0,SIGMA); // 10
+        GenerateTrack(hits,NHITS,0.025, 1.0,M_PI/2.0, 1.0,SIGMA); // 00
+        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/2.0, 1.0,SIGMA); // 10
         GenerateTrack(hits,NHITS,0.025, 1.5,M_PI/1.0,-1.0,SIGMA); // 20
         GenerateTrack(hits,NHITS,0.025,-2.0,M_PI/3.0,-1.0,SIGMA); // 30
     }
@@ -176,9 +155,9 @@ int main(int argc, char* argv[]) {
     int nt;
     for (int i=0; i<nhits; i++) {
         Point hit = hits[i];
-        x[i] = hit.x;
-        y[i] = hit.y;
-        z[i] = hit.z;
+        x[i] = hit.x();
+        y[i] = hit.y();
+        z[i] = hit.z();
     }
     
     nt = Tracker::findTracks((int)nhits,x,y,z,labels);
@@ -188,7 +167,7 @@ int main(int argc, char* argv[]) {
         int track = i+1;
         for (int j=0;j<nhits;j++) {
             if (track != labels[j]) continue;
-            hits[j].val = labels[j];
+            hits[j].setval(labels[j]);
             tracks[i].push_back(hits[j]); // Save the results
         }
     }
@@ -202,7 +181,7 @@ int main(int argc, char* argv[]) {
             cout << "Track " << i+1 << ": ";
             for (vector<Point>::iterator it = t.begin(); it != t.end(); ++it) {
                 Point p = *it;
-                cout << p.id << " ";
+                cout << p.id() << " ";
             }
             cout << endl;
         }
@@ -236,8 +215,8 @@ int main(int argc, char* argv[]) {
         for (vector<Point>::iterator it = hits.begin(); it != hits.end(); it++)    {
             static int i = 0;
             Point p=*it;
-            hitmarker->SetPoint(i++,p.x,p.y,p.z);
-            nt1.Fill(p.x,p.y,p.z);
+            hitmarker->SetPoint(i++,p.x(),p.y(),p.z());
+            nt1.Fill(p.x(),p.y(),p.z());
         }
         // set marker size, color & style
         hitmarker->SetMarkerSize(1.0);
@@ -253,7 +232,7 @@ int main(int argc, char* argv[]) {
             TPolyLine3D *connector = new TPolyLine3D((int)track.size());
             for (vector<Point>::iterator it = track.begin(); it != track.end(); it++)    {
                 Point hit = *it;
-                connector->SetPoint(n++, hit.x, hit.y, hit.z);
+                connector->SetPoint(n++, hit.x(), hit.y(), hit.z());
             }
             connector->SetLineWidth(1);
             connector->SetLineColor(kRed);
