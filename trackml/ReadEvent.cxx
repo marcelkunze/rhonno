@@ -33,9 +33,9 @@ std::vector<Particle> mParticles;
 
 int layerNHits[Geo::NLayers];
 
-#define NEVENTS 10
+#define NEVENTS 1
 #define MAXHITS 150000
-#define MAXPARTICLES 10000
+#define MAXPARTICLES 100
 #define MCHITS true
 
 TRandom r;
@@ -399,32 +399,14 @@ void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
     if (!mc) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
-            Point p;
-            p.id = h1.hitID;
-            p.val = h1.trackID;
-            p.x = h1.x; // Cache the point coordinates
-            p.y = h1.y;
-            p.z = h1.z;
-            p.r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
-            p.phi = atan2(p.y,p.x);
-            p.theta = acos(p.z/p.r);
-            p.distance = 0.0;
+            Point p(h1.x,h1.y,h1.z,h1.hitID,h1.trackID);
             points.push_back(p);
         }
     }
     else {
         for (int i=0;i<nhits;i++) {
             HitMC &h1 = mHitsMC[particle.hits[i]];
-            Point p;
-            p.id = h1.hitID+1;
-            p.val = -1;
-            p.x = h1.x; // Cache the point coordinates
-            p.y = h1.y;
-            p.z = h1.z;
-            p.r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
-            p.phi = atan2(p.y,p.x);
-            p.theta = acos(p.z/p.r);
-            p.distance = 0.0;
+            Point p(h1.x,h1.y,h1.z,h1.hitID+1,-1);
             points.push_back(p);
         }
     }
@@ -445,12 +427,12 @@ void combine(Particle &p1, Particle &p2)
         for (int j=0; j<nhits1; j++)    {
             Hit &h2 = mHits[p1.hits[j]];
             Point &hit2 = hits1[j];
-            if (i!=j) ntuple->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,h1.values,h2.values,1.0); //true combination
+            if (i!=j) ntuple->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),h1.values,h2.values,1.0); //true combination
         }
         for (int j=0; j<nhits2; j++)    {
             Hit &h2 = mHits[p2.hits[j]];
             Point &hit2 = hits2[j];
-            if (i!=j) ntuple->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,h1.values,h2.values,0.0); // wrong combination
+            if (i!=j) ntuple->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),h1.values,h2.values,0.0); // wrong combination
         }
     }
 }
@@ -461,7 +443,7 @@ void combine2(Particle &p)
     transform(p,hits,MCHITS);
     
     // Sort the hits according to distance from origin
-    sort(hits.begin(),hits.end(),sortDist);
+    sort(hits.begin(),hits.end(),Point::sortDist);
 
     int nhits = (int)hits.size();
     for (int i=0; i<nhits-1; i++)    {
@@ -469,10 +451,10 @@ void combine2(Particle &p)
         Point &hit1 = hits[i];
         Hit &h2 = mHits[p.hits[i+1]];
         Point &hit2 = hits[i+1];
-        ntuple->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,h1.values,h2.values,1.0); //true combination
+        ntuple->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),h1.values,h2.values,1.0); //true combination
         float phi2 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r2
         float theta2 = r.Rndm()*M_PI;
-        ntuple->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,phi2,theta2,h1.values,h2.values,0.0); // wrong combination
+        ntuple->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),phi2,theta2,h1.values,h2.values,0.0); // wrong combination
     }
 }
 
@@ -482,7 +464,7 @@ void combine3(Particle &p)
     transform(p,hits,MCHITS);
 
     // Sort the hits according to distance from origin
-    sort(hits.begin(),hits.end(),sortDist);
+    sort(hits.begin(),hits.end(),Point::sortDist);
 
     // Combine 3 hits
     int nhits = (int)hits.size();
@@ -493,10 +475,10 @@ void combine3(Particle &p)
         Point &hit1 = hits[i];
         Point &hit2 = hits[i+1];
         Point &hit3 = hits[i+2];
-        ntuple3->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,hit3.r,hit3.phi,hit3.theta,h1.values,h2.values,h3.values,1.0); //true combination
+        ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),hit3.phi(),hit3.theta(),h1.values,h2.values,h3.values,1.0); //true combination
         float phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
         float theta3 = r.Rndm()*M_PI;
-        ntuple3->Fill(hit1.r,hit1.phi,hit1.theta,hit2.r,hit2.phi,hit2.theta,hit3.r,phi3,theta3,h1.values,h2.values,h3.values,0.0); // wrong combination
+        ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),phi3,theta3,h1.values,h2.values,h3.values,0.0); // wrong combination
     }
     
 }
@@ -596,22 +578,23 @@ int main()
         int nt;
         
         for (int i=0; i<nhits; i++) {
+            labels[i] = 0;
             Point &h = hits[i];
-            x[i] = h.x;
-            y[i] = h.y;
-            z[i] = h.z;
+            x[i] = h.x();
+            y[i] = h.y();
+            z[i] = h.z();
         }
         
         cout << "Find tracks..." << endl;
         nt = Tracker::findTracks((int)nhits,x,y,z,labels);
         
         // Assemble the tracks from label information
-        std::vector<Point> tracks[MAXHITS];
+        std::vector<Point> tracks[nt];
         for(int i=0; i<nt; i++) {
             int track = i+1;
             for (int j=0;j<nhits;j++) {
                 if (track != labels[j]) continue;
-                hits[j].val = labels[j];
+                hits[j].setval(labels[j]);
                 tracks[i].push_back(hits[j]); // Save the results
             }
         }
@@ -626,7 +609,7 @@ int main()
                 cout << "Track " << i+1 << ": ";
                 for (vector<Point>::iterator it = t.begin(); it != t.end(); ++it) {
                     Point p = *it;
-                    cout << p.id << " ";
+                    cout << p.id() << " ";
                 }
                 cout << endl;
             }
@@ -691,7 +674,7 @@ int main()
             for (vector<Point>::iterator it = hits.begin(); it != hits.end(); it++)    {
                 static int i = 0;
                 Point p=*it;
-                hitmarker->SetPoint(i++,p.x,p.y,p.z);
+                hitmarker->SetPoint(i++,p.x(),p.y(),p.z());
             }
             // set marker size, color & style
             hitmarker->SetMarkerSize(1.0);
@@ -707,7 +690,7 @@ int main()
                 TPolyLine3D *connector = new TPolyLine3D((int)track.size());
                 for (vector<Point>::iterator it = track.begin(); it != track.end(); it++)    {
                     Point hit = *it;
-                    connector->SetPoint(n++, hit.x, hit.y, hit.z);
+                    connector->SetPoint(n++, hit.x(), hit.y(), hit.z());
                 }
                 connector->SetLineWidth(1);
                 connector->SetLineColor(kRed);
