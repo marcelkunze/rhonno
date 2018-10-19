@@ -10,8 +10,8 @@
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
 #define TRACKLET 3
-#define THRESHOLD 0.995
-#define DISTANCE 1.0
+#define THRESHOLD 0.985
+#define DISTANCE 0.5
 #define DELTAR   1.0
 #define DELTAPHI 0.1
 #else

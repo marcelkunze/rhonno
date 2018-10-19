@@ -218,9 +218,9 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 pvec.push_back(p2); // Note the columns with a good combination
                 if (VERBOSE) cout << p2.id() << "(" << (int) 100*recall << ") ";
                 points.erase(it2);  // Remove the corresponding point from the set
-                *it2--;
                 p0 = p1;// Note the assigned hits
                 p1 = p2;
+                *it2--;
                 continue;
             }
             else {
@@ -253,6 +253,12 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     if (VERBOSE) {
         cout << "Tracklets:" << endl;
         for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
+    }
+    
+    // Print out the shot tracks vector
+    if (VERBOSE) {
+        cout << "Short Tracklets:" << endl;
+        for( int i=0; i<shortpath.size(); i++ ) print(shortpath[i]);
     }
     
     cout << endl << "Re-assign n/a hits to tracklets..." << endl;
