@@ -10,6 +10,7 @@
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
 #define TRACKLET 3
+#define NEIGHBOURS 5
 #define THRESHOLD 0.985
 #define DISTANCE 0.5
 #define DELTAR   1.0
@@ -38,6 +39,8 @@ private:
     double _x, _y, _z;     // Cartesian coordinate of point
     double _r,_phi,_theta; // Spherical coordinates of point
     double _distance;    // Distance from test point
+    int _neighbour;
+    int _nextneighbour;
 public:
     Point(void):_id(0),_val(0),_x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_distance(0) {}
     Point(const Point &p);
@@ -53,6 +56,7 @@ public:
     static double circleRadius(const Point &p1,const Point &p2,const Point &p3);
     static bool comparison(const Point &a,const Point &b);
     double distance(const Point &a);
+    static double distance(const Point &a, const Point &b);
     static int classifyAPoint(Point arr[], int n, int k, Point p);
     inline double x() {return _x;}
     inline double y() {return _y;}
@@ -62,11 +66,15 @@ public:
     inline double phi() {return _phi;}
     inline int id() {return _id;}
     inline int val() {return _val;}
+    inline int neighbour() {return _neighbour;}
+    inline int nextneighbour() {return _nextneighbour;}
     inline void setx(double x) { _x = x;}
     inline void sety(double y) { _y = y;}
     inline void setz(double z) { _z = z;}
     inline void setval(int val) { _val = val;}
     inline void setid(int id) { _id = id;}
+    inline void setneighbour(int neighbour) { _neighbour = neighbour;}
+    inline void setnextneighbour(int nextneighbour) { _nextneighbour = nextneighbour;}
 };
 
 // Used to sort an array of points by increasing
@@ -154,6 +162,15 @@ double Point::distance(const Point &a)
     double d =  sqrt((a._x - _x) * (a._x - _x) +
                      (a._y - _y) * (a._y - _y) +
                      (a._z - _z) * (a._z - _z));
+    return d;
+}
+
+inline
+double Point::distance(const Point &a, const Point &b)
+{
+    double d =  sqrt((a._x - b._x) * (a._x - b._x) +
+                     (a._y - b._y) * (a._y - b._y) +
+                     (a._z - b._z) * (a._z - b._z));
     return d;
 }
 

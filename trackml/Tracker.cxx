@@ -16,6 +16,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
 
 using namespace std;
 
@@ -30,6 +31,8 @@ Point::Point(double x, double y, double z, int id, int val)
     _phi = atan2(_y,_x);
     _theta = acos(z/_r);
     _distance = 0.0;
+    _neighbour = -1;
+    _nextneighbour = -1;
 }
 
 Point::Point(float x, float y, float z, int id=-1, int val=-1)
@@ -43,6 +46,8 @@ Point::Point(float x, float y, float z, int id=-1, int val=-1)
     _phi = atan2(_y,_x);
     _theta = acos(z/_r);
     _distance = 0.0;
+    _neighbour = -1;
+    _nextneighbour = -1;
 }
 
 Point::Point(const Point &p)
@@ -56,6 +61,8 @@ Point::Point(const Point &p)
     _phi = p._phi;
     _theta = p._theta;
     _distance = p._distance;
+    _neighbour = p._neighbour;
+    _nextneighbour = p._nextneighbour;
 }
 
 // Print an integer hit id track vector
@@ -164,8 +171,9 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     Point *p = new Point[nhits];
     vector<Point> points;
     points.reserve(nhits);
-    
-    unsigned long n2(0), n3(0);
+    unordered_map<int,Point> hitmap;
+
+    unsigned long n1(0), n2(0), n3(0);
 
     // Set up a cache for the point coordinates
     //cout << "Set up points cache..." << endl;
@@ -176,15 +184,65 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
     
     // Sort the hits according to distance from origin
+    for (int i=0;i<nhits;i++) points[i] = p[i];
     cout << "Sorting " << nhits << " hits..." << endl;
     sort(points.begin(),points.end(),Point::sortDist);
     
+    // Search neighbouring hits
+    cout << "Searching neighbours..." << endl;
+    for (int i=0;i<nhits-NEIGHBOURS;i++) {
+        double dmin = MAXFLOAT;
+        int neighbour = -1;
+        int nextneighbour = -1;
+        for (int j=0;j<NEIGHBOURS;j++) {
+            int n = i+j+1;
+            double angle = acos(Point::dot(points[i],points[n])); // Check angle between the vectors (origin,p1) and (origin,p2)
+            if (angle > DELTAPHI) continue;
+            double d = Point::distance(points[i],points[n]);
+            if (d < dmin) {
+                dmin = d;
+                nextneighbour = neighbour;
+                neighbour = n;
+            }
+        }
+        points[i].setneighbour(neighbour);
+        points[i].setnextneighbour(nextneighbour);
+    }
+    
+    for (int i=nhits-1;i>=nhits-NEIGHBOURS;--i) {
+        double dmin = MAXFLOAT;
+        int neighbour = -1;
+        int nextneighbour = -1;
+        for (int j=0;j<NEIGHBOURS;j++) {
+            int n = i-j-1;
+            double angle = acos(Point::dot(points[i],points[n])); // Check angle between the vectors (origin,p1) and (origin,p2)
+            if (angle > DELTAPHI) continue;
+            double d = Point::distance(points[i],points[n]);
+            if (d < dmin) {
+                dmin = d;
+                nextneighbour = neighbour;
+                neighbour = n;
+            }
+        }
+        points[i].setneighbour(neighbour);
+        points[i].setnextneighbour(nextneighbour);
+    }
+    
+    if (VERBOSE) {
+        for (int i=0;i<nhits;i++) cout << points[i].neighbour() << "(" << points[i].nextneighbour() << ") ";
+        cout << endl;
+    }
+    
+    // fill the hitmap
+    for (int i=0;i<nhits;i++) hitmap[i] = points[i];
+
     // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
     cout << "Find tracklets..." << endl;
     int nd(0), nr(0), nn(0), np(0);
     vector<vector<int> > tracklet;
     vector<vector<int> > shortpath;
-    for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1) {
+    for (vector<Point>::iterator it1 = points.begin(); it1 != points.end(); ++it1, n1++) {
+        if (VERBOSE && n1%1000==0) cout << n1 << " size " << points.size() << endl;
         Point p0 = *it1; // Seeding point
         Point p1 = *it1;
         vector<Point> pvec;
