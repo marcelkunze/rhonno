@@ -33,10 +33,11 @@ std::vector<Particle> mParticles;
 
 int layerNHits[Geo::NLayers];
 
-#define NEVENTS 1
+#define NEVENTS 10
 #define MAXHITS 150000
-#define MAXPARTICLES 100
-#define MCHITS true
+#define MAXPARTICLES 10000
+#define MCHITS false
+#define FINDTRACKS false
 
 TRandom r;
 TNtuple *ntuple,*ntuple3;
@@ -545,10 +546,7 @@ int main()
         
         int n = 0;
         for (int ip=0; ip<nParticles; ip++ ) {
-            int jp = r.Rndm() * nParticles;
-            while (ip == jp) jp = r.Rndm() * nParticles; // Do not combine the particle with itself
             Particle &p1 = mParticles[ip];
-            Particle &p2 = mParticles[jp];
             combine2(p1); // Produce training data (2 hits)
             combine3(p1); // Produce training data (3 hits)
 
@@ -572,6 +570,8 @@ int main()
         size_t nhits = hits.size();
         if (nhits > MAXHITS) nhits = MAXHITS;
         cout << "Hits: " << nhits << endl;
+        
+        if (!FINDTRACKS) continue;
         
         float x[nhits],y[nhits],z[nhits];
         int labels[nhits];

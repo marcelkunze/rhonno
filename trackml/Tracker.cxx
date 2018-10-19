@@ -227,14 +227,16 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     int napoints = 0;
     int rapoints = 0;
     for (vector<vector<int> >::iterator it = shortpath.begin(); it != shortpath.end(); ++it) napoints += (*it).size();
-        
+
+#ifdef REASSIGN
     for (vector<vector<int> >::iterator it1 = tracklet.begin(); it1 != tracklet.end(); ++it1) {
-        vector<int> t1 = *it1;
+        vector<int> &t1 = *it1;
         int seed1 = t1[t1.size()-1]; // last hit
+        int seed2 = t1[t1.size()-2]; // 2nd last hit
         for (vector<vector<int> >::iterator it2 = shortpath.begin(); it2 != shortpath.end(); ++it2) {
-            vector<int> t2 = *it2;
-            int seed2 = t2[0];
-            double recall = Recall2(points[seed1],points[seed2])[0];
+            vector<int> &t2 = *it2;
+            int seed3 = t2[0];
+            double recall = Recall3(points[seed1],points[seed2],points[seed3])[0];
             if (recall>THRESHOLD) {
                 for (int i=0;i<t2.size();i++) {
                     t1.push_back(t2[i]);
@@ -242,10 +244,19 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 }
                 shortpath.erase(it2);
                 *it2--;
+                break;
             }
         }
     }
 
+    // Print out the tracks vector
+    if (VERBOSE) {
+        cout << "Tracklets after re-assignment:" << endl;
+        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
+    }
+
+#endif
+    
     // Assign labels
     int n = 0;
     for (int i=0;i<tracklet.size();i++) {
@@ -266,12 +277,6 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     }
     */
     
-    // Print out the tracks vector
-    if (VERBOSE) {
-        cout << "Tracklets after re-assignment:" << endl;
-        for( int i=0; i<tracklet.size(); i++ ) print(tracklet[i]);
-    }
-
     cout << "Number of hits              : " << nhits << endl;
     cout << "Number of assigned points   : " << n << endl;
     cout << "Number of unassigned points : " << napoints << endl;
