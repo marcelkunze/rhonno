@@ -33,11 +33,11 @@ std::vector<Particle> mParticles;
 
 int layerNHits[Geo::NLayers];
 
-#define NEVENTS 10
+#define NEVENTS 1
 #define MAXHITS 150000
-#define MAXPARTICLES 10000
+#define MAXPARTICLES 10
 #define MCHITS false
-#define FINDTRACKS false
+#define FINDTRACKS true
 
 TRandom r;
 TNtuple *ntuple,*ntuple3;

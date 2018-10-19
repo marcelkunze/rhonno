@@ -23,7 +23,7 @@
 #define DELTAPHI 0.04
 #endif
 
-#define VERBOSE false
+#define VERBOSE true
 
 #include <cmath>
 #include <algorithm>
