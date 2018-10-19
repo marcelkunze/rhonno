@@ -8,6 +8,7 @@
 #ifdef TRACKML
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
+#define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
 #define TRACKLET 3
 #define THRESHOLD 0.995
 #define DISTANCE 1.0
@@ -16,6 +17,7 @@
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
+#define NETFILE4 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
 #define TRACKLET 2
 #define THRESHOLD 0.7
 #define DISTANCE 1.0
@@ -189,6 +191,7 @@ private:
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
     static double* Recall2(Point &p1, Point &p2);
     static double* Recall3(Point &p1, Point &p2, Point &p3);
+    static double* Recall4(Point &p1, Point &p2, Point &p3, Point &p4);
 public:
     Tracker() {}
     static int findTracks(int nhits, float *x, float *y, float *z, int* labels);

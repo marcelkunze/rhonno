@@ -123,6 +123,40 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
     return net.Recallstep(x);
 }
 
+// Recall function for 4 points
+double* Tracker::Recall4(Point &p1, Point &p2, Point &p3, Point &p4)
+{
+    static XMLP net(NETFILE4);
+    static float x[12]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+    //static double bad[1]={-1.0};
+    static double null[1]={0.0};
+    
+    Point v1 = p2 - p1;
+    Point v2 = p3 - p1;
+    double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
+    if (angle > DELTAPHI) return null;
+    
+    Point v3 = p3 - p2;
+    Point v4 = p4 - p2;
+    angle = acos(Point::dot(v3,v4)); // Check angle between the last points
+    if (angle > DELTAPHI) return null;
+    
+    x[0]     = p1.r();     // r1
+    x[1]     = p1.phi();   // phi1
+    x[2]     = p1.theta(); // theta1
+    x[3]     = p2.r();     // r2
+    x[4]     = p2.phi();   // phi2
+    x[5]     = p2.theta(); // theta2
+    x[6]     = p3.r();     // r3
+    x[7]     = p3.phi();   // phi3
+    x[8]     = p3.theta(); // theta3
+    x[9]     = p4.r();     // r4
+    x[10]    = p4.phi();   // phi4
+    x[11]    = p4.theta(); // theta4
+    
+    return net.Recallstep(x);
+}
+
 int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
     std::clock_t c_start = std::clock();
@@ -259,27 +293,32 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     // Assign labels
     int n = 0;
+    int nc = 0;
     for (int i=0;i<tracklet.size();i++) {
+        int id = 0;
         for (int j=0;j<tracklet[i].size();j++) {
             int hit = tracklet[i][j];
+            if (j==0) id = hit;
             labels[hit] = i+1;
             p[hit].setval(i+1);
+            if (hit == id++) nc ++;
             n++;
         }
     }
-
-    /*
-    // Gather the not assigned points
-    for (int i=0;i<nhits;i++) {
-        if (labels[i] == 0) {
-            points.push_back(p[i]);
-        }
-    }
-    */
     
-    cout << "Number of hits              : " << nhits << endl;
-    cout << "Number of assigned points   : " << n << endl;
-    cout << "Number of unassigned points : " << napoints << endl;
+    /*
+     // Gather the not assigned points
+     for (int i=0;i<nhits;i++) {
+     if (labels[i] == 0) {
+     points.push_back(p[i]);
+     }
+     }
+     */
+    
+    cout << "Number of hits                      : " << nhits << endl;
+    cout << "Number of assigned points           : " << n << endl;
+    cout << "Number of correctly assigned points : " << nc << endl;
+    cout << "Number of unassigned points         : " << napoints << endl;
     cout << "Number of reassigned points : " << rapoints << endl;
     cout << "Threshold <" << THRESHOLD << ": " << nn <<endl;
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
