@@ -1,7 +1,6 @@
 // Read the trackml data files and extract neural network training data
 // M.Kunze, Heidelberg University, 2018
 
-#define TRACKML
 #define DRAW true
 
 #include "TString.h"
@@ -19,6 +18,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <random>
 
 #include "DataStructures.h"
 #include "Geo.h"
@@ -160,8 +160,34 @@ void combine4(Particle &p)
     }
 }
 
+#define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
+
+void GenerateTrack(std::vector<Point> &points, int np, double delta, double radius, double phi, double gamma, double error) {
+    default_random_engine generator;
+    double tau = 0.1;
+    static int n = 0;
+    for (int i=0; i<np; i++,tau+=delta)
+    {
+        float X,Y,Z;
+        X = radius * ( sin(phi + (signum(radius)) * tau) - sin(phi));
+        Y = radius * (-cos(phi + (signum(radius)) * tau) + cos(phi));
+        Z = gamma * tau;
+        if (error > 0.0) {
+            normal_distribution<float> distribution0(X,error);
+            X = distribution0(generator);
+            normal_distribution<float> distribution1(Y,error);
+            Y = distribution1(generator);
+            normal_distribution<float> distribution2(Z,error);
+            Z = distribution2(generator);
+        }
+        Point p(X,Y,Z,n++,-1);
+        points.push_back(p);
+    }
+}
+
 int main()
 {
+#ifdef TRACKML
     bool analyseTruth = true;
     
     const int nEvents = NEVENTS;
@@ -216,7 +242,6 @@ int main()
         std::vector<Point> hits;
         hits.reserve(MAXHITS);
         
-        
         size_t nParticles = mParticles.size();
         if (nParticles > MAXPARTICLES) nParticles = MAXPARTICLES;
         cout << "Particles:" << nParticles << endl;
@@ -246,11 +271,21 @@ int main()
         delete ntuple3;
         delete ntuple4;
 
+#else
+    {
+        std::vector<Point> hits;
+        hits.reserve(MAXHITS);
+        // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
+        GenerateTrack(hits,NHITS,0.025, 1.0,M_PI/2.0, 1.0,SIGMA); // 00
+        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/2.0, 1.0,SIGMA); // 10
+        GenerateTrack(hits,NHITS,0.025, 1.5,M_PI/1.0,-1.0,SIGMA); // 20
+        GenerateTrack(hits,NHITS,0.025,-2.0,M_PI/3.0,-1.0,SIGMA); // 30
+#endif
         size_t nhits = hits.size();
         if (nhits > MAXHITS) nhits = MAXHITS;
         cout << "Hits: " << nhits << endl;
         
-        if (!FINDTRACKS) continue;
+        //if (!FINDTRACKS) continue;
         
         float x[nhits],y[nhits],z[nhits];
         int labels[nhits];
@@ -306,7 +341,9 @@ int main()
             if (i<MAXLABEL || i>nhits-MAXLABEL) cout << labels[i] << " ";
             if (i == MAXLABEL) cout << endl << "..." << endl;
         }
-        
+        cout << endl;
+
+#ifdef TRACKML
         // Wite a hits file with hits sorted by tracks
         cout << endl << "Write hits file..." << endl;
         //outhits<<"hit_id,x,y,z,volume_id,layer_id,module_id"<<endl;
@@ -321,7 +358,7 @@ int main()
                 //outhits<<h.volume<<","<<h.layer<<","<<h.module<<endl;
             }
         }
-        
+
         cout << "Write tracks file..." << endl;
         for (int ip=0; ip<mParticles.size(); ip++ ) {
             Particle &p1 = mParticles[ip];
@@ -336,10 +373,12 @@ int main()
             out<<event<<","<<ih+1<<","<<labels[ih]<<endl;
         }
         out.close();
-        
+#endif
         // Initialize a 3D canvas and draw the hits and tracks
         if (DRAW) {
-            filePrefix.Form("%sevent%09d",dir.Data(),event);
+            TString dir = "/Users/marcel/workspace/train_sample/";
+            TString filePrefix;
+            filePrefix.Form("%sevent%09d",dir.Data(),0);
             TString cname = filePrefix+"-canvas.root";
             TFile output(cname,"RECREATE");
             TCanvas *c1 = new TCanvas("c1","NNO Tracking: XMLP",200,10,700,500);

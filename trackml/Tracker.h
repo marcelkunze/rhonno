@@ -10,20 +10,23 @@
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
 #define TRACKLET 3
-#define NEIGHBOURS 5
-#define THRESHOLD 0.985
-#define DISTANCE 0.5
-#define DELTAR   1.0
-#define DELTAPHI 0.1
+#define NEIGHBOURS 3
+#define THRESHOLD 0.9
+#define DISTANCE 10.0
+#define DELTAR   10.0
+#define DELTAPHI 0.5
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
 #define TRACKLET 2
-#define THRESHOLD 0.7
-#define DISTANCE 1.0
+#define NEIGHBOURS 3
+#define THRESHOLD 0.9
+#define DISTANCE 0.5
 #define DELTAR   1.0
 #define DELTAPHI 0.04
+#define NHITS 10
+#define SIGMA 0.0
 #endif
 
 #define VERBOSE true
@@ -39,8 +42,7 @@ private:
     double _x, _y, _z;     // Cartesian coordinate of point
     double _r,_phi,_theta; // Spherical coordinates of point
     double _distance;    // Distance from test point
-    int _neighbour;
-    int _nextneighbour;
+    int _neighbour[NEIGHBOURS];
 public:
     Point(void):_id(0),_val(0),_x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_distance(0) {}
     Point(const Point &p);
@@ -48,6 +50,7 @@ public:
     Point(float x, float y, float z, int id, int val);
     Point operator+(const Point p) const { return Point(_x+p._x,_y+p._y,_z+p._z);}
     Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
+    static bool sortRad(const Point &a,const Point &b);
     static bool sortDist(const Point &a,const Point &b);
     static bool sortId(const Point &a,const Point &b);
     static double angleBetween(const Point &a,const Point &b,const Point &c);
@@ -66,27 +69,41 @@ public:
     inline double phi() {return _phi;}
     inline int id() {return _id;}
     inline int val() {return _val;}
-    inline int neighbour() {return _neighbour;}
-    inline int nextneighbour() {return _nextneighbour;}
+    inline int neighbour(int i=0) {if (i<NEIGHBOURS && i>=0) return _neighbour[i]; else return -1;}
+    inline int* neighbours() {return _neighbour;}
     inline void setx(double x) { _x = x;}
     inline void sety(double y) { _y = y;}
     inline void setz(double z) { _z = z;}
     inline void setval(int val) { _val = val;}
     inline void setid(int id) { _id = id;}
-    inline void setneighbour(int neighbour) { _neighbour = neighbour;}
-    inline void setnextneighbour(int nextneighbour) { _nextneighbour = nextneighbour;}
+    inline void setneighbour(int neighbour, int i=0) { if (i<NEIGHBOURS && i>=0) _neighbour[i] = neighbour;}
+    inline void insertneighbour(int neighbour) {
+        for (int i=NEIGHBOURS-1;i>=0;i--) _neighbour[i+1] =_neighbour[i];
+        _neighbour[0] = neighbour;
+    }
+    inline void backinsertneighbour(int neighbour) {
+        for (int i=1;i<NEIGHBOURS;i++) _neighbour[i-1] =_neighbour[i];
+        _neighbour[NEIGHBOURS-1] = neighbour;
+    }
 };
 
 // Used to sort an array of points by increasing
 // order of distance from origin
 inline
-bool Point::sortDist(const Point &a,const Point &b)
+bool Point::sortRad(const Point &a,const Point &b)
 {
     return (a._r < b._r);
 }
 
 // Used to sort an array of points by increasing
 // order of distance from origin
+inline
+bool Point::sortDist(const Point &a,const Point &b)
+{
+    return (a._distance < b._distance);
+}
+
+// Used to sort an array of points by increasing id
 inline
 bool Point::sortId(const Point &a,const Point &b)
 {
@@ -159,10 +176,10 @@ bool Point::comparison(const Point &a,const Point &b)
 inline
 double Point::distance(const Point &a)
 {
-    double d =  sqrt((a._x - _x) * (a._x - _x) +
-                     (a._y - _y) * (a._y - _y) +
-                     (a._z - _z) * (a._z - _z));
-    return d;
+    _distance =  sqrt((a._x - _x) * (a._x - _x) +
+                      (a._y - _y) * (a._y - _y) +
+                      (a._z - _z) * (a._z - _z));
+    return _distance;
 }
 
 inline
