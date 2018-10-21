@@ -35,7 +35,7 @@ int layerNHits[Geo::NLayers];
 
 #define NEVENTS 1
 #define MAXHITS 150000
-#define MAXPARTICLES 10
+#define MAXPARTICLES 3
 #define MCHITS false
 #define FINDTRACKS true
 

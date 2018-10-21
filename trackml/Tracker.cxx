@@ -83,15 +83,7 @@ double* Tracker::Recall2(Point &p1, Point &p2)
 {
     static XMLP net(NETFILE2);
     static float x[6]={0.,0.,0.,0.,0.,0.};
-    static double bad[1]={-1.0};
-    static double null[1]={0.0};
 
-    double angle = acos(Point::dot(p1,p2)); // Check angle between the vectors (origin,p1) and (origin,p2)
-    if (angle > DELTAPHI) return null;
-
-    double deltar = abs(p1.r()-p2.r()); // Check the radial distance
-    if (deltar > DELTAR) return bad;
-    
     x[0]     = p1.r();     // r1
     x[1]     = p1.phi();   // phi1
     x[2]     = p1.theta(); // theta1
@@ -107,7 +99,6 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
 {
     static XMLP net(NETFILE3);
     static float x[9]={0.,0.,0.,0.,0.,0.,0.,0.,0.};
-    //static double bad[1]={-1.0};
     static double null[1]={0.0};
 
     Point v1 = p2 - p1;
@@ -188,31 +179,49 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     // Search neighbouring hits
     cout << "Searching neighbours..." << endl;
+    
     for (int i=0;i<nhits;i++) {
         int index = i;
         if (i>nhits-NEIGHBOURS) index = nhits-NEIGHBOURS;
         int n = 0;
         vector<Point> neighbours;
+        Point p0 = points[i];
+        
         while (n<NEIGHBOURS && index++<nhits-1) {
+            
             if (index == i) continue;
             Point &p1 = points[index];
-            double angle = acos(Point::dot(points[i],p1)); // Check angle between the vectors (origin,p1) and (origin,p2)
+            
+            double angle = acos(Point::dot(p0,p1)); // Check angle between the vectors (origin,p1) and (origin,p2)
             if (angle > DELTAPHI) continue;
+            
+            double deltar = abs(p1.r()-p0.r()); // Check the radial distance
+            if (deltar > DELTAR) continue;
+            
             double d = p1.distance(points[i]);
             if (d < DISTANCE) {
-                neighbours.push_back(p1);
-                n++;
+                if (Recall2(p0,p1)[0]>THRESHOLD) {
+                    neighbours.push_back(p1);
+                    n++;
+                }
             }
         }
+        
         sort(neighbours.begin(),neighbours.end(),Point::sortDist);
+        
         for (int j=0;j<neighbours.size();j++) {
             points[i].setneighbour(neighbours[j].id(),j);
             p[points[i].id()].setneighbour(neighbours[j].id(),j);
         }
+        
     }
         
     if (VERBOSE) {
-        for (int i=0;i<nhits;i++) cout << points[i].neighbour() << "(" << points[i].neighbour(1) << "," << points[i].neighbour(2) << ") ";
+        for (int i=0;i<nhits;i++) {
+            cout << points[i].id() << "(" ;
+            for (int j=0;j<NEIGHBOURS;j++) cout << points[i].neighbour(j) << " ";
+            cout << ") ";
+        }
         cout << endl;
     }
     
@@ -230,7 +239,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
         n1++;
         vector<Point> pvec;
         auto it = hitmap.begin();
-        if (VERBOSE) cout << it->first << "(0) ";
+        if (VERBOSE) cout << endl << it->first << "(0) ";
         Point p0 = it->second;
         pvec.push_back(p0);
         hitmap.erase(it++);
@@ -238,11 +247,33 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
             int neighbour = p0.neighbour();
             if (neighbour == -1) break;
             Point p1 = p[neighbour];
+            
             double recall = 0.0;
-            recall = Recall2(p0,p1)[0]; // try the initial pair
-            n2++;
+            
+            if (pvec.size()<2 || p1.neighbour() == -1) {
+                recall = Recall2(p0,p1)[0]; // try the initial or last pair
+                if (VERBOSE) cout << "/" << p0.id() << " " << p1.id() << "/ ";
+                n2++;
+            }
+            else
+            {
+                Point p2 = p[p1.neighbour()];
+                recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 consecutive points
+                n3++;
+                if (recall == 0.0) { // No straight conection between the three points
+                    p2 = p[p1.neighbour(1)]; // Try next neighbour
+                    recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 consecutive points
+                    n3++;
+                    if (recall == 0.0) { // No straight conection between the three points
+                        if (VERBOSE) cout << endl << "break " << p0.id() << " " << p1.id() << " " << p2.id() << "(" << recall << ")";
+                        np++;
+                        break;
+                    }
+                }
+            }
+  
             if (recall>THRESHOLD) {
-                if (VERBOSE) cout << p1.id() << "(" << (int) 100*recall << ") ";
+                if (VERBOSE) cout << "*" << p1.id() << "(" << (int) 100*recall << ") ";
                 pvec.push_back(p1);
                 it = hitmap.find(neighbour);
                 if (it == hitmap.end()) break;
@@ -250,7 +281,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
                 p0 = p1;
             }
             else {
-                if (VERBOSE) cout << p1.id() << "{" << (int) 100*recall << "} ";
+                if (VERBOSE) cout << "*" << p1.id() << "{" << (int) 100*recall << "} ";
                 nn++;
                 break;
             }
