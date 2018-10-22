@@ -24,7 +24,7 @@ $(EXECUTABLE): $(OBJECTS) $(LIBRARY)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
 $(LIBRARY): Tracker.o XMLP.o XMLP.h Tracker.h
-	clang++ -fPIC -shared -o $(LIBRARY) XMLP.cxx Tracker.cxx
+	clang++ -std=c++11 -fPIC -shared -o $(LIBRARY) XMLP.cxx Tracker.cxx
 
 %.o: %.cxx $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ 
