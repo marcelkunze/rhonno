@@ -93,7 +93,7 @@ void VNeuralNet::WriteNet()
     char ftype[16];
     if (fFiletype==FILE_BINARY) strcpy(ftype,"binary"); else strcpy(ftype,"text");
     if (fFile==0) { cerr << "VNeuralNet::WriteNet:: Could not open for writing " << fFilename << endl; return; }
-    fprintf(fFile,"C++  NEURAL NETWORK OBJECTS   VERSION %s\n(C) Copyright Johannes Steffens\nFiletype %s\n",NNO_VERSION,ftype);
+    fprintf(fFile,"C++  NEURAL NETWORK OBJECTS   VERSION %s\nFiletype %s\n",NNO_VERSION,ftype);
     if (fFiletype==FILE_BINARY) WriteNetBinary(); else WriteNetText();
     if (fFiletype==FILE_BINARY) WriteBinary();     else WriteText();
     fclose(fFile);
@@ -117,7 +117,7 @@ void VNeuralNet::ReadNet(const char* netID)
     if (fFile==0) Errorf((char *)"file %s not found",(char *)fFilename.data());
     char ftype[16];
     char Version[16];
-    fscanf(fFile,"C++  NEURAL NETWORK OBJECTS   VERSION %s\n(C) Copyright Johannes Steffens\nFiletype %s\n",Version,ftype);
+    fscanf(fFile,"C++  NEURAL NETWORK OBJECTS   VERSION %s\nFiletype %s\n",Version,ftype);
     if      (!strcmp(ftype,"binary")) fFiletype = FILE_BINARY;
     else if (!strcmp(ftype,"text"))   fFiletype = FILE_TEXT;
     else Errorf((char *)"illegal fileformat: %s",(char *)fFilename.data());
