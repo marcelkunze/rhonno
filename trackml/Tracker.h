@@ -11,9 +11,10 @@
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
 #define TRACKLET 3
 #define NEIGHBOURS 3
-#define THRESHOLD 0.99
-#define DISTANCE 1.0
-#define DELTAR   1.0
+#define MAXKNN 8
+#define THRESHOLD 0.98
+#define DISTANCE 2.0
+#define DELTAR   2.0
 #define DELTAPHI 0.2
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
@@ -21,6 +22,7 @@
 #define NETFILE4 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
 #define TRACKLET 2
 #define NEIGHBOURS 3
+#define MAXKNN 8
 #define THRESHOLD 0.9
 #define DISTANCE 0.5
 #define DELTAR   1.0
@@ -43,6 +45,7 @@ private:
     double _r,_phi,_theta; // Spherical coordinates of point
     double _distance;    // Distance from test point
     int _neighbour[NEIGHBOURS];
+    double _recall[NEIGHBOURS];
 public:
     Point(void):_id(0),_val(0),_x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_distance(0) {}
     Point(const Point &p);
@@ -53,6 +56,7 @@ public:
     static bool sortRad(const Point &a,const Point &b);
     static bool sortDist(const Point &a,const Point &b);
     static bool sortId(const Point &a,const Point &b);
+    static bool sortRecall(const Point &a,const Point &b);
     static double angleBetween(const Point &a,const Point &b,const Point &c);
     static double dot(const Point &a,const Point &b);
     static Point circleCenter(const Point &p1,const Point &p2,const Point &p3);
@@ -71,20 +75,15 @@ public:
     inline int val() {return _val;}
     inline int neighbour(int i=0) {if (i<NEIGHBOURS && i>=0) return _neighbour[i]; else return -1;}
     inline int* neighbours() {return _neighbour;}
+    inline double recall(int i=0) {if (i<NEIGHBOURS && i>=0) return _recall[i]; else return -1;}
+    inline double* recalls() {return _recall;}
     inline void setx(double x) { _x = x;}
     inline void sety(double y) { _y = y;}
     inline void setz(double z) { _z = z;}
     inline void setval(int val) { _val = val;}
     inline void setid(int id) { _id = id;}
     inline void setneighbour(int neighbour, int i=0) { if (i<NEIGHBOURS && i>=0) _neighbour[i] = neighbour;}
-    inline void insertneighbour(int neighbour) {
-        for (int i=NEIGHBOURS-1;i>=0;i--) _neighbour[i+1] =_neighbour[i];
-        _neighbour[0] = neighbour;
-    }
-    inline void backinsertneighbour(int neighbour) {
-        for (int i=1;i<NEIGHBOURS;i++) _neighbour[i-1] =_neighbour[i];
-        _neighbour[NEIGHBOURS-1] = neighbour;
-    }
+    inline void setrecall(double recall, int i=0) { if (i<NEIGHBOURS && i>=0) _recall[i] = recall;}
 };
 
 // Used to sort an array of points by increasing
@@ -110,6 +109,12 @@ bool Point::sortId(const Point &a,const Point &b)
     return (a._id < b._id);
 }
 
+// Used to sort an array of points by decreasing recall
+inline
+bool Point::sortRecall(const Point &a,const Point &b)
+{
+    return (a._recall[0] > b._recall[0]);
+}
 
 // Calculate the angle between two vectors defined by (a,b) and (a,c)
 inline

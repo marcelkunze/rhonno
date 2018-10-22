@@ -32,7 +32,7 @@ Point::Point(double x, double y, double z, int id, int val)
     _phi = atan2(_y,_x);
     _theta = acos(z/_r);
     _distance = 0.0;
-    for (int i=0; i<NEIGHBOURS;i++) _neighbour[i] = -1;
+    for (int i=0; i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1;
 }
 
 Point::Point(float x, float y, float z, int id=-1, int val=-1)
@@ -46,7 +46,7 @@ Point::Point(float x, float y, float z, int id=-1, int val=-1)
     _phi = atan2(_y,_x);
     _theta = acos(z/_r);
     _distance = 0.0;
-    for (int i=0; i<NEIGHBOURS;i++) _neighbour[i] = -1;
+    for (int i=0; i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1;
 }
 
 Point::Point(const Point &p)
@@ -60,7 +60,10 @@ Point::Point(const Point &p)
     _phi = p._phi;
     _theta = p._theta;
     _distance = p._distance;
-    for (int i=0; i<NEIGHBOURS;i++) _neighbour[i] = p._neighbour[i];
+    for (int i=0; i<NEIGHBOURS;i++) {
+        _neighbour[i] = p._neighbour[i];
+        _recall[i] = p._recall[i];
+    }
 }
 
 // Print an integer hit id track vector
@@ -181,15 +184,21 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Searching neighbours..." << endl;
     
     for (int i=0;i<nhits;i++) {
+
+        //if (i%10000==0) cout << i << endl;
         int index = i;
         if (i>nhits-NEIGHBOURS) index = nhits-NEIGHBOURS;
         int n = 0;
         vector<Point> neighbours;
-        Point p0 = points[i];
+        
+        int knn = 0;
+        Point &p0 = points[i];
         
         while (n<NEIGHBOURS && index++<nhits-1) {
             
             if (index == i) continue;
+            if (knn++ > MAXKNN) break; // Max. number of neighbours reached
+            
             Point &p1 = points[index];
             
             double angle = acos(Point::dot(p0,p1)); // Check angle between the vectors (origin,p1) and (origin,p2)
@@ -198,9 +207,17 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
             double deltar = abs(p1.r()-p0.r()); // Check the radial distance
             if (deltar > DELTAR) continue;
             
-            double d = p1.distance(points[i]);
-            if (d < DISTANCE) {
-                if (Recall2(p0,p1)[0]>THRESHOLD) {
+            double d = p1.distance(p0);
+            if (d < DISTANCE*p0.r()) {
+                double recall = 0;
+                if (neighbours.size()==0) {
+                    recall = Recall2(p0,p1)[0];
+                }
+                else {
+                    recall = Recall3(p0,neighbours[0],p1)[0];
+                }
+                if (recall>THRESHOLD) { // Check hit pair belongs to track
+                    p1.setrecall(recall);
                     neighbours.push_back(p1);
                     n++;
                 }
@@ -208,23 +225,36 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
         }
         
         sort(neighbours.begin(),neighbours.end(),Point::sortDist);
-        
-        for (int j=0;j<neighbours.size();j++) {
+ 
+/*
+        Point &p1 = points[neighbours[0].id()];
+        Point &p2 = points[neighbours[1].id()];
+        Point &p3 = points[neighbours[2].id()];
+        double recall1 = Recall3(p0,p1,p2)[0];
+        double recall2 = Recall3(p0,p1,p3)[0];
+*/
+        for (int j=0;j<neighbours.size();j++) { // Note the neighbour ids and recall values
             points[i].setneighbour(neighbours[j].id(),j);
+            points[i].setrecall(neighbours[j].recall(),j);
             p[points[i].id()].setneighbour(neighbours[j].id(),j);
+            p[points[i].id()].setrecall(neighbours[j].recall(),j);
         }
         
     }
         
     if (VERBOSE) {
         for (int i=0;i<nhits;i++) {
-            cout << points[i].id() << "(" ;
-            for (int j=0;j<NEIGHBOURS;j++) cout << points[i].neighbour(j) << " ";
-            cout << ") ";
+            cout << p[i].id() << "(" ;
+            for (int j=0;j<NEIGHBOURS;j++) cout << p[i].neighbour(j) << "/" << p[i].recall(j) << " ";
+            cout << ") " << endl;
         }
         cout << endl;
     }
     
+    std::clock_t c_end = std::clock();
+    double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+
     // fill the hitmap
     for (int i=0;i<nhits;i++) hitmap[points[i].id()] = points[i];
 
@@ -476,8 +506,8 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
 
     delete [] p;
     
-    std::clock_t c_end = std::clock();
-    double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    c_end = std::clock();
+    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     return (int) tracklet.size();

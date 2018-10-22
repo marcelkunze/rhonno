@@ -273,6 +273,7 @@ int main()
 
 #else
     {
+        int event = 0;
         std::vector<Point> hits;
         hits.reserve(MAXHITS);
         // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
@@ -378,7 +379,7 @@ int main()
         if (DRAW) {
             TString dir = "/Users/marcel/workspace/train_sample/";
             TString filePrefix;
-            filePrefix.Form("%sevent%09d",dir.Data(),0);
+            filePrefix.Form("%sevent%09d",dir.Data(),event);
             TString cname = filePrefix+"-canvas.root";
             TFile output(cname,"RECREATE");
             TCanvas *c1 = new TCanvas("c1","NNO Tracking: XMLP",200,10,700,500);
