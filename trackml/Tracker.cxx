@@ -21,10 +21,11 @@
 
 using namespace std;
 
-Point::Point(double x, double y, double z, int id, int val)
+Point::Point(double x, double y, double z, int id, int label, int truth)
 {
     _id = id;
-    _val = val;
+    _label = label;
+    _truth = truth;
     _x = x;
     _y = y;
     _z = z;
@@ -35,10 +36,11 @@ Point::Point(double x, double y, double z, int id, int val)
     for (int i=0; i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1;
 }
 
-Point::Point(float x, float y, float z, int id=-1, int val=-1)
+Point::Point(float x, float y, float z, int id, int label, int truth)
 {
     _id = id;
-    _val = val;
+    _label = label;
+    _truth = truth;
     _x = x;
     _y = y;
     _z = z;
@@ -52,7 +54,8 @@ Point::Point(float x, float y, float z, int id=-1, int val=-1)
 Point::Point(const Point &p)
 {
     _id = p._id;
-    _val = p._val;
+    _label = p._label;
+    _truth = p._truth;
     _x = p._x;
     _y = p._y;
     _z = p._z;
@@ -165,7 +168,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     points.reserve(nhits);
     map<int,Point> hitmap;
 
-    unsigned long n1(0), n2(0), n3(0);
+    unsigned long n1(0), n2(0), n3(0), n4(0), np(0), nr(0), nd(0);
 
     // Set up a cache for the point coordinates
     //cout << "Set up points cache..." << endl;
@@ -185,54 +188,61 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     for (int i=0;i<nhits;i++) {
 
+#define TBD -1
+        int tbd = points[i].id();
+        
         //if (i%10000==0) cout << i << endl;
+        if (TBD==tbd) cout << "id: " << points[i].id() << endl;
         int index = i;
         if (i>nhits-NEIGHBOURS) index = nhits-NEIGHBOURS;
         int n = 0;
         vector<Point> neighbours;
         
         int knn = 0;
-        Point &p0 = points[i];
+        Point &p0 = points[i]; // Seeding hit
         
         while (n<NEIGHBOURS && index++<nhits-1) {
             
             if (index == i) continue;
             if (knn++ > MAXKNN) break; // Max. number of neighbours reached
             
-            Point &p1 = points[index];
+            if (TBD==tbd) cout << "Index: " << points[index].id() << endl;
+            Point p1 = points[index];
             
             double angle = acos(Point::dot(p0,p1)); // Check angle between the vectors (origin,p1) and (origin,p2)
-            if (angle > DELTAPHI) continue;
+            if (angle > DELTAPHI) { if (TBD==tbd) cout << "P " << angle << endl; np++; continue; }
             
             double deltar = abs(p1.r()-p0.r()); // Check the radial distance
-            if (deltar > DELTAR) continue;
+            if (deltar > DELTAR) { if (TBD==tbd) cout << "R " << deltar << endl; nr++; continue; }
             
-            double d = p1.distance(p0);
-            if (d < DISTANCE*p0.r()) {
-                double recall = 0;
-                if (neighbours.size()==0) {
-                    recall = Recall2(p0,p1)[0];
-                }
-                else {
-                    recall = Recall3(p0,neighbours[0],p1)[0];
-                }
-                if (recall>THRESHOLD) { // Check hit pair belongs to track
-                    p1.setrecall(recall);
-                    neighbours.push_back(p1);
-                    n++;
-                }
+            double d = p1.distance(p0); // Check the euclidean distance
+            if (d > DISTANCE) { if (TBD==tbd) cout << "D " << d << endl; nd++; continue; }
+            
+            double recall = 0;
+            if (neighbours.size()<2) {
+                recall = Recall2(p0,p1)[0];
+                n2++;
+            }
+            else {
+                Point &last = neighbours[n-1];
+                Point &forelast = neighbours[n-2];
+                recall = Recall3(forelast,last,p1)[0];
+                n3++;
+            }
+            if (recall>THRESHOLD) { // Check hit pair/triple belongs to track
+                p1.setrecall(recall);
+                neighbours.push_back(p1);
+                n++;
+                if (TBD==tbd) cout << "OK " << endl;
+            }
+            else {
+               n4++;
+                if (TBD==tbd) cout << "T " << recall << endl;
             }
         }
         
         sort(neighbours.begin(),neighbours.end(),Point::sortDist);
- 
-/*
-        Point &p1 = points[neighbours[0].id()];
-        Point &p2 = points[neighbours[1].id()];
-        Point &p3 = points[neighbours[2].id()];
-        double recall1 = Recall3(p0,p1,p2)[0];
-        double recall2 = Recall3(p0,p1,p3)[0];
-*/
+
         for (int j=0;j<neighbours.size();j++) { // Note the neighbour ids and recall values
             points[i].setneighbour(neighbours[j].id(),j);
             points[i].setrecall(neighbours[j].recall(),j);
@@ -262,163 +272,49 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Find tracklets..." << endl;
     vector<vector<int> > tracklet;
     vector<vector<int> > shortpath;
-    int nd(0), nr(0), nn(0), np(0);
     
     while (hitmap.size()>0) {
         if (VERBOSE && n1%1000==0) cout << endl << n1 << " size " << hitmap.size() << endl;
         n1++;
         vector<Point> pvec;
         auto it = hitmap.begin();
-        if (VERBOSE) cout << endl << it->first << "(0) ";
-        Point p0 = it->second;
+        //if (VERBOSE) cout << tracklet.size() << ": ";
+        Point &p0 = it->second;
         pvec.push_back(p0);
         hitmap.erase(it++);
-        while (it != hitmap.end()) {
-            int neighbour = p0.neighbour();
-            if (neighbour == -1) break;
-            Point p1 = p[neighbour];
-            
-            double recall = 0.0;
-            
-            if (pvec.size()<2 || p1.neighbour() == -1) {
-                recall = Recall2(p0,p1)[0]; // try the initial or last pair
-                if (VERBOSE) cout << "/" << p0.id() << " " << p1.id() << "/ ";
-                n2++;
+        int neighbour = p0.neighbour(0);
+        int nextneighbour = p0.neighbour(1);
+        while (it != hitmap.end()) { // Follow the path until there are no more neighbours
+            if (neighbour < 0 || neighbour >= nhits) break;
+            auto it1 = hitmap.find(neighbour);
+            if (it1==hitmap.end()) { // hit is already assigned
+                neighbour = nextneighbour; // try an alternative neighbour
+                continue;
             }
-            else
-            {
-                Point p2 = p[p1.neighbour()];
-                recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 consecutive points
-                n3++;
-                if (recall == 0.0) { // No straight conection between the three points
-                    p2 = p[p1.neighbour(1)]; // Try next neighbour
-                    recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 consecutive points
-                    n3++;
-                    if (recall == 0.0) { // No straight conection between the three points
-                        if (VERBOSE) cout << endl << "break " << p0.id() << " " << p1.id() << " " << p2.id() << "(" << recall << ")";
-                        np++;
-                        break;
-                    }
-                }
-            }
-  
-            if (recall>THRESHOLD) {
-                if (VERBOSE) cout << "*" << p1.id() << "(" << (int) 100*recall << ") ";
-                pvec.push_back(p1);
-                it = hitmap.find(neighbour);
-                if (it == hitmap.end()) break;
-                hitmap.erase(it++);
-                p0 = p1;
-            }
-            else {
-                if (VERBOSE) cout << "*" << p1.id() << "{" << (int) 100*recall << "} ";
-                nn++;
-                break;
-            }
+            Point &p1 = it->second;  // copy the point into the tracklet vector
+            pvec.push_back(p1);
+            hitmap.erase(it++);
+            neighbour = p1.neighbour(0); // move to the next point
+            nextneighbour = p1.neighbour(1);
         }
         
         sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
         vector<int> tmpvec;
         for (int ip=0;ip<pvec.size();ip++) tmpvec.push_back(pvec[ip].id()); // Note the hit indices
+        if (VERBOSE) print(tmpvec);
         if (pvec.size() >= TRACKLET)
             tracklet.push_back(tmpvec);
         else
             shortpath.push_back(tmpvec);
     }
 
-/*
-    for (auto it1 = hitmap.begin(); it1 != hitmap.end(); n1++) {
-        Point p0 = (*it1).second;
-        int neighbour = p0.neighbour();
-        vector<Point> pvec;
-        while (neighbour != -1) {
-            pvec.push_back(p0);
-            auto it = hitmap.find(p0.id());
-            if (it == hitmap.end()) { it1++; break; }
-            it1 = hitmap.erase(it);
-            p0 = points[neighbour];
-            neighbour = p0.neighbour();
-        }
-        sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
-        vector<int> tmpvec;
-        for (int ip=0;ip<pvec.size();ip++) tmpvec.push_back(pvec[ip].id()); // Note the hit indices
-        if (pvec.size() >= TRACKLET)
-            tracklet.push_back(tmpvec);
-        else
-            shortpath.push_back(tmpvec);
-    }
- */
-/*
-    // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
-    cout << "Find tracklets..." << endl;
-    int nd(0), nr(0), nn(0), np(0);
-    for (auto it1 = hitmap.begin(); it1 != hitmap.end(); it1++, n1++) {
-        if (VERBOSE && n1%1000==0) cout << n1 << " size " << points.size() << endl;
-        Point p0 = (*it1).second;// it1->second; // Seeding point
-        Point p1 = (*it1).second;// it1->second;
-        vector<Point> pvec;
-        pvec.push_back(p1); //Note the seeding point in the first place
-        if (VERBOSE) cout << endl << p1.id() << "(0) ";
-        int ntry = 0;
-        auto tmp = it1;
-        for (auto it2 = ++tmp; it2 != hitmap.end(); it2++) { //
-            if (it1==it2) continue;
-            Point p2 = (*it2).second;//it2->second;
-            double dist = p2.distance(p1); // Only consider points in the neighborhood
-            if (dist > DISTANCE) {
-                nd++;
-                continue;
-            }
-            
-            // Seeding a second point: Get network track quality of 2 points
-            double recall = 0.0;
-            if (pvec.size() <2) {
-                recall = Recall2(p1,p2)[0]; // try the initial pair
-                n2++;
-                if (recall == 0 && ntry++<5) { np++; continue; } // try the next 5 points
-                if (recall < 0.0) { nr++; break; } // Out of bounds; finish tracklet
-            }
-            else
-            {
-                recall = Recall3(p0,p1,p2)[0]; // Get network track quality of 3 consecutive points
-                n3++;
-                if (recall <= 0.0) { np++; continue; } // No straight conection between the three points
-            }
-
-            if (recall>THRESHOLD) {
-                pvec.push_back(p2); // Note the columns with a good combination
-                if (VERBOSE) cout << p2.id() << "(" << (int) 100*recall << ") ";
-                hitmap.erase(it2);  // Remove the corresponding point from the set
-                *it2--;
-                p0 = p1;// Note the assigned hits
-                p1 = p2;
-                continue;
-            }
-            else {
-                if (VERBOSE) cout << p2.id() << "{" << (int) 100*recall << "} ";
-                nn++;
-            }
-            
-        }
-        hitmap.erase(it1);  // Remove the corresponding point from the set
-        *it1--;
-
-        sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
-        vector<int> tmpvec;
-        for (int ip=0;ip<pvec.size();ip++) tmpvec.push_back(pvec[ip].id()); // Note the hit indices
-        if (pvec.size() >= TRACKLET)
-            tracklet.push_back(tmpvec);
-        else
-            shortpath.push_back(tmpvec);
-    }
-*/
     cout << endl << "Number of tracklets   : " << tracklet.size() << endl;
     cout << "Number of short tracks: " << shortpath.size() << endl;
     if (tracklet.size() == 0) exit(0);
     
     // Sort the tracklet vector according to the tracklet length
     
-    sort(tracklet.begin(), tracklet.end(), sortFunc);
+    //sort(tracklet.begin(), tracklet.end(), sortFunc);
     
     // Print out the tracks vector
     if (VERBOSE) {
@@ -477,27 +373,18 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
             int hit = tracklet[i][j];
             if (j==0) id = hit;
             labels[hit] = i+1;
-            p[hit].setval(i+1);
+            p[hit].setlabel(i+1);
             if (hit == id++) nc ++;
             n++;
         }
     }
-    
-    /*
-     // Gather the not assigned points
-     for (int i=0;i<nhits;i++) {
-     if (labels[i] == 0) {
-     points.push_back(p[i]);
-     }
-     }
-     */
     
     cout << "Number of hits                      : " << nhits << endl;
     cout << "Number of assigned points           : " << n << endl;
     cout << "Number of correctly assigned points : " << nc << endl;
     cout << "Number of unassigned points         : " << napoints << endl;
     cout << "Number of reassigned points : " << rapoints << endl;
-    cout << "Threshold <" << THRESHOLD << ": " << nn <<endl;
+    cout << "Threshold <" << THRESHOLD << ": " << n4 <<endl;
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
     cout << "Radius   <" << DELTAR << ": " << nr <<endl;
     cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
@@ -512,5 +399,3 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     
     return (int) tracklet.size();
 }
-
-

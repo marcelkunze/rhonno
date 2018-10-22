@@ -9,13 +9,13 @@
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
-#define TRACKLET 3
-#define NEIGHBOURS 3
-#define MAXKNN 8
-#define THRESHOLD 0.98
-#define DISTANCE 2.0
-#define DELTAR   2.0
-#define DELTAPHI 0.2
+#define TRACKLET 2
+#define NEIGHBOURS 2
+#define MAXKNN 100
+#define THRESHOLD 0.99
+#define DISTANCE 1.0
+#define DELTAR   1.0
+#define DELTAPHI 0.1
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
@@ -39,18 +39,19 @@
 class Point
 {
 private:
-    int _id;             // Hit id of point
-    int _val;            // Group of point
-    double _x, _y, _z;     // Cartesian coordinate of point
-    double _r,_phi,_theta; // Spherical coordinates of point
+    int _id;             // Hit id
+    int _label;          // Label
+    int _truth;          // True label
+    double _x, _y, _z;     // Cartesian coordinate
+    double _r,_phi,_theta; // Spherical coordinates
     double _distance;    // Distance from test point
     int _neighbour[NEIGHBOURS];
     double _recall[NEIGHBOURS];
 public:
-    Point(void):_id(0),_val(0),_x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_distance(0) {}
+    Point(void):_id(0),_label(0), _truth(0), _x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_distance(0) { for (int i=0;i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1; }
     Point(const Point &p);
-    Point(double x, double y, double z, int id=-1, int val=-1);
-    Point(float x, float y, float z, int id, int val);
+    Point(double x, double y, double z, int id=-1, int val=-1, int truth=-1);
+    Point(float x, float y, float z, int id=-1, int val=-1, int truth=-1);
     Point operator+(const Point p) const { return Point(_x+p._x,_y+p._y,_z+p._z);}
     Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
     static bool sortRad(const Point &a,const Point &b);
@@ -72,7 +73,8 @@ public:
     inline double theta() {return _theta;}
     inline double phi() {return _phi;}
     inline int id() {return _id;}
-    inline int val() {return _val;}
+    inline int label() {return _label;}
+    inline int truth() {return _truth;}
     inline int neighbour(int i=0) {if (i<NEIGHBOURS && i>=0) return _neighbour[i]; else return -1;}
     inline int* neighbours() {return _neighbour;}
     inline double recall(int i=0) {if (i<NEIGHBOURS && i>=0) return _recall[i]; else return -1;}
@@ -80,7 +82,8 @@ public:
     inline void setx(double x) { _x = x;}
     inline void sety(double y) { _y = y;}
     inline void setz(double z) { _z = z;}
-    inline void setval(int val) { _val = val;}
+    inline void setlabel(int label) { _label = label;}
+    inline void settruth(int label) { _truth = label;}
     inline void setid(int id) { _id = id;}
     inline void setneighbour(int neighbour, int i=0) { if (i<NEIGHBOURS && i>=0) _neighbour[i] = neighbour;}
     inline void setrecall(double recall, int i=0) { if (i<NEIGHBOURS && i>=0) _recall[i] = recall;}
@@ -215,9 +218,9 @@ int Point::classifyAPoint(Point arr[], int n, int k, Point p)
     int freq2 = 0;     // Frequency of group 1
     for (int i = 0; i < k; i++)
     {
-        if (arr[i]._val == 0)
+        if (arr[i]._label == 0)
             freq1++;
-        else if (arr[i]._val == 1)
+        else if (arr[i]._label == 1)
             freq2++;
     }
     

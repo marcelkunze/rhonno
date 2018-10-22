@@ -35,7 +35,7 @@ int layerNHits[Geo::NLayers];
 
 #define NEVENTS 1
 #define MAXHITS 150000
-#define MAXPARTICLES 3
+#define MAXPARTICLES 20
 #define MCHITS false
 #define FINDTRACKS true
 
@@ -49,7 +49,7 @@ void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
     if (!mc) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
-            Point p(h1.x,h1.y,h1.z,h1.hitID,h1.trackID);
+            Point p(h1.x,h1.y,h1.z,h1.hitID,h1.hitID+1,h1.trackID);
             points.push_back(p);
         }
     }
@@ -224,11 +224,6 @@ int main()
         ntuple3 = new TNtuple("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:v1:v2:v3:truth");
         ntuple4 = new TNtuple("tracks4","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:r4:phi4:theta4:truth");
         
-        filePrefix.Form("%sevent%09d",dir.Data(),event+100000000);
-        TString hname = filePrefix+"-hits.csv";
-        ofstream outhits(hname);
-        cout << "Writing hits data to " << hname << endl;
-        
         for (int ih=0; ih<mHitsMC.size(); ih++ ) {
             HitMC &h = mHitsMC[ih];
             if (ih<10) h.Print();
@@ -239,13 +234,24 @@ int main()
             if (ih<10) h.Print();
         }
         
+        long start[MAXPARTICLES+1];
+        long end[MAXPARTICLES+1];
         std::vector<Point> hits;
         hits.reserve(MAXHITS);
-        
+
         size_t nParticles = mParticles.size();
         if (nParticles > MAXPARTICLES) nParticles = MAXPARTICLES;
         cout << "Particles:" << nParticles << endl;
-        
+
+        start[0] = 0;
+        end[0] = -1;
+        map<int,int> particles;
+        for (int ip=0; ip<nParticles; ip++ ) {
+            Particle &p1 = mParticles[ip];
+            start[ip+1] = end[ip]+1;
+            end[ip+1] = end[ip] + p1.hits.size();
+        }
+
         int n = 0;
         for (int ip=0; ip<nParticles; ip++ ) {
             Particle &p1 = mParticles[ip];
@@ -255,9 +261,9 @@ int main()
 
             // Print the hit ids
             transform(p1,hits,MCHITS);
-            if (ip == 10) cout << endl << "..." << endl;
-            if (ip<10 || ip>nParticles-10) {
-                cout << "Track " << ip+1 << ": ";
+
+            if (VERBOSE && ip<100) {
+                cout << "Track " << ip+1 << "(" << start[ip+1] << "-" << end[ip+1] << "): ";
                 for (int j=0; j<p1.hits.size(); j++) {
                     Hit &h = mHits[p1.hits[j]];
                     cout << h.hitID << "(" << n++ << ") ";
@@ -271,6 +277,7 @@ int main()
         delete ntuple3;
         delete ntuple4;
 
+        
 #else
     {
         int event = 0;
@@ -310,16 +317,33 @@ int main()
         nt = Tracker::findTracks((int)nhits,x,y,z,labels);
         
         // Assemble the tracks from label information
-        std::vector<Point> tracks[nt];
+        map<int,vector<Point> > tracks;
         for(int i=0; i<nt; i++) {
             int track = i+1;
+            vector<Point> t;
             for (int j=0;j<nhits;j++) {
                 if (track != labels[j]) continue;
-                hits[j].setval(labels[j]);
-                tracks[i].push_back(hits[j]); // Save the results
+                hits[j].setlabel(labels[j]);
+                t.push_back(hits[j]); // Save the results
             }
+            tracks[i] = t;
         }
         
+        // Compare the results with truth
+        cout << "Check the results..." << endl;
+        long length = 0;
+        for(int i=0; i<nt-1; i++) {
+            vector<Point> t = tracks[i];
+            if (length == start[i+1]) {
+                cout << i+1 << ": " << start[i+1] << "/" << length << " OK " << endl;
+                length += t.size();
+            }
+            else {
+                cout << i+1 << ": " << start[i+1] << "/" << length << " NOK " << endl;
+                length = start[i+2];
+            }
+            
+        }
         
 #define MAXTRACK 10
         cout << endl << "Number of tracks:" << nt << endl;
@@ -345,21 +369,6 @@ int main()
         cout << endl;
 
 #ifdef TRACKML
-        // Wite a hits file with hits sorted by tracks
-        cout << endl << "Write hits file..." << endl;
-        //outhits<<"hit_id,x,y,z,volume_id,layer_id,module_id"<<endl;
-        int nh = 0;
-        for (int ip=0; ip<mParticles.size(); ip++ ) {
-            Particle &p1 = mParticles[ip];
-            for (int j=0;j<p1.hits.size();j++) {
-                if (nh++>MAXHITS) break;
-                int index = p1.hits[j];
-                Hit h = mHits[index];
-                outhits<<100.*h.x<<"\t"<<100.*h.y<<"\t"<<100.*h.z<<endl; // Coordinates in cm
-                //outhits<<h.volume<<","<<h.layer<<","<<h.module<<endl;
-            }
-        }
-
         cout << "Write tracks file..." << endl;
         for (int ip=0; ip<mParticles.size(); ip++ ) {
             Particle &p1 = mParticles[ip];
