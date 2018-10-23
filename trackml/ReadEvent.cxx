@@ -35,7 +35,7 @@ int layerNHits[Geo::NLayers];
 
 #define NEVENTS 1
 #define MAXHITS 150000
-#define MAXPARTICLES 20
+#define MAXPARTICLES 35
 #define MCHITS false
 #define FINDTRACKS true
 
@@ -185,6 +185,9 @@ void GenerateTrack(std::vector<Point> &points, int np, double delta, double radi
     }
 }
 
+map<unsigned long,int> particlemap;
+map<unsigned long,int> recomap;
+
 int main()
 {
 #ifdef TRACKML
@@ -252,23 +255,23 @@ int main()
             end[ip+1] = end[ip] + p1.hits.size();
         }
 
-        int n = 0;
+        unsigned long nh = 0;
         for (int ip=0; ip<nParticles; ip++ ) {
+            
+            // Produce training data
             Particle &p1 = mParticles[ip];
             combine2(p1); // Produce training data (2 hits)
             combine3(p1); // Produce training data (3 hits)
             combine4(p1); // Produce training data (4 hits)
 
-            // Print the hit ids
+            // Print the hit ids and generate a particle hit map to check the reconstruction results
             transform(p1,hits,MCHITS);
 
-            if (VERBOSE && ip<100) {
-                cout << "Track " << ip+1 << "(" << start[ip+1] << "-" << end[ip+1] << "): ";
-                for (int j=0; j<p1.hits.size(); j++) {
-                    Hit &h = mHits[p1.hits[j]];
-                    cout << h.hitID << "(" << n++ << ") ";
-                }
-                cout << endl;
+            if (VERBOSE && ip<1000) cout << endl << "Track " << ip+1 << "(" << start[ip+1] << "-" << end[ip+1] << "): ";
+            for (int j=0; j<p1.hits.size(); j++) {
+                Hit &h = mHits[p1.hits[j]];
+                particlemap[nh++] = ip;
+                cout << h.hitID << "(" << nh << ") ";
             }
         }
         
@@ -317,6 +320,7 @@ int main()
         nt = Tracker::findTracks((int)nhits,x,y,z,labels);
         
         // Assemble the tracks from label information
+        nh = 0;
         map<int,vector<Point> > tracks;
         for(int i=0; i<nt; i++) {
             int track = i+1;
@@ -325,25 +329,35 @@ int main()
                 if (track != labels[j]) continue;
                 hits[j].setlabel(labels[j]);
                 t.push_back(hits[j]); // Save the results
+                recomap[nh++] = i;
             }
             tracks[i] = t;
         }
         
         // Compare the results with truth
         cout << "Check the results..." << endl;
-        long length = 0;
-        for(int i=0; i<nt-1; i++) {
-            vector<Point> t = tracks[i];
-            if (length == start[i+1]) {
-                cout << i+1 << ": " << start[i+1] << "/" << length << " OK " << endl;
-                length += t.size();
+    
+        nh = 0;
+        unsigned long np = 0;
+        for(int ip=0; ip<nt; ip++) {
+            vector<Point> t = tracks[ip];
+            for (int j=0;j<t.size();j++) {
+                auto itp = particlemap.find(np++);
+                int trackp = itp->second;
+                auto ith = recomap.find(nh++);
+                int trackh = ith->second;
+                if (trackp == trackh) {
+                    // if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << endl;
+                    particlemap.erase(itp++);
+                }
+                else {
+                    if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << " NOK" << endl;
+                    if (trackp<trackh) np++;
+                    if (trackp>trackh) np--;
+                }
             }
-            else {
-                cout << i+1 << ": " << start[i+1] << "/" << length << " NOK " << endl;
-                length = start[i+2];
-            }
-            
         }
+        cout << "Wrongly assigned:" << particlemap.size()-1 << endl;
         
 #define MAXTRACK 10
         cout << endl << "Number of tracks:" << nt << endl;

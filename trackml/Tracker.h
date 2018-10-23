@@ -10,12 +10,14 @@
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
 #define TRACKLET 2
-#define NEIGHBOURS 2
-#define MAXKNN 100
-#define THRESHOLD 0.99
-#define DISTANCE 1.0
-#define DELTAR   1.0
-#define DELTAPHI 0.1
+#define NEIGHBOURS 3
+#define MAXKNN 250
+#define THRESHOLD 0.967
+#define DISTANCE 1.8
+#define DELTAR   0.9
+#define DELTATHE 0.4
+#define DELTAPHI 0.35
+#define DELTANN  0.02
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
@@ -227,6 +229,8 @@ int Point::classifyAPoint(Point arr[], int n, int k, Point p)
     return (freq1 > freq2 ? 0 : 1);
 }
 
+static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4;
+
 class Tracker {
 private:
     static void print(std::vector<int> const &input);
@@ -237,6 +241,7 @@ private:
 public:
     Tracker() {}
     static int findTracks(int nhits, float *x, float *y, float *z, int* labels);
+    static void kNearestNeighbour(std::vector<Point> &points);
 };
 
 #endif
