@@ -35,7 +35,7 @@ int layerNHits[Geo::NLayers];
 
 #define NEVENTS 1
 #define MAXHITS 150000
-#define MAXPARTICLES 35
+#define MAXPARTICLES 10
 #define MCHITS false
 #define FINDTRACKS true
 
@@ -339,25 +339,27 @@ int main()
     
         nh = 0;
         unsigned long np = 0;
+        int delta = 0;
         for(int ip=0; ip<nt; ip++) {
             vector<Point> t = tracks[ip];
             for (int j=0;j<t.size();j++) {
                 auto itp = particlemap.find(np++);
-                int trackp = itp->second;
+                int trackp = itp->second + delta;
                 auto ith = recomap.find(nh++);
                 int trackh = ith->second;
                 if (trackp == trackh) {
-                    // if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << endl;
+                    if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << endl;
                     particlemap.erase(itp++);
                 }
                 else {
                     if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << " NOK" << endl;
-                    if (trackp<trackh) np++;
-                    if (trackp>trackh) np--;
+                    while (trackp<trackh) { trackp++; delta++; }
+                    while (trackp>trackh) { trackp--; delta--; }
                 }
             }
         }
-        cout << "Wrongly assigned:" << particlemap.size()-1 << endl;
+        
+        if (particlemap.size()>=0) cout << "Wrongly assigned:" << particlemap.size() << endl;
         
 #define MAXTRACK 10
         cout << endl << "Number of tracks:" << nt << endl;

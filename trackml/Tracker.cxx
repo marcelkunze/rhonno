@@ -167,8 +167,8 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
     
     for (int i=0;i<nhits;i++) {
         
-#define TBD id==354
-#define REF false
+#define TBD id==69
+#define REF true
         
         //if (i%10000==0) cout << i << endl;
  
@@ -186,11 +186,9 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
             if (index == i) continue;
             if (knn++ > MAXKNN) break; // Max. number of neighbours reached
             
-            int ref = points[index].id();
-            
-            if (TBD&&REF) cout << "Index: " << id << endl;
             Point &p1 = points[index];
-            
+            if (TBD&&REF) cout << "Index: " << p1.id() << endl;
+
             double deltar = abs(p1.r()-p0.r()); // Check the radial distance
             if (deltar > DELTAR) { if (TBD&&REF) cout << "R " << deltar << endl; nr++; continue; }
             
@@ -211,7 +209,7 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
             else {
                 Point &last = neighbours[n-1];
                 Point &forelast = neighbours[n-2];
-                recall = Recall3(forelast,last,p1)[0];
+                recall = Recall3(p0,last,p1)[0];
                 n3++;
             }
             if (recall>THRESHOLD) { // Check hit pair/triple belongs to track
@@ -220,7 +218,10 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
                 p1.setrecall(-1.0);
                 n++; // next neighbour
                 n1++;
-                if (TBD) cout << index << " OK " << recall << endl;
+                if (TBD) {
+                    cout << "R " << deltar << " T " << deltat << " D " << d << " P " << angle;
+                    cout << index << " OK " << recall << endl;
+                }
             }
             else {
                 n4++;
@@ -304,13 +305,15 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
         hitmap.erase(it++);
         while (it != hitmap.end()) { // Follow the path until there are no more neighbours
             neighbour = p0->neighbour(n);
-            cout << p0->id() << "->" << neighbour << endl;
+            if (VERBOSE) cout << p0->id() << "->" << neighbour << endl;
             if (neighbour < 0 || neighbour >= nhits) break;
-            auto it1 = hitmap.find(neighbour);
-            if (n<NEIGHBOURS-1 && it1==hitmap.end()) { // hit is already assigned
+            auto it = hitmap.find(neighbour);
+            if (n<NEIGHBOURS-1 && it==hitmap.end()) { // hit is already assigned
+                if (VERBOSE) cout <<  "->" << neighbour << endl;
                 n++;  // try an alternative neighbour
                 continue;
             }
+            if (it==hitmap.end()) break;
             Point *p1 = it->second;  // copy the point into the tracklet vector
             pvec.push_back(*p1);
             hitmap.erase(it++);
@@ -318,7 +321,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
             p0 = p1;
         }
         
-        //sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
+        sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
         vector<int> tmpvec;
         for (int ip=0;ip<pvec.size();ip++) tmpvec.push_back(pvec[ip].id()); // Note the hit indices
         if (VERBOSE) print(tmpvec);
@@ -326,7 +329,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
             tracklet.push_back(tmpvec);
         else
             shortpath.push_back(tmpvec);
-        cout << "---" << endl;
+        if (VERBOSE) cout << "---" << endl;
     }
 
     cout << endl << "Number of tracklets   : " << tracklet.size() << endl;

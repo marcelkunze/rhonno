@@ -10,14 +10,14 @@
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
 #define TRACKLET 2
-#define NEIGHBOURS 3
-#define MAXKNN 250
-#define THRESHOLD 0.967
+#define NEIGHBOURS 5
+#define MAXKNN 100
+#define THRESHOLD 0.995
 #define DISTANCE 1.8
 #define DELTAR   0.9
 #define DELTATHE 0.4
 #define DELTAPHI 0.35
-#define DELTANN  0.02
+#define DELTANN  0.01
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
