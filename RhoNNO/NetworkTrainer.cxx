@@ -319,6 +319,8 @@ double NetworkTrainer::Train()
     if (fPlots) fNet->SetupPlots();
     
     double error = 0.0;
+    double errbest = FLT_MAX;
+    int epobest = 0;
     
     for (int epo=fStartEpoch; epo<=fStopEpoch; epo++){
         
@@ -331,6 +333,16 @@ double NetworkTrainer::Train()
         string network =  Makename(epo , fNetworkPath, fNetworkFile);
         cout << "Saving: " << network << endl;
         fNet->Save(network);
+        
+        // Test and save the best network
+        error = Test();
+        if (error < errbest) {
+            epobest = epo;
+            errbest = error;
+            network =  Makename(0 , fNetworkPath, fNetworkFile);
+            cout << "Saving as best network " << network << " with error " << error << "%" << endl;
+            fNet->Save(network);
+        }
         
         // Adapt the learning rate, freeze network upon convergence
         if (fModel == "xmlp") {
@@ -345,6 +357,8 @@ double NetworkTrainer::Train()
         }
         
     }
+    
+    cout << "Finished training with best epoch: " << epobest << endl;
     
     return error;
 }
