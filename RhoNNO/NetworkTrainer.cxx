@@ -324,7 +324,7 @@ double NetworkTrainer::Train()
     
     for (int epo=fStartEpoch; epo<=fStopEpoch; epo++){
         
-        cout << endl << "epoch: " << epo << endl;
+        cout << endl << "epoch: " << epo << " / best epoch: " << epobest << endl;
         
         // Perform training for an epoch
         error = fNet->TrainEpoch(fTrainingServer);
