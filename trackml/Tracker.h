@@ -6,22 +6,21 @@
 #define TRACKML
 
 #ifdef TRACKML
-#define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
-#define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
-#define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
+#define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2rand.net"
+#define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3rand.net"
 #define TRACKLET 2
-#define NEIGHBOURS 5
-#define MAXKNN 100
-#define THRESHOLD 0.995
+#define NEIGHBOURS 3
+#define MAXKNN 150
+#define THRESHOLD2 0.967
+#define THRESHOLD3 0.967
 #define DISTANCE 1.8
 #define DELTAR   0.9
 #define DELTATHE 0.4
 #define DELTAPHI 0.35
-#define DELTANN  0.01
+#define DELTANN  0.02
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
-#define NETFILE4 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
 #define TRACKLET 2
 #define NEIGHBOURS 3
 #define MAXKNN 8
@@ -37,6 +36,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <vector>
 
 class Point
 {
@@ -67,7 +67,7 @@ public:
     static bool comparison(const Point &a,const Point &b);
     double distance(const Point &a);
     static double distance(const Point &a, const Point &b);
-    static int classifyAPoint(Point arr[], int n, int k, Point p);
+    static int classifyAPoint(std::vector<Point> &arr, int k, Point &p, int label);
     inline double x() {return _x;}
     inline double y() {return _y;}
     inline double z() {return _z;}
@@ -204,15 +204,15 @@ double Point::distance(const Point &a, const Point &b)
 // This function finds classification of point p using
 // k nearest neighbour algorithm. It assumes only two
 // groups and returns 0 if p belongs to group 0, else
-// 1 (belongs to group 1).
+// 1 (belongs to group label).
 inline
-int Point::classifyAPoint(Point arr[], int n, int k, Point p)
+int Point::classifyAPoint(std::vector<Point> &arr, int k, Point &p, int label=1)
 {
     // Fill distances of all points from p
-    for (int i = 0; i < n; i++) arr[i]._distance = p.distance(arr[i]);
+    for (auto it=arr.begin(); it != arr.end(); ++it) it->_distance = p.distance(*it);
 
     // Sort the Points by distance from p
-    std::sort(arr, arr+n, comparison);
+    std::sort(arr.begin(), arr.end(), comparison);
     
     // Now consider the first k elements and only
     // two groups
@@ -222,7 +222,7 @@ int Point::classifyAPoint(Point arr[], int n, int k, Point p)
     {
         if (arr[i]._label == 0)
             freq1++;
-        else if (arr[i]._label == 1)
+        else if (arr[i]._label == label)
             freq2++;
     }
     
@@ -237,11 +237,12 @@ private:
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
     static double* Recall2(Point &p1, Point &p2);
     static double* Recall3(Point &p1, Point &p2, Point &p3);
-    static double* Recall4(Point &p1, Point &p2, Point &p3, Point &p4);
 public:
     Tracker() {}
     static int findTracks(int nhits, float *x, float *y, float *z, int* labels);
     static void kNearestNeighbour(std::vector<Point> &points);
+    static bool checkTracklet(Point &p0,Point &p1);
+    static bool checkTracklet(Point &p0,Point &p1, Point &p2);
 };
 
 #endif
