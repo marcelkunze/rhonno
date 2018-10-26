@@ -6,17 +6,17 @@
 #define TRACKML
 
 #ifdef TRACKML
-#define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2rand.net"
-#define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3rand.net"
+#define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
+#define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define TRACKLET 2
 #define NEIGHBOURS 3
 #define MAXKNN 150
-#define THRESHOLD2 0.967
-#define THRESHOLD3 0.967
-#define DISTANCE 1.8
+#define THRESHOLD2 0.95
+#define THRESHOLD3 0.95
+#define DISTANCE 1.2
 #define DELTAR   0.9
 #define DELTATHE 0.4
-#define DELTAPHI 0.35
+#define DELTAPHI 0.1
 #define DELTANN  0.02
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
@@ -41,22 +41,24 @@
 class Point
 {
 private:
-    int _id;             // Hit id
-    int _label;          // Label
-    int _truth;          // True label
-    double _x, _y, _z;     // Cartesian coordinate
-    double _r,_phi,_theta; // Spherical coordinates
-    double _distance;    // Distance from test point
+    int _id;                // Hit id
+    int _label;             // Label
+    int _truth;             // True label
+    double _x, _y, _z;      // Cartesian coordinate
+    double _r,_phi,_theta;  // Spherical coordinates
+    double _rz;             // Spherical coordinates
+    double _distance;       // Distance from test point
     int _neighbour[NEIGHBOURS];
     double _recall[NEIGHBOURS];
 public:
-    Point(void):_id(0),_label(0), _truth(0), _x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_distance(0) { for (int i=0;i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1; }
+    Point(void):_id(0),_label(0), _truth(0), _x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_rz(0),_distance(0) { for (int i=0;i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1; }
     Point(const Point &p);
     Point(double x, double y, double z, int id=-1, int val=-1, int truth=-1);
     Point(float x, float y, float z, int id=-1, int val=-1, int truth=-1);
     Point operator+(const Point p) const { return Point(_x+p._x,_y+p._y,_z+p._z);}
     Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
     static bool sortRad(const Point &a,const Point &b);
+    static bool sortRz(const Point &a,const Point &b);
     static bool sortDist(const Point &a,const Point &b);
     static bool sortId(const Point &a,const Point &b);
     static bool sortRecall(const Point &a,const Point &b);
@@ -68,22 +70,23 @@ public:
     double distance(const Point &a);
     static double distance(const Point &a, const Point &b);
     static int classifyAPoint(std::vector<Point> &arr, int k, Point &p, int label);
-    inline double x() {return _x;}
-    inline double y() {return _y;}
-    inline double z() {return _z;}
-    inline double r() {return _r;}
-    inline double theta() {return _theta;}
-    inline double phi() {return _phi;}
-    inline int id() {return _id;}
-    inline int label() {return _label;}
-    inline int truth() {return _truth;}
+    inline double x() const {return _x;}
+    inline double y() const {return _y;}
+    inline double z() const {return _z;}
+    inline double r() const {return _r;}
+    inline double theta() const {return _theta;}
+    inline double phi() const {return _phi;}
+    inline double rz() const {return _rz;}
+    inline int id() const {return _id;}
+    inline int label() const {return _label;}
+    inline int truth() const {return _truth;}
     inline int neighbour(int i=0) {if (i<NEIGHBOURS && i>=0) return _neighbour[i]; else return -1;}
     inline int* neighbours() {return _neighbour;}
     inline double recall(int i=0) {if (i<NEIGHBOURS && i>=0) return _recall[i]; else return -1;}
     inline double* recalls() {return _recall;}
-    inline void setx(double x) { _x = x;}
-    inline void sety(double y) { _y = y;}
-    inline void setz(double z) { _z = z;}
+    //inline void setx(double x) { _x = x;}
+    //inline void sety(double y) { _y = y;}
+    //inline void setz(double z) { _z = z;}
     inline void setlabel(int label) { _label = label;}
     inline void settruth(int label) { _truth = label;}
     inline void setid(int id) { _id = id;}
@@ -100,7 +103,14 @@ bool Point::sortRad(const Point &a,const Point &b)
 }
 
 // Used to sort an array of points by increasing
-// order of distance from origin
+// order of distance from origin in xy plane
+inline
+bool Point::sortRz(const Point &a,const Point &b)
+{
+    return (a._rz < b._rz);
+}
+
+// Used to sort an array of points by distance
 inline
 bool Point::sortDist(const Point &a,const Point &b)
 {

@@ -30,6 +30,7 @@ Point::Point(double x, double y, double z, int id, int label, int truth)
     _y = y;
     _z = z;
     _r = sqrt(_x*_x+_y*_y+_z*_z);
+    _rz = sqrt(_x*_x+_y*_y);
     _phi = atan2(_y,_x);
     _theta = acos(z/_r);
     _distance = 0.0;
@@ -45,6 +46,7 @@ Point::Point(float x, float y, float z, int id, int label, int truth)
     _y = y;
     _z = z;
     _r = sqrt(_x*_x+_y*_y+_z*_z);
+    _rz = sqrt(_x*_x+_y*_y);
     _phi = atan2(_y,_x);
     _theta = acos(z/_r);
     _distance = 0.0;
@@ -60,6 +62,7 @@ Point::Point(const Point &p)
     _y = p._y;
     _z = p._z;
     _r = p._r;
+    _rz = p._rz;
     _phi = p._phi;
     _theta = p._theta;
     _distance = p._distance;
@@ -90,12 +93,12 @@ double* Tracker::Recall2(Point &p1, Point &p2)
     static XMLP net(NETFILE2);
     static float x[6]={0.,0.,0.,0.,0.,0.};
 
-    x[0]     = p1.r();     // r1
-    x[1]     = p1.phi();   // phi1
-    x[2]     = p1.theta(); // theta1
-    x[3]     = p2.r();     // r2
-    x[4]     = p2.phi();   // phi2
-    x[5]     = p2.theta(); // theta2
+    x[0]     = p1.rz();     // r1
+    x[1]     = p1.phi();    // phi1
+    x[2]     = p1.z();      // z1
+    x[3]     = p2.rz();     // r2
+    x[4]     = p2.phi();    // phi2
+    x[5]     = p2.z();      // z2
     
     return net.Recallstep(x);
 }
@@ -112,15 +115,15 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
     double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
     if (angle > DELTANN) { nx++; return null; }
     
-    x[0]     = p1.r();     // r1
-    x[1]     = p1.phi();   // phi1
-    x[2]     = p1.theta(); // theta1
-    x[3]     = p2.r();     // r2
-    x[4]     = p2.phi();   // phi2
-    x[5]     = p2.theta(); // theta2
-    x[6]     = p3.r();     // r3
-    x[7]     = p3.phi();   // phi3
-    x[8]     = p3.theta(); // theta3
+    x[0]     = p1.rz();     // r1
+    x[1]     = p1.phi();    // phi1
+    x[2]     = p1.z();      // z1
+    x[3]     = p2.rz();     // r2
+    x[4]     = p2.phi();    // phi2
+    x[5]     = p2.z();      // z2
+    x[6]     = p3.rz();     // r3
+    x[7]     = p3.phi();    // phi3
+    x[8]     = p3.z();      // z3
     
     return net.Recallstep(x);
 }
@@ -132,7 +135,7 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
     for (auto it=points.begin(); it!=points.end();it++) {
         
 //id==49
-#define TBD id==73
+#define TBD id==37
 #define REF true
         
         //if (i%10000==0) cout << i << endl;
@@ -274,7 +277,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Sort the hits according to distance from origin
     for (int i=0;i<nhits;i++) points[i] = p[i];
     cout << "Sorting " << nhits << " hits..." << endl;
-    sort(points.begin(),points.end(),Point::sortRad);
+    sort(points.begin(),points.end(),Point::sortRz);
     
     // Search neighbouring hits
     cout << "Searching neighbours..." << endl;

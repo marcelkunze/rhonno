@@ -98,14 +98,12 @@ void combine2(Particle &p)
     int nhits = (int)hits.size();
     if (nhits < 2) return;
     for (int i=0; i<nhits-1; i++)    {
-        Hit &h1 = mHits[p.hits[i]];
         Point &hit1 = hits[i];
-        Hit &h2 = mHits[p.hits[i+1]];
         Point &hit2 = hits[i+1];
-        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),h1.values,h2.values,1.0); //true combination
+        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),1.0); //true combination
         float phi2 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r2
         float theta2 = r.Rndm()*M_PI;
-        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),phi2,theta2,h1.values,h2.values,0.0); // wrong combination
+        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),phi2,theta2,hit1.rz(),hit2.rz(),0.0); // wrong combination
     }
 }
 
@@ -121,16 +119,13 @@ void combine3(Particle &p)
     int nhits = (int)hits.size();
     if (nhits < 3) return;
     for (int i=0; i<nhits-2; i++)    {
-        Hit &h1 = mHits[p.hits[i]];
-        Hit &h2 = mHits[p.hits[i+1]];
-        Hit &h3 = mHits[p.hits[i+2]];
         Point &hit1 = hits[i];
         Point &hit2 = hits[i+1];
         Point &hit3 = hits[i+2];
-        ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),hit3.phi(),hit3.theta(),h1.values,h2.values,h3.values,1.0); //true combination
+        ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),hit3.phi(),hit3.theta(),hit1.rz(),hit2.rz(),hit3.rz(),1.0); //true combination
         float phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
         float theta3 = r.Rndm()*M_PI;
-        ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),phi3,theta3,h1.values,h2.values,h3.values,0.0); // wrong combination
+        ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),phi3,theta3,hit1.rz(),hit2.rz(),hit3.rz(),0.0); // wrong combination
     }
     
 }
@@ -150,7 +145,7 @@ void combine2(Particle &p1, Particle &p2)
     for (auto it=hits1.begin(); it!=hits1.end()-1; it++)    {
         Point hit1 = *it;
         Point hit2 = *(it+1);
-        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),0.0,0.0,1.0); //true combination
+        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),1.0); //true combination
        it->settruth(1);
     }
     
@@ -158,7 +153,7 @@ void combine2(Particle &p1, Particle &p2)
     for (auto it=hits2.begin(); it!=hits2.end()-1; it++)    {
         Point hit1 = *it;
         Point hit2 = *(it+1);
-        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),0.0,0.0,1.0); //true combination
+        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),1.0); //true combination
         it->settruth(2);
     }
     
@@ -175,7 +170,7 @@ void combine2(Particle &p1, Particle &p2)
             if (hit1.truth()==hit2.truth()) continue;
             double d = hit1.distance(hit2);
             if (d > DISTANCE*hit1.r()) continue; // Consider hits within a DISTANCE*r
-            ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),0.0,0.0,0.0); // wrong combination
+            ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),0.0); // wrong combination
         }
     }
 }
@@ -201,29 +196,29 @@ void combine3(Particle &p1, Particle &p2)
     ite2=hits2.end();
     
     for (auto it1=itb1, it2=itb2; it1!=ite1-4&&it2!=ite2-4; it1++, it2++)    {
-        Point hit11 = *it1; // Three consecutive hits of track1
-        Point hit12 = *(it1+1);
-        Point hit13 = *(it1+2);
-        Point hit21 = *it2; // Three consecutive hits of track2
-        Point hit22 = *(it2+1);
-        Point hit23 = *(it2+2);
+        Point &hit11 = *it1; // Three consecutive hits of track1
+        Point &hit12 = *(it1+1);
+        Point &hit13 = *(it1+2);
+        Point &hit21 = *it2; // Three consecutive hits of track2
+        Point &hit22 = *(it2+1);
+        Point &hit23 = *(it2+2);
         
-        ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit13.r(),hit13.phi(),hit13.theta(),0.0,0.0,0.0,1.0); //true combination
-        ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit23.r(),hit23.phi(),hit23.theta(),0.0,0.0,0.0,1.0); //true combination
+        ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit13.r(),hit13.phi(),hit13.theta(),hit11.rz(),hit12.rz(),hit13.rz(),1.0); //true combination
+        ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit23.r(),hit23.phi(),hit23.theta(),hit21.rz(),hit22.rz(),hit23.rz(),1.0); //true combination
 
         // Consider hits within a DISTANCE*r
-        if (hit11.distance(hit21)<DISTANCE*hit11.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit21.r(),hit21.phi(),hit21.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit12.distance(hit21)<DISTANCE*hit12.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit21.r(),hit21.phi(),hit21.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit11.distance(hit22)<DISTANCE*hit11.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit22.r(),hit22.phi(),hit22.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit12.distance(hit22)<DISTANCE*hit12.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit22.r(),hit22.phi(),hit22.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit11.distance(hit23)<DISTANCE*hit11.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit23.r(),hit23.phi(),hit23.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit12.distance(hit23)<DISTANCE*hit12.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit23.r(),hit23.phi(),hit23.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit21.distance(hit11)<DISTANCE*hit21.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit11.r(),hit11.phi(),hit11.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit22.distance(hit11)<DISTANCE*hit22.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit11.r(),hit11.phi(),hit11.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit21.distance(hit12)<DISTANCE*hit21.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit12.r(),hit12.phi(),hit12.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit22.distance(hit12)<DISTANCE*hit22.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit12.r(),hit12.phi(),hit12.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit21.distance(hit13)<DISTANCE*hit21.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit13.r(),hit13.phi(),hit13.theta(),0.0,0.0,0.0,0.0); // wrong combination
-        if (hit22.distance(hit13)<DISTANCE*hit22.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit13.r(),hit13.phi(),hit13.theta(),0.0,0.0,0.0,0.0); // wrong combination
+        if (hit11.distance(hit21)<DISTANCE*hit11.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit21.r(),hit21.phi(),hit21.theta(),hit11.rz(),hit12.rz(),hit21.rz(),0.0); // wrong combination
+        if (hit12.distance(hit21)<DISTANCE*hit12.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit21.r(),hit21.phi(),hit21.theta(),hit11.rz(),hit12.rz(),hit21.rz(),0.0); // wrong combination
+        if (hit11.distance(hit22)<DISTANCE*hit11.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit11.rz(),hit12.rz(),hit22.rz(),0.0); // wrong combination
+        if (hit12.distance(hit22)<DISTANCE*hit12.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit11.rz(),hit12.rz(),hit22.rz(),0.0); // wrong combination
+        if (hit11.distance(hit23)<DISTANCE*hit11.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit23.r(),hit23.phi(),hit23.theta(),hit11.rz(),hit12.rz(),hit23.rz(),0.0); // wrong combination
+        if (hit12.distance(hit23)<DISTANCE*hit12.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit23.r(),hit23.phi(),hit23.theta(),hit11.rz(),hit12.rz(),hit23.rz(),0.0); // wrong combination
+        if (hit21.distance(hit11)<DISTANCE*hit21.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit11.r(),hit11.phi(),hit11.theta(),hit21.rz(),hit22.rz(),hit11.rz(),0.0); // wrong combination
+        if (hit22.distance(hit11)<DISTANCE*hit22.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit11.r(),hit11.phi(),hit11.theta(),hit21.rz(),hit22.rz(),hit11.rz(),0.0); // wrong combination
+        if (hit21.distance(hit12)<DISTANCE*hit21.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit21.rz(),hit22.rz(),hit12.rz(),0.0); // wrong combination
+        if (hit22.distance(hit12)<DISTANCE*hit22.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit21.rz(),hit22.rz(),hit12.rz(),0.0); // wrong combination
+        if (hit21.distance(hit13)<DISTANCE*hit21.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit13.r(),hit13.phi(),hit13.theta(),hit21.rz(),hit22.rz(),hit13.rz(),0.0); // wrong combination
+        if (hit22.distance(hit13)<DISTANCE*hit22.r()) ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit13.r(),hit13.phi(),hit13.theta(),hit21.rz(),hit22.rz(),hit13.rz(),0.0); // wrong combination
     }
     
 }
@@ -291,8 +286,8 @@ int main()
         TString fname = filePrefix+".root";
         auto f = TFile::Open(fname,"RECREATE");
         cout << "Writing training data to " << fname << endl;
-        ntuple2 = new TNtuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:v1:v2:truth");
-        ntuple3 = new TNtuple("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:v1:v2:v3:truth");
+        ntuple2 = new TNtuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:rz1:rz2:truth");
+        ntuple3 = new TNtuple("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:rz1:rz2:rz3:truth");
         
         for (int ih=0; ih<mHitsMC.size(); ih++ ) {
             HitMC &h = mHitsMC[ih];
@@ -330,8 +325,8 @@ int main()
             int index = ip;
             while (ip == index) index = rand()%nParticles;
             Particle &p2 = mParticles[index];
-            combine2(p1,p2); // Produce training data (2 hits)
-            combine3(p1,p2); // Produce training data (3 hits)
+            combine2(p1); // Produce training data (2 hits)
+            combine3(p1); // Produce training data (3 hits)
 
             // Print the hit ids and generate a particle hit map to check the reconstruction results
             transform(p1,hits,MCHITS);
