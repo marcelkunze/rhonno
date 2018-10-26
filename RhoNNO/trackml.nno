@@ -13,9 +13,16 @@ stop 200
 #define the data source
 datapath /Users/marcel/workspace/train_sample
 networkpath ../Networks
-file event000021100.root
-file event000021101.root
-file event000021102.root
+file zevent000021100.root
+file zevent000021101.root
+file zevent000021102.root
+file zevent000021103.root
+file zevent000021104.root
+#file zevent000021105.root
+#file zevent000021106.root
+#file zevent000021107.root
+#file zevent000021108.root
+#file zevent000021109.root
 
 #set up the input layer (use branch names)
 tree tracks
@@ -23,10 +30,10 @@ input rz1:phi1:r1*cos(theta1):rz2:phi2:r2*cos(theta2)
 #input r1:phi1:theta1:r2:phi2:theta2
 
 #autoscale true
-#cut p<2.0
+cut rz1<0.2&&abs(r1*cos(theta1))<0.7
 
 #set up the output layer (use branch names)
-output truth==1
+output truth>0
 
 #end of file
 		

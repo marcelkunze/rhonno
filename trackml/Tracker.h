@@ -8,6 +8,10 @@
 #ifdef TRACKML
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
+#define RMIN 0.0
+#define RMAX 10.0
+#define ZMIN 0.0
+#define ZMAX 10.0
 #define TRACKLET 2
 #define NEIGHBOURS 3
 #define MAXKNN 150
@@ -46,15 +50,15 @@ private:
     int _truth;             // True label
     double _x, _y, _z;      // Cartesian coordinate
     double _r,_phi,_theta;  // Spherical coordinates
-    double _rz;             // Spherical coordinates
+    double _rz;             // Cylindrical coordinates
     double _distance;       // Distance from test point
     int _neighbour[NEIGHBOURS];
     double _recall[NEIGHBOURS];
 public:
     Point(void):_id(0),_label(0), _truth(0), _x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_rz(0),_distance(0) { for (int i=0;i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1; }
     Point(const Point &p);
-    Point(double x, double y, double z, int id=-1, int val=-1, int truth=-1);
-    Point(float x, float y, float z, int id=-1, int val=-1, int truth=-1);
+    Point(double x, double y, double z, int id=-1, int label=-1, int truth=-1);
+    Point(float x, float y, float z, int id=-1, int label=-1, int truth=-1);
     Point operator+(const Point p) const { return Point(_x+p._x,_y+p._y,_z+p._z);}
     Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
     bool operator<(const Point p) const { return _id<p._id;}
@@ -251,6 +255,8 @@ private:
 public:
     Tracker() {}
     static int findTracks(int nhits, float *x, float *y, float *z, int* labels);
+    static long selectPoints(std::vector<Point> &points, std::vector<Point> &selection, double rmin, double rmax, double zmin, double zmax);
+    static long selectPoints(std::vector<Point> &points, std::vector<Point> &selection, Point &ref, double deltar, double deltathe, double distance);
     static void kNearestNeighbour(std::vector<Point> &points);
     static bool checkTracklet(Point &p0,Point &p1);
     static bool checkTracklet(Point &p0,Point &p1, Point &p2);

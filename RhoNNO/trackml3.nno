@@ -33,7 +33,7 @@ input rz1:phi1:r1*cos(theta1):rz2:phi2:r2*cos(theta2):rz3:phi3:r3*cos(theta3)
 #cut p<2.0
 
 #set up the output layer (use branch names)
-output truth==1
+output truth>0
 
 #end of file
 		

@@ -40,26 +40,328 @@ int layerNHits[Geo::NLayers];
 #define FINDTRACKS true
 
 TRandom r;
-TNtuple *ntuple2,*ntuple3;
 
+void transform(Particle &particle, std::vector<Point> &points, bool mc);
+void combine(Particle &p1, Particle &p2);
+void combine2(Particle &p1, Particle &p2);
+void combine3(Particle &p1, Particle &p2);
+void combine2(Particle &p1);
+void combine3(Particle &p1);
 void readEvent( const char *directory, int event, bool loadMC );
 
+map<unsigned long,int> particlemap;
+map<unsigned long,int> recomap;
+TNtuple *ntuple2,*ntuple3;
+
+int main()
+{
+#ifdef TRACKML
+    bool analyseTruth = true;
+    
+    const int nEvents = NEVENTS;
+    //const int firstEvent=100021100;
+    const int firstEvent=21100;
+    //const int firstEvent=1000;
+    TString dir = "/Users/marcel/workspace/train_sample/";
+    
+    ofstream out("mysubmission.csv");
+    if( !out.is_open() ){
+        cout<<"Can not open output file"<<endl;
+        exit(0);
+    }
+    
+    ofstream outtracks("tracks.csv");
+    if( !outtracks.is_open() ){
+        cout<<"Can not open tracks file"<<endl;
+        exit(0);
+    }
+    
+    out<<"event_id,hit_id,track_id"<<endl;
+    outtracks<<"event_id,track_id: hits"<<endl;
+    
+    for (int event = firstEvent; event<firstEvent+nEvents; event++) {
+        cout<<"read event "<<event<<endl;
+        readEvent( dir.Data(),  event, analyseTruth );
+        
+        TString filePrefix;
+        filePrefix.Form("%sevent%09d",dir.Data(),event);
+        TString fname = filePrefix+".root";
+        auto f = TFile::Open(fname,"RECREATE");
+        cout << "Writing training data to " << fname << endl;
+        ntuple2 = new TNtuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:rz1:rz2:truth");
+        ntuple3 = new TNtuple("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:rz1:rz2:rz3:truth");
+        
+        TH1F h0("h0","Track length",100,0,100);
+        TH1F h1("h1","x distribution",100,-3,3);
+        TH1F h2("h2","y distribution",100,-3,3);
+        TH1F h3("h3","z distribution",100,-3,3);
+        TH1F h4("h4","rz distribution",100,0,3);
+        TH1F h5("h5","r distribution",100,0,3);
+        TH1F h6("h6","phi distribution",100,-4,4);
+        TH1F h7("h7","theta distribution",100,-4,4);
+        
+        for (int ih=0; ih<mHitsMC.size(); ih++ ) {
+            HitMC &h = mHitsMC[ih];
+            if (ih<10) h.Print();
+        }
+        
+        for (int ih=0; ih<mHits.size(); ih++ ) {
+            Hit &h = mHits[ih];
+            if (ih<10) h.Print();
+        }
+        
+        long start[MAXPARTICLES+1];
+        long end[MAXPARTICLES+1];
+        std::vector<Point> hits;
+        hits.reserve(MAXHITS);
+        
+        size_t nParticles = mParticles.size();
+        if (nParticles > MAXPARTICLES) nParticles = MAXPARTICLES;
+        cout << "Particles:" << nParticles << endl;
+        
+        start[0] = 0;
+        end[0] = -1;
+        map<int,int> particles;
+        for (int ip=0; ip<nParticles; ip++ ) {
+            Particle &p1 = mParticles[ip];
+            start[ip+1] = end[ip]+1;
+            end[ip+1] = end[ip] + p1.hits.size();
+        }
+        
+        unsigned long nh = 0;
+        for (int ip=0; ip<nParticles; ip++ ) {
+ 
+            Particle &p1 = mParticles[ip];
+            h0.Fill(p1.hits.size());
+
+            if (VERBOSE && ip<1000) cout << endl << "Track " << ip+1 << "(" << start[ip+1] << "-" << end[ip+1] << "): ";
+            
+            // Generate a particle hit map to check the reconstruction results
+            for (int j=0; j<p1.hits.size(); j++) {
+                Hit &h = mHits[p1.hits[j]];
+                h.trackID = ip;
+                particlemap[nh++] = ip;
+                Point p(h.x,h.y,h.z);
+                h1.Fill(p.x());
+                h2.Fill(p.y());
+                h3.Fill(p.z());
+                h4.Fill(p.rz());
+                h5.Fill(p.r());
+                h6.Fill(p.phi());
+                h7.Fill(p.theta());
+                if (VERBOSE) cout << h.hitID << "(" << nh << ") ";
+            }
+        
+            // Push the particle hits into Point vector
+            transform(p1,hits,MCHITS);
+
+            // Generate training data
+            //int index = ip;
+            //while (ip == index) index = rand()%nParticles;
+            //Particle &p2 = mParticles[index];
+            combine2(p1); // Produce training data (2 hits)
+            combine3(p1); // Produce training data (3 hits)
+            
+        }
+        
+        f->Write();
+        delete ntuple2;
+        delete ntuple3;
+        
+#else
+        {
+            int event = 0;
+            std::vector<Point> hits;
+            hits.reserve(MAXHITS);
+            // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
+            GenerateTrack(hits,NHITS,0.025, 1.0,M_PI/2.0, 1.0,SIGMA); // 00
+            GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/2.0, 1.0,SIGMA); // 10
+            GenerateTrack(hits,NHITS,0.025, 1.5,M_PI/1.0,-1.0,SIGMA); // 20
+            GenerateTrack(hits,NHITS,0.025,-2.0,M_PI/3.0,-1.0,SIGMA); // 30
+#endif
+            size_t nhits = hits.size();
+            if (nhits > MAXHITS) nhits = MAXHITS;
+            cout << "Hits: " << nhits << endl;
+            
+            float x[nhits],y[nhits],z[nhits];
+            int labels[nhits];
+            int nt;
+            
+            double minr = FLT_MAX;
+            double maxr = 0.0;
+            for (int i=0; i<nhits; i++) {
+                labels[i] = 0;
+                Point &h = hits[i];
+                x[i] = h.x();
+                y[i] = h.y();
+                z[i] = h.z();
+                if (h.r() < minr) minr = h.r();
+                if (h.r() > maxr) maxr = h.r();
+            }
+            cout << "Min. radius: " << minr << endl;
+            cout << "Max. radius: " << maxr << endl;
+            
+            cout << "Find tracks..." << endl;
+            nt = Tracker::findTracks((int)nhits,x,y,z,labels);
+            
+            // Assemble the tracks from label information
+            nh = 0;
+            map<int,vector<Point> > tracks;
+            for(int i=0; i<nt; i++) {
+                int track = i+1;
+                vector<Point> t;
+                for (int j=0;j<nhits;j++) {
+                    if (track != labels[j]) continue;
+                    hits[j].setlabel(labels[j]);
+                    t.push_back(hits[j]); // Save the results
+                    recomap[nh++] = i;
+                }
+                tracks[i] = t;
+            }
+            
+            // Compare the results with truth
+            cout << "Check the results..." << endl;
+            
+            nh = 0;
+            unsigned long np = 0;
+            int delta = 0;
+            for(int ip=0; ip<nt; ip++) {
+                vector<Point> t = tracks[ip];
+                for (int j=0;j<t.size();j++) {
+                    auto itp = particlemap.find(np++);
+                    int trackp = itp->second + delta;
+                    auto ith = recomap.find(nh++);
+                    int trackh = ith->second;
+                    if (trackp == trackh) {
+                        if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << endl;
+                        particlemap.erase(itp++);
+                    }
+                    else {
+                        if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << " NOK" << endl;
+                        while (trackp<trackh) { trackp++; delta++; }
+                        while (trackp>trackh) { trackp--; delta--; }
+                    }
+                }
+            }
+            
+            if (particlemap.size()>0) cout << "Wrongly assigned:" << particlemap.size() << endl;
+            
+#define MAXTRACK 10
+            cout << endl << "Number of tracks:" << nt << endl;
+            for (int i=0; i<nt; i++) {
+                vector<Point> t = tracks[i];
+                if (i == MAXTRACK) cout << endl << "..." << endl;
+                if (i<MAXTRACK || i>nt-MAXTRACK) {
+                    cout << "Track " << i+1 << ": ";
+                    for (vector<Point>::iterator it = t.begin(); it != t.end(); ++it) {
+                        Point p = *it;
+                        cout << p.id() << " ";
+                    }
+                    cout << endl;
+                }
+            }
+            
+#define MAXLABEL 100
+            cout << "Labels: ";
+            for (int i=0;i<nhits;i++) {
+                if (i<MAXLABEL || i>nhits-MAXLABEL) cout << labels[i] << " ";
+                if (i == MAXLABEL) cout << endl << "..." << endl;
+            }
+            cout << endl;
+            
+#ifdef TRACKML
+            cout << "Write tracks file..." << endl;
+            for (int ip=0; ip<mParticles.size(); ip++ ) {
+                Particle &p1 = mParticles[ip];
+                outtracks<<event<<","<<ip<<": ";
+                for (int j=0;j<p1.hits.size();j++) outtracks<<p1.hits[j]<<" ";
+                outtracks << endl;
+            }
+            outtracks.close();
+            
+            cout << "Write submission file..." << endl;
+            for (int ih=0; ih<nhits; ih++ ){
+                out<<event<<","<<ih+1<<","<<labels[ih]<<endl;
+            }
+            out.close();
+#endif
+            // Initialize a 3D canvas and draw the hits and tracks
+            if (DRAW) {
+                TString dir = "/Users/marcel/workspace/train_sample/";
+                TString filePrefix;
+                filePrefix.Form("%sevent%09d",dir.Data(),event);
+                TString cname = filePrefix+"-canvas.root";
+                TFile output(cname,"RECREATE");
+                TCanvas *c1 = new TCanvas("c1","NNO Tracking: XMLP",200,10,700,500);
+                // create a pad
+                TPad *p1 = new TPad("p1","p1",0.05,0.02,0.95,0.82,46,3,1);
+                p1->SetFillColor(kBlack);
+                p1->Draw();
+                p1->cd();
+                // creating a view
+                TView *view = TView::CreateView(1);
+                view->SetRange(-2,-2,-2,2,2,2); // draw in a 2 meter cube
+                // Draw axis
+                TAxis3D rulers;
+                rulers.Draw();
+                // draw hits as PolyMarker3D
+                TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
+                for (vector<Point>::iterator it = hits.begin(); it != hits.end(); it++)    {
+                    static int i = 0;
+                    Point p=*it;
+                    hitmarker->SetPoint(i++,p.x(),p.y(),p.z());
+                }
+                // set marker size, color & style
+                hitmarker->SetMarkerSize(1.0);
+                hitmarker->SetMarkerColor(kCyan);
+                hitmarker->SetMarkerStyle(kStar);
+                hitmarker->Draw();
+                
+                // Draw the tracks
+                for (int i=0;i<nt;i++) {
+                    //cout << endl << "Drawing track " << i+1 << ": ";
+                    vector<Point> track = tracks[i];
+                    int n = 0;
+                    TPolyLine3D *connector = new TPolyLine3D((int)track.size());
+                    for (vector<Point>::iterator it = track.begin(); it != track.end(); it++)    {
+                        Point hit = *it;
+                        connector->SetPoint(n++, hit.x(), hit.y(), hit.z());
+                    }
+                    connector->SetLineWidth(1);
+                    connector->SetLineColor(kRed);
+                    connector->Draw();
+                }
+                
+                cout <<  "Writing " << cname << endl;
+                c1->Write();
+                output.Close();
+            }
+            
+        }
+}
+
 void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
+    
+    vector<Point> tmpvec;
     int nhits = (int)particle.hits.size();
+    
     if (!mc) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
-            Point p(h1.x,h1.y,h1.z,h1.hitID,h1.hitID+1,h1.trackID);
-            points.push_back(p);
+            Point p(h1.x,h1.y,h1.z,h1.hitID,h1.trackID,i);
+            tmpvec.push_back(p);
         }
     }
     else {
         for (int i=0;i<nhits;i++) {
             HitMC &h1 = mHitsMC[particle.hits[i]];
-            Point p(h1.x,h1.y,h1.z,h1.hitID+1,-1);
-            points.push_back(p);
+            Point p(h1.x,h1.y,h1.z,h1.hitID+1,1,i);
+            tmpvec.push_back(p);
         }
     }
+    
+    sort(tmpvec.begin(),tmpvec.end(),Point::sortRz);
+    points.insert(points.end(),tmpvec.begin(),tmpvec.end());
 }
 
 void combine(Particle &p1, Particle &p2)
@@ -77,7 +379,7 @@ void combine(Particle &p1, Particle &p2)
         for (int j=0; j<nhits1; j++)    {
             Hit &h2 = mHits[p1.hits[j]];
             Point &hit2 = hits1[j];
-            if (i!=j) ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),h1.values,h2.values,1.0); //true combination
+            if (i!=j) ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),h1.values,h2.values,hit1.truth()+1); //true combination
         }
         for (int j=0; j<nhits2; j++)    {
             Hit &h2 = mHits[p2.hits[j]];
@@ -100,7 +402,7 @@ void combine2(Particle &p)
     for (int i=0; i<nhits-1; i++)    {
         Point &hit1 = hits[i];
         Point &hit2 = hits[i+1];
-        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),1.0); //true combination
+        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),hit1.truth()+1); //true combination
         float phi2 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r2
         float theta2 = r.Rndm()*M_PI;
         ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),phi2,theta2,hit1.rz(),hit2.rz(),0.0); // wrong combination
@@ -122,7 +424,7 @@ void combine3(Particle &p)
         Point &hit1 = hits[i];
         Point &hit2 = hits[i+1];
         Point &hit3 = hits[i+2];
-        ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),hit3.phi(),hit3.theta(),hit1.rz(),hit2.rz(),hit3.rz(),1.0); //true combination
+        ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),hit3.phi(),hit3.theta(),hit1.rz(),hit2.rz(),hit3.rz(),hit1.truth()+1); //true combination
         float phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
         float theta3 = r.Rndm()*M_PI;
         ntuple3->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit3.r(),phi3,theta3,hit1.rz(),hit2.rz(),hit3.rz(),0.0); // wrong combination
@@ -145,7 +447,7 @@ void combine2(Particle &p1, Particle &p2)
     for (auto it=hits1.begin(); it!=hits1.end()-1; it++)    {
         Point hit1 = *it;
         Point hit2 = *(it+1);
-        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),1.0); //true combination
+        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),hit1.truth()+1); //true combination
        it->settruth(1);
     }
     
@@ -153,7 +455,7 @@ void combine2(Particle &p1, Particle &p2)
     for (auto it=hits2.begin(); it!=hits2.end()-1; it++)    {
         Point hit1 = *it;
         Point hit2 = *(it+1);
-        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),1.0); //true combination
+        ntuple2->Fill(hit1.r(),hit1.phi(),hit1.theta(),hit2.r(),hit2.phi(),hit2.theta(),hit1.rz(),hit2.rz(),hit1.truth()+1); //true combination
         it->settruth(2);
     }
     
@@ -203,8 +505,8 @@ void combine3(Particle &p1, Particle &p2)
         Point &hit22 = *(it2+1);
         Point &hit23 = *(it2+2);
         
-        ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit13.r(),hit13.phi(),hit13.theta(),hit11.rz(),hit12.rz(),hit13.rz(),1.0); //true combination
-        ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit23.r(),hit23.phi(),hit23.theta(),hit21.rz(),hit22.rz(),hit23.rz(),1.0); //true combination
+        ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit13.r(),hit13.phi(),hit13.theta(),hit11.rz(),hit12.rz(),hit13.rz(),hit11.truth()+1); //true combination
+        ntuple3->Fill(hit21.r(),hit21.phi(),hit21.theta(),hit22.r(),hit22.phi(),hit22.theta(),hit23.r(),hit23.phi(),hit23.theta(),hit21.rz(),hit22.rz(),hit23.rz(),hit21.truth()+1); //true combination
 
         // Consider hits within a DISTANCE*r
         if (hit11.distance(hit21)<DISTANCE*hit11.r()) ntuple3->Fill(hit11.r(),hit11.phi(),hit11.theta(),hit12.r(),hit12.phi(),hit12.theta(),hit21.r(),hit21.phi(),hit21.theta(),hit11.rz(),hit12.rz(),hit21.rz(),0.0); // wrong combination
@@ -246,277 +548,6 @@ void GenerateTrack(std::vector<Point> &points, int np, double delta, double radi
         Point p(X,Y,Z,n++,-1);
         points.push_back(p);
     }
-}
-
-map<unsigned long,int> particlemap;
-map<unsigned long,int> recomap;
-
-int main()
-{
-#ifdef TRACKML
-    bool analyseTruth = true;
-    
-    const int nEvents = NEVENTS;
-    //const int firstEvent=100021100;
-    const int firstEvent=21100;
-    //const int firstEvent=1000;
-    TString dir = "/Users/marcel/workspace/train_sample/";
-    
-    ofstream out("mysubmission.csv");
-    if( !out.is_open() ){
-        cout<<"Can not open output file"<<endl;
-        exit(0);
-    }
-    
-    ofstream outtracks("tracks.csv");
-    if( !outtracks.is_open() ){
-        cout<<"Can not open tracks file"<<endl;
-        exit(0);
-    }
-    
-    out<<"event_id,hit_id,track_id"<<endl;
-    outtracks<<"event_id,track_id: hits"<<endl;
-    
-    for (int event = firstEvent; event<firstEvent+nEvents; event++) {
-        cout<<"read event "<<event<<endl;
-        readEvent( dir.Data(),  event, analyseTruth );
-        
-        TString filePrefix;
-        filePrefix.Form("%sevent%09d",dir.Data(),event);
-        TString fname = filePrefix+".root";
-        auto f = TFile::Open(fname,"RECREATE");
-        cout << "Writing training data to " << fname << endl;
-        ntuple2 = new TNtuple("tracks","training data","r1:phi1:theta1:r2:phi2:theta2:rz1:rz2:truth");
-        ntuple3 = new TNtuple("tracks3","training data","r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3:rz1:rz2:rz3:truth");
-        
-        for (int ih=0; ih<mHitsMC.size(); ih++ ) {
-            HitMC &h = mHitsMC[ih];
-            if (ih<10) h.Print();
-        }
-        
-        for (int ih=0; ih<mHits.size(); ih++ ) {
-            Hit &h = mHits[ih];
-            if (ih<10) h.Print();
-        }
-        
-        long start[MAXPARTICLES+1];
-        long end[MAXPARTICLES+1];
-        std::vector<Point> hits;
-        hits.reserve(MAXHITS);
-
-        size_t nParticles = mParticles.size();
-        if (nParticles > MAXPARTICLES) nParticles = MAXPARTICLES;
-        cout << "Particles:" << nParticles << endl;
-
-        start[0] = 0;
-        end[0] = -1;
-        map<int,int> particles;
-        for (int ip=0; ip<nParticles; ip++ ) {
-            Particle &p1 = mParticles[ip];
-            start[ip+1] = end[ip]+1;
-            end[ip+1] = end[ip] + p1.hits.size();
-        }
-
-        unsigned long nh = 0;
-        for (int ip=0; ip<nParticles; ip++ ) {
-            
-            // Produce training data
-            Particle &p1 = mParticles[ip];
-            int index = ip;
-            while (ip == index) index = rand()%nParticles;
-            Particle &p2 = mParticles[index];
-            combine2(p1); // Produce training data (2 hits)
-            combine3(p1); // Produce training data (3 hits)
-
-            // Print the hit ids and generate a particle hit map to check the reconstruction results
-            transform(p1,hits,MCHITS);
-
-            if (VERBOSE && ip<1000) cout << endl << "Track " << ip+1 << "(" << start[ip+1] << "-" << end[ip+1] << "): ";
-            for (int j=0; j<p1.hits.size(); j++) {
-                Hit &h = mHits[p1.hits[j]];
-                particlemap[nh++] = ip;
-                if (VERBOSE) cout << h.hitID << "(" << nh << ") ";
-            }
-        }
-        
-        f->Write();
-        delete ntuple2;
-        delete ntuple3;
-
-        
-#else
-    {
-        int event = 0;
-        std::vector<Point> hits;
-        hits.reserve(MAXHITS);
-        // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
-        GenerateTrack(hits,NHITS,0.025, 1.0,M_PI/2.0, 1.0,SIGMA); // 00
-        GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/2.0, 1.0,SIGMA); // 10
-        GenerateTrack(hits,NHITS,0.025, 1.5,M_PI/1.0,-1.0,SIGMA); // 20
-        GenerateTrack(hits,NHITS,0.025,-2.0,M_PI/3.0,-1.0,SIGMA); // 30
-#endif
-        size_t nhits = hits.size();
-        if (nhits > MAXHITS) nhits = MAXHITS;
-        cout << "Hits: " << nhits << endl;
-        
-        //if (!FINDTRACKS) continue;
-        
-        float x[nhits],y[nhits],z[nhits];
-        int labels[nhits];
-        int nt;
-        
-        double minr = FLT_MAX;
-        double maxr = 0.0;
-        for (int i=0; i<nhits; i++) {
-            labels[i] = 0;
-            Point &h = hits[i];
-            x[i] = h.x();
-            y[i] = h.y();
-            z[i] = h.z();
-            if (h.r() < minr) minr = h.r();
-            if (h.r() > maxr) maxr = h.r();
-        }
-        cout << "Min. radius: " << minr << endl;
-        cout << "Max. radius: " << maxr << endl;
-
-        cout << "Find tracks..." << endl;
-        nt = Tracker::findTracks((int)nhits,x,y,z,labels);
-        
-        // Assemble the tracks from label information
-        nh = 0;
-        map<int,vector<Point> > tracks;
-        for(int i=0; i<nt; i++) {
-            int track = i+1;
-            vector<Point> t;
-            for (int j=0;j<nhits;j++) {
-                if (track != labels[j]) continue;
-                hits[j].setlabel(labels[j]);
-                t.push_back(hits[j]); // Save the results
-                recomap[nh++] = i;
-            }
-            tracks[i] = t;
-        }
-        
-        // Compare the results with truth
-        cout << "Check the results..." << endl;
-    
-        nh = 0;
-        unsigned long np = 0;
-        int delta = 0;
-        for(int ip=0; ip<nt; ip++) {
-            vector<Point> t = tracks[ip];
-            for (int j=0;j<t.size();j++) {
-                auto itp = particlemap.find(np++);
-                int trackp = itp->second + delta;
-                auto ith = recomap.find(nh++);
-                int trackh = ith->second;
-                if (trackp == trackh) {
-                    if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << endl;
-                    particlemap.erase(itp++);
-                }
-                else {
-                    if (VERBOSE) cout << nh << ":" << trackh << "/" << trackp << " NOK" << endl;
-                    while (trackp<trackh) { trackp++; delta++; }
-                    while (trackp>trackh) { trackp--; delta--; }
-                }
-            }
-        }
-        
-        if (particlemap.size()>0) cout << "Wrongly assigned:" << particlemap.size() << endl;
-        
-#define MAXTRACK 10
-        cout << endl << "Number of tracks:" << nt << endl;
-        for (int i=0; i<nt; i++) {
-            vector<Point> t = tracks[i];
-            if (i == MAXTRACK) cout << endl << "..." << endl;
-            if (i<MAXTRACK || i>nt-MAXTRACK) {
-                cout << "Track " << i+1 << ": ";
-                for (vector<Point>::iterator it = t.begin(); it != t.end(); ++it) {
-                    Point p = *it;
-                    cout << p.id() << " ";
-                }
-                cout << endl;
-            }
-        }
-        
-#define MAXLABEL 100
-        cout << "Labels: ";
-        for (int i=0;i<nhits;i++) {
-            if (i<MAXLABEL || i>nhits-MAXLABEL) cout << labels[i] << " ";
-            if (i == MAXLABEL) cout << endl << "..." << endl;
-        }
-        cout << endl;
-
-#ifdef TRACKML
-        cout << "Write tracks file..." << endl;
-        for (int ip=0; ip<mParticles.size(); ip++ ) {
-            Particle &p1 = mParticles[ip];
-            outtracks<<event<<","<<ip<<": ";
-            for (int j=0;j<p1.hits.size();j++) outtracks<<p1.hits[j]<<" ";
-            outtracks << endl;
-        }
-        outtracks.close();
-        
-        cout << "Write submission file..." << endl;
-        for (int ih=0; ih<nhits; ih++ ){
-            out<<event<<","<<ih+1<<","<<labels[ih]<<endl;
-        }
-        out.close();
-#endif
-        // Initialize a 3D canvas and draw the hits and tracks
-        if (DRAW) {
-            TString dir = "/Users/marcel/workspace/train_sample/";
-            TString filePrefix;
-            filePrefix.Form("%sevent%09d",dir.Data(),event);
-            TString cname = filePrefix+"-canvas.root";
-            TFile output(cname,"RECREATE");
-            TCanvas *c1 = new TCanvas("c1","NNO Tracking: XMLP",200,10,700,500);
-            // create a pad
-            TPad *p1 = new TPad("p1","p1",0.05,0.02,0.95,0.82,46,3,1);
-            p1->SetFillColor(kBlack);
-            p1->Draw();
-            p1->cd();
-            // creating a view
-            TView *view = TView::CreateView(1);
-            view->SetRange(-2,-2,-2,2,2,2); // draw in a 2 meter cube
-            // Draw axis
-            TAxis3D rulers;
-            rulers.Draw();
-            // draw hits as PolyMarker3D
-            TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
-            for (vector<Point>::iterator it = hits.begin(); it != hits.end(); it++)    {
-                static int i = 0;
-                Point p=*it;
-                hitmarker->SetPoint(i++,p.x(),p.y(),p.z());
-            }
-            // set marker size, color & style
-            hitmarker->SetMarkerSize(1.0);
-            hitmarker->SetMarkerColor(kCyan);
-            hitmarker->SetMarkerStyle(kStar);
-            hitmarker->Draw();
-            
-            // Draw the tracks
-            for (int i=0;i<nt;i++) {
-                //cout << endl << "Drawing track " << i+1 << ": ";
-                vector<Point> track = tracks[i];
-                int n = 0;
-                TPolyLine3D *connector = new TPolyLine3D((int)track.size());
-                for (vector<Point>::iterator it = track.begin(); it != track.end(); it++)    {
-                    Point hit = *it;
-                    connector->SetPoint(n++, hit.x(), hit.y(), hit.z());
-                }
-                connector->SetLineWidth(1);
-                connector->SetLineColor(kRed);
-                connector->Draw();
-            }
-            
-            cout <<  "Writing " << cname << endl;
-            c1->Write();
-            output.Close();
-        }
-        
-    }
-    
 }
 
 void print(vector<int> const &input)
