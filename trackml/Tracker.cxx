@@ -145,13 +145,14 @@ long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &select
 }
 
 //id==49
-#define TBD false
-#define REF false
+#define TBD id==66
+#define REF true
 
 // Select points wrt. a reference point
 long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &selection, Point &ref, double deltar, double deltathe, double distance)
 {
-    if (TBD&&REF) cout << "---------------------------> id: " << ref.id() << endl;
+    int id = ref.id();
+    if (TBD&&REF) cout << "---------------------------> id: " << id << endl;
 
     int knn = 0;
     vector<Point> neighbours;
@@ -161,7 +162,7 @@ long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &selec
         if (knn++ > MAXKNN) break; // Max. number of neighbouring points reached
  
         Point &p = *it;
-        if (ref.id()==p.id()) continue;
+        if (id==p.id()) continue;
 
         if (TBD&&REF) cout << p.id() << endl;
             
@@ -180,12 +181,12 @@ long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &selec
         selection.push_back(p);
             
         if (TBD&&REF) {
-                cout << ref.id() << ": R " << dr << " T " << dt << " D " << d;
+                cout << p.id() << ": R " << dr << " T " << dt << " D " << d;
         }
             
     }
     
-    if (TBD&&REF) cout << "<--------------------------- id: " << ref.id() << endl;
+    if (TBD&&REF) cout << "<--------------------------- id: " << id << endl;
     
     return selection.size();
 }
@@ -204,7 +205,7 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
         Point &p0 = *it; // Seeding hit
         selectPoints(points,neighbours,p0,DELTAR,DELTATHE,DISTANCE);
         
-        //sort(neighbours.begin(),neighbours.end(),Point::sortDist);
+        sort(neighbours.begin(),neighbours.end(),Point::sortDist);
         
         // Generate seeding points
         vector<Point> seed;
@@ -213,7 +214,7 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
             Point &p1 = *it;
             bool ok = checkTracklet(p0,p1);
             if (ok) {
-                if (TBD) cout << p1.id() << ": R2 OK " << p1.recall() << endl;
+                if (VERBOSE) cout << p1.id() << ": R2 OK " << p1.recall() << endl;
                 seed.push_back(p1);
             }
         }

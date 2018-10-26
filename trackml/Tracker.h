@@ -9,17 +9,17 @@
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define RMIN 0.0
-#define RMAX 10.0
+#define RMAX 0.2
 #define ZMIN 0.0
-#define ZMAX 10.0
+#define ZMAX 0.7
 #define TRACKLET 2
 #define NEIGHBOURS 3
 #define MAXKNN 150
-#define THRESHOLD2 0.95
+#define THRESHOLD2 0.98
 #define THRESHOLD3 0.95
 #define DISTANCE 1.2
 #define DELTAR   0.9
-#define DELTATHE 0.4
+#define DELTATHE 0.1
 #define DELTAPHI 0.1
 #define DELTANN  0.02
 #else
