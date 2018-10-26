@@ -114,8 +114,13 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
     Point v1 = p2 - p1;
     Point v2 = p3 - p1;
     double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
-    if (angle > DELTANN) { nx++; return null; }
-    
+    if (angle<0.5*M_PI) {
+        if (angle>DELTANN) { nx++; return null; } // Check 0 deg.
+    }
+    else {
+        if ((M_PI-angle)>DELTANN) { nx++; return null; } // Check 180 deg.
+    }
+
     x[0]     = p1.rz();     // r1
     x[1]     = p1.phi();    // phi1
     x[2]     = p1.z();      // z1
@@ -145,7 +150,7 @@ long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &select
 }
 
 //id==49
-#define TBD id==66
+#define TBD id==77
 #define REF true
 
 // Select points wrt. a reference point
@@ -217,6 +222,8 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
                 if (VERBOSE) cout << p1.id() << ": R2 OK " << p1.recall() << endl;
                 seed.push_back(p1);
             }
+            else
+                if (VERBOSE) cout << p1.id() << ": R2 NOK " << p1.recall() << endl;
         }
         
         long size = seed.size();
@@ -256,11 +263,16 @@ void Tracker::kNearestNeighbour(std::vector<Point> &points)
         
         sort(nextneighbours.begin(),nextneighbours.end(),Point::sortId);
         set<Point> s(nextneighbours.begin(),nextneighbours.end()); // Remove double entries
-        
         if (VERBOSE) { cout << "set " << p0.id() << ":"; for (auto it=s.begin(); it != s.end(); it++) cout << it->id() << " " ; cout << endl; }
+
+        // Build a vector sorted by revall value
+        nextneighbours.clear();
+        nextneighbours.insert(nextneighbours.begin(),s.begin(),s.end());
+        sort(nextneighbours.begin(),nextneighbours.end(),Point::sortDist);
+        
         
         int j = 0;
-        for (auto it = seed.begin(); it!=seed.end(); it++, j++) { // Note the seed ids and recall values
+        for (auto it = nextneighbours.begin(); it!=nextneighbours.end(); it++, j++) { // Note the seed ids and recall values
             if (j>=NEIGHBOURS) break;
             if (it->recall()<=0.0) continue;
             p0.setneighbour(it->id(),j);
@@ -279,6 +291,9 @@ bool Tracker::checkTracklet(Point &p0,Point &p1)
         p1.setrecall(recall);
         n4++;
     }
+    else {
+        p1.setrecall(-recall);
+    }
     n2++;
     return ok;
 }
@@ -291,6 +306,9 @@ bool Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
     if (ok) {
         p2.setrecall(recall);
         n1++;
+    }
+    else {
+        p2.setrecall(-recall);
     }
     n3++;
     return ok;

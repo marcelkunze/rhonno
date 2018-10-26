@@ -15,16 +15,20 @@
 #define TRACKLET 2
 #define NEIGHBOURS 3
 #define MAXKNN 150
-#define THRESHOLD2 0.98
+#define THRESHOLD2 0.75
 #define THRESHOLD3 0.95
 #define DISTANCE 1.2
 #define DELTAR   0.9
 #define DELTATHE 0.1
 #define DELTAPHI 0.1
-#define DELTANN  0.02
+#define DELTANN  0.1
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
+#define RMIN 0.0
+#define RMAX 10.0
+#define ZMIN 0.0
+#define ZMAX 10.0
 #define TRACKLET 2
 #define NEIGHBOURS 3
 #define MAXKNN 8
@@ -32,6 +36,7 @@
 #define DISTANCE 0.5
 #define DELTAR   1.0
 #define DELTAPHI 0.04
+#define DELTANN  0.02
 #define NHITS 10
 #define SIGMA 0.0
 #endif
@@ -85,9 +90,9 @@ public:
     inline int id() const {return _id;}
     inline int label() const {return _label;}
     inline int truth() const {return _truth;}
-    inline int neighbour(int i=0) {if (i<NEIGHBOURS && i>=0) return _neighbour[i]; else return -1;}
+    inline int neighbour(int i=0) const {if (i<NEIGHBOURS && i>=0) return _neighbour[i]; else return -1;}
     inline int* neighbours() {return _neighbour;}
-    inline double recall(int i=0) {if (i<NEIGHBOURS && i>=0) return _recall[i]; else return -1;}
+    inline double recall(int i=0) const {if (i<NEIGHBOURS && i>=0) return _recall[i]; else return -1;}
     inline double* recalls() {return _recall;}
     //inline void setx(double x) { _x = x;}
     //inline void sety(double y) { _y = y;}
