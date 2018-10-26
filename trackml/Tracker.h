@@ -57,6 +57,7 @@ public:
     Point(float x, float y, float z, int id=-1, int val=-1, int truth=-1);
     Point operator+(const Point p) const { return Point(_x+p._x,_y+p._y,_z+p._z);}
     Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
+    bool operator<(const Point p) const { return _id<p._id;}
     static bool sortRad(const Point &a,const Point &b);
     static bool sortRz(const Point &a,const Point &b);
     static bool sortDist(const Point &a,const Point &b);

@@ -18,6 +18,7 @@
 #include <iterator>
 #include <vector>
 #include <map>
+#include <set>
 
 using namespace std;
 
@@ -128,104 +129,116 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
     return net.Recallstep(x);
 }
 
+//id==49
+#define TBD id==20
+#define REF true
+
 void Tracker::kNearestNeighbour(std::vector<Point> &points)
 {
     nr = nd = np = nt = nx = n1 = n2 = n3 = n4 =0;
     
+    if (points.size()<2) return;
+    
     for (auto it=points.begin(); it!=points.end();it++) {
         
-//id==49
-#define TBD id==37
-#define REF true
-        
         //if (i%10000==0) cout << i << endl;
- 
-        auto it2 = it;
-
+        
+        auto it2 = points.begin(); //it+1;
+        
         Point &p0 = *it; // Seeding hit
         int id = p0.id();
-        if (TBD) cout << "---- id: " << id << endl;
-
+        if (TBD&&REF) cout << "---------------------------> id: " << id << endl;
+        
         int knn = 0;
         vector<Point> neighbours;
-        while (it2++ < points.end()) {
+        while (it2++ != points.end()) {
+            if (it==it2) continue;
             if (knn++ > MAXKNN) break; // Max. number of neighbouring points reached
             
             Point &p1 = *it2;
             if (TBD&&REF) cout << p1.id() << endl;
-
+            
             double deltar = abs(p1.r()-p0.r()); // Check the radial distance
             if (deltar > DELTAR) { if (TBD&&REF) cout << "R " << deltar << endl; nr++; continue; }
             
-            double deltat = abs(p1.theta()-p0.theta()); // Check the radial distance
+            double deltat = abs(p1.theta()-p0.theta()); // Check the elongation
             if (deltat > DELTATHE) { if (TBD&&REF) cout << "T " << deltat << endl; nt++; continue; }
             
             double d = p1.distance(p0); // Check the euclidean distance
             if (d > DISTANCE*p0.r()) { if (TBD&&REF) cout << "D " << d << endl; nd++; continue; }
             
-            double angle = acos(Point::dot(p0,p1)); // Check angle between the vectors (p0,p1) and (p0,p2)
-            if (angle > DELTAPHI) { if (TBD&&REF) cout << "P " << angle << endl; np++; continue; }
+            //double angle = acos(Point::dot(p0,p1)); // Check angle between (p0,p1)
+            //if (angle > DELTAPHI) { if (TBD&&REF) cout << "P " << angle << endl; np++; continue; }
             
             neighbours.push_back(p1);
-
+            
             if (TBD&&REF) {
-                cout << p1.id() << ": R " << deltar << " T " << deltat << " D " << d << " P " << angle;
+                cout << p1.id() << ": R " << deltar << " T " << deltat << " D " << d;
             }
-
+            
         }
+        if (TBD&&REF) cout << "<--------------------------- id: " << id << endl;
         
-        sort(neighbours.begin(),neighbours.end(),Point::sortDist);
+        //sort(neighbours.begin(),neighbours.end(),Point::sortDist);
         
-        int n = 0;
-        vector<Point> nextneighbours;
+        // Generate seeding points
+        vector<Point> seed;
         for (auto it=neighbours.begin(); it != neighbours.end(); it++)
         {
-            if (n > NEIGHBOURS) break;
-            Point p1 = *it;
+            Point &p1 = *it;
             bool ok = checkTracklet(p0,p1);
             if (ok) {
-                if (TBD) cout << p1.id() << " OK " << p1.recall() << endl;
-                nextneighbours.push_back(p1);
-                n++;
+                if (TBD) cout << p1.id() << ": R2 OK " << p1.recall() << endl;
+                seed.push_back(p1);
             }
-
-/*
-            bool ok = false;
-            double recall = 0;
-            if (neighbours.size()<2) {
-                recall = Recall2(p0,p1)[0];
-                ok = recall>THRESHOLD2;
-                if (ok) n4++;
-                n2++;
-            }
-            else {
-                Point &last = neighbours[n-1];
-                Point &forelast = neighbours[n-2];
-                recall = Recall3(forelast,last,p1)[0];
-                ok = recall>THRESHOLD3;
-                if (ok) n1++;
-                n3++;
-            }
-            if (ok) { // Check hit pair/triple belongs to track
-                p1.setrecall(recall);
-                neighbours.push_back(p1);
-                n++; // next neighbour
-                if (TBD) {
-                    cout << "R " << deltar << " T " << deltat << " D " << d << " P " << angle;
-                    cout << index << " OK " << recall << endl;
-                }
-            }
-            else {
-                if (TBD) cout << index << " NN " << recall << endl;
-            }
- */
         }
         
-        //sort(nextneighbours.begin(),nextneighbours.end(),Point::sortRecall);
-
-        for (int j=0;j<nextneighbours.size();j++) { // Note the neighbour ids and recall values
-            p0.setneighbour(nextneighbours[j].id(),j);
-            p0.setrecall(nextneighbours[j].recall(),j);
+        long size = seed.size();
+        if (size==0) continue;
+        if (size>NEIGHBOURS) size = NEIGHBOURS;
+        
+        int n = 0;
+        for (auto it = seed.begin(); it!=seed.end(); it++, n++) { // Note the seed ids and recall values
+            Point &p1 = *it;
+            p0.setneighbour(p1.id(),n);
+            p0.setrecall(p1.recall(),n);
+        }
+        
+        if (VERBOSE) cout << "seed " << p0.id() << ":"; for (auto it=seed.begin(); it != seed.end(); it++) cout << it->id() << " " ; cout << endl;
+        
+        // Generate tracklets of 3 points
+        if (size<2) continue;
+        vector<Point> nextneighbours;
+        for (auto it1=seed.begin(); it1 != seed.end()-1; it1++)
+        {
+            Point &p1 = *it1;
+            nextneighbours.push_back(p1);
+            for (auto it2=it1+1; it2 != seed.end(); it2++) {
+                Point &p2 = *it2;
+                bool ok = checkTracklet(p0,p1,p2);
+                if (ok) {
+                    if (REF) cout << p2.id() << ": R3 OK " << p2.recall() << endl;
+                    nextneighbours.push_back(p2);
+                }
+                else
+                    if (REF) cout << p2.id() << ": R3 NOK " << p2.recall() << endl;
+                
+            }
+        }
+        
+        if (VERBOSE) cout << "nextneighbours " << p0.id() << ":"; for (auto it=nextneighbours.begin(); it != nextneighbours.end(); it++) cout << it->id() << " " ; cout << endl;
+        
+        sort(nextneighbours.begin(),nextneighbours.end(),Point::sortId);
+        set<Point> s(nextneighbours.begin(),nextneighbours.end()); // Remove double entries
+        
+        if (VERBOSE) cout << "set " << p0.id() << ":"; for (auto it=s.begin(); it != s.end(); it++) cout << it->id() << " " ; cout << endl;
+        
+        int j = 0;
+        for (auto it = seed.begin(); it!=seed.end(); it++, j++) { // Note the seed ids and recall values
+            if (j>=NEIGHBOURS) break;
+            if (it->recall()<=0.0) continue;
+            p0.setneighbour(it->id(),j);
+            p0.setrecall(it->recall(),j);
         }
         
     }
