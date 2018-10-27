@@ -24,6 +24,7 @@
 #include "Geo.h"
 #include "XMLP.h"
 #include "Tracker.h"
+#include "Point.h"
 
 using namespace std;
 

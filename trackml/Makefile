@@ -11,7 +11,7 @@ ROOTLIBS      = $(shell root-config --libs)
 ROOTGLIBS     = $(shell root-config --glibs)
 
 SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx 
-SHLIB=Tracker.cxx XMLP.cxx
+SHLIB=Tracker.cxx Point.cxx XMLP.cxx
 
 HEADERS=$(SRC:.cxx=.h)
 OBJECTS=$(SOURCES:.cxx=.o)
@@ -23,8 +23,8 @@ all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) $(LIBRARY)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
-$(LIBRARY): Tracker.o XMLP.o XMLP.h Tracker.h
-	clang++ -std=c++11 -fPIC -shared -o $(LIBRARY) XMLP.cxx Tracker.cxx
+$(LIBRARY): Tracker.o XMLP.o XMLP.h Point.h Tracker.h
+	clang++ -std=c++11 -fPIC -shared -o $(LIBRARY) XMLP.cxx Point.cxx Tracker.cxx
 
 %.o: %.cxx $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ 
