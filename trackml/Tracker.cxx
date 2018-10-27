@@ -22,6 +22,22 @@
 
 using namespace std;
 
+//Structure for storing promising triples of hits
+struct triple {
+    int x, y, z;   // hit ids
+    double r;      // quallity
+    triple() {}
+    triple(int a, int b, int c, double v=0) : x(a), y(b), z(c), r(v) {}
+};
+
+bool operator<(const triple&a, const triple&b) {
+    return a.r < b.r;
+}
+
+bool operator==(const triple&a, const triple&b) {
+    return a.x==b.x && a.y==b.y && a.z==b.z;
+}
+
 // Print an integer hit id track vector
 void Tracker::print(vector<int> const &input)
 {
@@ -83,12 +99,12 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
     return net.Recallstep(x);
 }
 
-// Preselect points
+// Preselect points in a cylinder defined by RMIN..RMAX and ZMIN..ZMAX
 long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &selection,double rmin,double rmax,double zmin,double zmax) {
     long n = 0;
     for (auto it=points.begin(); it!=points.end();it++) {
         Point &p = *it;
-        double z = abs(p.z());
+        double z = p.z();
         double r = p.rz();
         if (z>ZMAX || z<ZMIN) continue;
         if (r>RMAX || r<RMIN) continue;
@@ -100,7 +116,7 @@ long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &select
 
 //id==49
 #define TBD id==77
-#define REF true
+#define REF false
 
 // Select points wrt. a reference point
 long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &selection, Point &ref, double deltar, double deltathe, double distance)
@@ -145,128 +161,105 @@ long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &selec
     return selection.size();
 }
 
-void Tracker::kNearestNeighbour(std::vector<Point> &points)
+// Look for seeding points using a KNN algorithm and a neural network to identify hit pairs
+long Tracker::findSeeds(Point &p0, std::vector<Point> &points, std::vector<Point> &seed)
 {
-    nr = nd = np = nt = nx = n1 = n2 = n3 = n4 =0;
+    if (points.size()<2) return 0;
     
-    if (points.size()<2) return;
+    vector<Point> neighbours;
+    selectPoints(points,neighbours,p0,DELTAR,DELTATHE,DISTANCE);
     
-    for (auto it=points.begin(); it!=points.end();it++) {
-        
-        //if (i%10000==0) cout << i << endl;
-        
-        vector<Point> neighbours;
-        Point &p0 = *it; // Seeding hit
-        selectPoints(points,neighbours,p0,DELTAR,DELTATHE,DISTANCE);
-        
-        sort(neighbours.begin(),neighbours.end(),Point::sortDist);
-        
-        // Generate seeding points
-        vector<Point> seed;
-        for (auto it=neighbours.begin(); it != neighbours.end(); it++)
-        {
-            Point &p1 = *it;
-            bool ok = checkTracklet(p0,p1);
-            if (ok) {
-                if (VERBOSE) cout << p1.id() << ": R2 OK " << p1.recall() << endl;
-                seed.push_back(p1);
+    sort(neighbours.begin(),neighbours.end(),Point::sortDist);
+    
+    // Generate seeding points
+    for (auto it:neighbours)
+    {
+        Point &p1 = it;
+        double recall = checkTracklet(p0,p1); // Search for hit pairs
+        if (recall > 0) {
+            if (REF) cout << p0.id() << " " << p1.id() << ": R2 OK " << recall << endl;
+            p1.setrecall(recall);
+            seed.push_back(p1);
+        }
+        else
+            if (REF) cout << p0.id() << " " << p1.id() << ": R2 NOK " << recall << endl;
+    }
+    
+    sort(seed.begin(),seed.end(),Point::sortRecall);
+    
+    int n = 0;
+    for (auto &it:seed)
+    {
+        if (n>=NEIGHBOURS) break;
+        Point &p1 = it;
+        p0.setneighbour(p1.id(),n);
+        p0.setrecall(p1.recall(),n);
+        n++;
+    }
+    
+    if (VERBOSE) { cout << "seed " << p0.id() << ": "; for (auto &it:seed) cout << it.id() << " " ; cout << endl; }
+    
+    return seed.size();
+}
+
+// Generate tracklets of 3 points wrt. the first point in seed
+long Tracker::findTriples(Point &p0, std::vector<Point> &seed,std::vector<triple> &triples)
+{
+    long size = seed.size();
+    if (size<2) return 0;
+
+    triple t;
+    t.x = p0.id();
+    
+    for (auto it1=seed.begin(); it1 != seed.end()-1; it1++)
+    {
+        Point &p1 = *it1;
+        t.y = p1.id();
+        for (auto it2=it1+1; it2 != seed.end(); it2++) {
+            Point &p2 = *it2;
+            double recall = checkTracklet(p0,p1,p2);
+            if (recall > 0) {
+                t.z = p2.id();
+                t.r = recall;
+                triples.push_back(t);
+                if (REF) cout << t.x << " " << t.y << " " << t.z << ": R3 OK " << recall << endl;
             }
             else
-                if (VERBOSE) cout << p1.id() << ": R2 NOK " << p1.recall() << endl;
+                if (REF) cout << t.x << " " << t.y << " " << t.z << ": R3 NOK " << recall << endl;
+            
         }
-        
-        long size = seed.size();
-        if (size==0) continue;
-        if (size>NEIGHBOURS) size = NEIGHBOURS;
-        
-        int n = 0;
-        for (auto it = seed.begin(); it!=seed.end(); it++, n++) { // Note the seed ids and recall values
-            Point &p1 = *it;
-            p0.setneighbour(p1.id(),n);
-            p0.setrecall(p1.recall(),n);
-        }
-        
-        if (VERBOSE) { cout << "seed " << p0.id() << ":"; for (auto it=seed.begin(); it != seed.end(); it++) cout << it->id() << " " ; cout << endl; }
-        
-        // Generate tracklets of 3 points
-        if (size<2) continue;
-        vector<Point> nextneighbours;
-        for (auto it1=seed.begin(); it1 != seed.end()-1; it1++)
-        {
-            Point &p1 = *it1;
-            nextneighbours.push_back(p1);
-            for (auto it2=it1+1; it2 != seed.end(); it2++) {
-                Point &p2 = *it2;
-                bool ok = checkTracklet(p0,p1,p2);
-                if (ok) {
-                    if (REF) cout << p2.id() << ": R3 OK " << p2.recall() << endl;
-                    nextneighbours.push_back(p2);
-                }
-                else
-                    if (REF) cout << p2.id() << ": R3 NOK " << p2.recall() << endl;
-                
-            }
-        }
-        
-        if (VERBOSE) { cout << "nextneighbours " << p0.id() << ":"; for (auto it=nextneighbours.begin(); it != nextneighbours.end(); it++) cout << it->id() << " " ; cout << endl; }
-        
-        sort(nextneighbours.begin(),nextneighbours.end(),Point::sortId);
-        set<Point> s(nextneighbours.begin(),nextneighbours.end()); // Remove double entries
-        if (VERBOSE) { cout << "set " << p0.id() << ":"; for (auto it=s.begin(); it != s.end(); it++) cout << it->id() << " " ; cout << endl; }
-
-        // Build a vector sorted by revall value
-        nextneighbours.clear();
-        nextneighbours.insert(nextneighbours.begin(),s.begin(),s.end());
-        sort(nextneighbours.begin(),nextneighbours.end(),Point::sortDist);
-        
-        
-        int j = 0;
-        for (auto it = nextneighbours.begin(); it!=nextneighbours.end(); it++, j++) { // Note the seed ids and recall values
-            if (j>=NEIGHBOURS) break;
-            if (it->recall()<=0.0) continue;
-            p0.setneighbour(it->id(),j);
-            p0.setrecall(it->recall(),j);
-        }
-        
     }
+    
+    if (VERBOSE) { cout << "triples " << p0.id() << ":"; for (auto &it:triples) cout << " (" << it.x << "," << it.y << "," << it.z << ":" << it.r << ")"; cout << endl; }
+    
+    return triples.size();
 }
 
-bool Tracker::checkTracklet(Point &p0,Point &p1)
+double Tracker::checkTracklet(Point &p0,Point &p1)
 {
-    p1.setrecall(0.0);
     double recall = Recall2(p0,p1)[0];
     bool ok = recall>THRESHOLD2;
-    if (ok) {
-        p1.setrecall(recall);
-        n4++;
-    }
-    else {
-        p1.setrecall(-recall);
-    }
+    recall = ok ? recall : -recall;
+    if (ok) n4++;
     n2++;
-    return ok;
+    return recall;
 }
 
-bool Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
+double Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
 {
-    p2.setrecall(0.0);
     double recall = Recall3(p0,p1,p2)[0];
     bool ok = recall>THRESHOLD3;
-    if (ok) {
-        p2.setrecall(recall);
-        n1++;
-    }
-    else {
-        p2.setrecall(-recall);
-    }
+    recall = ok ? recall : -recall;
+    if (ok) n1++;
     n3++;
-    return ok;
+    return recall;
 }
 
 // Find tracks from points
 int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
     std::clock_t c_start = std::clock();
+    nr = nd = np = nt = nx = n1 = n2 = n3 = n4 =0;
     
     Point *p = new Point[nhits];
     vector<Point> points;
@@ -294,13 +287,18 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Search neighbouring hits
     cout << "Searching neighbours..." << endl;
     
-    kNearestNeighbour(selection);
-    
-    for (auto it=selection.begin(); it!=selection.end();it++) { // Note the neighbour ids and recall values
-        int id = it->id();
-        for (int j=0;j<NEIGHBOURS;j++) {
-            p[id].setneighbour(it->neighbour(j),j);
-            p[id].setrecall(it->recall(j),j);
+    for (auto &it: selection) {
+        vector<Point> seed;
+        vector<triple> triples;
+        findSeeds(it,selection,seed);
+        findTriples(it,seed,triples);
+        // Transfer the result
+        for (auto &it:selection) { // Note the neighbour ids and recall values
+            int id = it.id();
+            for (int j=0;j<NEIGHBOURS;j++) {
+                p[id].setneighbour(it.neighbour(j),j);
+                p[id].setrecall(it.recall(j),j);
+            }
         }
     }
     
@@ -312,7 +310,6 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
         }
         cout << endl;
     }
-    
     
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;

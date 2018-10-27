@@ -8,10 +8,10 @@
 #ifdef TRACKML
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
-#define RMIN 0.0
-#define RMAX 0.2
-#define ZMIN 0.0
-#define ZMAX 0.7
+#define RMIN  0.0
+#define RMAX  0.2
+#define ZMIN -0.7
+#define ZMAX  0.7
 #define TRACKLET 2
 #define MAXKNN 150
 #define THRESHOLD2 0.75
@@ -48,6 +48,7 @@
 static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4;
 
 class Point;
+struct triple;
 
 class Tracker {
 private:
@@ -58,11 +59,12 @@ private:
 public:
     Tracker() {}
     static int findTracks(int nhits, float *x, float *y, float *z, int* labels);
+    static long findSeeds(Point &p,std::vector<Point> &points,std::vector<Point> &seeds);
+    static long findTriples(Point &p,std::vector<Point> &points,std::vector<triple> &triples);
     static long selectPoints(std::vector<Point> &points, std::vector<Point> &selection, double rmin, double rmax, double zmin, double zmax);
     static long selectPoints(std::vector<Point> &points, std::vector<Point> &selection, Point &ref, double deltar, double deltathe, double distance);
-    static void kNearestNeighbour(std::vector<Point> &points);
-    static bool checkTracklet(Point &p0,Point &p1);
-    static bool checkTracklet(Point &p0,Point &p1, Point &p2);
+    static double checkTracklet(Point &p0,Point &p1);
+    static double checkTracklet(Point &p0,Point &p1, Point &p2);
 };
 
 #endif
