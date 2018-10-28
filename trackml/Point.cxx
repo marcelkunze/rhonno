@@ -6,6 +6,10 @@ Point::Point(double x, double y, double z, int id, int label, int truth)
     _id = id;
     _label = label;
     _truth = truth;
+    _weight = 0.0;
+    _volume = 0;
+    _layer = 0;
+    _module = 0;
     _x = x;
     _y = y;
     _z = z;
@@ -22,6 +26,10 @@ Point::Point(float x, float y, float z, int id, int label, int truth)
     _id = id;
     _label = label;
     _truth = truth;
+    _weight = 0.0;
+    _volume = 0;
+    _layer = 0;
+    _module = 0;
     _x = x;
     _y = y;
     _z = z;
@@ -38,6 +46,10 @@ Point::Point(const Point &p)
     _id = p._id;
     _label = p._label;
     _truth = p._truth;
+    _weight = p._weight;
+    _volume = p._volume;
+    _layer = p._layer;
+    _module = p._module;
     _x = p._x;
     _y = p._y;
     _z = p._z;

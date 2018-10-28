@@ -58,7 +58,7 @@ private:
     static double* Recall3(Point &p1, Point &p2, Point &p3);
 public:
     Tracker() {}
-    static int findTracks(int nhits, float *x, float *y, float *z, int* labels);
+    static int findTracks(int nhits,float *x,float *y,float *z,int* labels,int *volumes,int *layers,int *modules,float *weights);
     static long findSeeds(Point &p,std::vector<Point> &points,std::vector<Point> &seeds);
     static long findTriples(Point &p,std::vector<Point> &points,std::vector<triple> &triples);
     static long selectPoints(std::vector<Point> &points, std::vector<Point> &inner, std::vector<Point> &outer, double rmin, double rmax, double zmin, double zmax);

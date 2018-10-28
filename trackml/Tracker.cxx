@@ -278,7 +278,7 @@ double Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
 }
 
 // Find tracks from points
-int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
+int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* labels,int *volumes,int *layers,int *modules,float *weights)
 {
     std::clock_t c_start = std::clock();
     
@@ -292,6 +292,10 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     for (int i=0;i<nhits;i++) {
         //labels[i] = 0;
         p[i] = Point(x[i],y[i],z[i],i,labels[i]);
+        p[i].setvolume(volumes[i]);
+        p[i].setlayer(layers[i]);
+        p[i].setmodule(modules[i]);
+        p[i].setweight(weights[i]);
         points.push_back(p[i]);
     }
     

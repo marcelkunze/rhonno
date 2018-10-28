@@ -184,18 +184,24 @@ int main()
             if (nhits > MAXHITS) nhits = MAXHITS;
             cout << "Hits: " << nhits << endl;
             
-            float x[nhits],y[nhits],z[nhits];
-            int labels[nhits];
+            float x[nhits],y[nhits],z[nhits],weights[nhits];
+            int labels[nhits],volumes[nhits],layers[nhits],modules[nhits];
             int nt;
             
             double minr = FLT_MAX;
             double maxr = 0.0;
+            float weight = 1.0 / (float) nhits;
             for (int i=0; i<nhits; i++) {
                 Point &h = hits[i];
                 x[i] = h.x();
                 y[i] = h.y();
                 z[i] = h.z();
                 labels[i] = h.label();
+                volumes[i] = h.volume();
+                layers[i] = h.layer();
+                modules[i] = h.module();
+                weights[i] = weight;
+                if (MCHITS) weights[i] = h.weight();
                 if (h.r() < minr) minr = h.r();
                 if (h.r() > maxr) maxr = h.r();
             }
@@ -203,7 +209,7 @@ int main()
             cout << "Max. radius: " << maxr << endl;
             
             cout << "Find tracks..." << endl;
-            nt = Tracker::findTracks((int)nhits,x,y,z,labels);
+            nt = Tracker::findTracks((int)nhits,x,y,z,labels,volumes,modules,layers,weights);
             
             // Assemble the tracks from label information
             nh = 0;
@@ -307,9 +313,8 @@ int main()
                 rulers.Draw();
                 // draw hits as PolyMarker3D
                 TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
-                for (vector<Point>::iterator it = hits.begin(); it != hits.end(); it++)    {
+                for (auto &p : hits)    {
                     static int i = 0;
-                    Point p=*it;
                     hitmarker->SetPoint(i++,p.x(),p.y(),p.z());
                 }
                 // set marker size, color & style
@@ -324,8 +329,7 @@ int main()
                     vector<Point> track = tracks[i];
                     int n = 0;
                     TPolyLine3D *connector = new TPolyLine3D((int)track.size());
-                    for (vector<Point>::iterator it = track.begin(); it != track.end(); it++)    {
-                        Point hit = *it;
+                    for (auto &hit : track)    {
                         connector->SetPoint(n++, hit.x(), hit.y(), hit.z());
                     }
                     connector->SetLineWidth(1);
@@ -353,13 +357,22 @@ void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
             Point p(h1.x,h1.y,h1.z,h1.hitID,trackid,i);
+            p.setvolume(h1.volume);
+            p.setlayer(h1.layer);
+            p.setmodule(h1.module);
+            p.setweight(0.0);
             tmpvec.push_back(p);
         }
     }
     else {
         for (int i=0;i<nhits;i++) {
             HitMC &h1 = mHitsMC[particle.hits[i]];
+            Hit &h2 = mHits[particle.hits[i]];
             Point p(h1.x,h1.y,h1.z,h1.hitID+1,trackid,i);
+            p.setweight(h1.w);
+            p.setvolume(h2.volume);
+            p.setlayer(h2.layer);
+            p.setmodule(h2.module);
             tmpvec.push_back(p);
         }
     }
@@ -631,30 +644,33 @@ void readEvent( const char *directory, int event, bool loadMC )
             hit.r = sqrt( hit.x*hit.x + hit.y*hit.y );
             hit.phi = atan2( hit.y, hit.x );
             hit.module = h[6];
-            hit.layer = ( (int) h[5])/2 -1;
+            hit.layer = h[5];
+            hit.volume = h[4];
+            int vol;
+            int lay = ( (int) h[5])/2 -1;
             switch( (int) h[4] )
             {
-                case  8: hit.volume = 0; break;
-                case  7: hit.volume = 1; hit.layer = 6-hit.layer; break;
-                case  9: hit.volume = 2; break;
-                case 13: hit.volume = 3; break;
-                case 12: hit.volume = 4; hit.layer = 5-hit.layer; break;
-                case 14: hit.volume = 5; break;
-                case 17: hit.volume = 6; break;
-                case 16: hit.volume = 7; hit.layer = 5-hit.layer; break;
-                case 18: hit.volume = 8; break;
+                case  8: vol = 0; break;
+                case  7: vol = 1; hit.layer = 6-hit.layer; break;
+                case  9: vol = 2; break;
+                case 13: vol = 3; break;
+                case 12: vol = 4; hit.layer = 5-hit.layer; break;
+                case 14: vol = 5; break;
+                case 17: vol = 6; break;
+                case 16: vol = 7; hit.layer = 5-hit.layer; break;
+                case 18: vol = 8; break;
                 default:
                     cout<<"Unknown detector volume: "<< (int) h[4] << endl;
                     exit(0);
             };
             
-            if( hit.layer<0 || hit.layer>= Geo::volumes[hit.volume].nLayers ){
+            if( lay<0 || lay>= Geo::volumes[vol].nLayers ){
                 cout<<"Unknown detector layer: "<<hit.layer<<endl;
                 exit(0);
             }
-            hit.layerID = Geo::volumes[hit.volume].layerIDs[hit.layer];
+            hit.layerID = Geo::volumes[vol].layerIDs[lay];
             Layer &layer = Geo::layers[hit.layerID];
-            if( Geo::volumes[hit.volume].type==0 ){
+            if( Geo::volumes[vol].type==0 ){
                 hit.t = hit.z / hit.r * layer.r;
             } else {
                 hit.t = hit.r / hit.z * layer.z ;
