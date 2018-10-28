@@ -13,6 +13,7 @@
 // Corresponding labels are assigned to hits
 
 #include "XMLP.h"
+#include <ctime>
 #include <iostream>
 #include <algorithm>
 #include <iterator>
