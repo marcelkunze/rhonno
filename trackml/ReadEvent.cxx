@@ -191,11 +191,11 @@ int main()
             double minr = FLT_MAX;
             double maxr = 0.0;
             for (int i=0; i<nhits; i++) {
-                labels[i] = 0;
                 Point &h = hits[i];
                 x[i] = h.x();
                 y[i] = h.y();
                 z[i] = h.z();
+                labels[i] = h.label();
                 if (h.r() < minr) minr = h.r();
                 if (h.r() > maxr) maxr = h.r();
             }
@@ -345,18 +345,21 @@ void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
     
     vector<Point> tmpvec;
     int nhits = (int)particle.hits.size();
+    static int trackid = 0;
+    
+    trackid++;
     
     if (!mc) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
-            Point p(h1.x,h1.y,h1.z,h1.hitID,h1.trackID,i);
+            Point p(h1.x,h1.y,h1.z,h1.hitID,trackid,i);
             tmpvec.push_back(p);
         }
     }
     else {
         for (int i=0;i<nhits;i++) {
             HitMC &h1 = mHitsMC[particle.hits[i]];
-            Point p(h1.x,h1.y,h1.z,h1.hitID+1,1,i);
+            Point p(h1.x,h1.y,h1.z,h1.hitID+1,trackid,i);
             tmpvec.push_back(p);
         }
     }

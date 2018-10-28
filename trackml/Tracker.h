@@ -61,10 +61,15 @@ public:
     static int findTracks(int nhits, float *x, float *y, float *z, int* labels);
     static long findSeeds(Point &p,std::vector<Point> &points,std::vector<Point> &seeds);
     static long findTriples(Point &p,std::vector<Point> &points,std::vector<triple> &triples);
-    static long selectPoints(std::vector<Point> &points, std::vector<Point> &selection, double rmin, double rmax, double zmin, double zmax);
-    static long selectPoints(std::vector<Point> &points, std::vector<Point> &selection, Point &ref, double deltar, double deltathe, double distance);
+    static long selectPoints(std::vector<Point> &points, std::vector<Point> &inner, std::vector<Point> &outer, double rmin, double rmax, double zmin, double zmax);
+    static long selectPoints(std::vector<Point> &points, std::vector<Point> &good, std::vector<Point> &bad, Point &ref, double deltar, double deltathe, double distance);
     static double checkTracklet(Point &p0,Point &p1);
     static double checkTracklet(Point &p0,Point &p1, Point &p2);
+    static long checkLabels(std::vector<Point> &p);
+    static long seedstotal,seedsok;
+    static long trackletstotal,trackletsok;
+    static long nr,nd,np,nt,nx,n1,n2,n3,n4;
+
 };
 
 #endif

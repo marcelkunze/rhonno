@@ -38,6 +38,11 @@ bool operator==(const triple&a, const triple&b) {
     return a.x==b.x && a.y==b.y && a.z==b.z;
 }
 
+long Tracker::seedsok(0),Tracker::seedstotal(0);
+long Tracker::trackletsok(0),Tracker::trackletstotal(0);
+long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0),Tracker::nx(0);
+long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0);
+
 // Print an integer hit id track vector
 void Tracker::print(vector<int> const &input)
 {
@@ -51,6 +56,18 @@ void Tracker::print(vector<int> const &input)
 bool Tracker::sortFunc( const vector<int>& p1,
                        const vector<int>& p2 ) {
     return p1.size() > p2.size();
+}
+
+// CHeck whether the points in a vector belong to the same track
+long Tracker::checkLabels(std::vector<Point> &p) {
+    if (p.size()==0) return 0;
+    int label = p[0].label();
+    if (label<=0) return 0;
+    long n = 0;
+    for (auto it:p) {
+        if (it.label()==label) n++;
+    }
+    return n;
 }
 
 // Recall function for 2 points
@@ -100,17 +117,18 @@ double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
 }
 
 // Preselect points in a cylinder defined by RMIN..RMAX and ZMIN..ZMAX
-long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &selection,double rmin,double rmax,double zmin,double zmax) {
+long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &inner,std::vector<Point> &outer,double rmin,double rmax,double zmin,double zmax) {
     long n = 0;
     for (auto it=points.begin(); it!=points.end();it++) {
         Point &p = *it;
         double z = p.z();
         double r = p.rz();
-        if (z>ZMAX || z<ZMIN) continue;
-        if (r>RMAX || r<RMIN) continue;
-        selection.push_back(p);
+        if (z>ZMAX || z<ZMIN) { outer.push_back(p); continue; }
+        if (r>RMAX || r<RMIN) { outer.push_back(p); continue; }
+        inner.push_back(p);
         n++;
     }
+    
     return n;
 }
 
@@ -119,7 +137,7 @@ long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &select
 #define REF false
 
 // Select points wrt. a reference point
-long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &selection, Point &ref, double deltar, double deltathe, double distance)
+long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &good, std::vector<Point> &bad, Point &ref, double deltar, double deltathe, double distance)
 {
     int id = ref.id();
     if (TBD&&REF) cout << "---------------------------> id: " << id << endl;
@@ -137,18 +155,18 @@ long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &selec
         if (TBD&&REF) cout << p.id() << endl;
             
         double dr = abs(p.r()-ref.r()); // Check the radial distance
-        if (dr > deltar) { if (TBD&&REF) cout << "R " << dr << endl; nr++; continue; }
+        if (dr > deltar) { if (TBD&&REF) cout << "R " << dr << endl; nr++; bad.push_back(p); continue; }
             
         double dt = abs(p.theta()-ref.theta()); // Check the elongation
-        if (dt > deltathe) { if (TBD&&REF) cout << "T " << dt << endl; nt++; continue; }
+        if (dt > deltathe) { if (TBD&&REF) cout << "T " << dt << endl; nt++; bad.push_back(p); continue; }
             
         double d = p.distance(ref); // Check the euclidean distance
-        if (d > distance*p.r()) { if (TBD&&REF) cout << "D " << d << endl; nd++; continue; }
+        if (d > distance*p.r()) { if (TBD&&REF) cout << "D " << d << endl; nd++; bad.push_back(p); continue; }
             
         //double angle = acos(Point::dot(p0,p1)); // Check angle between (p0,p1)
         //if (angle > DELTAPHI) { if (TBD&&REF) cout << "P " << angle << endl; np++; continue; }
             
-        selection.push_back(p);
+        good.push_back(p);
             
         if (TBD&&REF) {
                 cout << p.id() << ": R " << dr << " T " << dt << " D " << d;
@@ -158,7 +176,7 @@ long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &selec
     
     if (TBD&&REF) cout << "<--------------------------- id: " << id << endl;
     
-    return selection.size();
+    return good.size();
 }
 
 // Look for seeding points using a KNN algorithm and a neural network to identify hit pairs
@@ -166,8 +184,8 @@ long Tracker::findSeeds(Point &p0, std::vector<Point> &points, std::vector<Point
 {
     if (points.size()<2) return 0;
     
-    vector<Point> neighbours;
-    selectPoints(points,neighbours,p0,DELTAR,DELTATHE,DISTANCE);
+    vector<Point> neighbours,bad;
+    selectPoints(points,neighbours,bad,p0,DELTAR,DELTATHE,DISTANCE);
     
     sort(neighbours.begin(),neighbours.end(),Point::sortDist);
     
@@ -199,7 +217,11 @@ long Tracker::findSeeds(Point &p0, std::vector<Point> &points, std::vector<Point
     
     if (VERBOSE) { cout << "seed " << p0.id() << ": "; for (auto &it:seed) cout << it.id() << " " ; cout << endl; }
     
-    return seed.size();
+    long size = seed.size();
+    seedstotal += seed.size();
+    seedsok += checkLabels(seed);
+    
+    return size;
 }
 
 // Generate tracklets of 3 points wrt. the first point in seed
@@ -259,7 +281,6 @@ double Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
 int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
 {
     std::clock_t c_start = std::clock();
-    nr = nd = np = nt = nx = n1 = n2 = n3 = n4 =0;
     
     Point *p = new Point[nhits];
     vector<Point> points;
@@ -269,14 +290,14 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Set up a cache for the point coordinates
     //cout << "Set up points cache..." << endl;
     for (int i=0;i<nhits;i++) {
-        labels[i] = 0;
-        p[i] = Point(x[i],y[i],z[i],i);
+        //labels[i] = 0;
+        p[i] = Point(x[i],y[i],z[i],i,labels[i]);
         points.push_back(p[i]);
     }
     
     // Select points in a cylinder around the origin
-    vector<Point> selection;
-    long n = selectPoints(points,selection,RMIN,RMAX,ZMIN,ZMAX);
+    vector<Point> selection, other;
+    long n = selectPoints(points,selection,other,RMIN,RMAX,ZMIN,ZMAX);
     if (n==0) return 0;
     
     // Sort the hits according to distance from origin
@@ -293,7 +314,7 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
         findSeeds(it,selection,seed);
         findTriples(it,seed,triples);
         // Transfer the result
-        for (auto &it:selection) { // Note the neighbour ids and recall values
+        for (auto &it:seed) { // Note the neighbour ids and recall values
             int id = it.id();
             for (int j=0;j<NEIGHBOURS;j++) {
                 p[id].setneighbour(it.neighbour(j),j);
@@ -357,8 +378,11 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
         vector<int> tmpvec;
         for (auto ip=pvec.begin();ip!=pvec.end();ip++) tmpvec.push_back(ip->id()); // Note the hit indices
         if (VERBOSE) print(tmpvec);
-        if (pvec.size() >= TRACKLET)
+        if (pvec.size() >= TRACKLET) {
             tracklet.push_back(tmpvec);
+            trackletstotal += pvec.size();
+            trackletsok += checkLabels(pvec);
+        }
         else
             shortpath.push_back(tmpvec);
         if (VERBOSE) cout << "---" << endl;
@@ -375,13 +399,13 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Print out the tracks vector
     if (VERBOSE) {
         cout << "Tracklets:" << endl;
-        for (auto it = tracklet.begin(); it != tracklet.end(); ++it) print(*it);
+        for (auto &it:tracklet) print(it);
     }
     
     // Print out the shot tracks vector
     if (VERBOSE) {
         cout << "Short Tracklets:" << endl;
-        for (auto it = shortpath.begin(); it != shortpath.end(); ++it) print(*it);
+        for (auto &it:shortpath) print(it);
     }
     
     cout << endl << "Re-assign n/a hits to tracklets..." << endl;
@@ -389,15 +413,15 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     // Re-assign the short paths to tracklets
     int napoints = 0;
     int rapoints = 0;
-    for (auto it = shortpath.begin(); it != shortpath.end(); ++it) napoints += (*it).size();
+    for (auto &it:shortpath) napoints += it.size();
     
 #ifdef REASSIGN
-    for (auto it1 = tracklet.begin(); it1 != tracklet.end(); ++it1) {
-        vector<int> &t1 = *it1;
+    for (auto &it1:tracklet) {
+        vector<int> &t1 = it1;
         int seed1 = t1[t1.size()-1]; // last hit
         int seed2 = t1[t1.size()-2]; // 2nd last hit
-        for (auto it2 = shortpath.begin(); it2 != shortpath.end(); ++it2) {
-            vector<int> &t2 = *it2;
+        for (auto &it2:shortpath) {
+            vector<int> &t2 = it2;
             int seed3 = t2[0];
             double recall = Recall3(points[seed1],points[seed2],points[seed3])[0];
             if (recall>THRESHOLD) {
@@ -448,7 +472,15 @@ int Tracker::findTracks(int nhits, float *x, float *y, float *z, int* labels)
     cout << "Threshold2 <" << THRESHOLD2 << ": " << n4 <<endl;
     cout << "Threshold3 <" << THRESHOLD3 << ": " << n1 <<endl;
     cout << "Recalls2 : " << n2 << endl;
-    cout << "Recalls3 : " << n3 << endl;
+    cout << "Recalls3 : " << n3 << endl << endl;
+
+    double perc = 0.0;
+    if (seedstotal>0) perc = 100. * seedsok / (double) seedstotal;
+    cout << "findSeeds: " << perc << "%" << endl;
+    
+    perc = 0.0;
+    if (trackletstotal>0) perc = 100. * trackletsok / (double) trackletstotal;
+    cout << "findTracks: " << perc << "%" << endl << endl;
     
     delete [] p;
     
