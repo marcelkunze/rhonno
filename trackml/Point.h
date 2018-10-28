@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 #define NEIGHBOURS 3
 
@@ -145,7 +146,7 @@ Point Point::circleCenter(const Point &p1,const Point &p2,const Point &p3)
     float cd =   (offset - pow(p3._x, 2) - pow(p3._y, 2))/2.0;
     float det =  (p1._x - p2._x) * (p2._y - p3._y) - (p2._x - p3._x)* (p1._y - p2._y);
     
-    if (abs(det) < 0.0000001) { return center; }
+    if (fabs(det) < 0.0000001) { return center; }
     
     float idet = 1/det;
     

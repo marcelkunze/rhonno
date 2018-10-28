@@ -10,12 +10,13 @@ ROOTCFLAGS    = $(shell root-config --cflags)
 ROOTLIBS      = $(shell root-config --libs)
 ROOTGLIBS     = $(shell root-config --glibs)
 
-SOURCES=ReadEvent.cxx Geo.cxx DataStructures.cxx 
+SOURCES1=ReadEvent.cxx Geo.cxx DataStructures.cxx 
+SOURCES=main.cxx
 SHLIB=Tracker.cxx Point.cxx XMLP.cxx
 
 HEADERS=$(SRC:.cxx=.h)
 OBJECTS=$(SOURCES:.cxx=.o)
-EXECUTABLE=ReadEvent
+EXECUTABLE=tracker
 LIBRARY=libprocess.so
 
 all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)

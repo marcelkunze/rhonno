@@ -11,6 +11,9 @@
 
 #include <iostream>
 #include <cmath>
+#include <cstdarg>
+#include <cstring>
+
 using namespace std;
 
 XMLP:: XMLP(int layers,double inputRange,string netFile,int innodes,...)
