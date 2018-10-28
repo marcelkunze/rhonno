@@ -27,6 +27,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <vector>
 
 class Point
 {
@@ -118,7 +119,7 @@ Point Point::circleCenter(const Point &p1,const Point &p2,const Point &p3)
     double cd =   (offset - pow(p3._x, 2) - pow(p3._y, 2))/2.0;
     double det =  (p1._x - p2._x) * (p2._y - p3._y) - (p2._x - p3._x)* (p1._y - p2._y);
     
-    if (abs(det) < 0.0000001) { return center; }
+    if (fabs(det) < 0.0000001) { return center; }
     
     double idet = 1/det;
     
