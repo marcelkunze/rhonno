@@ -65,8 +65,8 @@ int main(int argc, char**argv) {
     
     long nhits = Tracker::hits.size();
     float x[nhits],y[nhits],z[nhits];
-    int labels[nhits];
-    
+    int labels[nhits],truth[nhits],layer[nhits];
+
     int i = 0;
     int n = 0;
     for (auto &track : Tracker::truth_tracks) {
@@ -79,6 +79,10 @@ int main(int argc, char**argv) {
             x[i] = hit.x * 0.001; // in m
             y[i] = hit.y * 0.001; // in m;
             z[i] = hit.z * 0.001; // in m;
+            labels[i] = n;
+            truth[i] = id;
+            layer[i] = Tracker::metai[id];
+            //cout << Tracker::metai[id] << ": " << Tracker::meta[id].x << " " << Tracker::meta[id].y << " " << Tracker::meta[id].x << endl;
             i++;
         }
     }
@@ -88,7 +92,7 @@ int main(int argc, char**argv) {
     cout << "Hits: " << nhits << endl;
     
     cout << "Find tracks..." << endl;
-    long nt = Tracker::findTracks((int)nhits,x,y,z,labels);
+    long nt = Tracker::findTracks((int)nhits,x,y,z,layer,labels,truth);
     
     // Assemble tracks
     map<int,vector<Point> > tracks;
