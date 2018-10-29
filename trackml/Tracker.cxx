@@ -65,7 +65,7 @@ long Tracker::checkLabels(std::vector<Point> &p) {
 }
 
 // Recall function for 2 points
-double* Tracker::Recall2(Point &p1, Point &p2)
+double* Tracker::recall2(Point &p1, Point &p2)
 {
     static XMLP net(NETFILE2);
     static float x[6]={0.,0.,0.,0.,0.,0.};
@@ -81,7 +81,7 @@ double* Tracker::Recall2(Point &p1, Point &p2)
 }
 
 // Recall function for 3 points
-double* Tracker::Recall3(Point &p1, Point &p2, Point &p3)
+double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
 {
     static XMLP net(NETFILE3);
     static float x[9]={0.,0.,0.,0.,0.,0.,0.,0.,0.};
@@ -218,6 +218,25 @@ long Tracker::findSeeds(Point &p0, std::vector<Point> &points, std::vector<Point
     return size;
 }
 
+//Find pairs using a neural network
+vector<pair<int, int> > Tracker::findPairs() {
+    
+    const int n = 50;//How many pairs of layers to consider. Roughly proportional to run-time, and setting this to 30 gave practically the same score (less than 0.0002 reduction)
+    pair<int, int> start_list[100] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}, {1, 2}, {5, 6}, {12, 13}, {13, 14}, {6, 7}, {2, 3}, {3, 18}, {19, 20}, {0, 2}, {20, 21}, {1, 4}, {7, 8}, {11, 18}, {1, 11}, {14, 15}, {4, 18}, {2, 18}, {21, 22}, {0, 18}, {1, 18}, {24, 26}, {36, 38}, {15, 16}, {8, 9}, {22, 23}, {9, 10}, {16, 17}, {38, 40}, {5, 18}, {18, 24}, {18, 36}, {12, 18}, {40, 42}, {28, 30}, {26, 28}, {0, 12}, {18, 20}, {6, 18}, {2, 11}, {13, 18}, {2, 4}, {0, 5}, {19, 36}, {19, 24}, {4, 6}, {19, 22}, {20, 22}, {11, 13}, {3, 19}, {7, 18}, {14, 18}, {3, 4}, {22, 25}, {1, 3}, {20, 24}, {15, 18}, {3, 11}, {22, 37}, {30, 32}, {42, 44}, {8, 18}, {9, 18}, {8, 26}, {15, 38}, {20, 36}, {14, 36}, {7, 24}, {1, 5}, {16, 18}, {22, 24}, {18, 22}, {25, 27}, {16, 40}, {10, 30}, {25, 26}, {17, 40}, {36, 39}, {1, 12}, {10, 28}, {7, 26}, {17, 42}, {24, 27}, {21, 24}, {23, 37}, {13, 36}, {15, 36}, {22, 36}, {14, 38}, {8, 28}, {19, 21}, {6, 24}, {9, 28}, {16, 38}, {0, 3}};
+    
+    vector<pair<int, int> > pairs;
+    for (int i = 0; i < n; i++) {
+        for (auto a : tube[start_list[i].first]) {
+            for (auto b : tube[start_list[i].second]) {
+                double recall = recall2(p[a],p[b])[0];
+                if (recall > THRESHOLD2)
+                    pairs.push_back(make_pair(a, b));
+            }
+        }
+    }
+    return pairs;
+}
+
 // Generate tracklets of 3 points wrt. the first point in seed
 long Tracker::findTriples(Point &p0, std::vector<Point> &seed,std::vector<triple> &triples)
 {
@@ -253,7 +272,7 @@ long Tracker::findTriples(Point &p0, std::vector<Point> &seed,std::vector<triple
 
 double Tracker::checkTracklet(Point &p0,Point &p1)
 {
-    double recall = Recall2(p0,p1)[0];
+    double recall = recall2(p0,p1)[0];
     bool ok = recall>THRESHOLD2;
     recall = ok ? recall : -recall;
     if (ok) n4++;
@@ -263,7 +282,7 @@ double Tracker::checkTracklet(Point &p0,Point &p1)
 
 double Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
 {
-    double recall = Recall3(p0,p1,p2)[0];
+    double recall = recall3(p0,p1,p2)[0];
     bool ok = recall>THRESHOLD3;
     recall = ok ? recall : -recall;
     if (ok) n1++;
@@ -271,13 +290,30 @@ double Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
     return recall;
 }
 
+void Tracker::readTubes() {
+    map<long long,int> added[48];
+    
+    for (int i = 0; i < points.size(); i++) {
+        //if (!assignment[i])
+        tube[points[i].layer()].push_back(i);
+    }
+    for (int i = 0; i < 48; i++) {
+        if (layer[i].type == Tube)
+            sort(tube[i].begin(), tube[i].end(), z_cmp);
+        else
+            sort(tube[i].begin(), tube[i].end(), r_cmp);
+    }
+}
+
+bool Tracker::z_cmp(const int a, const int&b) { return hits[a].z < hits[b].z; }
+bool Tracker::r_cmp(const int&a, const int&b) { return hits[a].x*hits[a].x+hits[a].y*hits[a].y < hits[b].x*hits[b].x+hits[b].y*hits[b].y; }
+
 // Find tracks from points
-int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* labels)
+int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* labels,int *truth)
 {
     std::clock_t c_start = std::clock();
     
-    Point *p = new Point[nhits];
-    vector<Point> points;
+    p = new Point[nhits];
     points.reserve(nhits);
     map<int,Point*> hitmap;
     
@@ -285,9 +321,14 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* labels)
     //cout << "Set up points cache..." << endl;
     for (int i=0;i<nhits;i++) {
         //labels[i] = 0;
-        p[i] = Point(x[i],y[i],z[i],i,labels[i]);
+        p[i] = Point(x[i],y[i],z[i],i,labels[i],truth[i]);
+        p[i].setlayer(layers[i]);
         points.push_back(p[i]);
     }
+    
+    readTubes();
+    vector<pair<int, int> > pairs;
+    pairs = findPairs();
     
     // Select points in a cylinder around the origin
     vector<Point> selection, other;
@@ -486,27 +527,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* labels)
 }
 
 // functions to read trackml data
-
-vector<int>* Tracker::readTubes() {
-    vector<int> *tube = new vector<int>[48](); // List of hits in each layer
-    map<long long,int> added[48];
-    
-    for (int i = 1; i < hits.size(); i++) {
-        if (!assignment[i])
-            tube[metai[i]].push_back(i);
-    }
-    for (int i = 0; i < 48; i++) {
-        if (layer[i].type == Tube)
-            sort(tube[i].begin(), tube[i].end(), z_cmp);
-        else
-            sort(tube[i].begin(), tube[i].end(), r_cmp);
-    }
-    return tube;
-}
-
-
-bool Tracker::z_cmp(const int a, const int&b) { return hits[a].z < hits[b].z; }
-bool Tracker::r_cmp(const int&a, const int&b) { return hits[a].x*hits[a].x+hits[a].y*hits[a].y < hits[b].x*hits[b].x+hits[b].y*hits[b].y; }
 
 void Tracker::readBlacklist(string base_path,int filenum) {
     if (filenum < 1000) return;
@@ -1024,11 +1044,15 @@ void Tracker::initHitDir() {
 }
 
 // Data initialization
+Point* Tracker::p;
+vector<Point> Tracker::points;
 long Tracker::seedsok(0),Tracker::seedstotal(0);
 long Tracker::trackletsok(0),Tracker::trackletstotal(0);
 unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0),Tracker::nx(0);
 unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0);
 vector<point> Tracker::hits; //hit position
+
+vector<int> Tracker::tube[48]; // List of hits in each layer
 map<long long, vector<int> > Tracker::truth_tracks; //truth hit ids in each track
 map<long long, point> Tracker::track_hits; // Find points in hits
 int Tracker::assignment[150000];

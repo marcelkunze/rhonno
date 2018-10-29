@@ -84,8 +84,7 @@ struct Layer {
     double minr, avgr, maxr;
     double minz, avgz, maxz;
     int count;
-    int type;
-    
+    int type;    
     double var0, var1;
 };
 
@@ -103,7 +102,10 @@ public:
     static std::vector<point> hits; //hit position
     static std::map<long long, std::vector<int> > truth_tracks; //truth hit ids in each track
     static std::map<long long, point> track_hits; // Find points in hits
+    static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
+    static std::vector<point> meta; //volume_id / layer_id / module_id
 private:
+    static std::vector<int> tube[48]; // List of hits in each layer
     static int assignment[150000];
     static point truth_pos[150000], truth_mom[150000]; //truth position and momentum
     static double truth_weight[150000]; //weighting of each hit
@@ -117,8 +119,6 @@ private:
     static std::map<long long, int> part_hits; // = truth_tracks[particle_id].size()
     static int topo[48], itopo[48]; //reordering of layers for approximate sorting
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
-    static std::vector<point> meta; //volume_id / layer_id / module_id
-    static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static double disc_z[48][4];
     static const int Tube = 0, Disc = 1;
     static constexpr double Bfield = 1673.0; //Empirical field strengh, to scale the momentum
@@ -129,11 +129,13 @@ private:
     static point hit_dir[150000][2]; //The two possible directions of the hit according to the cell's data for each hit
 
     static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4;
-
+    static Point *p;
+    static std::vector<Point> points;
 public:
     Tracker() {}
-    static int findTracks(int nhits,float *x,float *y,float *z,int* labels);
+    static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *labels,int *truth);
     static long findSeeds(Point &p,std::vector<Point> &points,std::vector<Point> &seeds);
+    static std::vector<std::pair<int, int> > findPairs();
     static long findTriples(Point &p,std::vector<Point> &points,std::vector<triple> &triples);
     static long selectPoints(std::vector<Point> &points, std::vector<Point> &inner, std::vector<Point> &outer, double rmin, double rmax, double zmin, double zmax);
     static long selectPoints(std::vector<Point> &points, std::vector<Point> &good, std::vector<Point> &bad, Point &ref, double deltar, double deltathe, double distance);
@@ -148,17 +150,17 @@ public:
     static void readHits(std::string base_path,int filenum);
     static void readCells(std::string base_path,int filenum);
     static void readDetectors(std::string base_path);
+    static void readTubes();
     static void sortTracks();
     
 private:
     static void print(std::vector<int> const &input);
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
-    static double* Recall2(Point &p1, Point &p2);
-    static double* Recall3(Point &p1, Point &p2, Point &p3);
+    static double* recall2(Point &p1, Point &p2);
+    static double* recall3(Point &p1, Point &p2, Point &p3);
     static bool z_cmp(const int a, const int&b);
     static bool r_cmp(const int&a, const int&b);
     static int samepart(int a, int b);
-    static std::vector<int>* readTubes();
     static bool track_cmp(int a, int b);
     static void initOrder();
     static void initLayers();
