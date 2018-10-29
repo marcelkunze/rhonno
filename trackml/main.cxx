@@ -1,6 +1,16 @@
 // Read the trackml data files and extract neural network training data
 // M.Kunze, Heidelberg University, 2018
 
+#include "Tracker.h"
+#include "Point.h"
+#include "TString.h"
+#include "TFile.h"
+#include "TCanvas.h"
+#include "TView.h"
+#include "TPolyMarker3D.h"
+#include "TAxis3D.h"
+#include "TPolyLine3D.h"
+
 #include <iostream>
 #include <set>
 #include <algorithm>
@@ -12,6 +22,12 @@
 
 #define MAXPARTICLES 10
 #define MAXHITS 150000
+#define DRAW true
+
+std::string base_path = "/Users/marcel/workspace/train_sample/";
+
+//Which event to run, this may be overwritten by main()'s arguments
+int filenum = 21100;
 
 //Not doing much in practice
 int debug = 0;
@@ -19,65 +35,6 @@ int debug = 0;
 #define assert(a, m) {if (!(a)) {cout << m << endl; exit(0);}}
 
 using namespace std;
-
-inline double dist(double x, double y) { return sqrt(x*x+y*y); }
-inline double dist2(double x, double y) { return (x*x+y*y); }
-
-//Basics for 3d coordinate representation
-struct point {
-    double x, y, z;
-    point() {}
-    point(double x, double y, double z) : x(x),y(y),z(z) {}
-    inline point operator-(const point&p) {
-        return point(x-p.x, y-p.y, z-p.z);
-    }
-    inline point operator+(const point&p) {
-        return point(x+p.x, y+p.y, z+p.z);
-    }
-    inline double operator*(const point&p) {
-        return x*p.x+y*p.y+z*p.z;
-    }
-    inline point operator*(double f) {
-        return point(x*f, y*f, z*f);
-    }
-};
-ostream& operator<<(ostream&out, const point p) {
-    out << p.x << ' ' << p.y << ' ' << p.z;
-    return out;
-}
-inline double dist(const point&p) { return sqrt(p.x*p.x+p.y*p.y+p.z*p.z); }
-
-//Structure for storing promising triples of hits
-/*
-struct triple {
-    int x, y, z; //hit ids
-    triple() {}
-    triple(int a, int b, int c) : x(a), y(b), z(c) {}
-};
-bool operator<(const triple&a, const triple&b) {
-    if (a.z != b.z) return a.z < b.z;
-    if (a.y != b.y) return a.y < b.y;
-    return a.x < b.x;
-}
-bool operator==(const triple&a, const triple&b) {
-    return a.x==b.x && a.y==b.y && a.z==b.z;
-}
-*/
-//Convert "dir" to polar (really cylindrical coordinates) coordinates, suffix p  (as in "refp") usually means polar coodinates throughout the code
-point topolar(const point&dir, const point&ref, const point&refp) {
-    return point(ref.x*dir.x+ref.y*dir.y, ref.x*dir.y-ref.y*dir.x, dir.z*refp.x);
-}
-
-#include "input.h"
-
-//does hits a and b correspond to the same particle?
-int samepart(int a, int b) {
-    long long aa = truth_part[a];
-    long long bb = truth_part[b];
-    return aa == bb && aa;
-}
-
-#include "Tracker.h"
 
 int main(int argc, char**argv) {
     //Read which event to run from arguments, default is event # 1000
@@ -95,30 +52,29 @@ int main(int argc, char**argv) {
     eval = 1;
 #endif
     if (!eval) {
-        readBlacklist();
-        readTruth();
-        sortTracks();
-        readParticles();
+        Tracker::readBlacklist(base_path,filenum);
+        Tracker::readTruth(base_path,filenum);
+        Tracker::sortTracks();
+        Tracker::readParticles(base_path,filenum);
     }
-    readHits();
+    Tracker::readHits(base_path,filenum);
 
-    long nParticles = truth_tracks.size();
+    long nParticles = Tracker::truth_tracks.size();
     if (nParticles > MAXPARTICLES) nParticles = MAXPARTICLES;
     cout << "Particles: " << nParticles << endl;
-
     
-    long nhits = hits.size();
-    float x[nhits],y[nhits],z[nhits],weights[nhits];
-    int labels[nhits],volumes[nhits],layers[nhits],modules[nhits];
+    long nhits = Tracker::hits.size();
+    float x[nhits],y[nhits],z[nhits];
+    int labels[nhits];
     
     int i = 0;
     int n = 0;
-    for (auto &track : truth_tracks) {
+    for (auto &track : Tracker::truth_tracks) {
         if (n++ > MAXPARTICLES) break;
         vector<int> t = track.second;
         for (auto &id : t) {
-            auto it = track_hits.find(id);
-            if (it==track_hits.end()) continue;
+            auto it = Tracker::track_hits.find(id);
+            if (it==Tracker::track_hits.end()) continue;
             point &hit = it->second;
             x[i] = hit.x * 0.001; // in m
             y[i] = hit.y * 0.001; // in m;
@@ -132,6 +88,68 @@ int main(int argc, char**argv) {
     cout << "Hits: " << nhits << endl;
     
     cout << "Find tracks..." << endl;
-    Tracker::findTracks((int)nhits,x,y,z,labels,volumes,modules,layers,weights);
+    long nt = Tracker::findTracks((int)nhits,x,y,z,labels);
+    
+    // Assemble tracks
+    map<int,vector<Point> > tracks;
+    for(int i=0; i<nt; i++) {
+        int track = i+1;
+        vector<Point> t;
+        for (int j=0;j<nhits;j++) {
+            if (track != labels[j]) continue;
+            Point p(x[j],y[j],z[j]);
+            t.push_back(p); // Save the results
+        }
+        tracks[i] = t;
+    }
+
+    // Initialize a 3D canvas and draw the hits and tracks
+    if (DRAW) {
+        TString dir = base_path;
+        TString filePrefix;
+        filePrefix.Form("%sevent%09d",dir.Data(),filenum);
+        TString cname = filePrefix+"-canvas.root";
+        TFile output(cname,"RECREATE");
+        TCanvas *c1 = new TCanvas("c1","NNO Tracking: XMLP",200,10,700,500);
+        // create a pad
+        TPad *p1 = new TPad("p1","p1",0.05,0.02,0.95,0.82,46,3,1);
+        p1->SetFillColor(kBlack);
+        p1->Draw();
+        p1->cd();
+        // creating a view
+        TView *view = TView::CreateView(1);
+        view->SetRange(-2,-2,-2,2,2,2); // draw in a 2 meter cube
+        // Draw axis
+        TAxis3D rulers;
+        rulers.Draw();
+        // draw hits as PolyMarker3D
+        TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
+        for (int i=0;i<nhits;i++) {
+            hitmarker->SetPoint(i,x[i],y[i],z[i]);
+        }
+        // set marker size, color & style
+        hitmarker->SetMarkerSize(1.0);
+        hitmarker->SetMarkerColor(kCyan);
+        hitmarker->SetMarkerStyle(kStar);
+        hitmarker->Draw();
+        
+        // Draw the tracks
+        for (int i=0;i<nt;i++) {
+            //cout << endl << "Drawing track " << i+1 << ": ";
+            vector<Point> track = tracks[i];
+            int n = 0;
+            TPolyLine3D *connector = new TPolyLine3D((int)track.size());
+            for (auto &hit : track)    {
+                connector->SetPoint(n++, hit.x(), hit.y(), hit.z());
+            }
+            connector->SetLineWidth(1);
+            connector->SetLineColor(kRed);
+            connector->Draw();
+        }
+        
+        cout <<  "Writing " << cname << endl;
+        c1->Write();
+        output.Close();
+    }
 
 }
