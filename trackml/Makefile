@@ -23,7 +23,7 @@ LIBRARY=libprocess.so
 
 all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS) $(LIBRARY) input.h
+$(EXECUTABLE): $(OBJECTS) $(LIBRARY)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
 ReadEvent: $(OBJECTS1) $(LIBRARY)
