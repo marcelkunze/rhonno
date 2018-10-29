@@ -197,11 +197,6 @@ int main()
                 y[i] = h.y();
                 z[i] = h.z();
                 labels[i] = h.label();
-                volumes[i] = h.volume();
-                layers[i] = h.layer();
-                modules[i] = h.module();
-                weights[i] = weight;
-                if (MCHITS) weights[i] = h.weight();
                 if (h.r() < minr) minr = h.r();
                 if (h.r() > maxr) maxr = h.r();
             }
@@ -209,7 +204,7 @@ int main()
             cout << "Max. radius: " << maxr << endl;
             
             cout << "Find tracks..." << endl;
-            nt = Tracker::findTracks((int)nhits,x,y,z,labels,volumes,modules,layers,weights);
+            nt = Tracker::findTracks((int)nhits,x,y,z,labels);
             
             // Assemble the tracks from label information
             nh = 0;
@@ -357,10 +352,6 @@ void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
             Point p(h1.x,h1.y,h1.z,h1.hitID,trackid,i);
-            p.setvolume(h1.volume);
-            p.setlayer(h1.layer);
-            p.setmodule(h1.module);
-            p.setweight(0.0);
             tmpvec.push_back(p);
         }
     }
@@ -369,10 +360,6 @@ void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
             HitMC &h1 = mHitsMC[particle.hits[i]];
             Hit &h2 = mHits[particle.hits[i]];
             Point p(h1.x,h1.y,h1.z,h1.hitID+1,trackid,i);
-            p.setweight(h1.w);
-            p.setvolume(h2.volume);
-            p.setlayer(h2.layer);
-            p.setmodule(h2.module);
             tmpvec.push_back(p);
         }
     }
@@ -669,7 +656,7 @@ void readEvent( const char *directory, int event, bool loadMC )
                 exit(0);
             }
             hit.layerID = Geo::volumes[vol].layerIDs[lay];
-            Layer &layer = Geo::layers[hit.layerID];
+            Layer1 &layer = Geo::layers[hit.layerID];
             if( Geo::volumes[vol].type==0 ){
                 hit.t = hit.z / hit.r * layer.r;
             } else {

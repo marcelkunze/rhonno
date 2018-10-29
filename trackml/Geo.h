@@ -8,7 +8,7 @@
 
 using namespace std;
 
-struct Layer
+struct Layer1
 {
   int id = -1; // global layer id
   int size = -1; // radial position: 0 = inner, 1 = middle, 2 = outer 
@@ -57,7 +57,7 @@ class Geo
   static constexpr double OriginBzkG = 20.*CLight; // 20 kG * speed of light 
 
   static Volume volumes[NVolumes];
-  static Layer  layers[NLayers];
+  static Layer1  layers[NLayers];
 
   static void init();
 

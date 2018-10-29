@@ -6,7 +6,7 @@
  constexpr int Geo::NLayers; // 48
 
  Volume Geo::volumes[NVolumes];
- Layer  Geo::layers[NLayers];
+ Layer1  Geo::layers[NLayers];
  
 
 
@@ -27,7 +27,7 @@ void Geo::init()
   //  nLayers; // number of layers [2..7]
 
   for( int i=0; i<NLayers; i++ ){
-    Layer &l = layers[i];
+    Layer1 &l = layers[i];
     l.id = i; // general layer id
   }
 
@@ -52,7 +52,7 @@ void Geo::init()
   for( int iv=0; iv<NVolumes; iv++ ){
     Volume &v = volumes[iv];
     for( int il=0; il<v.nLayers; il++ ){      
-      Layer &l = layers[v.layerIDs[il]];      
+      Layer1 &l = layers[v.layerIDs[il]];      
       l.volume = iv;
       l.layer = il;
       l.size = v.size;
@@ -68,7 +68,7 @@ void Geo::init()
       exit(0);
     }
     for( int i=0; i<NLayers; i++){
-      Layer &l = layers[i];
+      Layer1 &l = layers[i];
       int j;
       in>>j>>l.r>>l.z>>l.tMin>>l.tMax;
       if( j!=i ){
@@ -89,7 +89,7 @@ void Geo::init()
     }
 
     for( int il=0; il<NLayers; il++){
-      Layer &l = layers[il];
+      Layer1 &l = layers[il];
       double sigma[3]={0,0,0};
       for( int ir=0; ir<3; ir++){
 	int jl;
@@ -98,7 +98,7 @@ void Geo::init()
 	  cout<<"Geo:: geo field file broken"<<endl;
 	  exit(1);
 	}
-	for( int i=0; i<Layer::NFieldPar; i++ ){
+	for( int i=0; i<Layer1::NFieldPar; i++ ){
 	  in>>l.field[ir][i];
 	  l.field[ir][i]*=CLight;
 	}
@@ -106,7 +106,7 @@ void Geo::init()
       }
       for( int ir=0; ir<2; ir++){
 	if( sigma[ir]<=1.e-4 ){
-	  for( int i=0; i<Layer::NFieldPar; i++ ) l.field[ir][i]=l.field[2][i];	
+	  for( int i=0; i<Layer1::NFieldPar; i++ ) l.field[ir][i]=l.field[2][i];	
 	}
       }
     }
