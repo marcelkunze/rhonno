@@ -14,6 +14,7 @@
 #include "XMLP.h"
 #include <ctime>
 #include <iostream>
+#include <utility>
 #include <algorithm>
 #include <iterator>
 #include <vector>
@@ -127,8 +128,8 @@ long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &inner,
 }
 
 //id==49
-#define TBD id==77
-#define REF false
+#define TBD true
+#define REF true
 
 // Select points wrt. a reference point
 long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &good, std::vector<Point> &bad, Point &ref, double deltar, double deltathe, double distance)
@@ -140,10 +141,10 @@ long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &good,
     vector<Point> neighbours;
     auto it = points.begin();
     
-    while (it++ != points.end()) {
+    while (it != points.end()) {
         if (knn++ > MAXKNN) break; // Max. number of neighbouring points reached
  
-        Point &p = *it;
+        Point &p = *it++;
         if (id==p.id()) continue;
 
         if (TBD&&REF) cout << p.id() << endl;
@@ -168,20 +169,17 @@ long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &good,
             
     }
     
-    if (TBD&&REF) cout << "<--------------------------- id: " << id << endl;
+    if (TBD&&REF) cout << endl << "<--------------------------- id: " << id << endl;
     
     return good.size();
 }
 
-// Look for seeding points using a KNN algorithm and a neural network to identify hit pairs
-long Tracker::findSeeds(Point &p0, std::vector<Point> &points, std::vector<Point> &seed)
+// Look for seeding points using a KNN search and a neural network to identify hit pairs
+std::vector<pair<int,float> > Tracker::findSeeds(Point &p0, std::vector<Point> &neighbours)
 {
-    if (points.size()<2) return 0;
+    vector<pair<int,float> > seed;
     
-    vector<Point> neighbours,bad;
-    selectPoints(points,neighbours,bad,p0,DELTAR,DELTATHE,DISTANCE);
-    
-    sort(neighbours.begin(),neighbours.end(),Point::sortDist);
+    paths.add(p0.id());
     
     // Generate seeding points
     for (auto it:neighbours)
@@ -190,32 +188,48 @@ long Tracker::findSeeds(Point &p0, std::vector<Point> &points, std::vector<Point
         double recall = checkTracklet(p0,p1); // Search for hit pairs
         if (recall > 0) {
             if (REF) cout << p0.id() << " " << p1.id() << ": R2 OK " << recall << endl;
-            p1.setrecall(recall);
-            seed.push_back(p1);
+            seed.push_back(make_pair(p1.id(),(float)recall));
+            paths.add(p0.id(),p1.id(), 1000*recall);
         }
         else
             if (REF) cout << p0.id() << " " << p1.id() << ": R2 NOK " << recall << endl;
     }
     
-    sort(seed.begin(),seed.end(),Point::sortRecall);
+    long size = seed.size();
+    seedstotal += size;
+    //seedsok += checkLabels(seed);
     
-    int n = 0;
-    for (auto &it:seed)
-    {
-        if (n>=NEIGHBOURS) break;
-        Point &p1 = it;
-        p0.setneighbour(p1.id(),n);
-        p0.setrecall(p1.recall(),n);
-        n++;
+    return seed;
+}
+
+// Look for seeding points using a neural network to identify hit pairs
+void Tracker::findSeeds()
+{
+    const pair<int, int> start_list[5] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}};
+    
+    for (int i = 0; i < 5; i++) {
+        int tube1 = start_list[i].first;
+        for (auto &a : tubePoints[tube1]) {
+            int tube2 = start_list[i].second;
+            vector<Point> &b = tubePoints[tube2];
+            std::vector<Point> neighbours,bad;
+            selectPoints(b,neighbours,bad,a,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
+            sort(neighbours.begin(),neighbours.end(),Point::sortDist);
+            if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
+            vector<pair<int,float> > seed = findSeeds(a,neighbours);
+            long n = seed.size();
+            if (n>0&&VERBOSE) {
+                cout << n << " seeds from " << a.id() << " (Tube: " << tube1 << "->" << tube2 << "):" << endl;
+                for (auto it: seed) cout << it.first << "(" << it.second << ") ";
+                cout << endl;
+            }
+        }
     }
     
-    if (VERBOSE) { cout << "seed " << p0.id() << ": "; for (auto &it:seed) cout << it.id() << " " ; cout << endl; }
-    
-    long size = seed.size();
-    seedstotal += seed.size();
-    seedsok += checkLabels(seed);
-    
-    return size;
+    if (VERBOSE) {
+        cout << paths << endl;
+    }
+
 }
 
 //Find pairs using a neural network
@@ -291,17 +305,23 @@ double Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
 }
 
 void Tracker::readTubes() {
-    map<long long,int> added[48];
     
     for (int i = 0; i < points.size(); i++) {
-        //if (!assignment[i])
         tube[points[i].layer()].push_back(i);
+        if (VERBOSE) cout << "Point " << i << " layer:" << points[i].layer() << endl;
     }
+    
     for (int i = 0; i < 48; i++) {
         if (layer[i].type == Tube)
             sort(tube[i].begin(), tube[i].end(), z_cmp);
         else
             sort(tube[i].begin(), tube[i].end(), r_cmp);
+    }
+    
+    for (int i = 0; i < 48; i++) {
+        for (auto it : tube[i]) {
+            tubePoints[i].push_back(points[it]);
+        }
     }
 }
 
@@ -327,37 +347,29 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     }
     
     readTubes();
-    vector<pair<int, int> > pairs;
-    pairs = findPairs();
-    
-    // Select points in a cylinder around the origin
-    vector<Point> selection, other;
-    long n = selectPoints(points,selection,other,RMIN,RMAX,ZMIN,ZMAX);
-    if (n==0) return 0;
-    
-    // Sort the hits according to distance from origin
-    //for (int i=0;i<nhits;i++) points[i] = p[i];
-    cout << "Sorting " << nhits << " hits..." << endl;
-    sort(selection.begin(),selection.end(),Point::sortRz);
-    
+   
     // Search neighbouring hits
-    cout << "Searching neighbours..." << endl;
+    cout << "Searching seeds..." << endl;
+    findSeeds();
     
-    for (auto &it: selection) {
-        vector<Point> seed;
-        vector<triple> triples;
-        findSeeds(it,selection,seed);
-        findTriples(it,seed,triples);
-        // Transfer the result
-        for (auto &it:seed) { // Note the neighbour ids and recall values
-            int id = it.id();
-            for (int j=0;j<NEIGHBOURS;j++) {
-                p[id].setneighbour(it.neighbour(j),j);
-                p[id].setrecall(it.recall(j),j);
-            }
+    // transfer the results
+    for (auto &ip : points) {
+        int a = ip.id();
+        int n = 0;
+        map<int,int> const &path = paths.connections(a);
+        if (path.size()==0) continue;
+        for (auto &it : path ) {
+            if (n>NEIGHBOURS) break;
+            int id = it.first;
+            float recall = 0.001*it.second;
+            ip.setneighbour(id,n);
+            ip.setrecall(recall,n);
+            p[a].setneighbour(id,n);
+            p[a].setrecall(recall,n);
+            n++;
         }
     }
-    
+
     if (VERBOSE) {
         for (int i=0;i<nhits;i++) {
             cout << p[i].id() << "(" ;
@@ -372,7 +384,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     // fill the hitmap
-    for (auto it=selection.begin(); it!=selection.end();it++) {
+    for (auto it=points.begin(); it!=points.end();it++) {
         Point &p = *it;
         int id = p.id();
         hitmap[id] = &p;
@@ -1046,6 +1058,7 @@ void Tracker::initHitDir() {
 // Data initialization
 Point* Tracker::p;
 vector<Point> Tracker::points;
+digraph<int> Tracker::paths;
 long Tracker::seedsok(0),Tracker::seedstotal(0);
 long Tracker::trackletsok(0),Tracker::trackletstotal(0);
 unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0),Tracker::nx(0);
@@ -1053,6 +1066,7 @@ unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0);
 vector<point> Tracker::hits; //hit position
 
 vector<int> Tracker::tube[48]; // List of hits in each layer
+vector<Point> Tracker::tubePoints[48]; // List of hits in each layer
 map<long long, vector<int> > Tracker::truth_tracks; //truth hit ids in each track
 map<long long, point> Tracker::track_hits; // Find points in hits
 int Tracker::assignment[150000];

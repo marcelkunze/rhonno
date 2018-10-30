@@ -13,14 +13,14 @@
 #define ZMIN -0.7
 #define ZMAX  0.7
 #define TRACKLET 2
-#define MAXKNN 150
-#define THRESHOLD2 0.75
+#define MAXKNN 10
+#define THRESHOLD2 0.95
 #define THRESHOLD3 0.95
-#define DISTANCE 1.2
+#define DISTANCE 1.8
 #define DELTAR   0.9
-#define DELTATHE 0.1
-#define DELTAPHI 0.1
-#define DELTANN  0.1
+#define DELTATHE 0.2
+#define DELTAPHI 0.2
+#define DELTANN  0.2
 #else
 #define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
@@ -41,6 +41,7 @@
 
 #define VERBOSE true
 
+#include "digraph.h"
 #include <cmath>
 #include <algorithm>
 #include <vector>
@@ -106,6 +107,7 @@ public:
     static std::vector<point> meta; //volume_id / layer_id / module_id
 private:
     static std::vector<int> tube[48]; // List of hits in each layer
+    static std::vector<Point> tubePoints[48]; // List of hits in each layer
     static int assignment[150000];
     static point truth_pos[150000], truth_mom[150000]; //truth position and momentum
     static double truth_weight[150000]; //weighting of each hit
@@ -131,10 +133,12 @@ private:
     static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4;
     static Point *p;
     static std::vector<Point> points;
+    static digraph<int> paths;
 public:
     Tracker() {}
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *labels,int *truth);
-    static long findSeeds(Point &p,std::vector<Point> &points,std::vector<Point> &seeds);
+    static std::vector<std::pair<int,float> > findSeeds(Point &p,std::vector<Point> &points);
+    static void findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
     static long findTriples(Point &p,std::vector<Point> &points,std::vector<triple> &triples);
     static long selectPoints(std::vector<Point> &points, std::vector<Point> &inner, std::vector<Point> &outer, double rmin, double rmax, double zmin, double zmax);

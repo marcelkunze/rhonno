@@ -23,7 +23,7 @@ LIBRARY=libprocess.so
 
 all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS) $(LIBRARY)
+$(EXECUTABLE): $(OBJECTS) $(LIBRARY) digraph.h
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
 ReadEvent: $(OBJECTS1) $(LIBRARY)

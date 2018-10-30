@@ -65,7 +65,7 @@ int main(int argc, char**argv) {
     
     long nhits = Tracker::hits.size();
     float x[nhits],y[nhits],z[nhits];
-    int labels[nhits],truth[nhits],layer[nhits];
+    int label[nhits],truth[nhits],layer[nhits];
 
     int i = 0;
     int n = 0;
@@ -79,7 +79,7 @@ int main(int argc, char**argv) {
             x[i] = hit.x * 0.001; // in m
             y[i] = hit.y * 0.001; // in m;
             z[i] = hit.z * 0.001; // in m;
-            labels[i] = n;
+            label[i] = n;
             truth[i] = id;
             layer[i] = Tracker::metai[id];
             //cout << Tracker::metai[id] << ": " << Tracker::meta[id].x << " " << Tracker::meta[id].y << " " << Tracker::meta[id].x << endl;
@@ -92,7 +92,7 @@ int main(int argc, char**argv) {
     cout << "Hits: " << nhits << endl;
     
     cout << "Find tracks..." << endl;
-    long nt = Tracker::findTracks((int)nhits,x,y,z,layer,labels,truth);
+    long nt = Tracker::findTracks((int)nhits,x,y,z,layer,label,truth);
     
     // Assemble tracks
     map<int,vector<Point> > tracks;
@@ -100,7 +100,7 @@ int main(int argc, char**argv) {
         int track = i+1;
         vector<Point> t;
         for (int j=0;j<nhits;j++) {
-            if (track != labels[j]) continue;
+            if (track != label[j]) continue;
             Point p(x[j],y[j],z[j]);
             t.push_back(p); // Save the results
         }

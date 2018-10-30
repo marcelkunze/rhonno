@@ -15,6 +15,7 @@ private:
     int _label;             // Label
     int _truth;             // True id
     int _layer;             // layer index (0...47)
+    int _twin;              // Double hit index
     double _x, _y, _z;      // Cartesian coordinate
     double _r,_phi,_theta;  // Spherical coordinates
     double _rz;             // Cylindrical coordinates
@@ -53,6 +54,7 @@ public:
     inline int label() const {return _label;}
     inline int truth() const {return _truth;}
     inline int layer() const {return _layer;}
+    inline int twin() const {return _twin;}
     inline int neighbour(int i=0) const {if (i<NEIGHBOURS && i>=0) return _neighbour[i]; else return -1;}
     inline int* neighbours() {return _neighbour;}
     inline double recall(int i=0) const {if (i<NEIGHBOURS && i>=0) return _recall[i]; else return -1;}
@@ -63,6 +65,7 @@ public:
     inline void setlabel(int label) { _label = label;}
     inline void settruth(int truth) { _truth = truth;}
     inline void setlayer(int layer) { _layer = layer;}
+    inline void settwin(int twin) { _twin = twin;}
     inline void setid(int id) { _id = id;}
     inline void setneighbour(int neighbour, int i=0) { if (i<NEIGHBOURS && i>=0) _neighbour[i] = neighbour;}
     inline void setrecall(double recall, int i=0) { if (i<NEIGHBOURS && i>=0) _recall[i] = recall;}
