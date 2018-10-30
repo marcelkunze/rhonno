@@ -190,6 +190,15 @@ std::vector<pair<int,float> > Tracker::findSeeds(Point &p0, std::vector<Point> &
             if (REF) cout << p0.id() << " " << p1.id() << ": R2 OK " << recall << endl;
             seed.push_back(make_pair(p1.id(),(float)recall));
             paths.add(p0.id(),p1.id(), 1000*recall);
+            // Add double hits
+            if (p0.twin()>0) {
+                int twin = p0.twin();
+                Point &t=points[twin];
+                recall = checkTracklet(t,p1);
+                seed.push_back(make_pair(twin,(float)recall));
+                paths.add(p0.id(),twin, 1000*recall);
+                if (REF) cout << " Added double hit " << twin << endl;
+            }
         }
         else
             if (REF) cout << p0.id() << " " << p1.id() << ": R2 NOK " << recall << endl;
@@ -202,7 +211,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(Point &p0, std::vector<Point> &
     return seed;
 }
 
-// Look for seeding points using a neural network to identify hit pairs
+// Look for seeding points by hit pair combinations in the innnermost layers
 void Tracker::findSeeds()
 {
     const pair<int, int> start_list[5] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}};
@@ -323,6 +332,26 @@ void Tracker::readTubes() {
             tubePoints[i].push_back(points[it]);
         }
     }
+
+    // Filter double hits
+    for (int i = 0; i < 48; i++) {
+        vector<Point> &pvec = tubePoints[i];
+        auto it = pvec.begin();
+        while (it++ != pvec.end()) {
+            Point &p0 = *(it-1);
+            int id0 = p0.id();
+            Point &p1 = *it;
+            int id1 = p1.id();
+            double d = p0.distance(p1);
+            if (d<0.005) {
+                p0.settwin(id1);
+                ntwins++;
+                if (VERBOSE) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
+
+            }
+        }
+    }
+
 }
 
 bool Tracker::z_cmp(const int a, const int&b) { return hits[a].z < hits[b].z; }
@@ -507,6 +536,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     }
     
     cout << "Number of hits                      : " << nhits << endl;
+    cout << "Number of double hits               : " << ntwins << endl;
     cout << "Number of assigned points           : " << na << endl;
     cout << "Number of correctly assigned points : " << nc << endl;
     cout << "Number of unassigned points         : " << napoints << endl;
@@ -1062,7 +1092,7 @@ digraph<int> Tracker::paths;
 long Tracker::seedsok(0),Tracker::seedstotal(0);
 long Tracker::trackletsok(0),Tracker::trackletstotal(0);
 unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0),Tracker::nx(0);
-unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0);
+unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0),Tracker::ntwins(0);
 vector<point> Tracker::hits; //hit position
 
 vector<int> Tracker::tube[48]; // List of hits in each layer

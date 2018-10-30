@@ -14,7 +14,7 @@
 #define ZMAX  0.7
 #define TRACKLET 2
 #define MAXKNN 10
-#define THRESHOLD2 0.95
+#define THRESHOLD2 0.99
 #define THRESHOLD3 0.95
 #define DISTANCE 1.8
 #define DELTAR   0.9
@@ -130,7 +130,7 @@ private:
     static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[150000]; //pair<pair<ch0, ch1>, value>
     static point hit_dir[150000][2]; //The two possible directions of the hit according to the cell's data for each hit
 
-    static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4;
+    static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4, ntwins;
     static Point *p;
     static std::vector<Point> points;
     static digraph<int> paths;

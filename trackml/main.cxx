@@ -20,7 +20,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10
+#define MAXPARTICLES 2
 #define MAXHITS 150000
 #define DRAW true
 
@@ -60,7 +60,7 @@ int main(int argc, char**argv) {
     Tracker::readHits(base_path,filenum);
 
     long nParticles = Tracker::truth_tracks.size();
-    if (nParticles > MAXPARTICLES) nParticles = MAXPARTICLES;
+    if (nParticles>MAXPARTICLES) nParticles = MAXPARTICLES;
     cout << "Particles: " << nParticles << endl;
     
     long nhits = Tracker::hits.size();
@@ -70,7 +70,7 @@ int main(int argc, char**argv) {
     int i = 0;
     int n = 0;
     for (auto &track : Tracker::truth_tracks) {
-        if (n++ > MAXPARTICLES) break;
+        if (n++ >= MAXPARTICLES) break;
         vector<int> t = track.second;
         for (auto &id : t) {
             auto it = Tracker::track_hits.find(id);
