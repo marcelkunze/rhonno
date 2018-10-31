@@ -21,7 +21,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 2
+#define MAXPARTICLES 5
 #define MAXHITS 150000
 #define DRAW true
 #define EVALUATION true

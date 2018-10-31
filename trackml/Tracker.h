@@ -14,11 +14,11 @@
 #define ZMAX  0.7
 #define TRACKLET 2
 #define MAXKNN 10
-#define THRESHOLD2 0.97
+#define THRESHOLD2 0.92
 #define THRESHOLD3 0.95
 #define DISTANCE 1.8
 #define DELTAR   0.9
-#define DELTATHE 0.2
+#define DELTATHE 0.4
 #define DELTAPHI 0.2
 #define DELTANN  0.2
 #else

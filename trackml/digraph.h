@@ -87,6 +87,7 @@ class digraph
         // tests if two nodes are connected
         bool areConnected(const N& n1, const N& n2, int& d) const
         {
+            if (fConnections.find(n1)==fConnections.end()) return false; // The node does not exist
             auto c = fConnections.at(n1);
             auto q = c.find(n2);
             if (q != c.end()) {

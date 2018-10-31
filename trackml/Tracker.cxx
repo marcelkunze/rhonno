@@ -189,14 +189,18 @@ std::vector<pair<int,float> > Tracker::findSeeds(Point &p0, std::vector<Point> &
         if (recall > 0) {
             if (REF) cout << p0.id() << " " << p1.id() << ": R2 OK " << recall << endl;
             seed.push_back(make_pair(p1.id(),(float)recall));
-            paths.add(p0.id(),p1.id(), 1000*recall);
+            paths.add(p0.id(),p1.id(),1000*recall);
             // Add double hits
             if (p0.twin()>0) {
                 int twin = p0.twin();
-                Point &t=points[twin];
+                Point &t = points[twin];
                 recall = checkTracklet(t,p1);
                 seed.push_back(make_pair(twin,(float)recall));
-                paths.add(p0.id(),twin, 1000*recall);
+                if (twin>p0.id())
+                    paths.add(p0.id(),twin,1000*recall);
+                else
+                    paths.add(twin,p0.id(),1000*recall);
+
                 if (REF) cout << " Added double hit " << twin << endl;
             }
         }
@@ -337,18 +341,23 @@ void Tracker::readTubes() {
     
     for (int i = 0; i < points.size(); i++) {
         tube[points[i].layer()].push_back(i);
-        if (VERBOSE) cout << "Point " << i << " layer:" << points[i].layer() << endl;
+        //if (VERBOSE) cout << "Point " << i << " layer:" << points[i].layer() << endl;
     }
  
     for (int i = 0; i < 48; i++) {
         for (auto it : tube[i]) {
             tubePoints[i].push_back(points[it]);
-            if (VERBOSE) cout << "Tube " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
+            if (VERBOSE) {
+                if (layer[i].type == Disc)
+                    cout << "Disc " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
+                else
+                    cout << "Tube " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
+            }
         }
     }
 
     for (int i = 0; i < 48; i++) {
-        if (layer[i].type == Tube)
+        if (layer[i].type == Disc)
             sort(tube[i].begin(), tube[i].end(), z_cmp);
         else
             sort(tube[i].begin(), tube[i].end(), r_cmp);
@@ -370,16 +379,11 @@ void Tracker::readTubes() {
             int id0 = p0.id();
             Point &p1 = *it;
             int id1 = p1.id();
-            double d;
-            if (layer[i].type == Tube)
-                d = fabs(p0.z()-p1.z());
-            else
-                d = fabs(p0.rz()-p1.rz());
+            double d = p0.distance(p1);
             if (d<0.005) {
                 p0.settwin(id1);
                 ntwins++;
                 if (VERBOSE) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
-
             }
         }
     }
@@ -444,6 +448,8 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
+    // Analyze the graph
+
     // fill the hitmap
     for (auto it=points.begin(); it!=points.end();it++) {
         Point &p = *it;
