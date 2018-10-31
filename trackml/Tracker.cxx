@@ -218,9 +218,10 @@ std::vector<pair<int,float> > Tracker::findSeeds(Point &p0, std::vector<Point> &
 // Look for seeding points by hit pair combinations in the innnermost layers
 void Tracker::findSeeds()
 {
-    const pair<int, int> start_list[5] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}};
+    const int n=5; // Seeding layer combinations
+    const pair<int, int> start_list[6] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}};
     
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < n; i++) {
         int tube1 = start_list[i].first;
         for (auto &a : tubePoints[tube1]) {
             int tube2 = start_list[i].second;
@@ -339,21 +340,24 @@ int Tracker::getLayer(int volume_id, int layer_id) {
 
 void Tracker::readTubes() {
     
-    for (int i = 0; i < points.size(); i++) {
+    cout << "Read tubes..." << endl;
+    
+    long nhits = points.size();
+    for (int i = 0; i < nhits; i++) {
         tube[points[i].layer()].push_back(i);
-        //if (VERBOSE) cout << "Point " << i << " layer:" << points[i].layer() << endl;
+        if (VERBOSE) cout << "Point " << i << " layer:" << points[i].layer() << endl;
     }
  
     for (int i = 0; i < 48; i++) {
         for (auto it : tube[i]) {
             tubePoints[i].push_back(points[it]);
-            if (VERBOSE) {
+/*            if (VERBOSE) {
                 if (layer[i].type == Disc)
                     cout << "Disc " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
                 else
                     cout << "Tube " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
             }
-        }
+*/        }
     }
 
     for (int i = 0; i < 48; i++) {
@@ -371,16 +375,19 @@ void Tracker::readTubes() {
     }
 
     // Filter double hits
+    cout << "Filter double hits..." << endl;
     for (int i = 0; i < 48; i++) {
         vector<Point> &pvec = tubePoints[i];
-        auto it = pvec.begin();
-        while (it++ != pvec.end()) {
-            Point &p0 = *(it-1);
+        if (VERBOSE) cout << "Tube " << i << " size: " << pvec.size() << endl;
+        if (pvec.size()<2) continue;
+        for (auto it = pvec.begin(); it != pvec.end()-1; it++) {
+            Point &p0 = *it;
             int id0 = p0.id();
-            Point &p1 = *it;
+            Point &p1 = *(it+1);
             int id1 = p1.id();
             double d = p0.distance(p1);
-            if (d<0.005) {
+            if (VERBOSE) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
+            if (d<TWINDIST) {
                 p0.settwin(id1);
                 ntwins++;
                 if (VERBOSE) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;

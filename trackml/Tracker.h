@@ -13,6 +13,7 @@
 #define ZMIN -0.7
 #define ZMAX  0.7
 #define TRACKLET 2
+#define TWINDIST 0.0051
 #define MAXKNN 10
 #define THRESHOLD2 0.92
 #define THRESHOLD3 0.95

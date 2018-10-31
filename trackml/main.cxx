@@ -21,7 +21,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 5
+#define MAXPARTICLES 10
 #define MAXHITS 150000
 #define DRAW true
 #define EVALUATION true
@@ -62,16 +62,21 @@ int main(int argc, char**argv) {
     long nParticles = Tracker::truth_tracks.size();
     if (nParticles>MAXPARTICLES) nParticles = MAXPARTICLES;
     cout << "Particles: " << nParticles << endl;
-    
+
     long nhits = Tracker::hits.size();
     float x[nhits],y[nhits],z[nhits];
     int label[nhits],truth[nhits],layer[nhits];
 
     nhits = 0;
     int n = 0;
+    int start[nParticles+1],end[nParticles+1];
+    start[0] = 0;
+    end[0] = -1;
     for (auto &track : Tracker::truth_tracks) {
         if (n++ >= MAXPARTICLES) break;
         vector<int> t = track.second;
+        start[n] = end[n-1]+1;
+        end[n] = end[n-1] + (int)t.size();
         for (auto &id : t) {
             auto it = Tracker::track_hits.find(id);
             if (it==Tracker::track_hits.end()) continue;
@@ -87,6 +92,7 @@ int main(int argc, char**argv) {
             layer[nhits] = Tracker::getLayer(vol,lay);
             nhits++;
         }
+        if (VERBOSE) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
     }
 
     if (nhits > MAXHITS) nhits = MAXHITS;
