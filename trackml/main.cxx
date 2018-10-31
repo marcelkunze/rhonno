@@ -12,6 +12,7 @@
 #include "TPolyLine3D.h"
 
 #include <iostream>
+#include <fstream>
 #include <set>
 #include <algorithm>
 #include <map>
@@ -23,6 +24,7 @@
 #define MAXPARTICLES 2
 #define MAXHITS 150000
 #define DRAW true
+#define EVALUATION true
 
 std::string base_path = "/Users/marcel/workspace/train_sample/";
 
@@ -33,6 +35,8 @@ int filenum = 21100;
 int debug = 0;
 //Not the standard assert!
 #define assert(a, m) {if (!(a)) {cout << m << endl; exit(0);}}
+
+void draw(long nhits,float *x,float *y,float *z,std::map<int,std::vector<Point> > tracks);
 
 using namespace std;
 
@@ -47,15 +51,11 @@ int main(int argc, char**argv) {
     ios::sync_with_stdio(false);
     cout << fixed;
 
-    int eval = 0;
-#if defined EVAL
-    eval = 1;
-#endif
-    if (!eval) {
+    if (EVALUATION) {
         Tracker::readBlacklist(base_path,filenum);
+        Tracker::readParticles(base_path,filenum);
         Tracker::readTruth(base_path,filenum);
         Tracker::sortTracks();
-        Tracker::readParticles(base_path,filenum);
     }
     Tracker::readHits(base_path,filenum);
 
@@ -67,7 +67,7 @@ int main(int argc, char**argv) {
     float x[nhits],y[nhits],z[nhits];
     int label[nhits],truth[nhits],layer[nhits];
 
-    int i = 0;
+    nhits = 0;
     int n = 0;
     for (auto &track : Tracker::truth_tracks) {
         if (n++ >= MAXPARTICLES) break;
@@ -76,37 +76,79 @@ int main(int argc, char**argv) {
             auto it = Tracker::track_hits.find(id);
             if (it==Tracker::track_hits.end()) continue;
             point &hit = it->second;
-            x[i] = hit.x * 0.001; // in m
-            y[i] = hit.y * 0.001; // in m;
-            z[i] = hit.z * 0.001; // in m;
-            label[i] = n;
-            truth[i] = id;
-            layer[i] = Tracker::metai[id];
-            //cout << Tracker::metai[id] << ": " << Tracker::meta[id].x << " " << Tracker::meta[id].y << " " << Tracker::meta[id].x << endl;
-            i++;
+            x[nhits] = hit.x * 0.001; // in m
+            y[nhits] = hit.y * 0.001; // in m;
+            z[nhits] = hit.z * 0.001; // in m;
+            label[nhits] = 0;
+            truth[nhits] = id;
+            point geo = Tracker::meta[id];
+            int vol = geo.x;
+            int lay = geo.y;
+            layer[nhits] = Tracker::getLayer(vol,lay);
+            nhits++;
         }
     }
 
-    nhits = i-1;
     if (nhits > MAXHITS) nhits = MAXHITS;
     cout << "Hits: " << nhits << endl;
     
     cout << "Find tracks..." << endl;
     long nt = Tracker::findTracks((int)nhits,x,y,z,layer,label,truth);
-    
+
+    // Show the results
+#define MAXLABEL 100
+    cout << "Labels: ";
+    for (int i=0;i<nhits;i++) {
+        if (i<MAXLABEL || i>nhits-MAXLABEL) cout << label[i] << " ";
+        if (i == MAXLABEL) cout << endl << "..." << endl;
+    }
+    cout << endl;
+
+    cout << "Write submission file..." << endl;
+    ofstream out("mysubmission.csv");
+    if( !out.is_open() ){
+        cout<<"Can not open output file"<<endl;
+        exit(0);
+    }
+    for (int ih=0; ih<nhits; ih++ ){
+        out<<filenum<<","<<ih+1<<","<<label[ih]<<endl;
+    }
+    out.close();
+
     // Assemble tracks
+    cout << "Assemble tracks..." << endl;
     map<int,vector<Point> > tracks;
     for(int i=0; i<nt; i++) {
         int track = i+1;
         vector<Point> t;
         for (int j=0;j<nhits;j++) {
             if (track != label[j]) continue;
-            Point p(x[j],y[j],z[j]);
+            Point p(x[j],y[j],z[j],j,track);
             t.push_back(p); // Save the results
         }
         tracks[i] = t;
     }
+    
+#define MAXTRACK 10
+    cout << endl << "Number of tracks: " << nt << endl;
+    for (int i=0; i<nt; i++) {
+        vector<Point> t = tracks[i];
+        if (i == MAXTRACK) cout << endl << "..." << endl;
+        if (i<MAXTRACK || i>nt-MAXTRACK) {
+            cout << "Track " << i+1 << ": ";
+            for (auto it : t) {
+                cout << it.id() << " ";
+            }
+            cout << endl;
+        }
+    }
 
+    // Show the results in a canvas
+    draw(nhits,x,y,z,tracks);
+}
+
+void draw(long nhits,float *x,float *y,float *z,map<int,vector<Point> > tracks)
+{
     // Initialize a 3D canvas and draw the hits and tracks
     if (DRAW) {
         TString dir = base_path;
@@ -138,6 +180,7 @@ int main(int argc, char**argv) {
         hitmarker->Draw();
         
         // Draw the tracks
+        long nt = tracks.size();
         for (int i=0;i<nt;i++) {
             //cout << endl << "Drawing track " << i+1 << ": ";
             vector<Point> track = tracks[i];

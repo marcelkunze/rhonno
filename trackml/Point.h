@@ -32,6 +32,7 @@ public:
     bool operator<(const Point p) const { return _id<p._id;}
     static bool sortRad(const Point &a,const Point &b);
     static bool sortRz(const Point &a,const Point &b);
+    static bool sortZ(const Point &a,const Point &b);
     static bool sortDist(const Point &a,const Point &b);
     static bool sortId(const Point &a,const Point &b);
     static bool sortRecall(const Point &a,const Point &b);
@@ -77,6 +78,13 @@ inline
 bool Point::sortRad(const Point &a,const Point &b)
 {
     return (a._r < b._r);
+}
+
+// Used to sort an array of points by increasing z
+inline
+bool Point::sortZ(const Point &a,const Point &b)
+{
+    return (a._z < b._z);
 }
 
 // Used to sort an array of points by increasing

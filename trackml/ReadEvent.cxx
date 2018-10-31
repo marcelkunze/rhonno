@@ -30,24 +30,24 @@ using namespace std;
 
 std::vector<Hit> mHits;
 std::vector<HitMC> mHitsMC;
-std::vector<Particle> mParticles;
+std::vector<xParticle> mParticles;
 
 int layerNHits[Geo::NLayers];
 
 #define NEVENTS 1
 #define MAXHITS 150000
-#define MAXPARTICLES 10
+#define MAXPARTICLES 2
 #define MCHITS false
 #define FINDTRACKS true
 
 TRandom r;
 
-void transform(Particle &particle, std::vector<Point> &points, bool mc);
-void combine(Particle &p1, Particle &p2);
-void combine2(Particle &p1, Particle &p2);
-void combine3(Particle &p1, Particle &p2);
-void combine2(Particle &p1);
-void combine3(Particle &p1);
+void transform(xParticle &particle, std::vector<Point> &points, bool mc);
+void combine(xParticle &p1, xParticle &p2);
+void combine2(xParticle &p1, xParticle &p2);
+void combine3(xParticle &p1, xParticle &p2);
+void combine2(xParticle &p1);
+void combine3(xParticle &p1);
 void readEvent( const char *directory, int event, bool loadMC );
 
 map<unsigned long,int> particlemap;
@@ -124,7 +124,7 @@ int main()
         end[0] = -1;
         map<int,int> particles;
         for (int ip=0; ip<nParticles; ip++ ) {
-            Particle &p1 = mParticles[ip];
+            xParticle &p1 = mParticles[ip];
             start[ip+1] = end[ip]+1;
             end[ip+1] = end[ip] + p1.hits.size();
         }
@@ -132,7 +132,7 @@ int main()
         unsigned long nh = 0;
         for (int ip=0; ip<nParticles; ip++ ) {
  
-            Particle &p1 = mParticles[ip];
+            xParticle &p1 = mParticles[ip];
             h0.Fill(p1.hits.size());
 
             if (VERBOSE && ip<1000) cout << endl << "Track " << ip+1 << "(" << start[ip+1] << "-" << end[ip+1] << "): ";
@@ -184,19 +184,20 @@ int main()
             if (nhits > MAXHITS) nhits = MAXHITS;
             cout << "Hits: " << nhits << endl;
             
-            float x[nhits],y[nhits],z[nhits],weights[nhits];
-            int labels[nhits],volumes[nhits],layers[nhits],modules[nhits];
+            float x[nhits],y[nhits],z[nhits];
+            int label[nhits],layer[nhits],truth[nhits];
             int nt;
             
             double minr = FLT_MAX;
             double maxr = 0.0;
-            float weight = 1.0 / (float) nhits;
             for (int i=0; i<nhits; i++) {
                 Point &h = hits[i];
+                Hit &hit = mHits[h.id()];
                 x[i] = h.x();
                 y[i] = h.y();
                 z[i] = h.z();
-                labels[i] = h.label();
+                label[i] = 0;
+                layer[i] = Tracker::getLayer(hit.volume,hit.layer);
                 if (h.r() < minr) minr = h.r();
                 if (h.r() > maxr) maxr = h.r();
             }
@@ -204,7 +205,7 @@ int main()
             cout << "Max. radius: " << maxr << endl;
             
             cout << "Find tracks..." << endl;
-            nt = Tracker::findTracks((int)nhits,x,y,z,labels);
+            nt = Tracker::findTracks((int)nhits,x,y,z,layer,label,truth);
             
             // Assemble the tracks from label information
             nh = 0;
@@ -213,8 +214,8 @@ int main()
                 int track = i+1;
                 vector<Point> t;
                 for (int j=0;j<nhits;j++) {
-                    if (track != labels[j]) continue;
-                    hits[j].setlabel(labels[j]);
+                    if (track != label[j]) continue;
+                    hits[j].setlabel(label[j]);
                     t.push_back(hits[j]); // Save the results
                     recomap[nh++] = i;
                 }
@@ -266,7 +267,7 @@ int main()
 #define MAXLABEL 100
             cout << "Labels: ";
             for (int i=0;i<nhits;i++) {
-                if (i<MAXLABEL || i>nhits-MAXLABEL) cout << labels[i] << " ";
+                if (i<MAXLABEL || i>nhits-MAXLABEL) cout << label[i] << " ";
                 if (i == MAXLABEL) cout << endl << "..." << endl;
             }
             cout << endl;
@@ -274,7 +275,7 @@ int main()
 #ifdef TRACKML
             cout << "Write tracks file..." << endl;
             for (int ip=0; ip<mParticles.size(); ip++ ) {
-                Particle &p1 = mParticles[ip];
+                xParticle &p1 = mParticles[ip];
                 outtracks<<event<<","<<ip<<": ";
                 for (int j=0;j<p1.hits.size();j++) outtracks<<p1.hits[j]<<" ";
                 outtracks << endl;
@@ -283,7 +284,7 @@ int main()
             
             cout << "Write submission file..." << endl;
             for (int ih=0; ih<nhits; ih++ ){
-                out<<event<<","<<ih+1<<","<<labels[ih]<<endl;
+                out<<event<<","<<ih+1<<","<<label[ih]<<endl;
             }
             out.close();
 #endif
@@ -340,7 +341,7 @@ int main()
         }
 }
 
-void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
+void transform(xParticle &particle, std::vector<Point> &points, bool mc=false) {
     
     vector<Point> tmpvec;
     int nhits = (int)particle.hits.size();
@@ -368,7 +369,7 @@ void transform(Particle &particle, std::vector<Point> &points, bool mc=false) {
     points.insert(points.end(),tmpvec.begin(),tmpvec.end());
 }
 
-void combine(Particle &p1, Particle &p2)
+void combine(xParticle &p1, xParticle &p2)
 {
     int nhits1 = (int)p1.hits.size();
     int nhits2 = (int)p2.hits.size();
@@ -393,7 +394,7 @@ void combine(Particle &p1, Particle &p2)
     }
 }
 
-void combine2(Particle &p)
+void combine2(xParticle &p)
 {
     vector<Point> hits;
     transform(p,hits,MCHITS);
@@ -413,7 +414,7 @@ void combine2(Particle &p)
     }
 }
 
-void combine3(Particle &p)
+void combine3(xParticle &p)
 {
     vector<Point> hits;
     transform(p,hits,MCHITS);
@@ -436,7 +437,7 @@ void combine3(Particle &p)
     
 }
 
-void combine2(Particle &p1, Particle &p2)
+void combine2(xParticle &p1, xParticle &p2)
 {
     vector<Point> hits1, hits2;
     transform(p1,hits1,MCHITS);
@@ -481,7 +482,7 @@ void combine2(Particle &p1, Particle &p2)
     }
 }
 
-void combine3(Particle &p1, Particle &p2)
+void combine3(xParticle &p1, xParticle &p2)
 {
     vector<Point> hits1, hits2;
     vector<Point>::iterator itb1,ite1,itb2,ite2;
@@ -650,6 +651,7 @@ void readEvent( const char *directory, int event, bool loadMC )
                     cout<<"Unknown detector volume: "<< (int) h[4] << endl;
                     exit(0);
             };
+            hit.layer = h[5];
             
             if( lay<0 || lay>= Geo::volumes[vol].nLayers ){
                 cout<<"Unknown detector layer: "<<hit.layer<<endl;
@@ -723,7 +725,7 @@ void readEvent( const char *directory, int event, bool loadMC )
             //cout << f[0] << endl;
             int nhits = (int) f[9];
             if( nhits==0 ) continue; // no hits belong to the particle
-            Particle p( nhits );
+            xParticle p( nhits );
             p.x = 0.001 * f[2]; // [m]
             p.y = 0.001 * f[3]; // [m]
             p.z = 0.001 * f[4]; // [m]
@@ -813,7 +815,7 @@ void readEvent( const char *directory, int event, bool loadMC )
                 exit(0);
             }
             hitmc.partID = newID;
-            Particle &p = mParticles[newID];
+            xParticle &p = mParticles[newID];
             
             double dx = hitmc.x - p.x;
             double dy = hitmc.y - p.y;
@@ -838,7 +840,7 @@ void readEvent( const char *directory, int event, bool loadMC )
     // sort particle hits
     
     for( unsigned int ipart=0; ipart<mParticles.size(); ipart++ ){
-        Particle &p = mParticles[ipart];
+        xParticle &p = mParticles[ipart];
         if( p.hits.size()<1 ) continue;
         std::vector<HitMC> v;
         for( int i=0; i<p.hits.size(); i++ ){
@@ -870,7 +872,7 @@ void readEvent( const char *directory, int event, bool loadMC )
     }
     
     for( unsigned int ipart=0; ipart<mParticles.size(); ipart++ ){
-        Particle &p = mParticles[ipart];
+        xParticle &p = mParticles[ipart];
         for( int i=0; i<Geo::NLayers; i++ ) layerNHits[i]=0;
         for( int i=0; i<p.hits.size(); i++ ){
             layerNHits[mHits[p.hits[i]].layerID]++;

@@ -14,7 +14,7 @@
 #define ZMAX  0.7
 #define TRACKLET 2
 #define MAXKNN 10
-#define THRESHOLD2 0.99
+#define THRESHOLD2 0.97
 #define THRESHOLD3 0.95
 #define DISTANCE 1.8
 #define DELTAR   0.9
@@ -30,7 +30,8 @@
 #define ZMAX 10.0
 #define TRACKLET 2
 #define MAXKNN 8
-#define THRESHOLD 0.9
+#define THRESHOLD2 0.9
+#define THRESHOLD3 0.9
 #define DISTANCE 0.5
 #define DELTAR   1.0
 #define DELTAPHI 0.04
@@ -96,11 +97,30 @@ struct Detector {
     double d, minw, maxw, h, cell_w, cell_h;
 };
 
+struct Particle // structure for truth particle info
+{
+    long long id;
+    int type;
+    double x;
+    double y;
+    double z;
+    double r;
+    double px;
+    double py;
+    double pz;
+    double q;
+    long hits;
+    std::vector<int> hit;
+};
+
 class Point;
 
 class Tracker {
 public:
     static std::vector<point> hits; //hit position
+    static std::vector<Particle> particles; //true tracks
+    static std::map<long long,int> partIDmap; // create particle ID->index map
+
     static std::map<long long, std::vector<int> > truth_tracks; //truth hit ids in each track
     static std::map<long long, point> track_hits; // Find points in hits
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
@@ -136,7 +156,7 @@ private:
     static digraph<int> paths;
 public:
     Tracker() {}
-    static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *labels,int *truth);
+    static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *label,int *truth);
     static std::vector<std::pair<int,float> > findSeeds(Point &p,std::vector<Point> &points);
     static void findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
@@ -156,6 +176,7 @@ public:
     static void readDetectors(std::string base_path);
     static void readTubes();
     static void sortTracks();
+    static int getLayer(int volume, int layer);
     
 private:
     static void print(std::vector<int> const &input);

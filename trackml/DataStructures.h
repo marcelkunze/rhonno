@@ -59,14 +59,14 @@ struct HitMC // hit truth data, stored in an array parallel to hits
 };
 
 
-struct Particle // structure for truth particle info
+struct xParticle // structure for truth particle info
 {
-    Particle(int nhits=0)
+    xParticle(int nhits=0)
     : hits(nhits)
     {
         hits.clear();
     }
-    ~Particle() = default;
+    ~xParticle() = default;
     void Print() const;
     
     double x;

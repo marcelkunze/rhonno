@@ -19,7 +19,7 @@ SHLIB=Tracker.cxx Point.cxx XMLP.cxx
 HEADERS=$(SRC:.cxx=.h)
 OBJECTS=$(SOURCES:.cxx=.o)
 EXECUTABLE=tracker
-LIBRARY=libprocess.so
+LIBRARY=libtrackml.so
 
 all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)
 
@@ -37,7 +37,7 @@ $(LIBRARY): Tracker.o XMLP.o XMLP.h Point.h Tracker.h
 
 
 clean:
-	rm reco $(OBJECTS)
+	rm Readevent $(EXECUTABLE) $(LIBRARY) $(OBJECTS)
 
 cleanall:
 	rm reco $(OBJECTS) *.~ *.root

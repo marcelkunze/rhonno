@@ -313,13 +313,40 @@ double Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
     return recall;
 }
 
+// Generate an index to address the detector layers 0..47
+int Tracker::getLayer(int volume_id, int layer_id) {
+    
+    int itopo[48] = {10,9,8,7,6,5,4,0,1,2,3,11,12,13,14,15,16,17,34,32,30,28,26,24,18,19,20,21,36,38,40,42,44,46,35,33,31,29,27,25,22,23,37,39,41,43,45,47};
+    int metai_list[9][7] = {{0,1,2,3,4,5,6},{7,8,9,10,-1,-1,-1},{11,12,13,14,15,16,17},{18,19,20,21,22,23,-1},{24,25,26,27,-1,-1,-1},{28,29,30,31,32,33,-1},{34,35,36,37,38,39,-1},{40,41,-1,-1,-1,-1,-1},{42,43,44,45,46,47}};
+
+    if (volume_id<7 || volume_id>18) return -1;
+    if (volume_id <= 9)
+        volume_id -= 7;
+    else if (volume_id <= 14)
+        volume_id -= 9;
+    else
+        volume_id -= 10;
+    
+    layer_id = layer_id/2-1;
+    
+    int index = itopo[metai_list[volume_id][layer_id]];
+    return index;
+}
+
 void Tracker::readTubes() {
     
     for (int i = 0; i < points.size(); i++) {
         tube[points[i].layer()].push_back(i);
         if (VERBOSE) cout << "Point " << i << " layer:" << points[i].layer() << endl;
     }
-    
+ 
+    for (int i = 0; i < 48; i++) {
+        for (auto it : tube[i]) {
+            tubePoints[i].push_back(points[it]);
+            if (VERBOSE) cout << "Tube " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
+        }
+    }
+
     for (int i = 0; i < 48; i++) {
         if (layer[i].type == Tube)
             sort(tube[i].begin(), tube[i].end(), z_cmp);
@@ -328,9 +355,10 @@ void Tracker::readTubes() {
     }
     
     for (int i = 0; i < 48; i++) {
-        for (auto it : tube[i]) {
-            tubePoints[i].push_back(points[it]);
-        }
+        if (layer[i].type == Tube)
+            sort(tubePoints[i].begin(), tubePoints[i].end(), Point::sortZ);
+        else
+            sort(tubePoints[i].begin(), tubePoints[i].end(), Point::sortRz);
     }
 
     // Filter double hits
@@ -342,7 +370,11 @@ void Tracker::readTubes() {
             int id0 = p0.id();
             Point &p1 = *it;
             int id1 = p1.id();
-            double d = p0.distance(p1);
+            double d;
+            if (layer[i].type == Tube)
+                d = fabs(p0.z()-p1.z());
+            else
+                d = fabs(p0.rz()-p1.rz());
             if (d<0.005) {
                 p0.settwin(id1);
                 ntwins++;
@@ -354,8 +386,8 @@ void Tracker::readTubes() {
 
 }
 
-bool Tracker::z_cmp(const int a, const int&b) { return hits[a].z < hits[b].z; }
-bool Tracker::r_cmp(const int&a, const int&b) { return hits[a].x*hits[a].x+hits[a].y*hits[a].y < hits[b].x*hits[b].x+hits[b].y*hits[b].y; }
+bool Tracker::z_cmp(const int a, const int&b) { return points[a].z() < points[b].z(); }
+bool Tracker::r_cmp(const int&a, const int&b) { return points[a].rz() < points[b].rz(); }
 
 // Find tracks from points
 int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* labels,int *truth)
@@ -608,12 +640,29 @@ void Tracker::readTruth(string base_path,int filenum) {
         truth_weight[hit_id] = weight;
         part_weight[particle_id] += weight;
         truth_part[hit_id] = particle_id;
+        
+        map<long long, int>::iterator it = partIDmap.find(particle_id);
+        if( it==partIDmap.end() ){
+            cout<<"Particle ID not found in map!!!"<<endl;
+            cout<<"ID= "<<hit_id<<" hit "<<hit_id<<" iterator at ID "<<it->first<<endl;
+            exit(0);
+        }
+        
+        int newID = it->second;
+        if( newID < 0 || newID>= particles.size() ){
+            cout<<"Mapped particle ID is wrong!!!"<<endl;
+            cout<<"ID= "<<hit_id<<" new ID "<<newID<<endl;
+            exit(0);
+        }
+
+        Particle &p = particles[newID];
+        p.hit.push_back(hit_id);
+
     }
     fclose(fp);
     
     cout << truth_tracks.size() << " particles with truth" << endl;
 }
-
 
 void Tracker::readParticles(string base_path,int filenum) {
     char file[1000];
@@ -635,6 +684,21 @@ void Tracker::readParticles(string base_path,int filenum) {
         start_mom[id] = m*Bfield;
         part_q[id] = -q;
         part_hits[id] = hits;
+        
+        Particle part;
+        partIDmap[ (long long) id ] = (int)particles.size();
+        part.id = id;
+        part.type = type;
+        part.x = p.x;
+        part.y = p.y;
+        part.z = p.z;
+        part.r = 0;
+        part.px = m.x;
+        part.py = m.y;
+        part.pz = m.z;
+        part.q = q;
+        part.hits = hits;
+        particles.push_back(part);
     }
     fclose(fp);
     cout << start_pos.size() << " particles" << endl;
@@ -665,45 +729,13 @@ void Tracker::sortTracks() {
             point&a = truth_pos[p.second[i-2]];
             point&b = truth_pos[p.second[i-1]];
             point&c = truth_pos[p.second[i]];
-            //point&ma = truth_mom[p.second[i-2]];
-            //point&mb = truth_mom[p.second[i-1]];
-            //point&mc = truth_mom[p.second[i]];
             if ((c.z-b.z)*(b.z-a.z) < 0) {
-                /*cout << endl;
-                 cout << v[i-2].first << ' ' << v[i-1].first << ' ' << v[i].first << endl;
-                 cout << a.z << ' ' << b.z << ' ' << c.z << endl;
-                 cout << mb << endl;
-                 cout << ma.z << ' ' << mb.z << ' ' << mc.z << endl;*/
                 fails++;
                 bad++;
             }
             else goods++;
         }
-        //point ma = truth_mom[v[0]], mb = truth_mom[v[1]];//v.size()-1]];
-        //point m0 = start_mom[truth_part[v[0]]];
-        //point dm = m0-ma*(sqrt(m0*m0)/sqrt(ma*ma));
-        //if (sqrt(m0*m0) > 10)
-        //  cerr << (sqrt(m0*m0)-sqrt(ma*ma)) << endl;
-        //cout << sqrt(m0*m0)-sqrt(ma*ma) << ' ' << sqrt(ma*ma)-sqrt(mb*mb) << ' ' << sqrt(mb*mb) << endl;
-        //cout << (sqrt(ma*ma)-sqrt(mb*mb)) << endl;///sqrt(ma*ma) << endl;
-        /*if (bad) {
-         static int cc = 0;
-         if (cc++ == -5) {
-         for (int hit_id : p.second) {
-         point p = truth_pos[hit_id];
-         //cerr << p.x << ' ' << p.y << endl;
-         cerr << p.z << ' ' << sqrt(p.x*p.x+p.y*p.y) << endl;
-         }
-         exit(0);
-         }
-         failparts++;
-         cout << bad << ' ' << int(v.size())-2 << ' ' << part_q[p.first] << endl;
-         }*/
     }
-    /*
-     cout << "fails: " << fails << endl;
-     cout << "goods: " << goods << endl;
-     cout << "failparts: " << failparts << endl;*/
 }
 
 
@@ -728,6 +760,7 @@ void Tracker::initOrder() {
     for (int i = 0; i < 48; i++) {
         topo[i] = handpicked[i];
         itopo[topo[i]] = i;
+        //cout << itopo[i] << "," ;
     }
 }
 
@@ -795,8 +828,6 @@ void Tracker::initLayers() {
     for (int i = 24; i < 48; i++) layer[i].var1 = i%2 ? 19 : 11;
 }
 
-
-
 void Tracker::readHits(string base_path, int filenum) {
     initOrder();
     
@@ -850,14 +881,6 @@ void Tracker::readHits(string base_path, int filenum) {
         
         int mi = itopo[metai_list[volume_id][layer_id/2-1]];
         
-        /*double a = rand()*(1./RAND_MAX)*M_PI*2;
-         //double b = rand()*(1./RAND_MAX)*900-450;
-         if (mi == 47) {
-         double r = sqrt(tx*tx+ty*ty);
-         tx = cos(a)*r;
-         ty = sin(a)*r;
-         //tz = b;
-         }*/
         hits.push_back(point(tx, ty, tz));
         track_hits[hit_id] = point(tx, ty, tz);
         polar.push_back(point(sqrt(tx*tx+ty*ty), atan2(ty,tx), tz));
@@ -879,12 +902,9 @@ void Tracker::readHits(string base_path, int filenum) {
     
     initLayers();
     
-    
     for (int hit_id = 1; hit_id < hits.size(); hit_id++) {
         metai_weight[truth_part[hit_id]][metai[hit_id]] += truth_weight[hit_id];
     }
-    
-    
     
     map<double, double> mir[48], mar[48];
     for (int i = 1; i < hits.size(); i++) {
@@ -919,44 +939,7 @@ void Tracker::readHits(string base_path, int filenum) {
         if (layer[mi].type == Disc)
             metaz[i] = zi[mi][hits[i].z];
     }
-    
-    
-    
-    
-    
-    /*for (int i = 0; i < 48; i++) {
-     layer[i].avgr /= layer[i].count;
-     layer[i].avgz /= layer[i].count;
-     cout << layer[i].minr << ' ' << layer[i].avgr << ' ' << layer[i].maxr << ' ' <<
-     layer[i].minz << ' ' << layer[i].avgz << ' ' << layer[i].maxz << endl;
-     }*/
-    
-    /*for (int i = 0; i < 48; i++) {
-     for (int k = 0; k <= 100; k++)
-     if (layer[i].type == Tube) {
-     cerr << layer[i].minz << ' ' << layer[i].avgr << endl;
-     cerr << layer[i].maxz << ' ' << layer[i].avgr << endl << endl;
-     } else {
-     cerr << layer[i].avgz << ' ' << layer[i].minr << endl;
-     cerr << layer[i].avgz << ' ' << layer[i].maxr << endl << endl;
-     }
-     }
-     exit(0);*/
-    
-    /*set<int> s;
-     for (int i = 0; i < hits.size(); i++) {
-     point p = hits[i];
-     //cout << meta[i].x << endl;
-     uint col = uint(meta[i].z)*0x10101*50;
-     if (meta[i].x == 8 && meta[i].y == 2) {//>= 7 && meta[i].x <= 18)
-     s.insert(meta[i].z);
-     double r = p.z;//sqrt(p.x*p.x+p.y*p.y);
-     cout << r << endl;
-     cerr << p.x << ' ' << p.y << ' ' << p.z << ' ' << col << endl;
-     }
-     }*/
-    //for (auto i : s) cout << i << endl;
-    //exit(0);
+
 }
 
 // Volumes: 7,8,9, 12,13,14, 16,17,18
@@ -990,7 +973,6 @@ void Tracker::readDetectors(string base_path) {
     fclose(fp);
 }
 
-
 void Tracker::readCells(string base_path,int filenum) {
     char file[1000];
     if (filenum >= 1000)
@@ -1014,14 +996,11 @@ void Tracker::readCells(string base_path,int filenum) {
     fclose(fp);
 }
 
-
-
 point Tracker::normalize(point a) {
     point ret = a*(1./dist(a));
     if (ret.z < 0) ret = ret*-1;
     return ret;
 }
-
 
 //Calculate direction of each hit with cell's data
 void Tracker::initHitDir() {
@@ -1058,11 +1037,7 @@ void Tracker::initHitDir() {
         double a = mxx-myy, b = 2*mxy;
         double x = a+b+sqrt(a*a+b*b);
         double y =-a+b+sqrt(a*a+b*b);
-/*        if (0) {
-            double lambda = (mxx+myy+sqrt(a*a+b*b))/2;
-            cout << lambda << ' ' << (mxx*x+mxy*y)/x << ' ' << (mxy*x+myy*y)/y << endl;
-        }
-*/
+
         //Analytical formula for z
         double z = 2*d.d*(fabs(x)/d.cell_w+fabs(y)/d.cell_h+1e-8);
         x *= (cells.size()*1.-1.3);//1.3 != 1 was adjusted empirically
@@ -1077,12 +1052,7 @@ void Tracker::initHitDir() {
             if (hit_dir[hit_id][k]*hits[hit_id] < 0)
                 hit_dir[hit_id][k] = hit_dir[hit_id][k]*-1;
         
-        //Write out missalignment to ground truth for plotting
-        //if (metai[hit_id] == 0)
-        //cerr << acos(max(fabs(hit_dir[hit_id][0]*truth_mom[hit_id]),
-        //           fabs(hit_dir[hit_id][1]*truth_mom[hit_id]))/dist(truth_mom[hit_id])) << endl;
     }
-    //exit(0);
 }
 
 // Data initialization
@@ -1094,6 +1064,8 @@ long Tracker::trackletsok(0),Tracker::trackletstotal(0);
 unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0),Tracker::nx(0);
 unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0),Tracker::ntwins(0);
 vector<point> Tracker::hits; //hit position
+vector<Particle> Tracker::particles; //true tracks
+map<long long,int> Tracker::partIDmap; // create particle ID->index map
 
 vector<int> Tracker::tube[48]; // List of hits in each layer
 vector<Point> Tracker::tubePoints[48]; // List of hits in each layer
