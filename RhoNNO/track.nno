@@ -17,7 +17,7 @@ file tracks.root
 
 #set up the input layer (use branch names)
 tree tracks
-input r1:phi1:theta1:r2:phi2:theta2
+input rz1:phi1:z1:rz2:phi2:z2
 #autoscale true
 #cut p<2.0
 

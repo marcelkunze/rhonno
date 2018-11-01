@@ -71,10 +71,10 @@ double* Tracker::recall2(Point &p1, Point &p2)
     static XMLP net(NETFILE2);
     static float x[6]={0.,0.,0.,0.,0.,0.};
     
-    x[0]     = p1.rz();     // r1
+    x[0]     = p1.rz();     // rz1
     x[1]     = p1.phi();    // phi1
     x[2]     = p1.z();      // z1
-    x[3]     = p2.rz();     // r2
+    x[3]     = p2.rz();     // rz2
     x[4]     = p2.phi();    // phi2
     x[5]     = p2.z();      // z2
     
@@ -98,13 +98,13 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
         if ((M_PI-angle)>DELTANN) { nx++; return null; } // Check 180 deg.
     }
 
-    x[0]     = p1.rz();     // r1
+    x[0]     = p1.rz();     // rz1
     x[1]     = p1.phi();    // phi1
     x[2]     = p1.z();      // z1
-    x[3]     = p2.rz();     // r2
+    x[3]     = p2.rz();     // rz2
     x[4]     = p2.phi();    // phi2
     x[5]     = p2.z();      // z2
-    x[6]     = p3.rz();     // r3
+    x[6]     = p3.rz();     // rz3
     x[7]     = p3.phi();    // phi3
     x[8]     = p3.z();      // z3
     
@@ -128,8 +128,8 @@ long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &inner,
 }
 
 //id==49
-#define TBD true
-#define REF true
+#define TBD false
+#define REF false
 
 // Select points wrt. a reference point
 long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &good, std::vector<Point> &bad, Point &ref, double deltar, double deltathe, double distance)
@@ -388,7 +388,10 @@ void Tracker::readTubes() {
             double d = p0.distance(p1);
             if (VERBOSE) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
             if (d<TWINDIST) {
-                p0.settwin(id1);
+                if (id0<id1)
+                    p0.settwin(id1);
+                else
+                    p1.settwin(id0);
                 ntwins++;
                 if (VERBOSE) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
             }

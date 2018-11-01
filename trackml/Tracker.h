@@ -15,7 +15,7 @@
 #define TRACKLET 2
 #define TWINDIST 0.0051
 #define MAXKNN 10
-#define THRESHOLD2 0.92
+#define THRESHOLD2 0.73
 #define THRESHOLD3 0.95
 #define DISTANCE 1.8
 #define DELTAR   0.9
@@ -126,9 +126,9 @@ public:
     static std::map<long long, point> track_hits; // Find points in hits
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static std::vector<point> meta; //volume_id / layer_id / module_id
-private:
     static std::vector<int> tube[48]; // List of hits in each layer
     static std::vector<Point> tubePoints[48]; // List of hits in each layer
+private:
     static int assignment[150000];
     static point truth_pos[150000], truth_mom[150000]; //truth position and momentum
     static double truth_weight[150000]; //weighting of each hit
