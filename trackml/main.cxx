@@ -23,7 +23,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 20
+#define MAXPARTICLES 10000
 #define MAXHITS 150000
 #define TRAINFILE false
 #define DRAW true
@@ -59,7 +59,7 @@ int main(int argc, char**argv) {
     ios::sync_with_stdio(false);
     cout << fixed;
     
-    Tracker::verbose(true);
+    Tracker::verbose(false);
     
     if (EVALUATION) {
         Tracker::readBlacklist(base_path,filenum);
@@ -108,7 +108,7 @@ int main(int argc, char**argv) {
     if (nhits > MAXHITS) nhits = MAXHITS;
     cout << "Hits: " << nhits << endl;
     
-    cout << "Find tracks..." << endl;
+    cout << endl << "Running Tracker:" << endl;
     long nt = Tracker::findTracks((int)nhits,x,y,z,layer,label,truth);
     
     // Show the results

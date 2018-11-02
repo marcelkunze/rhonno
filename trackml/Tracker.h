@@ -3,9 +3,7 @@
 // Neural Network based tracker
 // M.Kunze, Heidelberg University, 2018
 
-#define TRACKML
-
-#ifdef TRACKML
+//#define SWIMMER
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define RMIN  0.0
@@ -22,24 +20,6 @@
 #define DELTATHE 0.4
 #define DELTAPHI 0.2
 #define DELTANN  0.2
-#else
-#define NETFILE2 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP2.net"
-#define NETFILE3 "/Users/marcel/workspace/rhonno/RhoNNO/XMLP3.net"
-#define RMIN 0.0
-#define RMAX 10.0
-#define ZMIN 0.0
-#define ZMAX 10.0
-#define TRACKLET 2
-#define MAXKNN 8
-#define THRESHOLD2 0.9
-#define THRESHOLD3 0.9
-#define DISTANCE 0.5
-#define DELTAR   1.0
-#define DELTAPHI 0.04
-#define DELTANN  0.02
-#define NHITS 10
-#define SIGMA 0.0
-#endif
 
 #include "Graph.h"
 #include <cmath>

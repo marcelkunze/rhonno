@@ -426,7 +426,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     readTubes();
    
     // Search neighbouring hits and generate a weighted directed graph
-    cout << "Searching seeds..." << endl;
+    cout << "Searching seeds (pairs)..." << endl;
     findSeeds();
     
     // Transfer the results from the weighted directed graph into hits
@@ -451,7 +451,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
 
-    cout << "Find tracklets..." << endl;
+    cout << "Searching tracks..." << endl;
     vector<vector<int> > tracklet;
     vector<vector<int> > shortpath;
 
@@ -484,11 +484,11 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         hitmap.erase(it++);
         while (it != hitmap.end()) { // Follow the path until there are no more neighbours
             neighbour = p0->neighbour(n);
-            if (VERBOSE) cout << p0->id() << "->" << neighbour << endl;
+            if (_verbose) cout << p0->id() << "->" << neighbour << endl;
             if (neighbour < 0 || neighbour >= nhits) break;
             auto it = hitmap.find(neighbour);
             if (n<NEIGHBOURS-1 && it==hitmap.end()) { // hit is already assigned
-                if (VERBOSE) cout <<  "->" << neighbour << endl;
+                if (_verbose) cout <<  "->" << neighbour << endl;
                 n++;  // try an alternative neighbour
                 continue;
             }
@@ -503,7 +503,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
         vector<int> tmpvec;
         for (auto &ip : pvec) tmpvec.push_back(ip.id()); // Note the hit indices
-        if (VERBOSE) print(tmpvec);
+        if (_verbose) print(tmpvec);
         if (pvec.size() >= TRACKLET) {
             tracklet.push_back(tmpvec);
             trackletstotal += pvec.size();
@@ -511,7 +511,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         }
         else
             shortpath.push_back(tmpvec);
-        if (VERBOSE) cout << "---" << endl;
+        if (_verbose) cout << "---" << endl;
     }
 #else
     // Analyze the graph
@@ -522,7 +522,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     vector<int> tmpvec;
     for (auto n : t) {
         if (abs(n-nold)>1) {
-            cout << "Track at " << n << endl;
+            if (_verbose) cout << "Track at " << n << endl;
             if (nold!=-2) {
                 tracklet.push_back(tmpvec);
                 tmpvec.clear();
