@@ -26,7 +26,7 @@ file event000021104.root
 
 #set up the input layer (use branch names)
 tree tracks3
-input rz1:phi1:r1*cos(theta1):rz2:phi2:r2*cos(theta2):rz3:phi3:r3*cos(theta3)
+input rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3
 #input r1:phi1:theta1:r2:phi2:theta2:r3:phi3:theta3
 
 #autoscale true

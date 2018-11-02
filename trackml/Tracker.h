@@ -99,6 +99,7 @@ class Point;
 class Tracker {
 public:
     static std::vector<point> hits; //hit position
+    static std::vector<point> polar; //hit position in polar / cylindrical coordinates
     static std::vector<Particle> particles; //true tracks
     static std::map<long long,int> partIDmap; // create particle ID->index map
 
@@ -121,7 +122,6 @@ private:
     static std::map<long long, int> part_q; //start charge
     static std::map<long long, int> part_hits; // = truth_tracks[particle_id].size()
     static int topo[48], itopo[48]; //reordering of layers for approximate sorting
-    static std::vector<point> polar; //hit position in polar / cylindrical coordinates
     static double disc_z[48][4];
     static const int Tube = 0, Disc = 1;
     static constexpr double Bfield = 1673.0; //Empirical field strengh, to scale the momentum

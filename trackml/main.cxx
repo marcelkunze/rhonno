@@ -171,7 +171,11 @@ int main(int argc, char**argv) {
         ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:truth");
         makeTrain2();
         ntuple2->Write();
+        ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:truth");
+        makeTrain3();
+        ntuple3->Write();
         delete ntuple2;
+        delete ntuple3;
         f->Close();
     }
     
@@ -190,22 +194,55 @@ void makeTrain2()
     for (int i = 0; i < n; i++) {
         int tube1 = start_list[i].first;
         for (auto &a : Tracker::tubePoints[tube1]) {
+            Point &p1 = a;
             int tube2 = start_list[i].second;
             for (auto &b : Tracker::tubePoints[tube2]) {
-                if (a.truth() == b.truth()) {
-                    ntuple2->Fill(a.rz(),a.phi(),a.z(),b.rz(),b.phi(),b.z(),1.0); //wright combination
+                Point &p2 = b;
+                if (p1.truth() == p2.truth()) {
+                    ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),1.0); //wright combination
                     wright++;
                 }
                 else {
                     if (r.Rndm()<wright/wrong) {
-                        ntuple2->Fill(a.rz(),a.phi(),a.z(),b.rz(),b.phi(),b.z(),0.0); //wrong combination
+                        ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),0.0); //wrong combination
                         wrong++;
                     }
                 }
             }
         }
     }
-    cout << "Wright: " << wright << " Wrong: " << wrong << endl;
+    cout << "makeTrain2 Wright: " << wright << " Wrong: " << wrong << endl;
+}
+
+// Look for seeding points by hit pair combinations in the innnermost layers
+void makeTrain3()
+{
+    long wright=1,wrong=1;
+    // Combine 3 hits
+    for (auto p : Tracker::particles) {
+        long nhits = p.hits;
+        if (nhits < 3) continue;
+        for (int i=0; i<nhits-2; i++)    {
+            vector<int> &h = p.hit;
+            auto &polar = Tracker::polar;
+            int id1 = h[i];
+            int id2 = h[i+1];
+            int id3 = h[i+2];
+            point p1 = polar[id1];
+            point p2 = polar[id2];
+            point p3 = polar[id3];
+            ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,1.0); //wright combination
+            wright++;
+            p3.y = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on tube with rz
+            float theta3 = r.Rndm()*M_PI;
+            p3.z = p3.x * cos(theta3); // r*cos
+            if (r.Rndm()<wright/wrong) {
+                ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,0.0); //wrong combination
+                wrong++;
+            }
+        }
+    }
+    cout << "makeTrain3: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<Point> > tracks)
