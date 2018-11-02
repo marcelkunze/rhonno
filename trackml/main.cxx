@@ -23,21 +23,17 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10000
+#define MAXPARTICLES 10
 #define MAXHITS 150000
 #define TRAINFILE false
 #define DRAW true
 #define EVALUATION true
+#define VERBOSE true
 
 const std::string base_path = "/Users/marcel/workspace/train_sample/";
 
 //Which event to run, this may be overwritten by main()'s arguments
 int filenum = 21100;
-
-//Not doing much in practice
-int debug = 0;
-//Not the standard assert!
-#define assert(a, m) {if (!(a)) {cout << m << endl; exit(0);}}
 
 void makeTrain2();
 void makeTrain3();
@@ -59,7 +55,7 @@ int main(int argc, char**argv) {
     ios::sync_with_stdio(false);
     cout << fixed;
     
-    Tracker::verbose(false);
+    Tracker::verbose(VERBOSE);
     
     if (EVALUATION) {
         Tracker::readBlacklist(base_path,filenum);
@@ -83,8 +79,13 @@ int main(int argc, char**argv) {
     start[0] = 0;
     end[0] = -1;
     for (auto &track : Tracker::truth_tracks) {
-        if (n++ >= MAXPARTICLES) break;
         vector<int> t = track.second;
+        point geo = Tracker::meta[t[0]]; // Check the first layer of a hit
+        int vol = geo.x;
+        int lay = geo.y;
+        int first = Tracker::getLayer(vol,lay);
+        if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
+        if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
         for (auto &id : t) {

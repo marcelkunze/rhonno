@@ -33,8 +33,8 @@ bool operator==(const triple&a, const triple&b) {
 
 //does hits a and b correspond to the same particle?
 int Tracker::samepart(int a, int b) {
-    long long aa = truth_part[a];
-    long long bb = truth_part[b];
+    long long aa = p[a].truth();
+    long long bb = p[b].truth();
     return aa == bb && aa;
 }
 
@@ -81,6 +81,15 @@ double* Tracker::recall2(Point &p1, Point &p2)
     return net.Recallstep(x);
 }
 
+// Recall function for 2 points
+double* Tracker::recall2(int id1, int id2)
+{
+    Point &p1 = p[id1];
+    Point &p2 = p[id2];
+    
+    return recall2(p1,p2);
+}
+
 // Recall function for 3 points
 double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
 {
@@ -97,7 +106,7 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
     else {
         if ((M_PI-angle)>DELTANN) { nx++; return null; } // Check 180 deg.
     }
-
+    
     x[0]     = p1.rz();     // rz1
     x[1]     = p1.phi();    // phi1
     x[2]     = p1.z();      // z1
@@ -110,6 +119,17 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
     
     return net.Recallstep(x);
 }
+
+// Recall function for 3 points
+double* Tracker::recall3(int id1, int id2, int id3)
+{
+    Point &p1 = p[id1];
+    Point &p2 = p[id2];
+    Point &p3 = p[id3];
+    
+    return recall3(p1,p2,p3);
+}
+
 
 // Preselect points in a cylinder defined by RMIN..RMAX and ZMIN..ZMAX
 long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &inner,std::vector<Point> &outer,double rmin,double rmax,double zmin,double zmax) {
@@ -128,7 +148,7 @@ long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &inner,
 }
 
 //id==49
-#define TBD false
+#define TBD id==51
 #define REF false
 
 // Select points wrt. a reference point
@@ -136,37 +156,37 @@ long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &good,
 {
     int id = ref.id();
     if (TBD&&REF) cout << "---------------------------> id: " << id << endl;
-
+    
     int knn = 0;
     vector<Point> neighbours;
     auto it = points.begin();
     
     while (it != points.end()) {
         if (knn++ > MAXKNN) break; // Max. number of neighbouring points reached
- 
+        
         Point &p = *it++;
         if (id==p.id()) continue;
-
+        
         if (TBD&&REF) cout << p.id() << endl;
-            
+        
         double dr = abs(p.r()-ref.r()); // Check the radial distance
         if (dr > deltar) { if (TBD&&REF) cout << "R " << dr << endl; nr++; bad.push_back(p); continue; }
-            
+        
         double dt = abs(p.theta()-ref.theta()); // Check the elongation
         if (dt > deltathe) { if (TBD&&REF) cout << "T " << dt << endl; nt++; bad.push_back(p); continue; }
-            
+        
         double d = p.distance(ref); // Check the euclidean distance
         if (d > distance*p.r()) { if (TBD&&REF) cout << "D " << d << endl; nd++; bad.push_back(p); continue; }
-            
+        
         //double angle = acos(Point::dot(p0,p1)); // Check angle between (p0,p1)
         //if (angle > DELTAPHI) { if (TBD&&REF) cout << "P " << angle << endl; np++; continue; }
-            
+        
         good.push_back(p);
-            
+        
         if (TBD&&REF) {
-                cout << p.id() << ": R " << dr << " T " << dt << " D " << d;
+            cout << p.id() << ": R " << dr << " T " << dt << " D " << d;
         }
-            
+        
     }
     
     if (TBD&&REF) cout << endl << "<--------------------------- id: " << id << endl;
@@ -200,9 +220,10 @@ std::vector<pair<int,float> > Tracker::findSeeds(Point &p0, std::vector<Point> &
                     paths.add(p0.id(),twin,1000*recall);
                 else
                     paths.add(twin,p0.id(),1000*recall);
-
+                
                 if (REF) cout << " Added double hit " << twin << endl;
             }
+            
         }
         else
             if (REF) cout << p0.id() << " " << p1.id() << ": R2 NOK " << recall << endl;
@@ -219,12 +240,12 @@ std::vector<pair<int,float> > Tracker::findSeeds(Point &p0, std::vector<Point> &
 void Tracker::findSeeds()
 {
     const int n=5; // Seeding layer combinations
-    const pair<int, int> start_list[6] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}};
-    
+    const int start_list[6][3] = {{0,1,2}, {11,12,13}, {4,5,6}, {0,4,18}, {0,11,12}, {18,19,20}};
+
     for (int i = 0; i < n; i++) {
-        int tube1 = start_list[i].first;
+        int tube1 = start_list[i][0];
         for (auto &a : tubePoints[tube1]) {
-            int tube2 = start_list[i].second;
+            int tube2 = start_list[i][1];
             vector<Point> &b = tubePoints[tube2];
             std::vector<Point> neighbours,bad;
             selectPoints(b,neighbours,bad,a,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
@@ -237,13 +258,24 @@ void Tracker::findSeeds()
                 for (auto it: seed) cout << it.first << "(" << it.second << ") ";
                 cout << endl;
             }
+            
+            vector<triple> triples;
+            for (auto &it : seed) {
+                long nt = findTriples(a,p[it.first],tubePoints[start_list[i][2]],triples);
+                for (auto t: triples) paths.add(t.y,t.z,1000*t.r);
+                if (_verbose) {
+                    cout << nt << " triples:" << endl;
+                    for (auto t: triples) cout << t.x << " " << t.y << " " << t.z << "(" << t.r << ") ";
+                    cout << endl;
+                }
+            }
         }
     }
     
     if (_verbose) {
         cout << paths << endl;
     }
-
+    
 }
 
 //Find pairs using a neural network
@@ -266,34 +298,30 @@ vector<pair<int, int> > Tracker::findPairs() {
 }
 
 // Generate tracklets of 3 points wrt. the first point in seed
-long Tracker::findTriples(Point &p0, std::vector<Point> &seed,std::vector<triple> &triples)
+long Tracker::findTriples(Point &p0, Point &p1, std::vector<Point> &seed,std::vector<triple> &triples)
 {
     long size = seed.size();
     if (size<2) return 0;
-
+    
     triple t;
     t.x = p0.id();
-    
-    for (auto it1=seed.begin(); it1 != seed.end()-1; it1++)
+    t.y = p1.id();
+
+    for (auto &it : seed)
     {
-        Point &p1 = *it1;
-        t.y = p1.id();
-        for (auto it2=it1+1; it2 != seed.end(); it2++) {
-            Point &p2 = *it2;
-            double recall = checkTracklet(p0,p1,p2);
-            if (recall > 0) {
-                t.z = p2.id();
-                t.r = recall;
-                triples.push_back(t);
-                if (REF) cout << t.x << " " << t.y << " " << t.z << ": R3 OK " << recall << endl;
-            }
-            else
-                if (REF) cout << t.x << " " << t.y << " " << t.z << ": R3 NOK " << recall << endl;
-            
+        Point &p2 = it;
+        double recall = checkTracklet(p0,p1,p2);
+        if (recall > 0) {
+            t.z = p2.id();
+            t.r = recall;
+            triples.push_back(t);
+            if (REF) cout << t.x << " " << t.y << " " << t.z << ": R3 OK " << recall << endl;
         }
+        else
+            if (REF) cout << t.x << " " << t.y << " " << t.z << ": R3 NOK " << recall << endl;
     }
     
-    if (_verbose) { cout << "triples " << p0.id() << ":"; for (auto &it:triples) cout << " (" << it.x << "," << it.y << "," << it.z << ":" << it.r << ")"; cout << endl; }
+    //if (_verbose) { cout << "triples " << p0.id() << ":"; for (auto &it:triples) cout << " (" << it.x << "," << it.y << "," << it.z << ":" << it.r << ")"; cout << endl; }
     
     return triples.size();
 }
@@ -323,7 +351,7 @@ int Tracker::getLayer(int volume_id, int layer_id) {
     
     int itopo[48] = {10,9,8,7,6,5,4,0,1,2,3,11,12,13,14,15,16,17,34,32,30,28,26,24,18,19,20,21,36,38,40,42,44,46,35,33,31,29,27,25,22,23,37,39,41,43,45,47};
     int metai_list[9][7] = {{0,1,2,3,4,5,6},{7,8,9,10,-1,-1,-1},{11,12,13,14,15,16,17},{18,19,20,21,22,23,-1},{24,25,26,27,-1,-1,-1},{28,29,30,31,32,33,-1},{34,35,36,37,38,39,-1},{40,41,-1,-1,-1,-1,-1},{42,43,44,45,46,47}};
-
+    
     if (volume_id<7 || volume_id>18) return -1;
     if (volume_id <= 9)
         volume_id -= 7;
@@ -347,19 +375,19 @@ void Tracker::readTubes() {
         tube[points[i].layer()].push_back(i);
         if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << endl;
     }
- 
+    
     for (int i = 0; i < 48; i++) {
         for (auto it : tube[i]) {
             tubePoints[i].push_back(points[it]);
-/*            if (_verbose) {
-                if (layer[i].type == Disc)
-                    cout << "Disc " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
-                else
-                    cout << "Tube " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
-            }
-*/        }
+            /*            if (_verbose) {
+             if (layer[i].type == Disc)
+             cout << "Disc " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
+             else
+             cout << "Tube " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
+             }
+             */        }
     }
-
+    
     for (int i = 0; i < 48; i++) {
         if (layer[i].type == Disc)
             sort(tube[i].begin(), tube[i].end(), z_cmp);
@@ -373,12 +401,12 @@ void Tracker::readTubes() {
         else
             sort(tubePoints[i].begin(), tubePoints[i].end(), Point::sortRz);
     }
-
+    
     // Filter double hits
     cout << "Filter double hits..." << endl;
     for (int i = 0; i < 48; i++) {
         vector<Point> &pvec = tubePoints[i];
-        if (_verbose) cout << "Tube " << i << " size: " << pvec.size() << endl;
+        //if (_verbose) cout << "Tube " << i << " size: " << pvec.size() << endl;
         if (pvec.size()<2) continue;
         for (auto it = pvec.begin(); it != pvec.end()-1; it++) {
             Point &p0 = *it;
@@ -386,18 +414,18 @@ void Tracker::readTubes() {
             Point &p1 = *(it+1);
             int id1 = p1.id();
             double d = p0.distance(p1);
-            if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
+            //if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
             if (d<TWINDIST) {
                 if (id0<id1)
                     p0.settwin(id1);
                 else
                     p1.settwin(id0);
                 ntwins++;
-                if (_verbose) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
+                //if (_verbose) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
             }
         }
     }
-
+    
 }
 
 bool Tracker::z_cmp(const int a, const int&b) { return points[a].z() < points[b].z(); }
@@ -424,10 +452,20 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     // Sort the hits into the detector layers
     cout << "Sorting hits..." << endl;
     readTubes();
-   
+    
     // Search neighbouring hits and generate a weighted directed graph
     cout << "Searching seeds (pairs)..." << endl;
     findSeeds();
+    
+    std::clock_t c_end = std::clock();
+    double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+    
+    cout << "Searching tracks..." << endl;
+    vector<vector<int> > tracklet;
+    vector<vector<int> > shortpath;
+    
+#ifdef SWIMMER
     
     // Transfer the results from the weighted directed graph into hits
     for (auto &ip : points) {
@@ -446,16 +484,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
             n++;
         }
     }
-
-    std::clock_t c_end = std::clock();
-    double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
-
-    cout << "Searching tracks..." << endl;
-    vector<vector<int> > tracklet;
-    vector<vector<int> > shortpath;
-
-#ifdef SWIMMER
     
     if (_verbose) {
         for (int i=0;i<nhits;i++) {
@@ -516,20 +544,26 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
 #else
     // Analyze the graph
     
-    int nold = -2;
+    cout << "Analyzing directed weighted graph..." << endl;
     auto t = serialize(paths);
     sort(t.begin(),t.end());
     vector<int> tmpvec;
-    for (auto n : t) {
-        if (abs(n-nold)>1) {
-            if (_verbose) cout << "Track at " << n << endl;
-            if (nold!=-2) {
-                tracklet.push_back(tmpvec);
-                tmpvec.clear();
-            }
+    int previous = p[t[0]].layer(); // starting layer of track
+    bool sametrack = true;
+    for (auto it : t) {
+        int id = it;
+        int actual = p[id].layer();
+        sametrack = previous<=actual && abs(previous-actual) < 5;
+        if (sametrack) {
+            tmpvec.push_back(id);
         }
-        tmpvec.push_back(n);
-        nold = n;
+        else {
+            if (_verbose) cout << "Track at " << id << endl;
+            tracklet.push_back(tmpvec);
+            tmpvec.clear();
+            tmpvec.push_back(id);
+        }
+        previous = actual;
     }
     tracklet.push_back(tmpvec);
 #endif
@@ -538,8 +572,22 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     cout << "Number of short tracks: " << shortpath.size() << endl;
     if (tracklet.size() == 0) exit(0);
     
-    // Sort the tracklet vector according to the tracklet length
+    // Score the solution
+    if (SCORE) {
+        vector<pair<int,int> > pairs;
+        for (auto &it:tracklet) {
+            for (int i=0;i<it.size()-1;i++) {
+                pairs.push_back(make_pair(it[i],it[i+1]));
+            }
+        }
+        
+        //auto newPairs = findPairs();
+        scorePairs(pairs);
+    }
     
+    // extend the tracklet vector to outer layers
+    
+    // Sort the tracklet vector according to the tracklet length
     //sort(tracklet.begin(), tracklet.end(), sortFunc);
     
     // Print out the tracks vector
@@ -620,7 +668,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     cout << "Threshold3 <" << THRESHOLD3 << ": " << n1 <<endl;
     cout << "Recalls2 : " << n2 << endl;
     cout << "Recalls3 : " << n3 << endl << endl;
-
+    
     double perc = 0.0;
     if (seedstotal>0) perc = 100. * seedsok / (double) seedstotal;
     cout << "findSeeds: " << perc << "%" << endl;
@@ -692,10 +740,10 @@ void Tracker::readTruth(string base_path,int filenum) {
             cout<<"ID= "<<hit_id<<" new ID "<<newID<<endl;
             exit(0);
         }
-
+        
         Particle &p = particles[newID];
         p.hit.push_back(hit_id);
-
+        
     }
     fclose(fp);
     
@@ -977,7 +1025,7 @@ void Tracker::readHits(string base_path, int filenum) {
         if (layer[mi].type == Disc)
             metaz[i] = zi[mi][hits[i].z];
     }
-
+    
 }
 
 // Volumes: 7,8,9, 12,13,14, 16,17,18
@@ -1075,7 +1123,7 @@ void Tracker::initHitDir() {
         double a = mxx-myy, b = 2*mxy;
         double x = a+b+sqrt(a*a+b*b);
         double y =-a+b+sqrt(a*a+b*b);
-
+        
         //Analytical formula for z
         double z = 2*d.d*(fabs(x)/d.cell_w+fabs(y)/d.cell_h+1e-8);
         x *= (cells.size()*1.-1.3);//1.3 != 1 was adjusted empirically
@@ -1091,6 +1139,20 @@ void Tracker::initHitDir() {
                 hit_dir[hit_id][k] = hit_dir[hit_id][k]*-1;
         
     }
+}
+
+void Tracker::scorePairs(vector<pair<int, int> >&pairs) {
+    set<long long> found;
+    for (auto p : pairs) {
+        if (samepart(p.first, p.second)) {
+            found.insert(truth_part[p.first]);
+        }
+    }
+    double score = 0;
+    for (long long p : found) {
+        score += part_weight[p];
+    }
+    cout << score << " from " << pairs.size() << " pairs" << endl;
 }
 
 // Data initialization

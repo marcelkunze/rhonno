@@ -21,6 +21,8 @@
 #define DELTAPHI 0.2
 #define DELTANN  0.2
 
+#define SCORE true
+
 #include "Graph.h"
 #include <cmath>
 #include <algorithm>
@@ -141,7 +143,7 @@ public:
     static std::vector<std::pair<int,float> > findSeeds(Point &p,std::vector<Point> &points);
     static void findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
-    static long findTriples(Point &p,std::vector<Point> &points,std::vector<triple> &triples);
+    static long findTriples(Point &p0,Point &p1,std::vector<Point> &points,std::vector<triple> &triples);
     static long selectPoints(std::vector<Point> &points, std::vector<Point> &inner, std::vector<Point> &outer, double rmin, double rmax, double zmin, double zmax);
     static long selectPoints(std::vector<Point> &points, std::vector<Point> &good, std::vector<Point> &bad, Point &ref, double deltar, double deltathe, double distance);
     static double checkTracklet(Point &p0,Point &p1);
@@ -158,11 +160,13 @@ public:
     static void readTubes();
     static void sortTracks();
     static int getLayer(int volume, int layer);
-    
+    static void scorePairs(std::vector<std::pair<int, int> >&pairs);
 private:
     static void print(std::vector<int> const &input);
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
+    static double* recall2(int id1, int id2);
     static double* recall2(Point &p1, Point &p2);
+    static double* recall3(int id1, int id2, int id3);
     static double* recall3(Point &p1, Point &p2, Point &p3);
     static bool z_cmp(const int a, const int&b);
     static bool r_cmp(const int&a, const int&b);
