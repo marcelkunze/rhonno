@@ -23,12 +23,12 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10
+#define MAXPARTICLES 10000
 #define MAXHITS 150000
 #define TRAINFILE false
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE true
+#define VERBOSE false
 
 const std::string base_path = "/Users/marcel/workspace/train_sample/";
 
@@ -37,6 +37,7 @@ int filenum = 21100;
 
 void makeTrain2();
 void makeTrain3();
+void makeTrain3Random();
 void draw(long nhits,float *x,float *y,float *z,std::map<int,std::vector<Point> > tracks);
 
 using namespace std;
@@ -223,6 +224,45 @@ void makeTrain3()
         long nhits = p.hits;
         if (nhits < 3) continue;
         for (int i=0; i<nhits-2; i++)    {
+            // Select 3 continuous points
+            vector<int> &h = p.hit;
+            auto &polar = Tracker::polar;
+            int id1 = h[i];
+            int id2 = h[i+1];
+            int id3 = h[i+2];
+            point p1 = polar[id1];
+            point p2 = polar[id2];
+            point p3 = polar[id3];
+            ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,1.0); //wright combination
+            wright++;
+            // Select last point randomly in the same layer
+            point geo = Tracker::meta[id3];
+            int vol = geo.x;
+            int lay = geo.y;
+            int layer = Tracker::getLayer(vol,lay);
+            auto tube = Tracker::tube[layer];
+            if (tube.size()==0) continue;
+            int index = tube.size()*r.Rndm();
+            int idr = tube[index];
+            point p4 = polar[idr];
+            if (r.Rndm()<wright/wrong) {
+                ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p4.x,p4.y,p4.z,0.0); //wrong combination
+                wrong++;
+            }
+        }
+    }
+    cout << "makeTrain3: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
+}
+
+// Look for seeding points by hit pair combinations in the innnermost layers
+void makeTrain3Random()
+{
+    long wright=1,wrong=1;
+    // Combine 3 hits
+    for (auto p : Tracker::particles) {
+        long nhits = p.hits;
+        if (nhits < 3) continue;
+        for (int i=0; i<nhits-2; i++)    {
             vector<int> &h = p.hit;
             auto &polar = Tracker::polar;
             int id1 = h[i];
@@ -242,7 +282,7 @@ void makeTrain3()
             }
         }
     }
-    cout << "makeTrain3: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
+    cout << "makeTrain3Random: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<Point> > tracks)

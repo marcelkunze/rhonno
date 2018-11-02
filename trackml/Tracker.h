@@ -14,8 +14,8 @@
 #define TWINDIST 0.0051
 #define MAXKNN 10
 #define THRESHOLD2 0.95
-#define THRESHOLD3 0.95
-#define DISTANCE 1.8
+#define THRESHOLD3 0.90
+#define DISTANCE 0.8
 #define DELTAR   0.9
 #define DELTATHE 0.4
 #define DELTAPHI 0.2
