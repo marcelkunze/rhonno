@@ -23,7 +23,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10
+#define MAXPARTICLES 20
 #define MAXHITS 150000
 #define TRAINFILE false
 #define DRAW true
@@ -58,6 +58,8 @@ int main(int argc, char**argv) {
     }
     ios::sync_with_stdio(false);
     cout << fixed;
+    
+    Tracker::verbose(true);
     
     if (EVALUATION) {
         Tracker::readBlacklist(base_path,filenum);
@@ -100,7 +102,7 @@ int main(int argc, char**argv) {
             layer[nhits] = Tracker::getLayer(vol,lay);
             nhits++;
         }
-        if (VERBOSE) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
+        if (n<100) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
     }
     
     if (nhits > MAXHITS) nhits = MAXHITS;

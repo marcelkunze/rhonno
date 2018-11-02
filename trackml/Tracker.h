@@ -15,7 +15,7 @@
 #define TRACKLET 2
 #define TWINDIST 0.0051
 #define MAXKNN 10
-#define THRESHOLD2 0.73
+#define THRESHOLD2 0.95
 #define THRESHOLD3 0.95
 #define DISTANCE 1.8
 #define DELTAR   0.9
@@ -41,9 +41,7 @@
 #define SIGMA 0.0
 #endif
 
-#define VERBOSE true
-
-#include "digraph.h"
+#include "Graph.h"
 #include <cmath>
 #include <algorithm>
 #include <vector>
@@ -154,9 +152,11 @@ private:
     static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4, ntwins;
     static Point *p;
     static std::vector<Point> points;
-    static digraph<int> paths;
+    static Graph<int> paths;
+    static bool _verbose;
 public:
     Tracker() {}
+    static void verbose(bool verbose=true) {_verbose = verbose;}
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *label,int *truth);
     static std::vector<std::pair<int,float> > findSeeds(Point &p,std::vector<Point> &points);
     static void findSeeds();

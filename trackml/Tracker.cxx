@@ -232,7 +232,7 @@ void Tracker::findSeeds()
             if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
             vector<pair<int,float> > seed = findSeeds(a,neighbours);
             long n = seed.size();
-            if (n>0&&VERBOSE) {
+            if (n>0&&_verbose) {
                 cout << n << " seeds from " << a.id() << " (Tube: " << tube1 << "->" << tube2 << "):" << endl;
                 for (auto it: seed) cout << it.first << "(" << it.second << ") ";
                 cout << endl;
@@ -240,7 +240,7 @@ void Tracker::findSeeds()
         }
     }
     
-    if (VERBOSE) {
+    if (_verbose) {
         cout << paths << endl;
     }
 
@@ -293,7 +293,7 @@ long Tracker::findTriples(Point &p0, std::vector<Point> &seed,std::vector<triple
         }
     }
     
-    if (VERBOSE) { cout << "triples " << p0.id() << ":"; for (auto &it:triples) cout << " (" << it.x << "," << it.y << "," << it.z << ":" << it.r << ")"; cout << endl; }
+    if (_verbose) { cout << "triples " << p0.id() << ":"; for (auto &it:triples) cout << " (" << it.x << "," << it.y << "," << it.z << ":" << it.r << ")"; cout << endl; }
     
     return triples.size();
 }
@@ -345,13 +345,13 @@ void Tracker::readTubes() {
     long nhits = points.size();
     for (int i = 0; i < nhits; i++) {
         tube[points[i].layer()].push_back(i);
-        if (VERBOSE) cout << "Point " << i << " layer:" << points[i].layer() << endl;
+        if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << endl;
     }
  
     for (int i = 0; i < 48; i++) {
         for (auto it : tube[i]) {
             tubePoints[i].push_back(points[it]);
-/*            if (VERBOSE) {
+/*            if (_verbose) {
                 if (layer[i].type == Disc)
                     cout << "Disc " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
                 else
@@ -378,7 +378,7 @@ void Tracker::readTubes() {
     cout << "Filter double hits..." << endl;
     for (int i = 0; i < 48; i++) {
         vector<Point> &pvec = tubePoints[i];
-        if (VERBOSE) cout << "Tube " << i << " size: " << pvec.size() << endl;
+        if (_verbose) cout << "Tube " << i << " size: " << pvec.size() << endl;
         if (pvec.size()<2) continue;
         for (auto it = pvec.begin(); it != pvec.end()-1; it++) {
             Point &p0 = *it;
@@ -386,14 +386,14 @@ void Tracker::readTubes() {
             Point &p1 = *(it+1);
             int id1 = p1.id();
             double d = p0.distance(p1);
-            if (VERBOSE) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
+            if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
             if (d<TWINDIST) {
                 if (id0<id1)
                     p0.settwin(id1);
                 else
                     p1.settwin(id0);
                 ntwins++;
-                if (VERBOSE) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
+                if (_verbose) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
             }
         }
     }
@@ -421,17 +421,19 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         points.push_back(p[i]);
     }
     
+    // Sort the hits into the detector layers
+    cout << "Sorting hits..." << endl;
     readTubes();
    
-    // Search neighbouring hits
+    // Search neighbouring hits and generate a weighted directed graph
     cout << "Searching seeds..." << endl;
     findSeeds();
     
-    // transfer the results
+    // Transfer the results from the weighted directed graph into hits
     for (auto &ip : points) {
         int a = ip.id();
         int n = 0;
-        map<int,int> const &path = paths.connections(a);
+        map<int,int> const &path = paths.edges(a);
         if (path.size()==0) continue;
         for (auto &it : path ) {
             if (n>NEIGHBOURS) break;
@@ -445,7 +447,17 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         }
     }
 
-    if (VERBOSE) {
+    std::clock_t c_end = std::clock();
+    double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+
+    cout << "Find tracklets..." << endl;
+    vector<vector<int> > tracklet;
+    vector<vector<int> > shortpath;
+
+#ifdef SWIMMER
+    
+    if (_verbose) {
         for (int i=0;i<nhits;i++) {
             cout << p[i].id() << "(" ;
             for (int j=0;j<NEIGHBOURS;j++) cout << p[i].neighbour(j) << "/" << p[i].recall(j) << " ";
@@ -454,23 +466,13 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         cout << endl;
     }
     
-    std::clock_t c_end = std::clock();
-    double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
-    
-    // Analyze the graph
-
     // fill the hitmap
-    for (auto it=points.begin(); it!=points.end();it++) {
-        Point &p = *it;
+    for (auto &p : points) {
         int id = p.id();
         hitmap[id] = &p;
     }
     
     // Swimmer
-    cout << "Find tracklets..." << endl;
-    vector<vector<int> > tracklet;
-    vector<vector<int> > shortpath;
     
     while (hitmap.size()>0) {
         int n = 0;
@@ -500,7 +502,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         
         sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
         vector<int> tmpvec;
-        for (auto ip=pvec.begin();ip!=pvec.end();ip++) tmpvec.push_back(ip->id()); // Note the hit indices
+        for (auto &ip : pvec) tmpvec.push_back(ip.id()); // Note the hit indices
         if (VERBOSE) print(tmpvec);
         if (pvec.size() >= TRACKLET) {
             tracklet.push_back(tmpvec);
@@ -511,6 +513,26 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
             shortpath.push_back(tmpvec);
         if (VERBOSE) cout << "---" << endl;
     }
+#else
+    // Analyze the graph
+    
+    int nold = -2;
+    auto t = serialize(paths);
+    sort(t.begin(),t.end());
+    vector<int> tmpvec;
+    for (auto n : t) {
+        if (abs(n-nold)>1) {
+            cout << "Track at " << n << endl;
+            if (nold!=-2) {
+                tracklet.push_back(tmpvec);
+                tmpvec.clear();
+            }
+        }
+        tmpvec.push_back(n);
+        nold = n;
+    }
+    tracklet.push_back(tmpvec);
+#endif
     
     cout << endl << "Number of tracklets   : " << tracklet.size() << endl;
     cout << "Number of short tracks: " << shortpath.size() << endl;
@@ -521,13 +543,13 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     //sort(tracklet.begin(), tracklet.end(), sortFunc);
     
     // Print out the tracks vector
-    if (VERBOSE) {
+    if (_verbose) {
         cout << "Tracklets:" << endl;
         for (auto &it:tracklet) print(it);
     }
     
     // Print out the shot tracks vector
-    if (VERBOSE) {
+    if (_verbose) {
         cout << "Short Tracklets:" << endl;
         for (auto &it:shortpath) print(it);
     }
@@ -561,9 +583,9 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     }
     
     // Print out the tracks vector
-    if (VERBOSE) {
+    if (_verbose) {
         cout << "Tracklets after re-assignment:" << endl;
-        for (auto it = tracklet.begin(); it != tracklet.end(); ++it) print(*it);
+        for (auto &it : tracklet) print(it);
     }
     
 #endif
@@ -1072,9 +1094,10 @@ void Tracker::initHitDir() {
 }
 
 // Data initialization
+bool Tracker::_verbose(false);
 Point* Tracker::p;
 vector<Point> Tracker::points;
-digraph<int> Tracker::paths;
+Graph<int> Tracker::paths;
 long Tracker::seedsok(0),Tracker::seedstotal(0);
 long Tracker::trackletsok(0),Tracker::trackletstotal(0);
 unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0),Tracker::nx(0);
