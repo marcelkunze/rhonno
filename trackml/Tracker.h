@@ -6,10 +6,7 @@
 //#define SWIMMER
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
-#define RMIN  0.0
-#define RMAX  0.2
-#define ZMIN -0.7
-#define ZMAX  0.7
+
 #define TRACKLET 2
 #define TWINDIST 0.0051
 #define MAXKNN 10
@@ -20,6 +17,10 @@
 #define DELTATHE 0.4
 #define DELTAPHI 0.2
 #define DELTANN  0.2
+
+#define MAXDIM 150000
+#define PHIDIM 13
+#define PHIFACTOR 2.0
 
 #define SCORE true
 
@@ -98,6 +99,8 @@ class Point;
 
 class Tracker {
 public:
+    static std::vector<int> tube[48][PHIDIM]; // List of hits in each layer
+    static std::vector<Point> points; // hit Points
     static std::vector<point> hits; //hit position
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
     static std::vector<Particle> particles; //true tracks
@@ -107,13 +110,11 @@ public:
     static std::map<long long, point> track_hits; // Find points in hits
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static std::vector<point> meta; //volume_id / layer_id / module_id
-    static std::vector<int> tube[48]; // List of hits in each layer
-    static std::vector<Point> tubePoints[48]; // List of hits in each layer
 private:
-    static int assignment[150000];
-    static point truth_pos[150000], truth_mom[150000]; //truth position and momentum
-    static double truth_weight[150000]; //weighting of each hit
-    static long long truth_part[150000]; //particle this hit belongs to
+    static int assignment[MAXDIM];
+    static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
+    static double truth_weight[MAXDIM]; //weighting of each hit
+    static long long truth_part[MAXDIM]; //particle this hit belongs to
     static std::set<long long> blacklist;
     static std::map<long long, double> part_weight; //weighting of each particle
     static std::map<long long, std::map<int, double> > metai_weight; //weighting of each particle hit, also adding duplicates
@@ -128,27 +129,25 @@ private:
     static Layer layer[48];
     static double z_minr[48][4], z_maxr[48][4];
     static std::map<int, Detector> detectors;
-    static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[150000]; //pair<pair<ch0, ch1>, value>
-    static point hit_dir[150000][2]; //The two possible directions of the hit according to the cell's data for each hit
+    static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
+    static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
 
     static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4, ntwins;
     static Point *p;
-    static std::vector<Point> points;
     static Graph<int> paths;
     static bool _verbose;
 public:
     Tracker() {}
     static void verbose(bool verbose=true) {_verbose = verbose;}
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *label,int *truth);
-    static std::vector<std::pair<int,float> > findSeeds(Point &p,std::vector<Point> &points);
+    static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
     static void findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
-    static long findTriples(Point &p0,Point &p1,std::vector<Point> &points,std::vector<triple> &triples);
-    static long selectPoints(std::vector<Point> &points, std::vector<Point> &inner, std::vector<Point> &outer, double rmin, double rmax, double zmin, double zmax);
-    static long selectPoints(std::vector<Point> &points, std::vector<Point> &good, std::vector<Point> &bad, Point &ref, double deltar, double deltathe, double distance);
-    static double checkTracklet(Point &p0,Point &p1);
-    static double checkTracklet(Point &p0,Point &p1, Point &p2);
-    static long checkLabels(std::vector<Point> &p);
+    static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
+    static long selectPoints(std::vector<int> &points, std::vector<int> &good, std::vector<int> &bad, int ref, double deltar, double deltathe, double distance);
+    static double checkTracklet(int p0,int p1);
+    static double checkTracklet(int p0,int p1,int p2);
+    static long checkLabels(std::vector<int> &p);
     static long seedstotal,seedsok;
     static long trackletstotal,trackletsok;
     static void readBlacklist(std::string base_path,int filenum);
@@ -164,6 +163,8 @@ public:
 private:
     static void print(std::vector<int> const &input);
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
+    // Used to sort an array of points by distance
+    static bool sortDist(const int a,const int b);
     static double* recall2(int id1, int id2);
     static double* recall2(Point &p1, Point &p2);
     static double* recall3(int id1, int id2, int id3);

@@ -193,20 +193,22 @@ void makeTrain2()
     
     long wright=1,wrong=1;
     for (int i = 0; i < n; i++) {
-        int tube1 = start_list[i].first;
-        for (auto &a : Tracker::tubePoints[tube1]) {
-            Point &p1 = a;
-            int tube2 = start_list[i].second;
-            for (auto &b : Tracker::tubePoints[tube2]) {
-                Point &p2 = b;
-                if (p1.truth() == p2.truth()) {
-                    ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),1.0); //wright combination
-                    wright++;
-                }
-                else {
-                    if (r.Rndm()<wright/wrong) {
-                        ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),0.0); //wrong combination
-                        wrong++;
+        for (int j = 0; j< PHIDIM; j++) {
+            int tube1 = start_list[i].first;
+            for (auto &a : Tracker::tube[tube1][j]) {
+                Point &p1 = Tracker::points[a];
+                int tube2 = start_list[i].second;
+                for (auto &b : Tracker::tube[tube2][j]) {
+                    Point &p2 = Tracker::points[b];
+                        if (p1.truth() == p2.truth()) {
+                            ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),1.0); //wright combination
+                            wright++;
+                        }
+                        else {
+                            if (r.Rndm()<wright/wrong) {
+                                ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),0.0); //wrong combination
+                                wrong++;
+                        }
                     }
                 }
             }
@@ -240,7 +242,8 @@ void makeTrain3()
             int vol = geo.x;
             int lay = geo.y;
             int layer = Tracker::getLayer(vol,lay);
-            auto tube = Tracker::tube[layer];
+            int phi = (int)(M_PI+p3.y)*PHIFACTOR;
+            auto tube = Tracker::tube[layer][phi];
             if (tube.size()==0) continue;
             int index = tube.size()*r.Rndm();
             int idr = tube[index];

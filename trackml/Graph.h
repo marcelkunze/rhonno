@@ -20,7 +20,7 @@ public:
     
     void add(T n) // node
     {
-        if (fEdges.find(n)==fEdges.end()) return; // The node exists
+        //if (fEdges.find(n)==fEdges.end()) return; // The node exists
         fNodes.insert(n);
         (void)fEdges[n];
     }

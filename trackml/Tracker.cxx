@@ -53,14 +53,20 @@ bool Tracker::sortFunc( const vector<int>& p1,
     return p1.size() > p2.size();
 }
 
+// Sort two hits wrt distance
+bool Tracker::sortDist(const int a,const int b) {
+    return Point::sortDist(points[a],points[b]);
+}
+
 // CHeck whether the points in a vector belong to the same track
-long Tracker::checkLabels(std::vector<Point> &p) {
-    if (p.size()==0) return 0;
-    int label = p[0].label();
+long Tracker::checkLabels(std::vector<int> &ip) {
+    
+    if (ip.size()==0) return 0;
+    int label = points[ip[0]].label();
     if (label<=0) return 0;
     long n = 0;
-    for (auto it:p) {
-        if (it.label()==label) n++;
+    for (auto it:ip) {
+        if (points[it].label()==label) n++;
     }
     return n;
 }
@@ -130,103 +136,86 @@ double* Tracker::recall3(int id1, int id2, int id3)
     return recall3(p1,p2,p3);
 }
 
-
-// Preselect points in a cylinder defined by RMIN..RMAX and ZMIN..ZMAX
-long Tracker::selectPoints(std::vector<Point> &points,std::vector<Point> &inner,std::vector<Point> &outer,double rmin,double rmax,double zmin,double zmax) {
-    long n = 0;
-    for (auto it=points.begin(); it!=points.end();it++) {
-        Point &p = *it;
-        double z = p.z();
-        double r = p.rz();
-        if (z>ZMAX || z<ZMIN) { outer.push_back(p); continue; }
-        if (r>RMAX || r<RMIN) { outer.push_back(p); continue; }
-        inner.push_back(p);
-        n++;
-    }
-    
-    return n;
-}
-
 //id==49
-#define TBD id==51
+#define TBD ref==76
 #define REF false
 
 // Select points wrt. a reference point
-long Tracker::selectPoints(std::vector<Point> &points, std::vector<Point> &good, std::vector<Point> &bad, Point &ref, double deltar, double deltathe, double distance)
+long Tracker::selectPoints(std::vector<int> &ip, std::vector<int> &good, std::vector<int> &bad, int ref, double deltar, double deltathe, double distance)
 {
-    int id = ref.id();
-    if (TBD&&REF) cout << "---------------------------> id: " << id << endl;
+    Point pref = points[ref];
+    if (TBD&&REF) cout << "---------------------------> id: " << ref << endl;
     
     int knn = 0;
     vector<Point> neighbours;
-    auto it = points.begin();
+    auto it = ip.begin();
     
-    while (it != points.end()) {
+    while (it != ip.end()) {
         if (knn++ > MAXKNN) break; // Max. number of neighbouring points reached
         
-        Point &p = *it++;
-        if (id==p.id()) continue;
+        int ip = *it;
+        Point &pp = points[*it++];
+        if (ref==pp.id()) continue;
         
-        if (TBD&&REF) cout << p.id() << endl;
+        if (TBD&&REF) cout << pp.id() << endl;
         
-        double dr = abs(p.r()-ref.r()); // Check the radial distance
-        if (dr > deltar) { if (TBD&&REF) cout << "R " << dr << endl; nr++; bad.push_back(p); continue; }
+        double dr = abs(pp.r()-pref.r()); // Check the radial distance
+        if (dr > deltar) { if (TBD&&REF) cout << "R " << dr << endl; nr++; bad.push_back(ip); continue; }
         
-        double dt = abs(p.theta()-ref.theta()); // Check the elongation
-        if (dt > deltathe) { if (TBD&&REF) cout << "T " << dt << endl; nt++; bad.push_back(p); continue; }
+        double dt = abs(pp.theta()-pref.theta()); // Check the elongation
+        if (dt > deltathe) { if (TBD&&REF) cout << "T " << dt << endl; nt++; bad.push_back(ip); continue; }
         
-        double d = p.distance(ref); // Check the euclidean distance
-        if (d > distance*p.r()) { if (TBD&&REF) cout << "D " << d << endl; nd++; bad.push_back(p); continue; }
+        double d = pp.distance(pref); // Check the euclidean distance
+        if (d > distance*pp.r()) { if (TBD&&REF) cout << "D " << d << endl; nd++; bad.push_back(ip); continue; }
         
         //double angle = acos(Point::dot(p0,p1)); // Check angle between (p0,p1)
         //if (angle > DELTAPHI) { if (TBD&&REF) cout << "P " << angle << endl; np++; continue; }
         
-        good.push_back(p);
+        good.push_back(ip);
         
         if (TBD&&REF) {
-            cout << p.id() << ": R " << dr << " T " << dt << " D " << d;
+            cout << ip << ": R " << dr << " T " << dt << " D " << d;
         }
         
     }
     
-    if (TBD&&REF) cout << endl << "<--------------------------- id: " << id << endl;
+    if (TBD&&REF) cout << endl << "<--------------------------- id: " << ref << endl;
     
     return good.size();
 }
 
 // Look for seeding points using a KNN search and a neural network to identify hit pairs
-std::vector<pair<int,float> > Tracker::findSeeds(Point &p0, std::vector<Point> &neighbours)
+std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighbours)
 {
     vector<pair<int,float> > seed;
     
-    paths.add(p0.id());
+    paths.add(s);
+    Point &p0 = points[s];
     
     // Generate seeding points
     for (auto it:neighbours)
     {
-        Point &p1 = it;
-        double recall = checkTracklet(p0,p1); // Search for hit pairs
+        double recall = checkTracklet(s,it); // Search for hit pairs
         if (recall > 0) {
-            if (REF) cout << p0.id() << " " << p1.id() << ": R2 OK " << recall << endl;
-            seed.push_back(make_pair(p1.id(),(float)recall));
-            paths.add(p0.id(),p1.id(),1000*recall);
+            if (REF) cout << s << " " << it << ": R2 OK " << recall << endl;
+            seed.push_back(make_pair(it,(float)recall));
+            paths.add(s,it,1000*recall);
             // Add double hits
             if (p0.twin()>0) {
                 int twin = p0.twin();
-                Point &t = points[twin];
-                recall = checkTracklet(t,p1);
+                recall = checkTracklet(twin,it);
                 seed.push_back(make_pair(twin,(float)recall));
-                if (twin>p0.id())
-                    paths.add(p0.id(),twin,1000*recall);
+                if (twin>s)
+                    paths.add(s,twin,1000*recall);
                 else
-                    paths.add(twin,p0.id(),1000*recall);
+                    paths.add(twin,s,1000*recall);
                 
                 if (REF) cout << " Added double hit " << twin << endl;
             }
             
         }
         else
-            if (REF) cout << p0.id() << " " << p1.id() << ": R2 NOK " << recall << endl;
+            if (REF) cout << s << " " << it << ": R2 NOK " << recall << endl;
     }
     
     long size = seed.size();
@@ -243,32 +232,37 @@ void Tracker::findSeeds()
     const int start_list[6][3] = {{0,1,2}, {11,12,13}, {4,5,6}, {0,4,18}, {0,11,12}, {18,19,20}};
 
     for (int i = 0; i < n; i++) {
-        int tube1 = start_list[i][0];
-        for (auto &a : tubePoints[tube1]) {
-            int tube2 = start_list[i][1];
-            vector<Point> &b = tubePoints[tube2];
-            std::vector<Point> neighbours,bad;
-            selectPoints(b,neighbours,bad,a,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
-            sort(neighbours.begin(),neighbours.end(),Point::sortDist);
-            if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
-            vector<pair<int,float> > seed = findSeeds(a,neighbours);
-            long n = seed.size();
-            if (n>0&&_verbose) {
-                cout << n << " seeds from " << a.id() << " (Tube: " << tube1 << "->" << tube2 << "):" << endl;
-                for (auto it: seed) cout << it.first << "(" << it.second << ") ";
-                cout << endl;
-            }
-            
-            vector<triple> triples;
-            for (auto &it : seed) {
-                long nt = findTriples(a,p[it.first],tubePoints[start_list[i][2]],triples);
-                for (auto t: triples) paths.add(t.y,t.z,1000*t.r);
-                if (_verbose) {
-                    cout << nt << " triples:" << endl;
-                    for (auto t: triples) cout << t.x << " " << t.y << " " << t.z << "(" << t.r << ") ";
+        for (int j = 0; j < PHIDIM; j++) {
+            int tube1 = start_list[i][0];
+            for (auto a : tube[tube1][j]) {
+                int tube2 = start_list[i][1];
+                std::vector<int> neighbours,bad;
+                int phi  = (int)(M_PI+points[a].phi())*PHIFACTOR;
+                auto b = tube[tube2][phi];
+                selectPoints(b,neighbours,bad,a,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
+                sort(neighbours.begin(),neighbours.end(),sortDist);
+                if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
+                vector<pair<int,float> > seed = findSeeds(a,neighbours);
+                long n = seed.size();
+                if (n>0&&_verbose) {
+                    cout << n << " seeds from " << a << " (Tube: " << tube1 << "->" << tube2 << "):" << endl;
+                    for (auto it: seed) cout << it.first << "(" << it.second << ") ";
                     cout << endl;
                 }
+                
+                vector<triple> triples;
+                for (auto &it : seed) {
+                    long nt = findTriples(a,it.first,tube[start_list[i][2]][phi],triples);
+                    for (auto t: triples) paths.add(t.y,t.z,1000*t.r);
+                    if (_verbose) {
+                        cout << nt << " triples:" << endl;
+                        for (auto t: triples) cout << t.x << " " << t.y << " " << t.z << "(" << t.r << ") ";
+                        cout << endl;
+                    }
+                }
             }
+
+            
         }
     }
     
@@ -286,11 +280,13 @@ vector<pair<int, int> > Tracker::findPairs() {
     
     vector<pair<int, int> > pairs;
     for (int i = 0; i < n; i++) {
-        for (auto a : tube[start_list[i].first]) {
-            for (auto b : tube[start_list[i].second]) {
-                double recall = recall2(p[a],p[b])[0];
-                if (recall > THRESHOLD2)
-                    pairs.push_back(make_pair(a, b));
+        for (int j = 0; j <PHIDIM; j++) {
+            for (auto a : tube[start_list[i].first][j]) {
+                for (auto b : tube[start_list[i].second][j]) {
+                    double recall = recall2(p[a],p[b])[0];
+                    if (recall > THRESHOLD2)
+                        pairs.push_back(make_pair(a, b));
+                }
             }
         }
     }
@@ -298,21 +294,20 @@ vector<pair<int, int> > Tracker::findPairs() {
 }
 
 // Generate tracklets of 3 points wrt. the first point in seed
-long Tracker::findTriples(Point &p0, Point &p1, std::vector<Point> &seed,std::vector<triple> &triples)
+long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<triple> &triples)
 {
     long size = seed.size();
     if (size<2) return 0;
     
     triple t;
-    t.x = p0.id();
-    t.y = p1.id();
+    t.x = p0;
+    t.y = p1;
 
     for (auto &it : seed)
     {
-        Point &p2 = it;
-        double recall = checkTracklet(p0,p1,p2);
+        double recall = checkTracklet(p0,p1,it);
         if (recall > 0) {
-            t.z = p2.id();
+            t.z = it;
             t.r = recall;
             triples.push_back(t);
             if (REF) cout << t.x << " " << t.y << " " << t.z << ": R3 OK " << recall << endl;
@@ -326,7 +321,7 @@ long Tracker::findTriples(Point &p0, Point &p1, std::vector<Point> &seed,std::ve
     return triples.size();
 }
 
-double Tracker::checkTracklet(Point &p0,Point &p1)
+double Tracker::checkTracklet(int p0,int p1)
 {
     double recall = recall2(p0,p1)[0];
     bool ok = recall>THRESHOLD2;
@@ -336,7 +331,7 @@ double Tracker::checkTracklet(Point &p0,Point &p1)
     return recall;
 }
 
-double Tracker::checkTracklet(Point &p0,Point &p1, Point &p2)
+double Tracker::checkTracklet(int p0,int p1,int p2)
 {
     double recall = recall3(p0,p1,p2)[0];
     bool ok = recall>THRESHOLD3;
@@ -368,60 +363,48 @@ int Tracker::getLayer(int volume_id, int layer_id) {
 
 void Tracker::readTubes() {
     
-    cout << "Read tubes..." << endl;
+    cout << "Reading tubes..." << endl;
     
     long nhits = points.size();
     for (int i = 0; i < nhits; i++) {
-        tube[points[i].layer()].push_back(i);
-        if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << endl;
+        int phi  = (int)(M_PI+p[i].phi())*PHIFACTOR;
+        tube[points[i].layer()][phi].push_back(i);
+        if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << " phi: " << phi << endl;
     }
     
     for (int i = 0; i < 48; i++) {
-        for (auto it : tube[i]) {
-            tubePoints[i].push_back(points[it]);
-            /*            if (_verbose) {
-             if (layer[i].type == Disc)
-             cout << "Disc " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
-             else
-             cout << "Tube " << i << ": Point " << it << " layer:" << points[it].layer() << endl;
-             }
-             */        }
-    }
-    
-    for (int i = 0; i < 48; i++) {
-        if (layer[i].type == Disc)
-            sort(tube[i].begin(), tube[i].end(), z_cmp);
-        else
-            sort(tube[i].begin(), tube[i].end(), r_cmp);
-    }
-    
-    for (int i = 0; i < 48; i++) {
-        if (layer[i].type == Tube)
-            sort(tubePoints[i].begin(), tubePoints[i].end(), Point::sortZ);
-        else
-            sort(tubePoints[i].begin(), tubePoints[i].end(), Point::sortRz);
+        if (layer[i].type == Disc) {
+            for (int j=0;j<PHIDIM;j++)
+                sort(tube[i][j].begin(), tube[i][j].end(), z_cmp);
+        }
+        else {
+            for (int j=0;j<PHIDIM;j++)
+                sort(tube[i][j].begin(), tube[i][j].end(), r_cmp);
+        }
     }
     
     // Filter double hits
     cout << "Filter double hits..." << endl;
     for (int i = 0; i < 48; i++) {
-        vector<Point> &pvec = tubePoints[i];
-        //if (_verbose) cout << "Tube " << i << " size: " << pvec.size() << endl;
-        if (pvec.size()<2) continue;
-        for (auto it = pvec.begin(); it != pvec.end()-1; it++) {
-            Point &p0 = *it;
-            int id0 = p0.id();
-            Point &p1 = *(it+1);
-            int id1 = p1.id();
-            double d = p0.distance(p1);
-            //if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
-            if (d<TWINDIST) {
-                if (id0<id1)
-                    p0.settwin(id1);
-                else
-                    p1.settwin(id0);
-                ntwins++;
-                //if (_verbose) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
+        for (int j = 0; j <PHIDIM; j++) {
+            auto pvec = tube[i][j];
+            //if (_verbose) cout << "Tube " << i << " size: " << pvec.size() << endl;
+            if (pvec.size()<2) continue;
+            for (auto it = pvec.begin(); it != pvec.end()-1; it++) {
+                Point &p0 = points[*it];
+                int id0 = p0.id();
+                Point &p1 = points[*(it+1)];
+                int id1 = p1.id();
+                double d = p0.distance(p1);
+                //if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
+                if (d<TWINDIST) {
+                    if (id0<id1)
+                        p0.settwin(id1);
+                    else
+                        p1.settwin(id0);
+                    ntwins++;
+                    //if (_verbose) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
+                }
             }
         }
     }
@@ -441,7 +424,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     map<int,Point*> hitmap;
     
     // Set up a cache for the point coordinates
-    //cout << "Set up points cache..." << endl;
+    cout << "Reading hits..." << endl;
     for (int i=0;i<nhits;i++) {
         //labels[i] = 0;
         p[i] = Point(x[i],y[i],z[i],i,labels[i],truth[i]);
@@ -1168,14 +1151,13 @@ vector<point> Tracker::hits; //hit position
 vector<Particle> Tracker::particles; //true tracks
 map<long long,int> Tracker::partIDmap; // create particle ID->index map
 
-vector<int> Tracker::tube[48]; // List of hits in each layer
-vector<Point> Tracker::tubePoints[48]; // List of hits in each layer
+vector<int> Tracker::tube[48][PHIDIM]; // List of hits in each layer
 map<long long, vector<int> > Tracker::truth_tracks; //truth hit ids in each track
 map<long long, point> Tracker::track_hits; // Find points in hits
-int Tracker::assignment[150000];
-point Tracker::truth_pos[150000], Tracker::truth_mom[150000]; //truth position and momentum
-double Tracker::truth_weight[150000]; //weighting of each hit
-long long Tracker::truth_part[150000]; //particle this hit belongs to
+int Tracker::assignment[MAXDIM];
+point Tracker::truth_pos[MAXDIM], Tracker::truth_mom[MAXDIM]; //truth position and momentum
+double Tracker::truth_weight[MAXDIM]; //weighting of each hit
+long long Tracker::truth_part[MAXDIM]; //particle this hit belongs to
 set<long long> Tracker::blacklist;
 map<long long, double> Tracker::part_weight; //weighting of each particle
 map<long long, map<int, double> > Tracker::metai_weight; //weighting of each particle hit, also adding duplicates
@@ -1191,6 +1173,6 @@ double Tracker::disc_z[48][4];
 Layer Tracker::layer[48];
 double Tracker::z_minr[48][4], Tracker::z_maxr[48][4];
 map<int, Detector> Tracker::detectors;
-vector<std::pair<pair<int, int>, double> > Tracker::hit_cells[150000]; //pair<pair<ch0, ch1>, value>
-point Tracker::hit_dir[150000][2]; //The two possible directions of the hit according to the cell's data for each hit
+vector<std::pair<pair<int, int>, double> > Tracker::hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
+point Tracker::hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
 
