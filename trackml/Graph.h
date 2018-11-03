@@ -38,7 +38,7 @@ public:
             adj[n2] = d;
         }
     }
-    
+
     const std::set<T>& nodes() const
     {
         return fNodes;
@@ -50,7 +50,7 @@ public:
         if (fEdges.find(n)==fEdges.end()) return null; // The node does not exist
         return fEdges.at(n);
     }
-    
+
     bool areConnected(const T& n1, const T& n2, int& d) const
     {
         if (fEdges.find(n1)==fEdges.end()) return false; // The node does not exist
@@ -71,8 +71,35 @@ public:
     }
 };
 
+
 template <typename T>
-inline std::vector<T> serialize(const Graph<T>& G)
+inline std::vector<std::vector<T> > serialize(const Graph<T>& G)
+{
+    typedef std::function<void(const Graph<T>& G, const T& N, std::set<T>& V, std::vector<T>& R)> Visitfun;
+    Visitfun visit = [&visit](const Graph<T>& G, const T& N, std::set<T>& V, std::vector<T>& R) {
+        if (V.find(N) == V.end()) {
+            V.insert(N);
+            for (const auto& e : G.edges(N)) {
+                visit(G, e.first, V, R);
+            }
+            R.push_back(N);
+        }
+    };
+    
+    std::vector<std::vector<T> > v;
+    std::set<T>    V;
+    for (const T& N : G.nodes()) {
+        std::vector<T> R;
+        visit(G, N, V, R);
+        std::sort(R.begin(),R.end());
+        if (R.size()>0) v.push_back(R);
+    }
+    return v;
+}
+
+
+template <typename T>
+inline std::vector<T> serialize(const Graph<T>& G, const T& N)
 {
     typedef std::function<void(const Graph<T>& G, const T& N, std::set<T>& V, std::vector<T>& R)> Visitfun;
     Visitfun visit = [&visit](const Graph<T>& G, const T& N, std::set<T>& V, std::vector<T>& R) {
@@ -87,11 +114,50 @@ inline std::vector<T> serialize(const Graph<T>& G)
     
     std::vector<T> R;
     std::set<T>    V;
-    for (const T& N : G.nodes()) {
-        visit(G, N, V, R);
-    }
+    visit(G, N, V, R);
     return R;
 }
+
+template <typename T>
+inline std::vector<std::vector<T> > parallelize(const Graph<T>& g)
+{
+    //-----------------------------------------------------------
+    // Find the level of a node n -> {m1,m2,...} such that
+    //        level(n -> {})            = 0
+    //        level(n -> {m1,m2,...})    = 1 + max(level(mi))
+    //-----------------------------------------------------------
+    typedef std::function<int(const Graph<T>& g, const T& n1, std::map<T, int>&)> Levelfun;
+    
+    Levelfun level = [&level](const Graph<T>& g, const T& n1, std::map<T, int>& levelcache) -> int {
+        auto p = levelcache.find(n1);
+        if (p != levelcache.end()) {
+            return p->second;
+        } else {
+            int l = -1;
+            for (const auto& e : g.edges(n1)) {
+                l = std::max(l, level(g, e.first, levelcache));
+            }
+            return levelcache[n1] = l + 1;
+        }
+    };
+    
+    std::map<T, int> levelcache;
+    // compute the level of each node in the graph
+    int l = -1;
+    for (const T& n : g.nodes()) {
+        l = std::max(l, level(g, n, levelcache));
+    }
+    // create a graph for each level and place
+    // each node in the appropriate level
+    std::vector<std::vector<T> > v;
+    v.resize(l + 1);
+    for (const T& n : g.nodes()) {
+        v[levelcache[n]].push_back(n);
+    }
+    
+    return v;
+}
+
 
 // print on stream
 template <typename T>

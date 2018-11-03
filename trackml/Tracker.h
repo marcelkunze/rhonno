@@ -4,25 +4,31 @@
 // M.Kunze, Heidelberg University, 2018
 
 //#define SWIMMER
+//#define PAIRS
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
 #define TRACKLET 2
 #define TWINDIST 0.0051
 #define MAXKNN 10
-#define THRESHOLD2 0.95
+#define THRESHOLD2 0.90
 #define THRESHOLD3 0.90
-#define DISTANCE 0.8
+#define DISTANCE 1.8
 #define DELTAR   0.9
 #define DELTATHE 0.4
-#define DELTAPHI 0.2
-#define DELTANN  0.2
+#define DELTAPHI 0.4
+#define DELTANN  0.4
 
 #define MAXDIM 150000
 #define PHIDIM 13
-#define PHIFACTOR 2.0
+#define PHIFACTOR 2
 
 #define SCORE true
+
+//ref==49
+#define TBD ref==5
+#define REF true
+#define ANN false
 
 #include "Graph.h"
 #include <cmath>
@@ -99,6 +105,7 @@ class Point;
 
 class Tracker {
 public:
+    static Graph<int> paths, tracking;
     static std::vector<int> tube[48][PHIDIM]; // List of hits in each layer
     static std::vector<Point> points; // hit Points
     static std::vector<point> hits; //hit position
@@ -134,12 +141,12 @@ private:
 
     static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4, ntwins;
     static Point *p;
-    static Graph<int> paths;
     static bool _verbose;
 public:
     Tracker() {}
     static void verbose(bool verbose=true) {_verbose = verbose;}
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *label,int *truth);
+    static std::vector<std::vector<int> >  getTracks(Graph<int> &g);
     static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
     static void findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
@@ -163,11 +170,8 @@ public:
 private:
     static void print(std::vector<int> const &input);
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
-    // Used to sort an array of points by distance
     static bool sortDist(const int a,const int b);
-    static double* recall2(int id1, int id2);
     static double* recall2(Point &p1, Point &p2);
-    static double* recall3(int id1, int id2, int id3);
     static double* recall3(Point &p1, Point &p2, Point &p3);
     static bool z_cmp(const int a, const int&b);
     static bool r_cmp(const int&a, const int&b);

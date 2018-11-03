@@ -23,9 +23,9 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10000
+#define MAXPARTICLES 1000
 #define MAXHITS 150000
-#define TRAINFILE false
+#define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
 #define VERBOSE false
@@ -85,7 +85,7 @@ int main(int argc, char**argv) {
         int vol = geo.x;
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
-        if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
+        //if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
         if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
@@ -169,10 +169,10 @@ int main(int argc, char**argv) {
         auto f = TFile::Open(fname,"RECREATE");
         cout << "Writing training data to " << fname << endl;
         cout << "Generate training file..." << endl;
-        ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:truth");
+        ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
         makeTrain2();
         ntuple2->Write();
-        ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:truth");
+        ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l3:truth");
         makeTrain3();
         ntuple3->Write();
         delete ntuple2;
@@ -188,7 +188,7 @@ int main(int argc, char**argv) {
 void makeTrain2()
 {
     
-    const int n=10; // hit pair layer combinations
+    const int n=50; // hit pair layer combinations
     pair<int, int> start_list[100] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}, {1, 2}, {5, 6}, {12, 13}, {13, 14}, {6, 7}, {2, 3}, {3, 18}, {19, 20}, {0, 2}, {20, 21}, {1, 4}, {7, 8}, {11, 18}, {1, 11}, {14, 15}, {4, 18}, {2, 18}, {21, 22}, {0, 18}, {1, 18}, {24, 26}, {36, 38}, {15, 16}, {8, 9}, {22, 23}, {9, 10}, {16, 17}, {38, 40}, {5, 18}, {18, 24}, {18, 36}, {12, 18}, {40, 42}, {28, 30}, {26, 28}, {0, 12}, {18, 20}, {6, 18}, {2, 11}, {13, 18}, {2, 4}, {0, 5}, {19, 36}, {19, 24}, {4, 6}, {19, 22}, {20, 22}, {11, 13}, {3, 19}, {7, 18}, {14, 18}, {3, 4}, {22, 25}, {1, 3}, {20, 24}, {15, 18}, {3, 11}, {22, 37}, {30, 32}, {42, 44}, {8, 18}, {9, 18}, {8, 26}, {15, 38}, {20, 36}, {14, 36}, {7, 24}, {1, 5}, {16, 18}, {22, 24}, {18, 22}, {25, 27}, {16, 40}, {10, 30}, {25, 26}, {17, 40}, {36, 39}, {1, 12}, {10, 28}, {7, 26}, {17, 42}, {24, 27}, {21, 24}, {23, 37}, {13, 36}, {15, 36}, {22, 36}, {14, 38}, {8, 28}, {19, 21}, {6, 24}, {9, 28}, {16, 38}, {0, 3}};
     
     long wright=1,wrong=1;
@@ -201,12 +201,12 @@ void makeTrain2()
                 for (auto &b : Tracker::tube[tube2][j]) {
                     Point &p2 = Tracker::points[b];
                         if (p1.truth() == p2.truth()) {
-                            ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),1.0); //wright combination
+                            ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,1.0); //wright combination
                             wright++;
                         }
                         else {
                             if (r.Rndm()<wright/wrong) {
-                                ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),0.0); //wrong combination
+                                ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,0.0); //wrong combination
                                 wrong++;
                         }
                     }
@@ -235,13 +235,13 @@ void makeTrain3()
             point p1 = polar[id1];
             point p2 = polar[id2];
             point p3 = polar[id3];
-            ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,1.0); //wright combination
-            wright++;
-            // Select last point randomly in the same layer
             point geo = Tracker::meta[id3];
             int vol = geo.x;
             int lay = geo.y;
             int layer = Tracker::getLayer(vol,lay);
+            ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,layer,1.0); //wright combination
+            wright++;
+            // Select last point randomly in the same layer
             int phi = (int)(M_PI+p3.y)*PHIFACTOR;
             auto tube = Tracker::tube[layer][phi];
             if (tube.size()==0) continue;
@@ -249,7 +249,7 @@ void makeTrain3()
             int idr = tube[index];
             point p4 = polar[idr];
             if (r.Rndm()<wright/wrong) {
-                ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p4.x,p4.y,p4.z,0.0); //wrong combination
+                ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p4.x,p4.y,p4.z,layer,0.0); //wrong combination
                 wrong++;
             }
         }
@@ -274,13 +274,17 @@ void makeTrain3Random()
             point p1 = polar[id1];
             point p2 = polar[id2];
             point p3 = polar[id3];
-            ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,1.0); //wright combination
+            point geo = Tracker::meta[id3];
+            int vol = geo.x;
+            int lay = geo.y;
+            int layer = Tracker::getLayer(vol,lay);
+            ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,layer,1.0); //wright combination
             wright++;
             p3.y = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on tube with rz
             float theta3 = r.Rndm()*M_PI;
             p3.z = p3.x * cos(theta3); // r*cos
             if (r.Rndm()<wright/wrong) {
-                ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,0.0); //wrong combination
+                ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,layer,0.0); //wrong combination
                 wrong++;
             }
         }
