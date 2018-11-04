@@ -49,10 +49,8 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     // Search neighbouring hits and generate a weighted directed graph
     cout << "Searching seeds (pairs)..." << endl;
 #ifdef PAIRS
-    vector<vector<int> > tracks;
     auto pairs = findPairs();
     cout << "Pairs: " << pairs.size() << endl;
-    if (_verbose) cout << tracking << endl;
 #else
     findSeeds();
 #endif
@@ -62,6 +60,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     cout << "Searching tracks..." << endl;
+    
 #ifdef SWIMMER
     vector<vector<int> > tracklet;
     vector<vector<int> > shortpath;
@@ -155,9 +154,10 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     // Score the solution
     if (SCORE) {
         vector<pair<int,int> > pairs;
-        for (auto &it:tracklet) {
-            for (int i=0;i<it.size()-1;i++) {
-                pairs.push_back(make_pair(it[i],it[i+1]));
+        for (auto &it : tracklet) {
+            auto v = it.second;
+            for (int i=0;i<v.size()-1;i++) {
+                pairs.push_back(make_pair(v[i],v[i+1]));
             }
         }
         
@@ -173,7 +173,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     // Print out the tracks vector
     if (_verbose) {
         cout << "Tracklets:" << endl;
-        for (auto &it:tracklet) print(it);
+        for (auto &it : tracklet) print(it.second);
     }
     
     // Print out the shot tracks vector
@@ -182,14 +182,14 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     //    for (auto &it:shortpath) print(it);
     //}
     
-    cout << endl << "Re-assign n/a hits to tracklets..." << endl;
-    
     // Re-assign the short paths to tracklets
     int napoints = 0;
     int rapoints = 0;
     //for (auto &it:shortpath) napoints += it.size();
     
 #ifdef REASSIGN
+    cout << endl << "Re-assign n/a hits to tracklets..." << endl;
+    
     for (auto &it1:tracklet) {
         vector<int> &t1 = it1;
         int seed1 = t1[t1.size()-1]; // last hit
@@ -221,18 +221,22 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     // Assign labels
     int na = 0;
     int nc = 0;
-    for (int i=0;i<tracklet.size();i++) {
-        int id = 0;
-        for (int j=0;j<tracklet[i].size();j++) {
-            int hit = tracklet[i][j];
-            if (j==0) id = hit;
-            labels[hit] = i+1;
-            p[hit].setlabel(i+1);
-            if (hit == id++) nc ++;
+    for (auto it : tracklet) {
+        auto v = it.second;
+        int id = v[0];
+        for (auto j : v) {
             na++;
+            labels[j] = it.first;
+            p[j].setlabel(it.first);
+            if (j == id++)
+                nc ++;
+            else
+                id = j++;
         }
     }
-    
+
+    for (int i=0;i<nhits;i++) if (labels[i] == 0) napoints++;
+        
     cout << "Number of hits                      : " << nhits << endl;
     cout << "Number of double hits               : " << ntwins << endl;
     cout << "Number of assigned points           : " << na << endl;
@@ -244,8 +248,8 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     cout << "Theta    <" << DELTATHE << ": " << nt <<endl;
     cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
     cout << "PhiNN    <" << DELTANN << ": " << nx <<endl;
-    cout << "Threshold2 <" << THRESHOLD2 << ": " << n4 <<endl;
-    cout << "Threshold3 <" << THRESHOLD3 << ": " << n1 <<endl;
+    cout << "Threshold2 " << THRESHOLD2 << ": " << n4 << " R2 OK" << endl;
+    cout << "Threshold3 " << THRESHOLD3 << ": " << n1 << " R3 OK" << endl;
     cout << "Recalls2 : " << n2 << endl;
     cout << "Recalls3 : " << n3 << endl << endl;
     
@@ -268,7 +272,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
 
 
 // Run through the graph and reconstruct the tracks from hits
-vector<vector<int> > Tracker::getTracks(Graph<int> &g) {
+map<int,vector<int> > Tracker::getTracks(Graph<int> &g) {
     return serialize(g);
 }
 
@@ -328,6 +332,36 @@ long Tracker::checkLabels(std::vector<int> &ip) {
     return n;
 }
 
+// Check the track hits (evaluation has ascending order)
+long Tracker::checkTracks(std::map<int,vector<int> >  &tracks) {
+    cout << endl << "Checking tracks: " << endl;
+    long error = 0;
+    for (auto it : tracks) {
+        if (it.first==0) continue; // track 0 holds the unassigned hits
+        auto t = it.second;
+        long id = t[0];
+        long errorid = 0;
+        for (auto index : t) {
+            if (index != id++) {
+                id = index;
+                if (errorid == 0) errorid = index;
+                error++;
+            }
+        }
+        
+        if (errorid != 0) {
+            cout << "Track " << it.first << ": ";
+            for (auto index : t) {
+                if (index == errorid)
+                    cout << ">" << index << "< ";
+                else
+                    cout << index << " ";
+            }
+            cout << endl;
+        }
+    }
+    return error;
+}
 
 // Recall function for 2 points
 double Tracker::checkTracklet(int p0,int p1)
@@ -426,11 +460,11 @@ long Tracker::selectPoints(std::vector<int> &ip, std::vector<int> &good, std::ve
         double dt = abs(pp.theta()-pref.theta()); // Check the elongation
         if (dt > deltathe) { if (TBD&&REF) cout << "T " << dt << endl; nt++; bad.push_back(ip); continue; }
         
+        double angle = acos(Point::dot(pp,pref)); // Check angle between (pp,pref)
+        if (angle > DELTAPHI) { if (TBD&&REF) cout << "P " << angle << endl; np++; continue; }
+        
         double d = pp.distance(pref); // Check the euclidean distance
         if (d > distance*pp.r()) { if (TBD&&REF) cout << "D " << d << endl; nd++; bad.push_back(ip); continue; }
-        
-        //double angle = acos(Point::dot(p0,p1)); // Check angle between (p0,p1)
-        //if (angle > DELTAPHI) { if (TBD&&REF) cout << "P " << angle << endl; np++; continue; }
         
         good.push_back(ip);
         
@@ -490,7 +524,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
 // Look for seeding points by hit pair combinations in the innnermost layers
 void Tracker::findSeeds()
 {
-    const int n=5; // Seeding layer combinations
+    const int n=6; // Seeding layer combinations
     const int start_list[6][3] = {{0,1,2}, {11,12,13}, {4,5,6}, {0,4,18}, {0,11,12}, {18,19,20}};
 
     for (int i = 0; i < n; i++) {
@@ -581,10 +615,10 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<tri
             t.z = it;
             t.r = recall;
             triples.push_back(t);
-            if (ANN) cout << t.x << " " << t.y << " " << t.z << ": R3 OK " << recall << endl;
+            if (ANN) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
         }
         else
-            if (ANN) cout << t.x << " " << t.y << " " << t.z << ": R3 NOK " << recall << endl;
+            if (ANN) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
     }
     
     //if (_verbose) { cout << "triples " << p0.id() << ":"; for (auto &it:triples) cout << " (" << it.x << "," << it.y << "," << it.z << ":" << it.r << ")"; cout << endl; }

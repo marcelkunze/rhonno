@@ -73,7 +73,7 @@ public:
 
 
 template <typename T>
-inline std::vector<std::vector<T> > serialize(const Graph<T>& G)
+inline std::map<int,std::vector<T> > serialize(const Graph<T>& G)
 {
     typedef std::function<void(const Graph<T>& G, const T& N, std::set<T>& V, std::vector<T>& R)> Visitfun;
     Visitfun visit = [&visit](const Graph<T>& G, const T& N, std::set<T>& V, std::vector<T>& R) {
@@ -86,13 +86,14 @@ inline std::vector<std::vector<T> > serialize(const Graph<T>& G)
         }
     };
     
-    std::vector<std::vector<T> > v;
+    std::map<int,std::vector<T> > v;
     std::set<T>    V;
+    int n = 1;
     for (const T& N : G.nodes()) {
         std::vector<T> R;
         visit(G, N, V, R);
         std::sort(R.begin(),R.end());
-        if (R.size()>0) v.push_back(R);
+        if (R.size()>0) v.insert(std::pair<int, std::vector<T> >(n++, R));
     }
     return v;
 }

@@ -10,14 +10,14 @@
 
 #define TRACKLET 2
 #define TWINDIST 0.0051
-#define MAXKNN 10
+#define MAXKNN 20
 #define THRESHOLD2 0.90
-#define THRESHOLD3 0.90
-#define DISTANCE 1.8
-#define DELTAR   0.9
-#define DELTATHE 0.4
-#define DELTAPHI 0.4
-#define DELTANN  0.4
+#define THRESHOLD3 0.95
+#define DISTANCE 0.6
+#define DELTAR   0.3
+#define DELTATHE 0.1
+#define DELTAPHI 0.2
+#define DELTANN  0.2
 
 #define MAXDIM 150000
 #define PHIDIM 13
@@ -26,9 +26,9 @@
 #define SCORE true
 
 //ref==49
-#define TBD ref==5
+#define TBD true
 #define REF true
-#define ANN false
+#define ANN true
 
 #include "Graph.h"
 #include <cmath>
@@ -146,7 +146,7 @@ public:
     Tracker() {}
     static void verbose(bool verbose=true) {_verbose = verbose;}
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *label,int *truth);
-    static std::vector<std::vector<int> >  getTracks(Graph<int> &g);
+    static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
     static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
     static void findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
@@ -155,6 +155,7 @@ public:
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
     static long checkLabels(std::vector<int> &p);
+    static long checkTracks(std::map<int,std::vector<int> >  &tracks);
     static long seedstotal,seedsok;
     static long trackletstotal,trackletsok;
     static void readBlacklist(std::string base_path,int filenum);

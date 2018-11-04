@@ -23,12 +23,14 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 1000
+#define MAXPARTICLES 10
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE false
+#define VERBOSE true
+#define MAXTRACK 50
+#define MAXLABEL 100
 
 const std::string base_path = "/Users/marcel/workspace/train_sample/";
 
@@ -38,7 +40,7 @@ int filenum = 21100;
 void makeTrain2();
 void makeTrain3();
 void makeTrain3Random();
-void draw(long nhits,float *x,float *y,float *z,std::map<int,std::vector<Point> > tracks);
+void draw(long nhits,float *x,float *y,float *z,std::map<int,std::vector<int> > tracks);
 
 using namespace std;
 
@@ -85,7 +87,7 @@ int main(int argc, char**argv) {
         int vol = geo.x;
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
-        //if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
+        if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
         if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
@@ -114,7 +116,6 @@ int main(int argc, char**argv) {
     long nt = Tracker::findTracks((int)nhits,x,y,z,layer,label,truth);
     
     // Show the results
-#define MAXLABEL 100
     cout << "Labels: ";
     for (int i=0;i<nhits;i++) {
         if (i<MAXLABEL || i>nhits-MAXLABEL) cout << label[i] << " ";
@@ -135,31 +136,32 @@ int main(int argc, char**argv) {
     
     // Assemble tracks
     cout << "Assemble tracks..." << endl;
-    map<int,vector<Point> > tracks;
-    for(int i=0; i<nt; i++) {
-        int track = i+1;
-        vector<Point> t;
+    map<int,vector<int> > tracks;
+    int is = VERBOSE ? 0 : 1; // track 0 holds the unassigned points
+    for(int track=is; track<=nt; track++) {
+        vector<int> t;
         for (int j=0;j<nhits;j++) {
             if (track != label[j]) continue;
-            Point p(x[j],y[j],z[j],j,track);
-            t.push_back(p); // Save the results
+            t.push_back(j); // Save the results
         }
-        tracks[i] = t;
+        tracks[track] = t;
     }
     
-#define MAXTRACK 10
     cout << endl << "Number of tracks: " << nt << endl;
-    for (int i=0; i<nt; i++) {
-        vector<Point> t = tracks[i];
-        if (i == MAXTRACK) cout << endl << "..." << endl;
+    int i = 0;
+    for (auto it : tracks) {
+        auto track = it.second;
+        if (track.size() == 0) continue;
         if (i<MAXTRACK || i>nt-MAXTRACK) {
-            cout << "Track " << i+1 << ": ";
-            for (auto it : t) {
-                cout << it.id() << " ";
-            }
+            cout << "Track " << it.first << ": ";
+            for (auto it : track) cout << it << " ";
             cout << endl;
         }
+        if (i++ == MAXTRACK) cout << endl << "..." << endl;
     }
+    
+    // Check the results
+    Tracker::checkTracks(tracks);
     
     // Generate a training sample for hit pairs
     if (TRAINFILE) {
@@ -167,8 +169,7 @@ int main(int argc, char**argv) {
         filePrefix.Form("%sevent%09d",base_path.c_str(),filenum);
         TString fname = filePrefix+".root";
         auto f = TFile::Open(fname,"RECREATE");
-        cout << "Writing training data to " << fname << endl;
-        cout << "Generate training file..." << endl;
+        cout << endl << "Generating training data file " << fname << endl;
         ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
         makeTrain2();
         ntuple2->Write();
@@ -292,7 +293,7 @@ void makeTrain3Random()
     cout << "makeTrain3Random: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
-void draw(long nhits,float *x,float *y,float *z,map<int,vector<Point> > tracks)
+void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks)
 {
     // Initialize a 3D canvas and draw the hits and tracks
     if (DRAW) {
@@ -326,12 +327,13 @@ void draw(long nhits,float *x,float *y,float *z,map<int,vector<Point> > tracks)
         
         // Draw the tracks
         long nt = tracks.size();
-        for (int i=0;i<nt;i++) {
+        for (int i=1;i<nt;i++) {
             //cout << endl << "Drawing track " << i+1 << ": ";
-            vector<Point> track = tracks[i];
+            vector<int> track = tracks[i];
             int n = 0;
             TPolyLine3D *connector = new TPolyLine3D((int)track.size());
-            for (auto &hit : track)    {
+            for (auto &it : track)    {
+                Point hit = Tracker::points[it];
                 connector->SetPoint(n++, hit.x(), hit.y(), hit.z());
             }
             connector->SetLineWidth(1);
@@ -339,7 +341,7 @@ void draw(long nhits,float *x,float *y,float *z,map<int,vector<Point> > tracks)
             connector->Draw();
         }
         
-        cout <<  "Writing " << cname << endl;
+        cout <<  "Saving canvas file " << cname << endl;
         c1->Write();
         output.Close();
     }
