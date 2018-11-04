@@ -17,7 +17,7 @@
 #define DELTAR   0.3
 #define DELTATHE 0.1
 #define DELTAPHI 0.2
-#define DELTANN  0.2
+#define DELTANN  1.0
 
 #define MAXDIM 150000
 #define PHIDIM 13
@@ -26,8 +26,8 @@
 #define SCORE true
 
 //ref==49
-#define TBD true
-#define REF true
+#define TBD false
+#define REF false
 #define ANN true
 
 #include "Graph.h"
@@ -56,6 +56,13 @@ struct point {
     }
     inline point operator*(double f) {
         return point(x*f, y*f, z*f);
+    }
+    inline
+    double distance(const point &a)
+    {
+        return  sqrt((a.x - x) * (a.x - x) +
+                     (a.y - y) * (a.y - y) +
+                     (a.z - z) * (a.z - z));
     }
 };
 

@@ -332,36 +332,6 @@ long Tracker::checkLabels(std::vector<int> &ip) {
     return n;
 }
 
-// Check the track hits (evaluation has ascending order)
-long Tracker::checkTracks(std::map<int,vector<int> >  &tracks) {
-    cout << endl << "Checking tracks: " << endl;
-    long error = 0;
-    for (auto it : tracks) {
-        if (it.first==0) continue; // track 0 holds the unassigned hits
-        auto t = it.second;
-        long id = t[0];
-        long errorid = 0;
-        for (auto index : t) {
-            if (index != id++) {
-                id = index;
-                if (errorid == 0) errorid = index;
-                error++;
-            }
-        }
-        
-        if (errorid != 0) {
-            cout << "Track " << it.first << ": ";
-            for (auto index : t) {
-                if (index == errorid)
-                    cout << ">" << index << "< ";
-                else
-                    cout << index << " ";
-            }
-            cout << endl;
-        }
-    }
-    return error;
-}
 
 // Recall function for 2 points
 double Tracker::checkTracklet(int p0,int p1)
@@ -373,7 +343,6 @@ double Tracker::checkTracklet(int p0,int p1)
     n2++;
     return recall;
 }
-
 
 // Recall function for triple
 double Tracker::checkTracklet(int p0,int p1,int p2)
@@ -548,7 +517,9 @@ void Tracker::findSeeds()
                 
                 vector<triple> triples;
                 for (auto &it : seed) {
-                    long nt = findTriples(a,it.first,tube[start_list[i][2]][phi],triples);
+                    int tube3 = start_list[i][2];
+                    auto &slice = tube[tube3][phi];
+                    long nt = findTriples(a,it.first,slice,triples);
                     for (auto t: triples) {
                         paths.add(t.y,t.z,1000*t.r);
                         paths.add(t.z,t.y,1000*t.r);
@@ -601,9 +572,6 @@ vector<pair<int, int> > Tracker::findPairs() {
 // Generate tracklets of 3 points wrt. the first point in seed
 long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<triple> &triples)
 {
-    long size = seed.size();
-    if (size<2) return 0;
-    
     triple t;
     t.x = p0;
     t.y = p1;

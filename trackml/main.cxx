@@ -29,7 +29,7 @@
 #define DRAW true
 #define EVALUATION true
 #define VERBOSE true
-#define MAXTRACK 50
+#define MAXTRACK 10
 #define MAXLABEL 100
 
 const std::string base_path = "/Users/marcel/workspace/train_sample/";
@@ -37,12 +37,13 @@ const std::string base_path = "/Users/marcel/workspace/train_sample/";
 //Which event to run, this may be overwritten by main()'s arguments
 int filenum = 21100;
 
+using namespace std;
+
 void makeTrain2();
 void makeTrain3();
 void makeTrain3Random();
-void draw(long nhits,float *x,float *y,float *z,std::map<int,std::vector<int> > tracks);
-
-using namespace std;
+long checkTracks(std::map<int,std::vector<int> >  &tracks);
+void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks);
 
 TNtuple *ntuple2,*ntuple3;
 TRandom r;
@@ -87,7 +88,7 @@ int main(int argc, char**argv) {
         int vol = geo.x;
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
-        if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
+        //if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
         if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
@@ -137,6 +138,7 @@ int main(int argc, char**argv) {
     // Assemble tracks
     cout << "Assemble tracks..." << endl;
     map<int,vector<int> > tracks;
+    
     int is = VERBOSE ? 0 : 1; // track 0 holds the unassigned points
     for(int track=is; track<=nt; track++) {
         vector<int> t;
@@ -161,7 +163,7 @@ int main(int argc, char**argv) {
     }
     
     // Check the results
-    Tracker::checkTracks(tracks);
+    checkTracks(tracks);
     
     // Generate a training sample for hit pairs
     if (TRAINFILE) {
@@ -173,7 +175,7 @@ int main(int argc, char**argv) {
         ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
         makeTrain2();
         ntuple2->Write();
-        ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l3:truth");
+        ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
         makeTrain3();
         ntuple3->Write();
         delete ntuple2;
@@ -183,6 +185,39 @@ int main(int argc, char**argv) {
     
     // Show the results in a canvas
     if (DRAW) draw(nhits,x,y,z,tracks);
+}
+
+// Check the track hits (evaluation has ascending order)
+long checkTracks(map<int,vector<int> >  &tracks) {
+    cout << endl << "Checking tracks: " << endl;
+    long error = 0;
+    int n = 0;
+    for (auto it : tracks) {
+        if (it.first==0) continue; // track 0 holds the unassigned hits
+        if (!VERBOSE && n++>MAXTRACK) break;
+        auto t = it.second;
+        long id = t[0];
+        long errorid = 0;
+        for (auto index : t) {
+            if (index != id++) {
+                id = index;
+                if (errorid == 0) errorid = index;
+                error++;
+            }
+        }
+        
+        if (errorid != 0) {
+            cout << "Track " << it.first << ": ";
+            for (auto index : t) {
+                if (index == errorid)
+                    cout << ">" << index << "< ";
+                else
+                    cout << index << " ";
+            }
+            cout << endl;
+        }
+    }
+    return error;
 }
 
 // Look for seeding points by hit pair combinations in the innnermost layers
@@ -226,31 +261,49 @@ void makeTrain3()
     for (auto p : Tracker::particles) {
         long nhits = p.hits;
         if (nhits < 3) continue;
-        for (int i=0; i<nhits-2; i++)    {
+        vector<int> &h = p.hit;
+        int id1 = h[0];
+        int id2 = h[1];
+        point x1 = Tracker::hits[id1]*0.001; // in m
+        point x2 = Tracker::hits[id2]*0.001; // in m
+        Point p1(x1.x,x1.y,x1.z);
+        Point p2(x2.x,x2.y,x2.z);
+        int istart = 2;
+        float d = p1.distance(p2);
+        if (d<TWINDIST) {
+            id2 = h[2];
+            istart = 3;
+        }
+        point geo = Tracker::meta[id1];
+        int vol = geo.x;
+        int lay = geo.y;
+        int l1 = Tracker::getLayer(vol,lay);
+        geo = Tracker::meta[id2];
+        vol = geo.x;
+        lay = geo.y;
+        int l2 = Tracker::getLayer(vol,lay);
+
+        for (int i=istart; i<nhits; i++)    {
             // Select 3 continuous points
-            vector<int> &h = p.hit;
-            auto &polar = Tracker::polar;
-            int id1 = h[i];
-            int id2 = h[i+1];
-            int id3 = h[i+2];
-            point p1 = polar[id1];
-            point p2 = polar[id2];
-            point p3 = polar[id3];
+            int id3 = h[i];
+            point x3 = Tracker::hits[id3]*0.001; // in m
+            Point p3(x3.x,x3.y,x3.z);
             point geo = Tracker::meta[id3];
             int vol = geo.x;
             int lay = geo.y;
-            int layer = Tracker::getLayer(vol,lay);
-            ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,layer,1.0); //wright combination
+            int l3 = Tracker::getLayer(vol,lay);
+            ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,1.0); //wright combination
             wright++;
             // Select last point randomly in the same layer
-            int phi = (int)(M_PI+p3.y)*PHIFACTOR;
-            auto tube = Tracker::tube[layer][phi];
+            int phi = (int)(M_PI+p3.phi())*PHIFACTOR;
+            auto tube = Tracker::tube[l3][phi];
             if (tube.size()==0) continue;
             int index = tube.size()*r.Rndm();
             int idr = tube[index];
-            point p4 = polar[idr];
+            point x4 = Tracker::hits[idr]*0.001; // in m
+            Point p4(x4.x,x4.y,x4.z);
             if (r.Rndm()<wright/wrong) {
-                ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p4.x,p4.y,p4.z,layer,0.0); //wrong combination
+                ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p4.rz(),p4.phi(),p4.z(),l1,l2,l3,0.0); //wrong combination
                 wrong++;
             }
         }
@@ -268,24 +321,35 @@ void makeTrain3Random()
         if (nhits < 3) continue;
         for (int i=0; i<nhits-2; i++)    {
             vector<int> &h = p.hit;
-            auto &polar = Tracker::polar;
             int id1 = h[i];
             int id2 = h[i+1];
             int id3 = h[i+2];
-            point p1 = polar[id1];
-            point p2 = polar[id2];
-            point p3 = polar[id3];
-            point geo = Tracker::meta[id3];
+            point x1 = Tracker::hits[id1]*0.001; // in m
+            point x2 = Tracker::hits[id2]*0.001; // in m
+            point x3 = Tracker::hits[id3]*0.001; // in m
+            Point p1(x1.x,x1.y,x1.z);
+            Point p2(x2.x,x2.y,x2.z);
+            Point p3(x3.x,x3.y,x3.z);
+            point geo = Tracker::meta[id1];
             int vol = geo.x;
             int lay = geo.y;
-            int layer = Tracker::getLayer(vol,lay);
-            ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,layer,1.0); //wright combination
+            int l1 = Tracker::getLayer(vol,lay);
+            geo = Tracker::meta[id2];
+            vol = geo.x;
+            lay = geo.y;
+            int l2 = Tracker::getLayer(vol,lay);
+            geo = Tracker::meta[id3];
+            vol = geo.x;
+            lay = geo.y;
+            int l3 = Tracker::getLayer(vol,lay);
+            ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,1.0); //wright combination
             wright++;
-            p3.y = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on tube with rz
+            float rz3 = p3.rz();
+            float phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on tube with rz
             float theta3 = r.Rndm()*M_PI;
-            p3.z = p3.x * cos(theta3); // r*cos
+            float z3 = rz3 * cos(theta3); // r*cos
             if (r.Rndm()<wright/wrong) {
-                ntuple3->Fill(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z,p3.x,p3.y,p3.z,layer,0.0); //wrong combination
+                ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),rz3,phi3,z3,l1,l2,l3,0.0); //wrong combination
                 wrong++;
             }
         }
