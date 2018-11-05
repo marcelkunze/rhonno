@@ -493,7 +493,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
 // Look for seeding points by hit pair combinations in the innnermost layers
 void Tracker::findSeeds()
 {
-    const int n=6; // Seeding layer combinations
+    const int n=5; // Seeding layer combinations
     const int start_list[6][3] = {{0,1,2}, {11,12,13}, {4,5,6}, {0,4,18}, {0,11,12}, {18,19,20}};
 
     for (int i = 0; i < n; i++) {
@@ -517,9 +517,13 @@ void Tracker::findSeeds()
                 
                 vector<triple> triples;
                 for (auto &it : seed) {
+                    neighbours.clear();
                     int tube3 = start_list[i][2];
                     auto &slice = tube[tube3][phi];
-                    long nt = findTriples(a,it.first,slice,triples);
+                    selectPoints(slice,neighbours,bad,it.first,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
+                    sort(neighbours.begin(),neighbours.end(),sortDist);
+                    if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
+                    long nt = findTriples(a,it.first,neighbours,triples);
                     for (auto t: triples) {
                         paths.add(t.y,t.z,1000*t.r);
                         paths.add(t.z,t.y,1000*t.r);

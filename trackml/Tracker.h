@@ -17,7 +17,7 @@
 #define DELTAR   0.3
 #define DELTATHE 0.1
 #define DELTAPHI 0.2
-#define DELTANN  1.0
+#define DELTANN  0.2
 
 #define MAXDIM 150000
 #define PHIDIM 13
@@ -26,9 +26,9 @@
 #define SCORE true
 
 //ref==49
-#define TBD false
-#define REF false
-#define ANN true
+#define TBD true
+#define REF true
+#define ANN false
 
 #include "Graph.h"
 #include <cmath>
