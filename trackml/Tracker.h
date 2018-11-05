@@ -3,8 +3,9 @@
 // Neural Network based tracker
 // M.Kunze, Heidelberg University, 2018
 
-//#define SWIMMER
 //#define PAIRS
+//#define SWIMMER
+
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
@@ -125,7 +126,7 @@ public:
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static std::vector<point> meta; //volume_id / layer_id / module_id
 private:
-    static int assignment[MAXDIM];
+    static int assignment[MAXDIM]; // hit hs been used
     static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
     static double truth_weight[MAXDIM]; //weighting of each hit
     static long long truth_part[MAXDIM]; //particle this hit belongs to
@@ -153,9 +154,10 @@ public:
     Tracker() {}
     static void verbose(bool verbose=true) {_verbose = verbose;}
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *label,int *truth);
+    static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
     static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
-    static void findSeeds();
+    static std::vector<std::pair<int, int> > findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
     static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
     static long selectPoints(std::vector<int> &points, std::vector<int> &good, std::vector<int> &bad, int ref, double deltar, double deltathe, double distance);

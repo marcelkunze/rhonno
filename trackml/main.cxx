@@ -41,6 +41,7 @@ using namespace std;
 
 void makeTrain2();
 void makeTrain3();
+void makeTrain3seed();
 void makeTrain3Continuous();
 long checkTracks(std::map<int,std::vector<int> >  &tracks);
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks);
@@ -137,7 +138,7 @@ int main(int argc, char**argv) {
     out.close();
     
     // Assemble tracks
-    cout << "Assemble tracks..." << endl;
+    cout << "Assembling tracks..." << endl;
     map<int,vector<int> > tracks;
     
     int is = VERBOSE ? 0 : 1; // track 0 holds the unassigned points
@@ -177,7 +178,7 @@ int main(int argc, char**argv) {
         makeTrain2();
         ntuple2->Write();
         ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
-        makeTrain3();
+        makeTrain3seed();
         ntuple3->Write();
         delete ntuple2;
         delete ntuple3;
@@ -276,6 +277,64 @@ void makeTrain2()
 
 // Look for seeding points by hit pair combinations in the innnermost layers
 void makeTrain3()
+{
+    long wright=1,wrong=1;
+    // Combine 3 hits
+    for (auto p : Tracker::particles) {
+        long nhits = p.hits;
+        if (nhits < 3) continue;
+        vector<int> &h = p.hit;
+        int id1 = h[0];
+        int id2 = h[1];
+        point x1 = Tracker::hits[id1]*0.001; // in m
+        point x2 = Tracker::hits[id2]*0.001; // in m
+        Point p1(x1.x,x1.y,x1.z);
+        Point p2(x2.x,x2.y,x2.z);
+        int istart = 2;
+        float d = p1.distance(p2);
+        if (d<TWINDIST) {
+            id2 = h[2];
+            istart = 3;
+        }
+        point geo = Tracker::meta[id1];
+        int vol = geo.x;
+        int lay = geo.y;
+        int l1 = Tracker::getLayer(vol,lay);
+        geo = Tracker::meta[id2];
+        vol = geo.x;
+        lay = geo.y;
+        int l2 = Tracker::getLayer(vol,lay);
+        
+        for (int i=istart; i<nhits; i++)    {
+            // Select 3 continuous points
+            int id3 = h[i];
+            point x3 = Tracker::hits[id3]*0.001; // in m
+            Point p3(x3.x,x3.y,x3.z);
+            point geo = Tracker::meta[id3];
+            int vol = geo.x;
+            int lay = geo.y;
+            int l3 = Tracker::getLayer(vol,lay);
+            ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,1.0); //wright combination
+            wright++;
+            // Select last point randomly in the same layer
+            int phi = (int)(M_PI+p3.phi())*PHIFACTOR;
+            auto tube = Tracker::tube[l3][phi];
+            if (tube.size()==0) continue;
+            int index = tube.size()*r.Rndm();
+            int idr = tube[index];
+            point x4 = Tracker::hits[idr]*0.001; // in m
+            Point p4(x4.x,x4.y,x4.z);
+            if (r.Rndm()<wright/wrong) {
+                ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p4.rz(),p4.phi(),p4.z(),l1,l2,l3,0.0); //wrong combination
+                wrong++;
+            }
+        }
+    }
+    cout << "makeTrain3: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
+}
+
+// Look for seeding points by hit pair combinations in the innnermost layers
+void makeTrain3seed()
 {
     long wright=1,wrong=1;
     // Combine 3 hits

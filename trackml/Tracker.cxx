@@ -31,12 +31,12 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     
     p = new Point[nhits];
     points.reserve(nhits);
-    map<int,Point*> hitmap;
     
     // Set up a cache for the point coordinates
     cout << "Reading hits..." << endl;
     for (int i=0;i<nhits;i++) {
-        //labels[i] = 0;
+        assignment[i] = 0;
+        labels[i] = 0;
         p[i] = Point(x[i],y[i],z[i],i,labels[i],truth[i]);
         p[i].setlayer(layers[i]);
         points.push_back(p[i]);
@@ -47,125 +47,42 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     readTubes();
     
     // Search neighbouring hits and generate a weighted directed graph
-    cout << "Searching seeds (pairs)..." << endl;
 #ifdef PAIRS
+    cout << "Searching pairs..." << endl;
     auto pairs = findPairs();
-    cout << "Pairs: " << pairs.size() << endl;
 #else
-    findSeeds();
+    cout << "Searching seeds..." << endl;
+    auto pairs = findSeeds();
 #endif
     
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
-    
-    cout << "Searching tracks..." << endl;
-    
+
+    // Assemble tracklets from the seeds/pairs
 #ifdef SWIMMER
-    vector<vector<int> > tracklet;
-    vector<vector<int> > shortpath;
-    
-    // Transfer the results from the weighted directed graph into hits
-    for (auto &ip : points) {
-        int a = ip.id();
-        int n = 0;
-        map<int,int> const &path = paths.edges(a);
-        if (path.size()==0) continue;
-        for (auto &it : path ) {
-            if (n>NEIGHBOURS) break;
-            int id = it.first;
-            float recall = 0.001*it.second;
-            ip.setneighbour(id,n);
-            ip.setrecall(recall,n);
-            p[a].setneighbour(id,n);
-            p[a].setrecall(recall,n);
-            n++;
-        }
-    }
-    
-    if (_verbose) {
-        for (int i=0;i<nhits;i++) {
-            cout << p[i].id() << "(" ;
-            for (int j=0;j<NEIGHBOURS;j++) cout << p[i].neighbour(j) << "/" << p[i].recall(j) << " ";
-            cout << ") " << endl;
-        }
-        cout << endl;
-    }
-    
-    // fill the hitmap
-    for (auto &p : points) {
-        int id = p.id();
-        hitmap[id] = &p;
-    }
-    
-    // Swimmer
-    
-    while (hitmap.size()>0) {
-        int n = 0;
-        int neighbour = -1;
-        vector<Point> pvec;
-        auto it = hitmap.begin();
-        Point *p0 = it->second;
-        pvec.push_back(*p0);
-        hitmap.erase(it++);
-        while (it != hitmap.end()) { // Follow the path until there are no more neighbours
-            neighbour = p0->neighbour(n);
-            if (_verbose) cout << p0->id() << "->" << neighbour << endl;
-            if (neighbour < 0 || neighbour >= nhits) break;
-            auto it = hitmap.find(neighbour);
-            if (n<NEIGHBOURS-1 && it==hitmap.end()) { // hit is already assigned
-                if (_verbose) cout <<  "->" << neighbour << endl;
-                n++;  // try an alternative neighbour
-                continue;
-            }
-            if (it==hitmap.end()) break;
-            Point *p1 = it->second;  // copy the point into the tracklet vector
-            pvec.push_back(*p1);
-            hitmap.erase(it++);
-            n = 0;
-            p0 = p1;
-        }
-        
-        sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
-        vector<int> tmpvec;
-        for (auto &ip : pvec) tmpvec.push_back(ip.id()); // Note the hit indices
-        if (_verbose) print(tmpvec);
-        if (pvec.size() >= TRACKLET) {
-            tracklet.push_back(tmpvec);
-            trackletstotal += pvec.size();
-            trackletsok += checkLabels(tmpvec);
-        }
-        else
-            shortpath.push_back(tmpvec);
-        if (_verbose) cout << "---" << endl;
-    }
+    cout << "Searching tracks with swimmer..." << endl;
+    auto tracklet = swimmer();
 #else
-    // Analyze the graph
-    
-    cout << "Analyzing directed weighted graph..." << endl;
+    cout << "Searching tracks by analyzing directed weighted graph..." << endl;
     auto tracklet = serialize(paths);
-    
 #endif
-    
+
+    c_end = std::clock();
+    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+
+    // Exvaluate the results
     cout << endl << "Number of tracklets   : " << tracklet.size() << endl;
     //cout << "Number of short tracks: " << shortpath.size() << endl;
     if (tracklet.size() == 0) exit(0);
     
     // Score the solution
-    if (SCORE) {
-        vector<pair<int,int> > pairs;
-        for (auto &it : tracklet) {
-            auto v = it.second;
-            for (int i=0;i<v.size()-1;i++) {
-                pairs.push_back(make_pair(v[i],v[i+1]));
-            }
-        }
-        
-        //auto newPairs = findPairs();
-        scorePairs(pairs);
-    }
+    if (SCORE) scorePairs(pairs);
     
     // extend the tracklet vector to outer layers
+    
+    //  TBD
     
     // Sort the tracklet vector according to the tracklet length
     //sort(tracklet.begin(), tracklet.end(), sortFunc);
@@ -268,6 +185,93 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     return (int) tracklet.size();
+}
+
+
+// Reconstruct tracks with a swimmer
+map<int,vector<int> > Tracker::swimmer() {
+    long nhits = points.size();
+    map<int,vector<int> > tracklet;
+    map<int,vector<int> > shortpath;
+    map<int,Point*> hitmap;
+
+    // Transfer the results from the weighted directed graph into hits
+    for (auto &ip : points) {
+        int a = ip.id();
+        int n = 0;
+        map<int,int> const &path = paths.edges(a);
+        if (path.size()==0) continue;
+        for (auto &it : path ) {
+            if (n>NEIGHBOURS) break;
+            int id = it.first;
+            float recall = 0.001*it.second;
+            ip.setneighbour(id,n);
+            ip.setrecall(recall,n);
+            p[a].setneighbour(id,n);
+            p[a].setrecall(recall,n);
+            n++;
+        }
+    }
+    
+    if (_verbose) {
+        for (int i=0;i<nhits;i++) {
+            cout << p[i].id() << "(" ;
+            for (int j=0;j<NEIGHBOURS;j++) cout << p[i].neighbour(j) << "/" << p[i].recall(j) << " ";
+            cout << ") " << endl;
+        }
+        cout << endl;
+    }
+    
+    // fill the hitmap
+    for (auto &p : points) {
+        int id = p.id();
+        hitmap[id] = &p;
+    }
+    
+    // Swimmer
+    
+    int ntrack(1), nshort(1);
+    while (hitmap.size()>0) {
+        int n = 0;
+        int neighbour = -1;
+        vector<Point> pvec;
+        auto it = hitmap.begin();
+        Point *p0 = it->second;
+        pvec.push_back(*p0);
+        hitmap.erase(it++);
+        while (it != hitmap.end()) { // Follow the path until there are no more neighbours
+            neighbour = p0->neighbour(n);
+            if (_verbose) cout << p0->id() << "->" << neighbour << endl;
+            if (neighbour < 0 || neighbour >= nhits) break;
+            auto it = hitmap.find(neighbour);
+            if (n<NEIGHBOURS-1 && it==hitmap.end()) { // hit is already assigned
+                if (_verbose) cout <<  "->" << neighbour << endl;
+                n++;  // try an alternative neighbour
+                continue;
+            }
+            if (it==hitmap.end()) break;
+            Point *p1 = it->second;  // copy the point into the tracklet vector
+            pvec.push_back(*p1);
+            hitmap.erase(it++);
+            n = 0;
+            p0 = p1;
+        }
+        
+        sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
+        vector<int> tmpvec;
+        for (auto &ip : pvec) tmpvec.push_back(ip.id()); // Note the hit indices
+        if (_verbose) print(tmpvec);
+        if (pvec.size() >= TRACKLET) {
+            tracklet[ntrack++] = tmpvec;
+            trackletstotal += pvec.size();
+            trackletsok += checkLabels(tmpvec);
+        }
+        else
+            shortpath[nshort++] = tmpvec;
+        if (_verbose) cout << "---" << endl;
+    }
+    
+    return tracklet;
 }
 
 
@@ -452,23 +456,30 @@ long Tracker::selectPoints(std::vector<int> &ip, std::vector<int> &good, std::ve
 // Look for seeding points using a KNN search and a neural network to identify hit pairs
 std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighbours)
 {
-    vector<pair<int,float> > seed;
+    static int ntrack(0);
+    ntrack++;
     
+    vector<pair<int,float> > seed;
+    if (assignment[s] !=  0) return seed;
+
     //paths.add(s);
     Point &p0 = points[s];
     
     // Generate seeding points
     for (auto it:neighbours)
     {
+        //if (assignment[it] != 0) continue;
         double recall = checkTracklet(s,it); // Search for hit pairs
         if (recall > 0) {
+            assignment[it] = ntrack;
             if (ANN) cout << s << " " << it << ": R2 OK " << recall << endl;
             seed.push_back(make_pair(it,(float)recall));
             paths.add(s,it,1000*recall);
             paths.add(it,s,1000*recall);
             // Add double hits
-            if (p0.twin()>0) {
-                int twin = p0.twin();
+            int twin = p0.twin();
+            if (twin > 0) {
+                assignment[twin] = ntrack;
                 recall = checkTracklet(twin,it);
                 seed.push_back(make_pair(twin,(float)recall));
                 paths.add(s,twin,1000*recall);
@@ -483,6 +494,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
     }
     
     long size = seed.size();
+    if (size>0) assignment[s] = ntrack;
     seedstotal += size;
     //seedsok += checkLabels(seed);
     
@@ -491,15 +503,17 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
 
 
 // Look for seeding points by hit pair combinations in the innnermost layers
-void Tracker::findSeeds()
+vector<pair<int, int> > Tracker::findSeeds()
 {
     const int n=5; // Seeding layer combinations
     const int start_list[6][3] = {{0,1,2}, {11,12,13}, {4,5,6}, {0,4,18}, {0,11,12}, {18,19,20}};
 
+    vector<pair<int, int> > pairs;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < PHIDIM; j++) {
             int tube1 = start_list[i][0];
             for (auto a : tube[tube1][j]) {
+                if (assignment[a] != 0) continue;
                 int tube2 = start_list[i][1];
                 std::vector<int> neighbours,bad;
                 int phi  = (int)(M_PI+points[a].phi())*PHIFACTOR;
@@ -517,6 +531,7 @@ void Tracker::findSeeds()
                 
                 vector<triple> triples;
                 for (auto &it : seed) {
+                    pairs.push_back(make_pair(a, it.first));
                     neighbours.clear();
                     int tube3 = start_list[i][2];
                     auto &slice = tube[tube3][phi];
@@ -525,6 +540,8 @@ void Tracker::findSeeds()
                     if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
                     long nt = findTriples(a,it.first,neighbours,triples);
                     for (auto t: triples) {
+                        assignment[t.z] = assignment[t.y];
+                        pairs.push_back(make_pair(t.y, t.z));
                         paths.add(t.y,t.z,1000*t.r);
                         paths.add(t.z,t.y,1000*t.r);
                     }
@@ -544,6 +561,7 @@ void Tracker::findSeeds()
         cout << paths << endl;
     }
     
+    return pairs;
 }
 
 
@@ -553,14 +571,21 @@ vector<pair<int, int> > Tracker::findPairs() {
     const int n = 30;//How many pairs of layers to consider. Roughly proportional to run-time, and setting this to 30 gave practically the same score (less than 0.0002 reduction)
     pair<int, int> start_list[100] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}, {1, 2}, {5, 6}, {12, 13}, {13, 14}, {6, 7}, {2, 3}, {3, 18}, {19, 20}, {0, 2}, {20, 21}, {1, 4}, {7, 8}, {11, 18}, {1, 11}, {14, 15}, {4, 18}, {2, 18}, {21, 22}, {0, 18}, {1, 18}, {24, 26}, {36, 38}, {15, 16}, {8, 9}, {22, 23}, {9, 10}, {16, 17}, {38, 40}, {5, 18}, {18, 24}, {18, 36}, {12, 18}, {40, 42}, {28, 30}, {26, 28}, {0, 12}, {18, 20}, {6, 18}, {2, 11}, {13, 18}, {2, 4}, {0, 5}, {19, 36}, {19, 24}, {4, 6}, {19, 22}, {20, 22}, {11, 13}, {3, 19}, {7, 18}, {14, 18}, {3, 4}, {22, 25}, {1, 3}, {20, 24}, {15, 18}, {3, 11}, {22, 37}, {30, 32}, {42, 44}, {8, 18}, {9, 18}, {8, 26}, {15, 38}, {20, 36}, {14, 36}, {7, 24}, {1, 5}, {16, 18}, {22, 24}, {18, 22}, {25, 27}, {16, 40}, {10, 30}, {25, 26}, {17, 40}, {36, 39}, {1, 12}, {10, 28}, {7, 26}, {17, 42}, {24, 27}, {21, 24}, {23, 37}, {13, 36}, {15, 36}, {22, 36}, {14, 38}, {8, 28}, {19, 21}, {6, 24}, {9, 28}, {16, 38}, {0, 3}};
     
+    static int ntrack(0);
+    ntrack++;
+    
     vector<pair<int, int> > pairs;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j <PHIDIM; j++) {
             for (auto a : tube[start_list[i].first][j]) {
+                if (assignment[a] != 0) continue;
                 //tracking.add(a);
                 for (auto b : tube[start_list[i].second][j]) {
+                    if (assignment[b] != 0) continue;
                     double recall = recall2(p[a],p[b])[0];
                     if (recall > THRESHOLD2) {
+                        assignment[a] = ntrack;
+                        //assignment[b] = ntrack;
                         pairs.push_back(make_pair(a, b));
                         paths.add(a,b,recall*1000);
                         paths.add(b,a,recall*1000);
@@ -1149,7 +1174,7 @@ void Tracker::scorePairs(vector<pair<int, int> >&pairs) {
     for (long long p : found) {
         score += part_weight[p];
     }
-    cout << score << " from " << pairs.size() << " pairs" << endl;
+    cout << "Score: " << score << " from " << pairs.size() << " pairs" << endl << endl;
 }
 
 
