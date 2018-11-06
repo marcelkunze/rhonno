@@ -18,7 +18,7 @@
 #define DELTAR   0.3
 #define DELTATHE 0.1
 #define DELTAPHI 0.2
-#define DELTANN  0.2
+#define DELTANN  0.1
 
 #define MAXDIM 150000
 #define PHIDIM 13
@@ -160,6 +160,7 @@ public:
     static std::vector<std::pair<int, int> > findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
     static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
+    static long addHits(int p0, int p1, int layer,int phi,std::vector<triple> &triples);
     static long selectPoints(std::vector<int> &points, std::vector<int> &good, std::vector<int> &bad, int ref, double deltar, double deltathe, double distance);
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);

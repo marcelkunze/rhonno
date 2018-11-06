@@ -422,6 +422,8 @@ long Tracker::selectPoints(std::vector<int> &ip, std::vector<int> &good, std::ve
         if (knn++ > MAXKNN) break; // Max. number of neighbouring points reached
         
         int ip = *it;
+        if (assignment[ip] != 0) continue;
+
         Point &pp = points[*it++];
         if (ref==pp.id()) continue;
         
@@ -508,6 +510,9 @@ vector<pair<int, int> > Tracker::findSeeds()
     const int n=5; // Seeding layer combinations
     const int start_list[6][3] = {{0,1,2}, {11,12,13}, {4,5,6}, {0,4,18}, {0,11,12}, {18,19,20}};
 
+    static int ntrack(0);
+    ntrack++;
+
     vector<pair<int, int> > pairs;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < PHIDIM; j++) {
@@ -523,6 +528,7 @@ vector<pair<int, int> > Tracker::findSeeds()
                 if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
                 vector<pair<int,float> > seed = findSeeds(a,neighbours);
                 long n = seed.size();
+                if (n > 0) assignment[a] = ntrack;
                 if (n>0&&_verbose) {
                     cout << n << " seeds from " << a << " (Tube: " << tube1 << "->" << tube2 << "):" << endl;
                     for (auto it: seed) cout << it.first << "(" << it.second << ") ";
@@ -538,7 +544,7 @@ vector<pair<int, int> > Tracker::findSeeds()
                     selectPoints(slice,neighbours,bad,it.first,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
                     sort(neighbours.begin(),neighbours.end(),sortDist);
                     if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
-                    long nt = findTriples(a,it.first,neighbours,triples);
+                    long nt = addHits(a,it.first,2,phi,triples);
                     for (auto t: triples) {
                         assignment[t.z] = assignment[t.y];
                         pairs.push_back(make_pair(t.y, t.z));
@@ -569,7 +575,7 @@ vector<pair<int, int> > Tracker::findSeeds()
 vector<pair<int, int> > Tracker::findPairs() {
     
     const int n = 30;//How many pairs of layers to consider. Roughly proportional to run-time, and setting this to 30 gave practically the same score (less than 0.0002 reduction)
-    pair<int, int> start_list[100] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}, {1, 2}, {5, 6}, {12, 13}, {13, 14}, {6, 7}, {2, 3}, {3, 18}, {19, 20}, {0, 2}, {20, 21}, {1, 4}, {7, 8}, {11, 18}, {1, 11}, {14, 15}, {4, 18}, {2, 18}, {21, 22}, {0, 18}, {1, 18}, {24, 26}, {36, 38}, {15, 16}, {8, 9}, {22, 23}, {9, 10}, {16, 17}, {38, 40}, {5, 18}, {18, 24}, {18, 36}, {12, 18}, {40, 42}, {28, 30}, {26, 28}, {0, 12}, {18, 20}, {6, 18}, {2, 11}, {13, 18}, {2, 4}, {0, 5}, {19, 36}, {19, 24}, {4, 6}, {19, 22}, {20, 22}, {11, 13}, {3, 19}, {7, 18}, {14, 18}, {3, 4}, {22, 25}, {1, 3}, {20, 24}, {15, 18}, {3, 11}, {22, 37}, {30, 32}, {42, 44}, {8, 18}, {9, 18}, {8, 26}, {15, 38}, {20, 36}, {14, 36}, {7, 24}, {1, 5}, {16, 18}, {22, 24}, {18, 22}, {25, 27}, {16, 40}, {10, 30}, {25, 26}, {17, 40}, {36, 39}, {1, 12}, {10, 28}, {7, 26}, {17, 42}, {24, 27}, {21, 24}, {23, 37}, {13, 36}, {15, 36}, {22, 36}, {14, 38}, {8, 28}, {19, 21}, {6, 24}, {9, 28}, {16, 38}, {0, 3}};
+    const pair<int, int> start_list[100] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}, {1, 2}, {5, 6}, {12, 13}, {13, 14}, {6, 7}, {2, 3}, {3, 18}, {19, 20}, {0, 2}, {20, 21}, {1, 4}, {7, 8}, {11, 18}, {1, 11}, {14, 15}, {4, 18}, {2, 18}, {21, 22}, {0, 18}, {1, 18}, {24, 26}, {36, 38}, {15, 16}, {8, 9}, {22, 23}, {9, 10}, {16, 17}, {38, 40}, {5, 18}, {18, 24}, {18, 36}, {12, 18}, {40, 42}, {28, 30}, {26, 28}, {0, 12}, {18, 20}, {6, 18}, {2, 11}, {13, 18}, {2, 4}, {0, 5}, {19, 36}, {19, 24}, {4, 6}, {19, 22}, {20, 22}, {11, 13}, {3, 19}, {7, 18}, {14, 18}, {3, 4}, {22, 25}, {1, 3}, {20, 24}, {15, 18}, {3, 11}, {22, 37}, {30, 32}, {42, 44}, {8, 18}, {9, 18}, {8, 26}, {15, 38}, {20, 36}, {14, 36}, {7, 24}, {1, 5}, {16, 18}, {22, 24}, {18, 22}, {25, 27}, {16, 40}, {10, 30}, {25, 26}, {17, 40}, {36, 39}, {1, 12}, {10, 28}, {7, 26}, {17, 42}, {24, 27}, {21, 24}, {23, 37}, {13, 36}, {15, 36}, {22, 36}, {14, 38}, {8, 28}, {19, 21}, {6, 24}, {9, 28}, {16, 38}, {0, 3}};
     
     static int ntrack(0);
     ntrack++;
@@ -623,12 +629,67 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<tri
     return triples.size();
 }
 
+// Generate tracklets of 3 points wrt. the first point in seed
+long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &triples)
+{
+    const int n(5), nl(11);
+    const int layers[n][nl]= {   {0,1,2,3,4,18,19,20,21,22,23},
+                                 {0,1,2,3,4,18,24,26,28,30,32},
+                                 {0,1,2,3,4,18,24,26,28,31,33},
+                                 {11,12,13,14,15,16,17,-1,-1,-1,-1},
+                                 {5,6,7,8,9,10,11,-1,-1,-1,-1}
+                            };
+
+    triple t;
+    t.x = p0;
+    t.y = p1;
+    
+    if (dephth>=nl) return 0;
+    
+    long found(0);
+    for (int i=0;i<n;i++) {
+        int l = layers[i][dephth];
+        if (l<0 || l>47) continue;
+        auto &seed = tube[l][phi];
+        std::vector<int> neighbours,bad;
+        selectPoints(seed,neighbours,bad,p1,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
+        sort(neighbours.begin(),neighbours.end(),sortDist);
+        if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
+        for (auto &it : neighbours)
+        {
+            if (assignment[it] != 0) continue; // Point has benn already used
+            
+            double recall = checkTracklet(p0,p1,it); // Point is a candidate on the next layer
+            if (recall > 0) {
+                t.z = it;
+                t.r = recall;
+                triples.push_back(t);
+                assignment[it] = assignment[p1];
+                int twin = points[it].twin(); // Point is a double hit
+                if (twin > 0) {
+                    t.z = twin;
+                    t.r = recall;
+                    triples.push_back(t);
+                    assignment[twin] = assignment[p1];
+                    found++;
+                }
+                found++;
+                if (ANN) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
+                found += addHits(p1,it,dephth+1,phi,triples);
+            }
+            else
+                if (ANN) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
+        }
+    }
+    
+    return found;
+}
 
 // Generate an index to address the detector layers 0..47
 int Tracker::getLayer(int volume_id, int layer_id) {
     
-    int itopo[48] = {10,9,8,7,6,5,4,0,1,2,3,11,12,13,14,15,16,17,34,32,30,28,26,24,18,19,20,21,36,38,40,42,44,46,35,33,31,29,27,25,22,23,37,39,41,43,45,47};
-    int metai_list[9][7] = {{0,1,2,3,4,5,6},{7,8,9,10,-1,-1,-1},{11,12,13,14,15,16,17},{18,19,20,21,22,23,-1},{24,25,26,27,-1,-1,-1},{28,29,30,31,32,33,-1},{34,35,36,37,38,39,-1},{40,41,-1,-1,-1,-1,-1},{42,43,44,45,46,47}};
+    const int itopo[48] = {10,9,8,7,6,5,4,0,1,2,3,11,12,13,14,15,16,17,34,32,30,28,26,24,18,19,20,21,36,38,40,42,44,46,35,33,31,29,27,25,22,23,37,39,41,43,45,47};
+    const int metai_list[9][7] = {{0,1,2,3,4,5,6},{7,8,9,10,-1,-1,-1},{11,12,13,14,15,16,17},{18,19,20,21,22,23,-1},{24,25,26,27,-1,-1,-1},{28,29,30,31,32,33,-1},{34,35,36,37,38,39,-1},{40,41,-1,-1,-1,-1,-1},{42,43,44,45,46,47}};
     
     if (volume_id<7 || volume_id>18) return -1;
     if (volume_id <= 9)

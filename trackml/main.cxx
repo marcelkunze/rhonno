@@ -23,7 +23,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 100
+#define MAXPARTICLES 10
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
@@ -94,6 +94,8 @@ int main(int argc, char**argv) {
         if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
+        cout << "Track  " << n << " {";
+        int oldl = -1;
         for (auto &id : t) {
             auto it = Tracker::track_hits.find(id);
             if (it==Tracker::track_hits.end()) continue;
@@ -106,9 +108,13 @@ int main(int argc, char**argv) {
             point geo = Tracker::meta[id];
             int vol = geo.x;
             int lay = geo.y;
-            layer[nhits] = Tracker::getLayer(vol,lay);
+            int l = Tracker::getLayer(vol,lay);
+            layer[nhits] = l;
             nhits++;
+            if (l != oldl) cout << l << ",";
+            oldl = l;
         }
+        cout << "-1}" << endl;
         if (n<100) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
     }
     
