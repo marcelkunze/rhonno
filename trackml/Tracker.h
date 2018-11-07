@@ -159,6 +159,7 @@ public:
     static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
     static std::vector<std::pair<int, int> > findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
+    static long findTriples(std::vector<std::pair<int,int> > seed, std::vector<triple> &triples);
     static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
     static long addHits(int p0, int p1, int layer,int phi,std::vector<triple> &triples);
     static long selectPoints(std::vector<int> &points, std::vector<int> &good, std::vector<int> &bad, int ref, double deltar, double deltathe, double distance);

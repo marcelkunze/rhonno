@@ -7,7 +7,6 @@ Point::Point(double x, double y, double z, int id, int label, int truth)
     _label = label;
     _truth = truth;
     _layer = -1;
-    _twin = -1;
     _x = x;
     _y = y;
     _z = z;
@@ -25,7 +24,6 @@ Point::Point(float x, float y, float z, int id, int label, int truth)
     _label = label;
     _truth = truth;
     _layer = -1;
-    _twin = -1;
     _x = x;
     _y = y;
     _z = z;
@@ -43,7 +41,6 @@ Point::Point(const Point &p)
     _label = p._label;
     _truth = p._truth;
     _layer = p._layer;
-    _twin = p._twin;
     _x = p._x;
     _y = p._y;
     _z = p._z;
