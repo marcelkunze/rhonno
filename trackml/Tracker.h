@@ -28,7 +28,7 @@
 
 //ref==49
 #define TBD true
-#define REF true
+#define REF ref==16
 #define ANN false
 
 #include "Graph.h"
