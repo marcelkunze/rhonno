@@ -59,6 +59,15 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
+    // Assemble tracklets from the seeds/pairs
+#ifdef SWIMMER
+    cout << "Searching tracks with swimmer..." << endl;
+    auto tracklet = swimmer();
+
+    c_end = std::clock();
+    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+#else
     // Search triples and add suiting combinations to the graph
     cout << "Searching triples..." << endl;
     
@@ -74,11 +83,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
-    // Assemble tracklets from the seeds/pairs
-#ifdef SWIMMER
-    cout << "Searching tracks with swimmer..." << endl;
-    auto tracklet = swimmer();
-#else
     cout << "Searching tracks by analyzing directed weighted graph..." << endl;
     auto tracklet = serialize(paths);
 #endif
@@ -216,23 +220,23 @@ map<int,vector<int> > Tracker::swimmer() {
         int n = 0;
         map<int,int> const &path = paths.edges(a);
         if (path.size()==0) continue;
+        
         for (auto &it : path ) {
-            if (n>NEIGHBOURS) break;
+            //if (n>NEIGHBOURS) break;
             int id = it.first;
             float recall = 0.001*it.second;
-            ip.setneighbour(id,n);
-            ip.setrecall(recall,n);
-            p[a].setneighbour(id,n);
-            p[a].setrecall(recall,n);
+            ip.setneighbour(id,recall);
+            p[a].setneighbour(id,recall);
             n++;
         }
     }
     
     if (_verbose) {
         for (int i=0;i<nhits;i++) {
-            cout << p[i].id() << "(" ;
-            for (int j=0;j<NEIGHBOURS;j++) cout << p[i].neighbour(j) << "/" << p[i].recall(j) << " ";
-            cout << ") " << endl;
+            auto adj = p[i].neighbours();
+            cout << p[i].id() << " {" ;
+            for (auto it : adj) cout << "{" << it.first << "," << it.second << "}";
+            cout << "}" << endl;
         }
         cout << endl;
     }
@@ -259,7 +263,7 @@ map<int,vector<int> > Tracker::swimmer() {
             if (_verbose) cout << p0->id() << "->" << neighbour << endl;
             if (neighbour < 0 || neighbour >= nhits) break;
             auto it = hitmap.find(neighbour);
-            if (n<NEIGHBOURS-1 && it==hitmap.end()) { // hit is already assigned
+            if (it==hitmap.end()) { // hit is already assigned
                 if (_verbose) cout <<  "->" << neighbour << endl;
                 n++;  // try an alternative neighbour
                 continue;
@@ -422,56 +426,6 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
     return net.Recallstep(x);
 }
 
-
-// Select points wrt. a reference point
-long Tracker::selectPoints(std::vector<int> &ip, std::vector<int> &good, std::vector<int> &bad, int ref, double deltar, double deltathe, double distance)
-{
-    if (ip.size()==0) return 0;
-    
-    Point pref = points[ref];
-    if (TBD&&REF) cout << "---------------------------> id: " << ref << endl;
-    
-    int knn = 0;
-    vector<Point> neighbours;
-    auto it = ip.begin();
-    
-    while (it != ip.end()) {
-        if (knn++ > MAXKNN) break; // Max. number of neighbouring points reached
-        
-        int ip = *it;
-        if (assignment[ip] != 0) continue;
-        
-        Point &pp = points[*it++];
-        if (ref==pp.id()) continue;
-        
-        if (TBD&&REF) cout << pp.id() << endl;
-        
-        double dr = abs(pp.r()-pref.r()); // Check the radial distance
-        if (dr > deltar) { if (TBD&&REF) cout << "R " << dr << endl; nr++; bad.push_back(ip); continue; }
-        
-        double dt = abs(pp.theta()-pref.theta()); // Check the elongation
-        if (dt > deltathe) { if (TBD&&REF) cout << "T " << dt << endl; nt++; bad.push_back(ip); continue; }
-        
-        double angle = acos(Point::dot(pp,pref)); // Check angle between (pp,pref)
-        if (angle > DELTAPHI) { if (TBD&&REF) cout << "P " << angle << endl; np++; continue; }
-        
-        double d = pp.distance(pref); // Check the euclidean distance
-        if (d > distance*pp.r()) { if (TBD&&REF) cout << "D " << d << endl; nd++; bad.push_back(ip); continue; }
-        
-        good.push_back(ip);
-        
-        if (TBD&&REF) {
-            cout << ip << ": R " << dr << " T " << dt << " D " << d;
-        }
-        
-    }
-    
-    if (TBD&&REF) cout << endl << "<--------------------------- id: " << ref << endl;
-    
-    return good.size();
-}
-
-
 // Look for seeding points using a KNN search and a neural network to identify hit pairs
 std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighbours)
 {
@@ -486,7 +440,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
         //if (assignment[it] != 0) continue;
         double recall = checkTracklet(s,it); // Search for hit pairs
         if (recall > 0) {
-            if (ANN) cout << s << " " << it << ": R2 OK " << recall << endl;
+            if (_verbose) cout << s << " " << it << ": R2 OK " << recall << endl;
             seed.push_back(make_pair(it,(float)recall));
             paths.add(s,it,1000*recall);
             paths.add(it,s,1000*recall);
@@ -503,7 +457,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
             }
         }
         else
-            if (ANN) cout << s << " " << it << ": R2 NOK " << recall << endl;
+            if (_verbose) cout << s << " " << it << ": R2 NOK " << recall << endl;
     }
     
     long size = seed.size();
@@ -530,13 +484,9 @@ vector<pair<int, int> > Tracker::findSeeds()
             for (auto a : tube[tube1][j]) {
                 if (assignment[a] != 0) continue;
                 int tube2 = start_list[i][1];
-                vector<int> neighbours,bad;
                 auto b = tube[tube2][j];
                 if (b.size() == 0) continue;
-                selectPoints(b,neighbours,bad,a,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
-                sort(neighbours.begin(),neighbours.end(),sortDist);
-                if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
-                vector<pair<int,float> > seed = findSeeds(a,neighbours);
+                vector<pair<int,float> > seed = findSeeds(a,b);
                 long n = seed.size();
                 if (n > 0) assignment[a] = ntrack;
                 if (n>0&&_verbose) {
@@ -626,10 +576,10 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<tri
             t.z = it;
             t.r = recall;
             triples.push_back(t);
-            if (ANN) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
+            if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
         }
         else
-            if (ANN) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
+            if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
     }
     
     //if (_verbose) { cout << "triples " << p0.id() << ":"; for (auto &it:triples) cout << " (" << it.x << "," << it.y << "," << it.z << ":" << it.r << ")"; cout << endl; }
@@ -651,20 +601,20 @@ long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &tr
         {7,{7,8,26}},
         {8,{8,9}},
         {9,{9,10,30}},
-        {10,{10,-1}},
+        {10,{10,34}},
         {11,{11,12,18}},
         {12,{12,13}},
         {13,{13,14,16,38}},
         {14,{14,15,38}},
         {15,{15,16,40}},
         {16,{16,17}},
-        {17,{17,46,-1}},
-        {18,{18,19,24}},
-        {19,{19,20,24}},
-        {20,{20,21,36}},
+        {17,{17,46}},
+        {18,{18,19,24,36}},
+        {19,{19,20,24,36}},
+        {20,{20,21,24,36}},
         {21,{21,22,25,27,37}},
-        {22,{22,23}},
-        {23,{23,-1}},
+        {22,{22,23,25,37}},
+        {23,{23}},
         {24,{24,26}},
         {25,{25,27}},
         {26,{26,28}},
@@ -675,9 +625,9 @@ long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &tr
         {31,{31,33}},
         {32,{32,34}},
         {33,{33,35}},
-        {34,{34,36}},
-        {35,{35,37}},
-        {36,{36,41}},
+        {34,{34}},
+        {35,{35}},
+        {36,{36,38,41}},
         {37,{37,39}},
         {38,{38,40}},
         {39,{39,41}},
@@ -687,28 +637,24 @@ long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &tr
         {43,{43,45}},
         {44,{44,46}},
         {45,{45,47}},
-        {46,{46,-1}},
-        {47,{47,-1}},
+        {46,{46}},
+        {47,{47}},
     };
     
     triple t;
     t.x = p0;
     t.y = p1;
     
-    auto entry = layers.find(dephth);
-    if (entry==layers.end()) return 0;
-    auto laylist = entry->second;
+    if (dephth<0 || dephth>47) return 0;
+    const auto laylist = layers.at(dephth);
     
     long found(0);
-    for (auto l : laylist) {
-        if (l<0) break;
+    for (int i=0; i<laylist.size()-1; i++) {
+        int l = laylist[i];
         if (l<dephth) continue;
+        cout << "dephth " << dephth << " layer " << l << endl;
         auto &seed = tube[l][phi];
-        vector<int> neighbours,bad;
-        selectPoints(seed,neighbours,bad,p1,DELTAR,DELTATHE,DISTANCE); // preselection of candidates b wrt a
-        sort(neighbours.begin(),neighbours.end(),sortDist);
-        if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN); // k nearest neighbours
-        for (auto &it : neighbours)
+        for (auto &it : seed)
         {
             if (assignment[it] != 0) continue; // Point has benn already used
             
@@ -730,14 +676,16 @@ long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &tr
                     if (_verbose) cout << "addHits: Added double hit " << twin << endl;
                 }
                 found++;
-                if (ANN) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
-                auto nextlayer = l;
-                nextlayer++;
-                found += addHits(p1,it,nextlayer,phi,triples);
-                return found;
+                if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
+                int nextlayer = laylist[i+1];
+                long npoints = addHits(p1,it,nextlayer,phi,triples);
+                if (npoints==0)
+                    return 0;
+                else
+                    found += npoints;
             }
             else
-                if (ANN) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
+                if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
         }
     }
     
@@ -788,7 +736,7 @@ void Tracker::readTubes() {
         }
     }
     
-    // Filter double hits
+    // Filter double hits and run k nearest neighbour
     cout << "Filter double hits..." << endl;
     for (int i = 0; i < 48; i++) {
         for (int j = 0; j <PHIDIM; j++) {
@@ -803,9 +751,10 @@ void Tracker::readTubes() {
             }
             if (pvec.size()<2) continue;
             for (auto it1 = pvec.begin(); it1 != pvec.end()-1; it1++) {
+                Point &p0 = points[*it1];
+                int id0 = p0.id();
+                vector<Point> neighbours;
                 for (auto it2 = it1+1; it2 != pvec.end(); it2++) {
-                    Point &p0 = points[*it1];
-                    int id0 = p0.id();
                     Point &p1 = points[*(it2)];
                     int id1 = p1.id();
                     double d = p0.distance(p1);
@@ -818,7 +767,16 @@ void Tracker::readTubes() {
                         ntwins++;
                         if (_verbose) cout << "Twin " << id0 << "," << id1 << ":" << d << endl;
                     }
+                    // note the distance of p0 to each point in the phi slice (exclude double hits)
+                    if (d<DISTANCE*p0.r() && d>TWINDIST) {
+                        neighbours.push_back(p1);
+                    }
                 }
+                // k nearest neighbours search for p0
+                if (neighbours.size()==0) continue;
+                sort(neighbours.begin(),neighbours.end(),Point::sortDist);
+                if (neighbours.size()>MAXKNN) neighbours.resize(MAXKNN);
+                for (int i=0;i<MAXKNN;i++) p0.setneighbour(neighbours[i].id(),-1.0);
             }
         }
     }

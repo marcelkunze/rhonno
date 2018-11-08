@@ -16,7 +16,6 @@ Point::Point(double x, double y, double z, int id, int label, int truth)
     _phi = atan2(_y,_x);
     _theta = acos(z/_r);
     _distance = 0.0;
-    for (int i=0; i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1;
 }
 
 Point::Point(float x, float y, float z, int id, int label, int truth)
@@ -34,7 +33,6 @@ Point::Point(float x, float y, float z, int id, int label, int truth)
     _phi = atan2(_y,_x);
     _theta = acos(z/_r);
     _distance = 0.0;
-    for (int i=0; i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1;
 }
 
 Point::Point(const Point &p)
@@ -52,9 +50,7 @@ Point::Point(const Point &p)
     _phi = p._phi;
     _theta = p._theta;
     _distance = p._distance;
-    for (int i=0; i<NEIGHBOURS;i++) {
-        _neighbour[i] = p._neighbour[i];
-        _recall[i] = p._recall[i];
-    }
+    _adjacent.clear();
+    _adjacent = p._adjacent;
 }
 

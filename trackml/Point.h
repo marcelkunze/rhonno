@@ -4,9 +4,8 @@
 // M.Kunze, Heidelberg University, 2018
 
 #include <vector>
+#include <utility>
 #include <cmath>
-
-#define NEIGHBOURS 3
 
 class Point
 {
@@ -16,14 +15,13 @@ private:
     int _truth;             // True id
     int _layer;             // layer index (0...47)
     int _twin;              // Double hit index
-    double _x, _y, _z;      // Cartesian coordinate
-    double _r,_phi,_theta;  // Spherical coordinates
-    double _rz;             // Cylindrical coordinates
-    double _distance;       // Distance from test point
-    int _neighbour[NEIGHBOURS];
-    double _recall[NEIGHBOURS];
+    float _x, _y, _z;      // Cartesian coordinate
+    float _r,_phi,_theta;  // Spherical coordinates
+    float _rz;             // Cylindrical coordinates
+    float _distance;       // Distance from test point
+    std::vector<std::pair<int,float> > _adjacent; // id and recall value of adjacent points
 public:
-    Point(void):_id(0),_label(0), _truth(0), _x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_rz(0),_distance(0) { for (int i=0;i<NEIGHBOURS;i++) _neighbour[i] = _recall[i] = -1; }
+    Point(void):_id(0),_label(0), _truth(0), _x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_rz(0),_distance(0) {}
     Point(const Point &p);
     Point(double x, double y, double z, int id=-1, int label=-1, int truth=-1);
     Point(float x, float y, float z, int id=-1, int label=-1, int truth=-1);
@@ -35,40 +33,36 @@ public:
     static bool sortDist(const Point &a,const Point &b);
     static bool sortId(const Point &a,const Point &b);
     static bool sortRecall(const Point &a,const Point &b);
-    static double angleBetween(const Point &a,const Point &b,const Point &c);
-    static double dot(const Point &a,const Point &b);
+    static float angleBetween(const Point &a,const Point &b,const Point &c);
+    static float dot(const Point &a,const Point &b);
     static Point circleCenter(const Point &p1,const Point &p2,const Point &p3);
-    static double circleRadius(const Point &p1,const Point &p2,const Point &p3);
+    static float circleRadius(const Point &p1,const Point &p2,const Point &p3);
     static bool comparison(const Point &a,const Point &b);
     double distance(const Point &a);
-    static double distance(const Point &a, const Point &b);
+    static float distance(const Point &a, const Point &b);
     static int classifyAPoint(std::vector<Point> &arr, int k, Point &p, int label);
-    inline double x() const {return _x;}
-    inline double y() const {return _y;}
-    inline double z() const {return _z;}
-    inline double r() const {return _r;}
-    inline double theta() const {return _theta;}
-    inline double phi() const {return _phi;}
-    inline double rz() const {return _rz;}
+    inline float x() const {return _x;}
+    inline float y() const {return _y;}
+    inline float z() const {return _z;}
+    inline float r() const {return _r;}
+    inline float theta() const {return _theta;}
+    inline float phi() const {return _phi;}
+    inline float rz() const {return _rz;}
     inline int id() const {return _id;}
     inline int label() const {return _label;}
     inline int truth() const {return _truth;}
     inline int layer() const {return _layer;}
     inline int twin() const {return _twin;}
-    inline int neighbour(int i=0) const {if (i<NEIGHBOURS && i>=0) return _neighbour[i]; else return -1;}
-    inline int* neighbours() {return _neighbour;}
-    inline double recall(int i=0) const {if (i<NEIGHBOURS && i>=0) return _recall[i]; else return -1;}
-    inline double* recalls() {return _recall;}
-    //inline void setx(double x) { _x = x;}
-    //inline void sety(double y) { _y = y;}
-    //inline void setz(double z) { _z = z;}
+    inline int neighbour(int i) const {if (i<_adjacent.size()) return _adjacent[i].first; else return -1;}
+    inline std::vector<std::pair<int,float> > &neighbours() {return _adjacent;}
+    inline int recall(int i) const {if (i<_adjacent.size()) return _adjacent[i].second; else return -1;}
+    inline std::vector<std::pair<int,float> > &recalls() {return _adjacent;}
     inline void setlabel(int label) { _label = label;}
     inline void settruth(int truth) { _truth = truth;}
     inline void setlayer(int layer) { _layer = layer;}
     inline void settwin(int twin) { _twin = twin;}
     inline void setid(int id) { _id = id;}
-    inline void setneighbour(int neighbour, int i=0) { if (i<NEIGHBOURS && i>=0) _neighbour[i] = neighbour;}
-    inline void setrecall(double recall, int i=0) { if (i<NEIGHBOURS && i>=0) _recall[i] = recall;}
+    inline void setneighbour(int neighbour, double recall) { _adjacent.push_back(std::make_pair(neighbour,recall));}
 };
 
 // Used to sort an array of points by increasing
@@ -105,26 +99,26 @@ bool Point::sortId(const Point &a,const Point &b)
 inline
 bool Point::sortRecall(const Point &a,const Point &b)
 {
-    return (a._recall[0] > b._recall[0]);
+    return (a.recall(0) > b.recall(0));
 }
 
 // Calculate the angle between two vectors defined by (a,b) and (a,c)
 inline
-double Point::angleBetween(const Point &a,const Point &b,const Point &c)
+float Point::angleBetween(const Point &a,const Point &b,const Point &c)
 {
     Point v1 = b - a;
     Point v2 = c - a;
-    double angle = acos(dot(v1,v2));
+    float angle = acos(dot(v1,v2));
     return angle;
 }
 
 // Calculate the scalar product between two vectors a and b
 inline
-double Point::dot(const Point &a,const Point &b)
+float Point::dot(const Point &a,const Point &b)
 {
-    double r1 = sqrt(a._x*a._x + a._y*a._y + a._z*a._z);
-    double r2 = sqrt(b._x*b._x + b._y*b._y + b._z*b._z);
-    double product = a._x*b._x + a._y*b._y + a._z*b._z;
+    float r1 = sqrt(a._x*a._x + a._y*a._y + a._z*a._z);
+    float r2 = sqrt(b._x*b._x + b._y*b._y + b._z*b._z);
+    float product = a._x*b._x + a._y*b._y + a._z*b._z;
     return product / (r1 * r2);
 }
 
@@ -154,10 +148,10 @@ Point Point::circleCenter(const Point &p1,const Point &p2,const Point &p3)
 
 // Calculate the circle radius through 3 points
 inline
-double Point::circleRadius(const Point &p1,const Point &p2,const Point &p3)
+float Point::circleRadius(const Point &p1,const Point &p2,const Point &p3)
 {
     Point center = circleCenter(p1,p2,p3);
-    double radius = sqrt( pow(p2._x - center._x,2) + pow(p2._y-center._y,2));
+    float radius = sqrt( pow(p2._x - center._x,2) + pow(p2._y-center._y,2));
     return radius;
 }
 
@@ -180,9 +174,9 @@ double Point::distance(const Point &a)
 }
 
 inline
-double Point::distance(const Point &a, const Point &b)
+float Point::distance(const Point &a, const Point &b)
 {
-    double d =  sqrt((a._x - b._x) * (a._x - b._x) +
+    float d =  sqrt((a._x - b._x) * (a._x - b._x) +
                      (a._y - b._y) * (a._y - b._y) +
                      (a._z - b._z) * (a._z - b._z));
     return d;

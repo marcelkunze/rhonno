@@ -4,18 +4,18 @@
 // M.Kunze, Heidelberg University, 2018
 
 //#define PAIRS
-//#define SWIMMER
+#define SWIMMER
 
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
 #define TRACKLET 2
 #define TWINDIST 0.0051
-#define MAXKNN 20
+#define MAXKNN 10
 #define THRESHOLD2 0.90
 #define THRESHOLD3 0.95
 #define DISTANCE 0.6
-#define DELTAR   0.3
+#define DELTAR   0.5
 #define DELTATHE 0.1
 #define DELTAPHI 0.2
 #define DELTANN  0.1
@@ -26,12 +26,8 @@
 
 #define SCORE true
 
-//ref==49
-#define TBD true
-#define REF ref==16
-#define ANN false
-
 #include "Graph.h"
+#include "Point.h"
 #include <cmath>
 #include <algorithm>
 #include <vector>
@@ -109,8 +105,6 @@ struct Particle // structure for truth particle info
     std::vector<int> hit;
 };
 
-class Point;
-
 class Tracker {
 public:
     static Graph<int> paths, tracking;
@@ -162,7 +156,10 @@ public:
     static long findTriples(std::vector<std::pair<int,int> > seed, std::vector<triple> &triples);
     static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
     static long addHits(int p0, int p1, int layer,int phi,std::vector<triple> &triples);
-    static long selectPoints(std::vector<int> &points, std::vector<int> &good, std::vector<int> &bad, int ref, double deltar, double deltathe, double distance);
+    inline
+    static bool checkRadius(int p0,int p1) { double dr = abs(points[p0].r()-points[p0].r()); if (dr > DELTAR) return false; else return true; }
+    inline
+    static bool checkTheta(int p0,int p1) { double dt = abs(points[p0].theta()-points[p0].theta()); if (dt > DELTATHE) return false; else return true; }
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
     static long checkLabels(std::vector<int> &p);
