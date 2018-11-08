@@ -19,7 +19,8 @@ private:
     float _r,_phi,_theta;  // Spherical coordinates
     float _rz;             // Cylindrical coordinates
     float _distance;       // Distance from test point
-    std::vector<std::pair<int,float> > _adjacent; // id and recall value of adjacent points
+    std::vector<int> _adjacent; // id of adjacent points
+    std::vector<float> _recall;  // and recall values
 public:
     Point(void):_id(0),_label(0), _truth(0), _x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_rz(0),_distance(0) {}
     Point(const Point &p);
@@ -53,16 +54,16 @@ public:
     inline int truth() const {return _truth;}
     inline int layer() const {return _layer;}
     inline int twin() const {return _twin;}
-    inline int neighbour(int i) const {if (i<_adjacent.size()) return _adjacent[i].first; else return -1;}
-    inline std::vector<std::pair<int,float> > &neighbours() {return _adjacent;}
-    inline int recall(int i) const {if (i<_adjacent.size()) return _adjacent[i].second; else return -1;}
-    inline std::vector<std::pair<int,float> > &recalls() {return _adjacent;}
+    inline int neighbour(int i) const {if (i<_adjacent.size()) return _adjacent[i]; else return -1;}
+    inline std::vector<int> &neighbours() {return _adjacent;}
+    inline int recall(int i) const {if (i<_recall.size()) return _recall[i]; else return -1;}
+    inline std::vector<float> &recalls() {return _recall;}
     inline void setlabel(int label) { _label = label;}
     inline void settruth(int truth) { _truth = truth;}
     inline void setlayer(int layer) { _layer = layer;}
     inline void settwin(int twin) { _twin = twin;}
     inline void setid(int id) { _id = id;}
-    inline void setneighbour(int neighbour, double recall) { _adjacent.push_back(std::make_pair(neighbour,recall));}
+    inline void setneighbour(int neighbour, double recall=-1.0) { _adjacent.push_back(neighbour); _recall.push_back(recall);}
 };
 
 // Used to sort an array of points by increasing

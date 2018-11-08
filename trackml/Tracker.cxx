@@ -63,9 +63,9 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     cout << "Searching triples..." << endl;
     
     vector<triple> triples;
-    long nt = findTriples(pairs,triples);
+    long ntrack = findTriples(pairs,triples);
     if (_verbose) {
-        cout << nt << " triples:" << endl;
+        cout << ntrack << " triples:" << endl;
         for (auto t: triples) cout << t.x << " " << t.y << " " << t.z << "(" << t.r << ") ";
         cout << endl;
     }
@@ -230,7 +230,7 @@ map<int,vector<int> > Tracker::swimmer() {
         for (int i=0;i<nhits;i++) {
             auto adj = p[i].neighbours();
             cout << p[i].id() << " {" ;
-            for (auto it : adj) cout << "{" << it.first << "," << it.second << "}";
+            for (auto it : adj) cout << it << "," ;
             cout << "}" << endl;
         }
         cout << endl;
@@ -338,8 +338,8 @@ bool Tracker::sortDist(const int a,const int b) {
 
 
 // CHeck whether the points in a vector belong to the same track
-long Tracker::checkLabels(std::vector<int> &ip) {
-    
+long Tracker::checkLabels(std::vector<int> &ip)
+{
     if (ip.size()==0) return 0;
     int label = points[ip[0]].label();
     if (label<=0) return 0;
@@ -361,6 +361,7 @@ double Tracker::checkTracklet(int p0,int p1)
     n2++;
     return recall;
 }
+
 
 // Recall function for triple
 double Tracker::checkTracklet(int p0,int p1,int p2)
@@ -421,6 +422,7 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
     return net.Recallstep(x);
 }
 
+
 // Look for seeding points using a KNN search and a neural network to identify hit pairs
 std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighbours)
 {
@@ -432,7 +434,11 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
     // Generate seeding points
     for (auto it:neighbours)
     {
-        //if (assignment[it] != 0) continue;
+        if (assignment[it] != 0) continue;
+        if (!checkTheta(s,it)) continue;
+        if (!checkRadius(s,it)) continue;
+        if (!checkDistance(s,it)) continue;
+
         double recall = checkTracklet(s,it); // Search for hit pairs
         if (recall > 0) {
             if (_verbose) cout << s << " " << it << ": R2 OK " << recall << endl;
@@ -563,6 +569,10 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<tri
     
     for (auto &it : seed)
     {
+        if (!checkTheta(p1,it)) continue;
+        if (!checkRadius(p1,it)) continue;
+        if (!checkDistance(p1,it)) continue;
+
         double recall = checkTracklet(p0,p1,it);
         if (recall > 0) {
             t.z = it;
@@ -651,7 +661,10 @@ long Tracker::addHits(int p0,int p1,int dephth,int phi,std::vector<triple> &trip
         for (auto &it : seed)
         {
             if (assignment[it] != 0) continue; // Point has benn already used
-            
+            if (!checkTheta(p1,it)) continue;
+            if (!checkRadius(p1,it)) continue;
+            if (!checkDistance(p1,it)) continue;
+
             double recall = checkTracklet(p0,p1,it); // Point is a candidate on the next layer
             
             if (recall > 0) {

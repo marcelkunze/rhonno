@@ -52,5 +52,6 @@ Point::Point(const Point &p)
     _distance = p._distance;
     _adjacent.clear();
     _adjacent = p._adjacent;
+    _recall = p._recall;
 }
 

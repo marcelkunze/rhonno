@@ -17,7 +17,6 @@
 #define DISTANCE 0.6
 #define DELTAR   0.5
 #define DELTATHE 0.1
-//#define DELTAPHI 0.2
 #define DELTANN  0.1
 
 #define MAXDIM 150000
@@ -157,9 +156,11 @@ public:
     static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
     static long addHits(int p0, int p1, int layer,int phi,std::vector<triple> &triples);
     inline
-    static bool checkRadius(int p0,int p1) { double dr = abs(points[p0].r()-points[p0].r()); if (dr > DELTAR) return false; else return true; }
+    static bool checkRadius(int p0,int p1) { double dr = abs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }
     inline
-    static bool checkTheta(int p0,int p1) { double dt = abs(points[p0].theta()-points[p0].theta()); if (dt > DELTATHE) return false; else return true; }
+    static bool checkTheta(int p0,int p1) { float dt = fabs(points[p0].theta()-points[p1].theta()); if (dt > DELTATHE) { nt++; return false; } else return true; }
+    inline
+    static bool checkDistance(int p0,int p1) { float dt = points[p0].distance(points[p1]); if (dt > DISTANCE) { nd++; return false; } else return true; }
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
     static long checkLabels(std::vector<int> &p);

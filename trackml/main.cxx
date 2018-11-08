@@ -23,12 +23,12 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 5
+#define MAXPARTICLES 100
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE false
+#define VERBOSE true
 #define MAXTRACK 10
 #define MAXLABEL 100
 
