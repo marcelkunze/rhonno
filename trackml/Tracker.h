@@ -4,20 +4,20 @@
 // M.Kunze, Heidelberg University, 2018
 
 //#define PAIRS
-#define SWIMMER
+//#define SWIMMER
 
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
 #define TRACKLET 2
 #define TWINDIST 0.0051
-#define MAXKNN 10
+#define MAXKNN 5
 #define THRESHOLD2 0.90
 #define THRESHOLD3 0.95
 #define DISTANCE 0.6
 #define DELTAR   0.5
 #define DELTATHE 0.1
-#define DELTAPHI 0.2
+//#define DELTAPHI 0.2
 #define DELTANN  0.1
 
 #define MAXDIM 150000
@@ -141,7 +141,7 @@ private:
     static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
     static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
 
-    static unsigned long nr, nd, np, nt, nx, n1, n2, n3, n4, ntwins;
+    static unsigned long nr, nd, np, nt, n1, n2, n3, n4, ntwins;
     static Point *p;
     static bool _verbose;
 public:

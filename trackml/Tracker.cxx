@@ -59,15 +59,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
-    // Assemble tracklets from the seeds/pairs
-#ifdef SWIMMER
-    cout << "Searching tracks with swimmer..." << endl;
-    auto tracklet = swimmer();
-
-    c_end = std::clock();
-    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
-#else
     // Search triples and add suiting combinations to the graph
     cout << "Searching triples..." << endl;
     
@@ -83,6 +74,11 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
+    // Assemble tracklets from the seeds/pairs
+#ifdef SWIMMER
+    cout << "Searching tracks with swimmer..." << endl;
+    auto tracklet = swimmer();
+#else
     cout << "Searching tracks by analyzing directed weighted graph..." << endl;
     auto tracklet = serialize(paths);
 #endif
@@ -182,8 +178,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
     cout << "Radius   <" << DELTAR << ": " << nr <<endl;
     cout << "Theta    <" << DELTATHE << ": " << nt <<endl;
-    cout << "Phi      <" << DELTAPHI << ": " << np <<endl;
-    cout << "PhiNN    <" << DELTANN << ": " << nx <<endl;
+    cout << "PhiNN    <" << DELTANN << ": " << np <<endl;
     cout << "Threshold2 " << THRESHOLD2 << ": " << n4 << " R2 OK" << endl;
     cout << "Threshold3 " << THRESHOLD3 << ": " << n1 << " R3 OK" << endl;
     cout << "Recalls2 : " << n2 << endl;
@@ -407,10 +402,10 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
     Point v2 = p3 - p1;
     double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
     if (angle<0.5*M_PI) {
-        if (angle>DELTANN) { nx++; return null; } // Check 0 deg.
+        if (angle>DELTANN) { np++; return null; } // Check 0 deg.
     }
     else {
-        if ((M_PI-angle)>DELTANN) { nx++; return null; } // Check 180 deg.
+        if ((M_PI-angle)>DELTANN) { np++; return null; } // Check 180 deg.
     }
     
     x[0]     = p1.rz();     // rz1
@@ -587,8 +582,9 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<tri
     return triples.size();
 }
 
+
 // Generate tracklets of 3 points wrt. the first point in seed
-long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &triples)
+long Tracker::addHits(int p0,int p1,int dephth,int phi,std::vector<triple> &triples)
 {
     static const std::map<int,vector<int> > layers{
         {0,{0,1,4,11}},
@@ -651,8 +647,9 @@ long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &tr
     long found(0);
     for (int i=0; i<laylist.size()-1; i++) {
         int l = laylist[i];
+        int nextlayer = laylist[i+1];
         if (l<dephth) continue;
-        cout << "dephth " << dephth << " layer " << l << endl;
+        //cout << "dephth " << dephth << " layer " << l << endl;
         auto &seed = tube[l][phi];
         for (auto &it : seed)
         {
@@ -664,6 +661,7 @@ long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &tr
                 t.z = it;
                 t.r = recall;
                 triples.push_back(t);
+                assignment[it] = assignment[p0];
                 // Add double hits
                 int twin = points[t.z].twin();
                 if (twin > 0) {
@@ -677,20 +675,17 @@ long Tracker::addHits(int p0, int p1, int dephth,int phi,std::vector<triple> &tr
                 }
                 found++;
                 if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
-                int nextlayer = laylist[i+1];
-                long npoints = addHits(p1,it,nextlayer,phi,triples);
-                if (npoints==0)
-                    return 0;
-                else
-                    found += npoints;
             }
             else
                 if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
         }
+        
+        found +=  addHits(p0,p1,nextlayer,phi,triples);
     }
     
     return found;
 }
+
 
 // Generate an index to address the detector layers 0..47
 int Tracker::getLayer(int volume_id, int layer_id) {
@@ -1272,7 +1267,7 @@ vector<Point> Tracker::points;
 Graph<int> Tracker::paths, Tracker::tracking;
 long Tracker::seedsok(0),Tracker::seedstotal(0);
 long Tracker::trackletsok(0),Tracker::trackletstotal(0);
-unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0),Tracker::nx(0);
+unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0);
 unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0),Tracker::ntwins(0);
 vector<point> Tracker::hits; //hit position
 vector<Particle> Tracker::particles; //true tracks
