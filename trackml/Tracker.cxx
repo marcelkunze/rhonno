@@ -469,8 +469,7 @@ vector<pair<int, int> > Tracker::findSeeds()
     const int n=5; // Seeding layer combinations
     const int start_list[6][3] = {{0,1,2}, {11,12,13}, {4,5,6}, {0,4,5}, {0,11,12}, {18,19,20}};
     
-    static int ntrack(0);
-    ntrack++;
+    static int ntrack(1);
     
     vector<pair<int, int> > pairs;
     for (int i = 0; i < n; i++) {
@@ -483,7 +482,7 @@ vector<pair<int, int> > Tracker::findSeeds()
                 if (b.size() == 0) continue;
                 vector<pair<int,float> > seed = findSeeds(a,b);
                 long n = seed.size();
-                if (n > 0) assignment[a] = ntrack;
+                if (n > 0) assignment[a] = ntrack++;
                 if (n>0&&_verbose) {
                     cout << n << " seeds from " << a << " (Tube: " << tube1 << "->" << tube2 << "):" << endl;
                     for (auto it: seed) cout << it.first << "(" << it.second << ") ";
@@ -492,9 +491,7 @@ vector<pair<int, int> > Tracker::findSeeds()
                 
                 // Make pairs
                 for (auto &it : seed) pairs.push_back(make_pair(a, it.first));
-                
             }
-            
         }
     }
     

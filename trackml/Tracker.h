@@ -107,6 +107,7 @@ struct Particle // structure for truth particle info
 
 class Tracker {
 public:
+    static int assignment[MAXDIM]; // hit hs been used
     static Graph<int> paths, tracking;
     static std::vector<int> tube[48][PHIDIM]; // List of hits in each layer
     static std::vector<Point> points; // hit Points
@@ -120,7 +121,6 @@ public:
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static std::vector<point> meta; //volume_id / layer_id / module_id
 private:
-    static int assignment[MAXDIM]; // hit hs been used
     static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
     static double truth_weight[MAXDIM]; //weighting of each hit
     static long long truth_part[MAXDIM]; //particle this hit belongs to

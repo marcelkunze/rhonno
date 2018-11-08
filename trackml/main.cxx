@@ -23,7 +23,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10
+#define MAXPARTICLES 5
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
@@ -128,6 +128,13 @@ int main(int argc, char**argv) {
     cout << "Labels: ";
     for (int i=0;i<nhits;i++) {
         if (i<MAXLABEL || i>nhits-MAXLABEL) cout << label[i] << " ";
+        if (i == MAXLABEL) cout << endl << "..." << endl;
+    }
+    cout << endl;
+    
+    cout << "Assig.: ";
+    for (int i=0;i<nhits;i++) {
+        if (i<MAXLABEL || i>nhits-MAXLABEL) cout << Tracker::assignment[i] << " ";
         if (i == MAXLABEL) cout << endl << "..." << endl;
     }
     cout << endl;
