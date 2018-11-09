@@ -38,7 +38,7 @@ inline double dist2(double x, double y) { return (x*x+y*y); }
 
 //Basics for 3d coordinate representation
 struct point {
-    float x, y, z;
+    double x, y, z;
     point() {}
     point(double x, double y, double z) : x(x),y(y),z(z) {}
     inline point operator-(const point&p) {

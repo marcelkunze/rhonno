@@ -290,7 +290,7 @@ long Tracker::addHits(int p0,int p1,int start,int phi,std::vector<triple> &tripl
         int nextlayer = laylist[i];
         //cout << "dephth " << dephth << " layer " << l << endl;
         auto &seed = tube[start][phi];
-        //auto &seed = tubecache[start][phi][p1];
+        //auto &seed = tubecache[start][phi][p0];
         for (auto &it : seed)
         {
             if (assignment[it] != 0) continue; // Point has benn already used
