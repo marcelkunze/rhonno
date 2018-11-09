@@ -265,11 +265,12 @@ void makeTrain2()
     long wright=1,wrong=1;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j< PHIDIM; j++) {
+            for (int k = 0; k<THEDIM; k++) {
             int tube1 = start_list[i].first;
-            for (auto &a : Tracker::tube[tube1][j]) {
+            for (auto &a : Tracker::tube[tube1][j][k]) {
                 treePoint &p1 = Tracker::points[a];
                 int tube2 = start_list[i].second;
-                for (auto &b : Tracker::tube[tube2][j]) {
+                for (auto &b : Tracker::tube[tube2][j][k]) {
                     treePoint &p2 = Tracker::points[b];
                     if (p1.truth() == p2.truth()) {
                         ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,1.0); //wright combination
@@ -282,6 +283,7 @@ void makeTrain2()
                         }
                     }
                 }
+            }
             }
         }
     }
@@ -331,7 +333,8 @@ void makeTrain3()
             wright++;
             // Select last point randomly in the same layer
             int phi = (int)(M_PI+p3.phi())*PHIFACTOR;
-            auto tube = Tracker::tube[l3][phi];
+            int the = (int)(M_PI+p3.theta())*THEFACTOR;
+            auto tube = Tracker::tube[l3][phi][the];
             if (tube.size()==0) continue;
             int index = tube.size()*r.Rndm();
             int idr = tube[index];

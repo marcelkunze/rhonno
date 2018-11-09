@@ -20,10 +20,10 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
     for (auto it:neighbours)
     {
         if (assignment[it] != 0) continue;
-//        if (!checkTheta(s,it)) continue;
-//        if (!checkRadius(s,it)) continue;
-//        if (!checkDistance(s,it)) continue;
-
+        //        if (!checkTheta(s,it)) continue;
+        //        if (!checkRadius(s,it)) continue;
+        //        if (!checkDistance(s,it)) continue;
+        
         double recall = checkTracklet(s,it); // Search for hit pairs
         if (recall > 0) {
             if (_verbose) cout << s << " " << it << ": R2 OK " << recall << endl;
@@ -65,25 +65,27 @@ vector<pair<int, int> > Tracker::findSeeds()
     vector<pair<int, int> > pairs;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < PHIDIM; j++) {
-            int tube1 = start_list[i][0];
-            for (auto a : tube[tube1][j]) {
-                if (assignment[a] != 0) continue;
-                //int tube2 = start_list[i][1];
-                //auto b = tube[tube2][j];
-                auto b = knn[a][j];
-                if (b.size() == 0) continue;
-                vector<pair<int,float> > seed = findSeeds(a,b);
-                long n = seed.size();
-                if (n > 0) assignment[a] = ntrack++;
-/*
-                if (n>0&&_verbose) {
-                    cout << n << " seeds from " << a << " (Tube: " << tube1 << "->" << tube2 << "):" << endl;
-                    for (auto it: seed) cout << it.first << "(" << it.second << ") ";
-                    cout << endl;
+            for (int k=0;k<THEDIM;k++) {
+                int tube1 = start_list[i][0];
+                for (auto a : tube[tube1][j][k]) {
+                    if (assignment[a] != 0) continue;
+                    //int tube2 = start_list[i][1];
+                    //auto b = tube[tube2][j];
+                    auto b = knn[a][j];
+                    if (b.size() == 0) continue;
+                    vector<pair<int,float> > seed = findSeeds(a,b);
+                    long n = seed.size();
+                    if (n > 0) assignment[a] = ntrack++;
+                    /*
+                     if (n>0&&_verbose) {
+                     cout << n << " seeds from " << a << " (Tube: " << tube1 << "->" << tube2 << "):" << endl;
+                     for (auto it: seed) cout << it.first << "(" << it.second << ") ";
+                     cout << endl;
+                     }
+                     */
+                    // Make pairs
+                    for (auto &it : seed) pairs.push_back(make_pair(a, it.first));
                 }
-*/
-                // Make pairs
-                for (auto &it : seed) pairs.push_back(make_pair(a, it.first));
             }
         }
     }
@@ -108,18 +110,20 @@ vector<pair<int, int> > Tracker::findPairs() {
     vector<pair<int, int> > pairs;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j <PHIDIM; j++) {
-            for (auto a : tube[start_list[i].first][j]) {
-                if (assignment[a] != 0) continue;
-                //tracking.add(a);
-                for (auto b : tube[start_list[i].second][j]) {
-                    if (assignment[b] != 0) continue;
-                    double recall = recall2(points[a],points[b])[0];
-                    if (recall > THRESHOLD2) {
-                        assignment[a] = ntrack;
-                        //assignment[b] = ntrack;
-                        pairs.push_back(make_pair(a, b));
-                        paths.add(a,b,recall*1000);
-                        paths.add(b,a,recall*1000);
+            for (int k=0;k<THEDIM;k++) {
+                for (auto a : tube[start_list[i].first][j][k]) {
+                    if (assignment[a] != 0) continue;
+                    //tracking.add(a);
+                    for (auto b : tube[start_list[i].second][j][k]) {
+                        if (assignment[b] != 0) continue;
+                        double recall = recall2(points[a],points[b])[0];
+                        if (recall > THRESHOLD2) {
+                            assignment[a] = ntrack;
+                            //assignment[b] = ntrack;
+                            pairs.push_back(make_pair(a, b));
+                            paths.add(a,b,recall*1000);
+                            paths.add(b,a,recall*1000);
+                        }
                     }
                 }
             }
@@ -141,7 +145,7 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<tri
         if (!checkTheta(p1,it)) continue;
         if (!checkRadius(p1,it)) continue;
         if (!checkDistance(p1,it)) continue;
-
+        
         double recall = checkTracklet(p0,p1,it);
         if (recall > 0) {
             t.z = it;
@@ -164,9 +168,10 @@ long Tracker::findTriples(vector<pair<int,int> > seed, vector<triple> &triples) 
     
     for (auto &it : seed) {
         int phi  = (int)(M_PI+points[it.second].phi())*PHIFACTOR;
+        int the  = (int)(M_PI+points[it.second].theta())*THEFACTOR;
         int l = points[it.second].layer();
         vector<triple> trip;
-        addHits(it.first,it.second,l,phi,trip);
+        addHits(it.first,it.second,l,phi,the,trip);
         //addHitsCached(it.first,it.second,phi,trip);
         for (auto t: trip) {
             paths.add(t.y,t.z,1000*t.r);
@@ -192,7 +197,7 @@ long Tracker::addHitsCached(int p0,int p1,int phi,std::vector<triple> &triples)
     for (auto &it : seed)
     {
         if (assignment[it] != 0) continue; // Point has benn already used
-
+        
         double recall = checkTracklet(p0,p1,it); // Point is a candidate on the next layer
         
         if (recall > 0) {
@@ -216,15 +221,15 @@ long Tracker::addHitsCached(int p0,int p1,int phi,std::vector<triple> &triples)
         }
         else
             if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
-
+        
         found +=  addHitsCached(p1,it,phi,triples);
     }
-        
+    
     return found;
 }
 
 // Generate tracklets of 3 points wrt. the first point in seed
-long Tracker::addHits(int p0,int p1,int start,int phi,std::vector<triple> &triples)
+long Tracker::addHits(int p0,int p1,int start,int phi,int the,std::vector<triple> &triples)
 {
     static const std::map<int,vector<int> > layers{
         {0,{1,4,11}},
@@ -289,7 +294,7 @@ long Tracker::addHits(int p0,int p1,int start,int phi,std::vector<triple> &tripl
     for (int i=0; i<laylist.size(); i++) {
         int nextlayer = laylist[i];
         //cout << "dephth " << dephth << " layer " << l << endl;
-        auto &seed = tube[start][phi];
+        auto &seed = tube[start][phi][the];
         //auto &seed = tubecache[start][phi][p0];
         for (auto &it : seed)
         {
@@ -298,7 +303,7 @@ long Tracker::addHits(int p0,int p1,int start,int phi,std::vector<triple> &tripl
             //if (!checkRadius(p1,it)) continue;
             //float d = distance(p1,it);
             //if (d>DISTANCE*r) continue;
-
+            
             //            if (!checkDistance(p1,it)) continue;
             
             double recall = checkTracklet(p0,p1,it); // Point is a candidate on the next layer
@@ -326,7 +331,7 @@ long Tracker::addHits(int p0,int p1,int start,int phi,std::vector<triple> &tripl
                 if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
         }
         
-        found +=  addHits(p0,p1,nextlayer,phi,triples);
+        found +=  addHits(p0,p1,nextlayer,phi,the,triples);
     }
     
     return found;

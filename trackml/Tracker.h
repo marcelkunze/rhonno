@@ -22,6 +22,8 @@
 #define MAXDIM 120000
 #define PHIDIM 13
 #define PHIFACTOR 2
+#define THEDIM 13
+#define THEFACTOR 2
 
 #define SCORE true
 
@@ -108,7 +110,7 @@ class Tracker {
 public:
     static int assignment[MAXDIM]; // hit hs been used
     static Graph<int> paths, tracking;
-    static std::vector<int> tube[48][PHIDIM]; // List of hits in each layer
+    static std::vector<int> tube[48][PHIDIM][THEDIM]; // List of hits in each layer
     static std::vector<int> tubecache[48][PHIDIM][MAXDIM]; // List of hits in each layer wrt. a certain particle
     static std::vector<treePoint> points; // hit Points
     static std::vector<point> hits; //hit position
@@ -168,7 +170,7 @@ public:
     static std::vector<std::pair<int, int> > findPairs();
     static long findTriples(std::vector<std::pair<int,int> > seed, std::vector<triple> &triples);
     static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
-    static long addHits(int p0, int p1, int layer,int phi,std::vector<triple> &triples);
+    static long addHits(int p0, int p1, int layer,int phi,int the,std::vector<triple> &triples);
     static long addHitsCached(int p0,int p1,int phi,std::vector<triple> &triples);
     inline
     static bool checkRadius(const int p0,const int p1) { double dr = abs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }

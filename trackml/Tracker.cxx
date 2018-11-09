@@ -32,7 +32,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     _x = x;
     _y = y;
     _z = z;
-
+    
     points.reserve(nhits);
     
     // Set up a cache for the point coordinates
@@ -49,11 +49,11 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     cout << "Sorting hits..." << endl;
     readTubes();
     setupCache();
-
+    
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
-
+    
     // Search neighbouring hits and generate a weighted directed graph
 #ifdef PAIRS
     cout << "Searching pairs..." << endl;
@@ -63,7 +63,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     auto pairs = findSeeds();
 #endif
     cout << pairs.size() << " pairs" << endl;
-
+    
     c_end = std::clock();
     time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
@@ -372,18 +372,21 @@ void Tracker::readTubes() {
     long nhits = points.size();
     for (int i = 0; i < nhits; i++) {
         int phi  = (int)(M_PI+points[i].phi())*PHIFACTOR;
-        tube[points[i].layer()][phi].push_back(i);
+        int the  = (int)(M_PI+points[i].theta())*THEFACTOR;
+        tube[points[i].layer()][phi][the].push_back(i);
         if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << " phi: " << phi << endl;
     }
     
     for (int i = 0; i < 48; i++) {
         if (layer[i].type == Disc) {
             for (int j=0;j<PHIDIM;j++)
-                sort(tube[i][j].begin(), tube[i][j].end(), z_cmp);
+                for (int k=0;k<THEDIM;k++)
+                    sort(tube[i][j][k].begin(), tube[i][j][k].end(), z_cmp);
         }
         else {
             for (int j=0;j<PHIDIM;j++)
-                sort(tube[i][j].begin(), tube[i][j].end(), r_cmp);
+                for (int k=0;k<THEDIM;k++)
+                    sort(tube[i][j][k].begin(), tube[i][j][k].end(), r_cmp);
         }
     }
     
@@ -391,31 +394,33 @@ void Tracker::readTubes() {
     cout << "Filter double hits..." << endl;
     for (int i = 0; i < 48; i++) {
         for (int j = 0; j <PHIDIM; j++) {
-            auto pvec = tube[i][j];
-            if (_verbose) {
-                long size = pvec.size();
-                if (size > 0) {
-                    cout << "Tube " << i << " phi " << j << " size: " << size << endl;
-                    for (auto it : pvec) cout << it << ",";
-                    cout << endl;
+            for (int k=0;k<THEDIM;k++) {
+                auto pvec = tube[i][j][k];
+                if (_verbose) {
+                    long size = pvec.size();
+                    if (size > 0) {
+                        cout << "Tube " << i << " phi " << j << " size: " << size << endl;
+                        for (auto it : pvec) cout << it << ",";
+                        cout << endl;
+                    }
                 }
-            }
-            if (pvec.size()<2) continue;
-            for (auto it1 = pvec.begin(); it1 != pvec.end()-1; it1++) {
-                int id1 = *it1;
-                treePoint &p1 = points[id1];
-                for (auto it2 = it1+1; it2 != pvec.end(); it2++) {
-                    int id2 = *it2;
-                    treePoint &p2 = points[id2];
-                    double d = distance(id1,id2);
-                    //if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
-                    if (d<TWINDIST) {
-                        if (id1<id2)
-                            p1.settwin(id2);
-                        else
-                            p2.settwin(id1);
-                        ntwins++;
-                        if (_verbose) cout << "Twin " << id1 << "," << id2 << ":" << d << endl;
+                if (pvec.size()<2) continue;
+                for (auto it1 = pvec.begin(); it1 != pvec.end()-1; it1++) {
+                    int id1 = *it1;
+                    treePoint &p1 = points[id1];
+                    for (auto it2 = it1+1; it2 != pvec.end(); it2++) {
+                        int id2 = *it2;
+                        treePoint &p2 = points[id2];
+                        double d = distance(id1,id2);
+                        //if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
+                        if (d<TWINDIST) {
+                            if (id1<id2)
+                                p1.settwin(id2);
+                            else
+                                p2.settwin(id1);
+                            ntwins++;
+                            if (_verbose) cout << "Twin " << id1 << "," << id2 << ":" << d << endl;
+                        }
                     }
                 }
             }
@@ -490,14 +495,15 @@ void Tracker::setupCache() {
     for (int i = 0; i < 48; i++) {
         const auto laylist = layers.at(i);
         for (int j = 0; j <PHIDIM; j++) {
-            auto &slice1 = tube[i][j];
+            for (int k=0;k<THEDIM;k++) {
+            auto &slice1 = tube[i][j][k];
             for (auto &it1 : slice1) {
                 float r = radius(it1);
                 vector<pair<int,float> > tmpvec;
-                for (int k = 0; k <laylist.size()-1; k++) {
-                    int l0 = laylist[k];
-                    int l1 = laylist[k+1];
-                    auto &slice2 = tube[l1][j];
+                for (int l = 0; l <laylist.size()-1; l++) {
+                    int l0 = laylist[l];
+                    int l1 = laylist[l+1];
+                    auto &slice2 = tube[l1][j][k];
                     for (auto &it2 : slice2) {
                         if (!checkTheta(it1,it2)) continue;
                         float d = distance(it1,it2);
@@ -512,6 +518,7 @@ void Tracker::setupCache() {
                 if (tmpvec.size()>MAXKNN) tmpvec.resize(MAXKNN);
                 for (auto it : tmpvec) knn[it1][j].push_back(it.first);
             }
+        }
         }
     }
 }
@@ -1015,7 +1022,7 @@ vector<Particle> Tracker::particles; //true tracks
 map<long long,int> Tracker::partIDmap; // create particle ID->index map
 vector<int> Tracker::knn[MAXDIM][PHIDIM];
 
-vector<int> Tracker::tube[48][PHIDIM]; // List of hits in each layer
+vector<int> Tracker::tube[48][PHIDIM][THEDIM]; // List of hits in each layer
 vector<int> Tracker::tubecache[48][PHIDIM][MAXDIM]; // List of hits in each layer wrt. a certain particle
 map<long long, vector<int> > Tracker::truth_tracks; //truth hit ids in each track
 map<long long, point> Tracker::track_hits; // Find points in hits
