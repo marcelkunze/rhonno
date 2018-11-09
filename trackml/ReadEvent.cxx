@@ -46,7 +46,7 @@ int layerNHits[Geo::NLayers];
 
 TRandom r;
 
-void transform(xParticle &particle, std::vector<Point> &points, bool mc);
+void transform(xParticle &particle, std::vector<treePoint> &points, bool mc);
 void combine(xParticle &p1, xParticle &p2);
 void combine2(xParticle &p1, xParticle &p2);
 void combine3(xParticle &p1, xParticle &p2);
@@ -54,7 +54,7 @@ void combine2(xParticle &p1);
 void combine3(xParticle &p1);
 void combine3continuos(xParticle &p1);
 void readEvent( const char *directory, int event, bool loadMC );
-void GenerateTrack(std::vector<Point> &points, int np, double delta, double radius, double phi, double gamma, double error);
+void GenerateTrack(std::vector<treePoint> &points, int np, double delta, double radius, double phi, double gamma, double error);
 
 map<unsigned long,int> particlemap;
 map<unsigned long,int> recomap;
@@ -119,7 +119,7 @@ int main()
         
         long start[MAXPARTICLES+1];
         long end[MAXPARTICLES+1];
-        std::vector<Point> hits;
+        std::vector<treePoint> hits;
         hits.reserve(MAXHITS);
         
         size_t nParticles = mParticles.size();
@@ -148,7 +148,7 @@ int main()
                 Hit &h = mHits[p1.hits[j]];
                 h.trackID = ip;
                 particlemap[nh++] = ip;
-                Point p(h.x,h.y,h.z);
+                treePoint p(h.x,h.y,h.z);
                 h1.Fill(p.x());
                 h2.Fill(p.y());
                 h3.Fill(p.z());
@@ -178,9 +178,9 @@ int main()
 #else
         {
             int event = 0;
-            std::vector<Point> hits;
+            std::vector<treePoint> hits;
             hits.reserve(MAXHITS);
-            // std::vector<Point>, int np, float delta tau, float radius, float phi, float gamma
+            // std::vector<treePoint>, int np, float delta tau, float radius, float phi, float gamma
             GenerateTrack(hits,NHITS,0.025, 1.0,M_PI/2.0, 1.0,SIGMA); // 00
             GenerateTrack(hits,NHITS,0.025,-1.0,M_PI/2.0, 1.0,SIGMA); // 10
             GenerateTrack(hits,NHITS,0.025, 1.5,M_PI/1.0,-1.0,SIGMA); // 20
@@ -197,7 +197,7 @@ int main()
             double minr = FLT_MAX;
             double maxr = 0.0;
             for (int i=0; i<nhits; i++) {
-                Point &h = hits[i];
+                treePoint &h = hits[i];
                 Hit &hit = mHits[h.id()];
                 x[i] = h.x();
                 y[i] = h.y();
@@ -216,10 +216,10 @@ int main()
 #endif
             // Assemble the tracks from label information
             nh = 0;
-            map<int,vector<Point> > tracks;
+            map<int,vector<treePoint> > tracks;
             for(int i=0; i<nt; i++) {
                 int track = i+1;
-                vector<Point> t;
+                vector<treePoint> t;
                 for (int j=0;j<nhits;j++) {
                     if (track != label[j]) continue;
                     hits[j].setlabel(label[j]);
@@ -236,7 +236,7 @@ int main()
             unsigned long np = 0;
             int delta = 0;
             for(int ip=0; ip<nt; ip++) {
-                vector<Point> t = tracks[ip];
+                vector<treePoint> t = tracks[ip];
                 for (int j=0;j<t.size();j++) {
                     auto itp = particlemap.find(np++);
                     int trackp = itp->second + delta;
@@ -259,12 +259,12 @@ int main()
 #define MAXTRACK 10
             cout << endl << "Number of tracks:" << nt << endl;
             for (int i=0; i<nt; i++) {
-                vector<Point> t = tracks[i];
+                vector<treePoint> t = tracks[i];
                 if (i == MAXTRACK) cout << endl << "..." << endl;
                 if (i<MAXTRACK || i>nt-MAXTRACK) {
                     cout << "Track " << i+1 << ": ";
-                    for (vector<Point>::iterator it = t.begin(); it != t.end(); ++it) {
-                        Point p = *it;
+                    for (vector<treePoint>::iterator it = t.begin(); it != t.end(); ++it) {
+                        treePoint p = *it;
                         cout << p.id() << " ";
                     }
                     cout << endl;
@@ -329,7 +329,7 @@ int main()
                 // Draw the tracks
                 for (int i=0;i<nt;i++) {
                     //cout << endl << "Drawing track " << i+1 << ": ";
-                    vector<Point> track = tracks[i];
+                    vector<treePoint> track = tracks[i];
                     int n = 0;
                     TPolyLine3D *connector = new TPolyLine3D((int)track.size());
                     for (auto &hit : track)    {
@@ -350,9 +350,9 @@ int main()
         return 0;
 }
 
-void transform(xParticle &particle, std::vector<Point> &points, bool mc=false) {
+void transform(xParticle &particle, std::vector<treePoint> &points, bool mc=false) {
     
-    vector<Point> tmpvec;
+    vector<treePoint> tmpvec;
     int nhits = (int)particle.hits.size();
     static int trackid = 0;
     
@@ -361,7 +361,7 @@ void transform(xParticle &particle, std::vector<Point> &points, bool mc=false) {
     if (!mc) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
-            Point p(h1.x,h1.y,h1.z,h1.hitID,trackid,i);
+            treePoint p(h1.x,h1.y,h1.z,h1.hitID,trackid,i);
             tmpvec.push_back(p);
         }
     }
@@ -369,7 +369,7 @@ void transform(xParticle &particle, std::vector<Point> &points, bool mc=false) {
         for (int i=0;i<nhits;i++) {
             HitMC &h1 = mHitsMC[particle.hits[i]];
             //Hit &h2 = mHits[particle.hits[i]];
-            Point p(h1.x,h1.y,h1.z,h1.hitID+1,trackid,i);
+            treePoint p(h1.x,h1.y,h1.z,h1.hitID+1,trackid,i);
             tmpvec.push_back(p);
         }
     }
@@ -383,21 +383,21 @@ void combine(xParticle &p1, xParticle &p2)
     int nhits1 = (int)p1.hits.size();
     int nhits2 = (int)p2.hits.size();
     
-    vector<Point> hits1, hits2;
+    vector<treePoint> hits1, hits2;
     transform(p1,hits1,MCHITS);
     transform(p2,hits2,MCHITS);
     
     for (int i=0; i<nhits1; i++)    {
         Hit &h1 = mHits[p1.hits[i]];
-        Point &hit1 = hits1[i];
+        treePoint &hit1 = hits1[i];
         for (int j=0; j<nhits1; j++)    {
             Hit &h2 = mHits[p1.hits[j]];
-            Point &hit2 = hits1[j];
+            treePoint &hit2 = hits1[j];
             if (i!=j) ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),h1.values,h2.values,hit1.truth()+1); //true combination
         }
         for (int j=0; j<nhits2; j++)    {
             Hit &h2 = mHits[p2.hits[j]];
-            Point &hit2 = hits2[j];
+            treePoint &hit2 = hits2[j];
             if (i!=j) ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),h1.values,h2.values,0.0); // wrong combination
         }
     }
@@ -405,7 +405,7 @@ void combine(xParticle &p1, xParticle &p2)
 
 void combine2(xParticle &p)
 {
-    vector<Point> hits;
+    vector<treePoint> hits;
     transform(p,hits,MCHITS);
     
     // Sort the hits according to distance from origin
@@ -414,8 +414,8 @@ void combine2(xParticle &p)
     int nhits = (int)hits.size();
     if (nhits < 2) return;
     for (int i=0; i<nhits-1; i++)    {
-        Point &hit1 = hits[i];
-        Point &hit2 = hits[i+1];
+        treePoint &hit1 = hits[i];
+        treePoint &hit2 = hits[i+1];
         double l1(0),l2(0);
         ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,hit1.truth()+1); //true combination
         double phi2 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r2
@@ -427,7 +427,7 @@ void combine2(xParticle &p)
 
 void combine3(xParticle &p)
 {
-    vector<Point> hits;
+    vector<treePoint> hits;
     transform(p,hits,MCHITS);
     
     // Sort the hits according to distance from origin
@@ -437,8 +437,8 @@ void combine3(xParticle &p)
     int nhits = (int)hits.size();
     if (nhits < 3) return;
     
-    Point &hit1 = hits[0];
-    Point &hit2 = hits[1];
+    treePoint &hit1 = hits[0];
+    treePoint &hit2 = hits[1];
     double l1(0),l2(0),l3(0);
     int istart = 2;
     float d = hit1.distance(hit2); // CHeck for double hits
@@ -447,7 +447,7 @@ void combine3(xParticle &p)
         istart = 3;
     }
     for (int i=istart; i<nhits; i++)    {
-       Point &hit3 = hits[i];
+       treePoint &hit3 = hits[i];
         ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
         double phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
         double theta3 = r.Rndm()*M_PI;
@@ -459,7 +459,7 @@ void combine3(xParticle &p)
     
 void combine3continuous(xParticle &p)
 {
-    vector<Point> hits;
+    vector<treePoint> hits;
     transform(p,hits,MCHITS);
 
     // Sort the hits according to distance from origin
@@ -470,9 +470,9 @@ void combine3continuous(xParticle &p)
     if (nhits < 3) return;
     double l1(0),l2(0),l3(0);
     for (int i=0; i<nhits-2; i++)    {
-        Point &hit1 = hits[i];
-        Point &hit2 = hits[i+1];
-        Point &hit3 = hits[i+2];
+        treePoint &hit1 = hits[i];
+        treePoint &hit2 = hits[i+1];
+        treePoint &hit3 = hits[i+2];
         ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
         double phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
         double theta3 = r.Rndm()*M_PI;
@@ -483,7 +483,7 @@ void combine3continuous(xParticle &p)
 
 void combine2(xParticle &p1, xParticle &p2)
 {
-    vector<Point> hits1, hits2;
+    vector<treePoint> hits1, hits2;
     transform(p1,hits1,MCHITS);
     transform(p2,hits2,MCHITS);
     
@@ -495,16 +495,16 @@ void combine2(xParticle &p1, xParticle &p2)
     if (hits1.size() < 2) return;
     double l1(0),l2(0);
     for (auto it=hits1.begin(); it!=hits1.end()-1; it++)    {
-        Point hit1 = *it;
-        Point hit2 = *(it+1);
+        treePoint hit1 = *it;
+        treePoint hit2 = *(it+1);
         ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,hit1.truth()+1); //true combination
        it->settruth(1);
     }
     
     if (hits2.size() < 2) return;
     for (auto it=hits2.begin(); it!=hits2.end()-1; it++)    {
-        Point hit1 = *it;
-        Point hit2 = *(it+1);
+        treePoint hit1 = *it;
+        treePoint hit2 = *(it+1);
         ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,hit1.truth()+1); //true combination
         it->settruth(2);
     }
@@ -514,11 +514,11 @@ void combine2(xParticle &p1, xParticle &p2)
     
     // Combine 2 hits of mixed tracks
     for (auto it1=hits1.begin(); it1!=hits1.end()-1; it1++)    {
-        Point hit1 = *it1;
+        treePoint hit1 = *it1;
         int n=0;
         for (auto it2=it1; it2!=hits1.end(); it2++)    {
-            if (n++>NEIGHBOURS) break;
-            Point hit2 = *it2;
+            if (n++>MAXKNN) break;
+            treePoint hit2 = *it2;
             if (hit1.truth()==hit2.truth()) continue;
             double d = hit1.distance(hit2);
             if (d > DISTANCE*hit1.r()) continue; // Consider hits within a DISTANCE*r
@@ -529,8 +529,8 @@ void combine2(xParticle &p1, xParticle &p2)
 
 void combine3(xParticle &p1, xParticle &p2)
 {
-    vector<Point> hits1, hits2;
-    vector<Point>::iterator itb1,ite1,itb2,ite2;
+    vector<treePoint> hits1, hits2;
+    vector<treePoint>::iterator itb1,ite1,itb2,ite2;
     transform(p1,hits1,MCHITS);
     transform(p2,hits2,MCHITS);
 
@@ -549,12 +549,12 @@ void combine3(xParticle &p1, xParticle &p2)
     
     double l1(0),l2(0),l3(0);
     for (auto it1=itb1, it2=itb2; it1!=ite1-4&&it2!=ite2-4; it1++, it2++)    {
-        Point &hit11 = *it1; // Three consecutive hits of track1
-        Point &hit12 = *(it1+1);
-        Point &hit13 = *(it1+2);
-        Point &hit21 = *it2; // Three consecutive hits of track2
-        Point &hit22 = *(it2+1);
-        Point &hit23 = *(it2+2);
+        treePoint &hit11 = *it1; // Three consecutive hits of track1
+        treePoint &hit12 = *(it1+1);
+        treePoint &hit13 = *(it1+2);
+        treePoint &hit21 = *it2; // Three consecutive hits of track2
+        treePoint &hit22 = *(it2+1);
+        treePoint &hit23 = *(it2+2);
         
         ntuple3->Fill(hit11.rz(),hit11.phi(),hit11.z(),hit12.rz(),hit12.phi(),hit12.z(),hit13.rz(),hit13.phi(),hit13.z(),l1,l2,l3,hit11.truth()+1); //true combination
         ntuple3->Fill(hit21.rz(),hit21.phi(),hit21.z(),hit22.rz(),hit22.phi(),hit22.z(),hit23.rz(),hit23.phi(),hit23.z(),l1,l2,l3,hit21.truth()+1); //true combination
@@ -578,7 +578,7 @@ void combine3(xParticle &p1, xParticle &p2)
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
-void GenerateTrack(std::vector<Point> &points, int np, double delta, double radius, double phi, double gamma, double error) {
+void GenerateTrack(std::vector<treePoint> &points, int np, double delta, double radius, double phi, double gamma, double error) {
     default_random_engine generator;
     double tau = 0.1;
     static int n = 0;
@@ -596,7 +596,7 @@ void GenerateTrack(std::vector<Point> &points, int np, double delta, double radi
             normal_distribution<float> distribution2(Z,error);
             Z = distribution2(generator);
         }
-        Point p(X,Y,Z,n++,-1);
+        treePoint p(X,Y,Z,n++,-1);
         points.push_back(p);
     }
 }
