@@ -69,9 +69,9 @@ vector<pair<int, int> > Tracker::findSeeds()
                 int tube1 = start_list[i][0];
                 for (auto a : tube[tube1][j][k]) {
                     if (assignment[a] != 0) continue;
-                    //int tube2 = start_list[i][1];
-                    //auto b = tube[tube2][j];
-                    auto b = knn[a][j];
+                    int tube2 = start_list[i][1];
+                    auto b = tube[tube2][j][k];
+                    //auto b = knn[a][j][k];
                     if (b.size() == 0) continue;
                     vector<pair<int,float> > seed = findSeeds(a,b);
                     long n = seed.size();
@@ -186,49 +186,6 @@ long Tracker::findTriples(vector<pair<int,int> > seed, vector<triple> &triples) 
 
 
 // Generate tracklets of 3 points wrt. the first point in seed
-long Tracker::addHitsCached(int p0,int p1,int phi,std::vector<triple> &triples)
-{
-    triple t;
-    t.x = p0;
-    t.y = p1;
-    
-    long found(0);
-    auto &seed = knn[p1][phi];
-    for (auto &it : seed)
-    {
-        if (assignment[it] != 0) continue; // Point has benn already used
-        
-        double recall = checkTracklet(p0,p1,it); // Point is a candidate on the next layer
-        
-        if (recall > 0) {
-            t.z = it;
-            t.r = recall;
-            triples.push_back(t);
-            assignment[it] = assignment[p0];
-            // Add double hits
-            int twin = points[t.z].twin();
-            if (twin > 0) {
-                int s = t.z;
-                t.z = twin;
-                triples.push_back(t);
-                paths.add(s,twin,1000*t.r);
-                //paths.add(twin,s,1000*t.r);
-                assignment[twin] = assignment[s];
-                if (_verbose) cout << "addHits: Added double hit " << twin << endl;
-            }
-            found++;
-            if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
-        }
-        else
-            if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
-        
-        found +=  addHitsCached(p1,it,phi,triples);
-    }
-    
-    return found;
-}
-
-// Generate tracklets of 3 points wrt. the first point in seed
 long Tracker::addHits(int p0,int p1,int start,int phi,int the,std::vector<triple> &triples)
 {
     static const std::map<int,vector<int> > layers{
@@ -295,16 +252,14 @@ long Tracker::addHits(int p0,int p1,int start,int phi,int the,std::vector<triple
         int nextlayer = laylist[i];
         //cout << "dephth " << dephth << " layer " << l << endl;
         auto &seed = tube[start][phi][the];
-        //auto &seed = tubecache[start][phi][p0];
         for (auto &it : seed)
         {
             if (assignment[it] != 0) continue; // Point has benn already used
             //if (!checkTheta(p1,it)) continue;
             //if (!checkRadius(p1,it)) continue;
-            //float d = distance(p1,it);
-            //if (d>DISTANCE*r) continue;
-            
-            //            if (!checkDistance(p1,it)) continue;
+            float d = distance(p1,it);
+            //if (d>DISTANCE*r) { nd++; continue; }
+            //if (!checkDistance(p1,it)) continue;
             
             double recall = checkTracklet(p0,p1,it); // Point is a candidate on the next layer
             

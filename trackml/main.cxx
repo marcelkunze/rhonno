@@ -23,7 +23,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 1
+#define MAXPARTICLES 2
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
@@ -266,24 +266,24 @@ void makeTrain2()
     for (int i = 0; i < n; i++) {
         for (int j = 0; j< PHIDIM; j++) {
             for (int k = 0; k<THEDIM; k++) {
-            int tube1 = start_list[i].first;
-            for (auto &a : Tracker::tube[tube1][j][k]) {
-                treePoint &p1 = Tracker::points[a];
-                int tube2 = start_list[i].second;
-                for (auto &b : Tracker::tube[tube2][j][k]) {
-                    treePoint &p2 = Tracker::points[b];
-                    if (p1.truth() == p2.truth()) {
-                        ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,1.0); //wright combination
-                        wright++;
-                    }
-                    else {
-                        if (r.Rndm()<wright/wrong) {
-                            ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,0.0); //wrong combination
-                            wrong++;
+                int tube1 = start_list[i].first;
+                for (auto &a : Tracker::tube[tube1][j][k]) {
+                    treePoint &p1 = Tracker::points[a];
+                    int tube2 = start_list[i].second;
+                    for (auto &b : Tracker::tube[tube2][j][k]) {
+                        treePoint &p2 = Tracker::points[b];
+                        if (p1.truth() == p2.truth()) {
+                            ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,1.0); //wright combination
+                            wright++;
+                        }
+                        else {
+                            if (r.Rndm()<wright/wrong) {
+                                ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,0.0); //wrong combination
+                                wrong++;
+                            }
                         }
                     }
                 }
-            }
             }
         }
     }
@@ -367,14 +367,14 @@ void makeTrain3seed()
         
         treePoint &hit1 = hits[0];
         treePoint &hit2 = hits[1];
-
+        
         int istart = 2;
         float d = hit1.distance(hit2); // CHeck for double hits
         if (d<TWINDIST) {
             hit2 = hits[2];
             istart = 3;
         }
-
+        
         double l1(0),l2(0),l3(0);
         point geo = Tracker::meta[hit1.id()];
         int vol = geo.x;
@@ -384,14 +384,14 @@ void makeTrain3seed()
         vol = geo.x;
         lay = geo.y;
         l2 = Tracker::getLayer(vol,lay);
-
+        
         for (int i=istart; i<nhits; i++)    {
             treePoint &hit3 = hits[i];
             geo = Tracker::meta[hit3.id()];
             vol = geo.x;
             lay = geo.y;
             l3 = Tracker::getLayer(vol,lay);
-
+            
             ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
             wright++;
             double phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
@@ -438,7 +438,7 @@ void makeTrain3Continuous()
             vol = geo.x;
             lay = geo.y;
             l3 = Tracker::getLayer(vol,lay);
-
+            
             ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
             wright++;
             double phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3

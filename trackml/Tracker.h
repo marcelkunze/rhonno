@@ -14,7 +14,7 @@
 #define MAXKNN 5
 #define THRESHOLD2 0.90
 #define THRESHOLD3 0.95
-#define DISTANCE 10000.
+#define DISTANCE 0.5
 #define DELTAR   0.5
 #define DELTATHE 0.1
 #define DELTANN  0.1
@@ -22,8 +22,8 @@
 #define MAXDIM 120000
 #define PHIDIM 13
 #define PHIFACTOR 2
-#define THEDIM 13
-#define THEFACTOR 2
+#define THEDIM 25
+#define THEFACTOR 4
 
 #define SCORE true
 
@@ -111,19 +111,17 @@ public:
     static int assignment[MAXDIM]; // hit hs been used
     static Graph<int> paths, tracking;
     static std::vector<int> tube[48][PHIDIM][THEDIM]; // List of hits in each layer
-    static std::vector<int> tubecache[48][PHIDIM][MAXDIM]; // List of hits in each layer wrt. a certain particle
     static std::vector<treePoint> points; // hit Points
     static std::vector<point> hits; //hit position
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
     static std::vector<Particle> particles; //true tracks
     static std::map<long long,int> partIDmap; // create particle ID->index map
-
     static std::map<long long, std::vector<int> > truth_tracks; //truth hit ids in each track
     static std::map<long long, point> track_hits; // Find points in hits
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static std::vector<point> meta; //volume_id / layer_id / module_id
 private:
-    static std::vector<int> knn[MAXDIM][PHIDIM];
+    static std::vector<int> knn[MAXDIM][PHIDIM][THEDIM];
     static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
     static double truth_weight[MAXDIM]; //weighting of each hit
     static long long truth_part[MAXDIM]; //particle this hit belongs to

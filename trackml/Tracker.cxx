@@ -374,7 +374,7 @@ void Tracker::readTubes() {
         int phi  = (int)(M_PI+points[i].phi())*PHIFACTOR;
         int the  = (int)(M_PI+points[i].theta())*THEFACTOR;
         tube[points[i].layer()][phi][the].push_back(i);
-        if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << " phi: " << phi << endl;
+        if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << " phi: " << phi << " the: " << the << endl;
     }
     
     for (int i = 0; i < 48; i++) {
@@ -399,7 +399,7 @@ void Tracker::readTubes() {
                 if (_verbose) {
                     long size = pvec.size();
                     if (size > 0) {
-                        cout << "Tube " << i << " phi " << j << " size: " << size << endl;
+                        cout << "Tube " << i << " phi " << j << " theta " << k << " size: " << size << endl;
                         for (auto it : pvec) cout << it << ",";
                         cout << endl;
                     }
@@ -496,29 +496,28 @@ void Tracker::setupCache() {
         const auto laylist = layers.at(i);
         for (int j = 0; j <PHIDIM; j++) {
             for (int k=0;k<THEDIM;k++) {
-            auto &slice1 = tube[i][j][k];
-            for (auto &it1 : slice1) {
-                float r = radius(it1);
-                vector<pair<int,float> > tmpvec;
-                for (int l = 0; l <laylist.size()-1; l++) {
-                    int l0 = laylist[l];
-                    int l1 = laylist[l+1];
-                    auto &slice2 = tube[l1][j][k];
-                    for (auto &it2 : slice2) {
-                        if (!checkTheta(it1,it2)) continue;
-                        float d = distance(it1,it2);
-                        if (d<DISTANCE*r) {
-                            tubecache[l0][j][it1].push_back(it2);
-                            tmpvec.push_back(make_pair(it2,d));
+                auto &slice1 = tube[i][j][k];
+                for (auto &it1 : slice1) {
+                    float r = radius(it1);
+                    vector<pair<int,float> > tmpvec;
+                    for (int l = 0; l <laylist.size()-1; l++) {
+                        int l0 = laylist[l];
+                        int l1 = laylist[l+1];
+                        auto &slice2 = tube[l1][j][k];
+                        for (auto &it2 : slice2) {
+                            if (!checkTheta(it1,it2)) continue;
+                            float d = distance(it1,it2);
+                            if (d<DISTANCE*r) {
+                                tmpvec.push_back(make_pair(it2,d));
+                            }
                         }
                     }
+                    if (tmpvec.size()==0) continue;
+                    sort(tmpvec.begin(),tmpvec.end(),sortbysec);
+                    if (tmpvec.size()>MAXKNN) tmpvec.resize(MAXKNN);
+                    for (auto it : tmpvec) knn[it1][j][k].push_back(it.first);
                 }
-                if (tmpvec.size()==0) continue;
-                sort(tmpvec.begin(),tmpvec.end(),sortbysec);
-                if (tmpvec.size()>MAXKNN) tmpvec.resize(MAXKNN);
-                for (auto it : tmpvec) knn[it1][j].push_back(it.first);
             }
-        }
         }
     }
 }
@@ -1020,10 +1019,8 @@ unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0),Tracke
 vector<point> Tracker::hits; //hit position
 vector<Particle> Tracker::particles; //true tracks
 map<long long,int> Tracker::partIDmap; // create particle ID->index map
-vector<int> Tracker::knn[MAXDIM][PHIDIM];
-
+vector<int> Tracker::knn[MAXDIM][PHIDIM][THEDIM];
 vector<int> Tracker::tube[48][PHIDIM][THEDIM]; // List of hits in each layer
-vector<int> Tracker::tubecache[48][PHIDIM][MAXDIM]; // List of hits in each layer wrt. a certain particle
 map<long long, vector<int> > Tracker::truth_tracks; //truth hit ids in each track
 map<long long, point> Tracker::track_hits; // Find points in hits
 int Tracker::assignment[MAXDIM];
