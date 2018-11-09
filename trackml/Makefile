@@ -14,7 +14,7 @@ SOURCES1=ReadEvent.cxx Geo.cxx DataStructures.cxx
 OBJECTS1=ReadEvent.o Geo.o DataStructures.o
 
 SOURCES=main.cxx
-SHLIB=Tracker.cxx Point.cxx XMLP.cxx
+SHLIB=Tracker.cxx Point.cxx find.cxx swimmer.cxx XMLP.cxx
 
 HEADERS=$(SRC:.cxx=.h)
 OBJECTS=$(SOURCES:.cxx=.o)
@@ -29,8 +29,8 @@ $(EXECUTABLE): $(OBJECTS) $(LIBRARY) digraph.h
 ReadEvent: $(OBJECTS1) $(LIBRARY)
 	$(CC) $(LDFLAGS) $(OBJECTS1) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
-$(LIBRARY): Tracker.o XMLP.o XMLP.h Point.h Tracker.h
-	clang++ -std=c++11 -fPIC -shared -o $(LIBRARY) XMLP.cxx Point.cxx Tracker.cxx
+$(LIBRARY): Tracker.o Point.o find.o swimmer.o XMLP.o XMLP.h Point.h Tracker.h
+	clang++ -std=c++11 -fPIC -shared -o $(LIBRARY) XMLP.cxx Point.cxx Tracker.cxx find.cxx swimmer.cxx
 
 %.o: %.cxx $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ 
