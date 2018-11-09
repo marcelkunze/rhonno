@@ -14,12 +14,12 @@
 #define MAXKNN 5
 #define THRESHOLD2 0.90
 #define THRESHOLD3 0.95
-#define DISTANCE 0.6
+#define DISTANCE 10000.
 #define DELTAR   0.5
 #define DELTATHE 0.1
 #define DELTANN  0.1
 
-#define MAXDIM 150000
+#define MAXDIM 120000
 #define PHIDIM 13
 #define PHIFACTOR 2
 
@@ -38,7 +38,7 @@ inline double dist2(double x, double y) { return (x*x+y*y); }
 
 //Basics for 3d coordinate representation
 struct point {
-    double x, y, z;
+    float x, y, z;
     point() {}
     point(double x, double y, double z) : x(x),y(y),z(z) {}
     inline point operator-(const point&p) {
@@ -109,7 +109,8 @@ public:
     static int assignment[MAXDIM]; // hit hs been used
     static Graph<int> paths, tracking;
     static std::vector<int> tube[48][PHIDIM]; // List of hits in each layer
-    static std::vector<Point> points; // hit Points
+    static std::vector<int> tubecache[48][PHIDIM][MAXDIM]; // List of hits in each layer wrt. a certain particle
+    static std::vector<treePoint> points; // hit Points
     static std::vector<point> hits; //hit position
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
     static std::vector<Particle> particles; //true tracks
@@ -120,6 +121,7 @@ public:
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static std::vector<point> meta; //volume_id / layer_id / module_id
 private:
+    static std::vector<int> knn[MAXDIM][PHIDIM];
     static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
     static double truth_weight[MAXDIM]; //weighting of each hit
     static long long truth_part[MAXDIM]; //particle this hit belongs to
@@ -141,12 +143,24 @@ private:
     static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
 
     static unsigned long nr, nd, np, nt, n1, n2, n3, n4, ntwins;
-    static Point *p;
     static bool _verbose;
+    static float *_x;
+    static float *_y;
+    static float *_z;
 public:
     Tracker() {}
+    inline
+    static float distance(const int &a, const int &b)
+    {
+        return  sqrt((_x[a] - _x[b]) * (_x[a] - _x[b]) +
+                     (_y[a] - _y[b]) * (_y[a] - _y[b]) +
+                     (_z[a] - _z[b]) * (_z[a] - _z[b]));
+    }
+    inline
+    static float radius(const int &a) { return sqrt(_x[a]*_x[a]+_y[a]*_y[a]+_z[a]*_z[a]); }
     static void verbose(bool verbose=true) {_verbose = verbose;}
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *label,int *truth);
+    static void setupCache();
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
     static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
@@ -155,12 +169,20 @@ public:
     static long findTriples(std::vector<std::pair<int,int> > seed, std::vector<triple> &triples);
     static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
     static long addHits(int p0, int p1, int layer,int phi,std::vector<triple> &triples);
+    static long addHitsCached(int p0,int p1,int phi,std::vector<triple> &triples);
     inline
-    static bool checkRadius(int p0,int p1) { double dr = abs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }
+    static bool checkRadius(const int p0,const int p1) { double dr = abs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }
     inline
-    static bool checkTheta(int p0,int p1) { float dt = fabs(points[p0].theta()-points[p1].theta()); if (dt > DELTATHE) { nt++; return false; } else return true; }
+    static bool checkTheta(const int p0,const int p1) { float dt = fabs(points[p0].theta()-points[p1].theta()); if (dt > DELTATHE) { nt++; return false; } else return true; }
     inline
-    static bool checkDistance(int p0,int p1) { float dt = points[p0].distance(points[p1]); if (dt > DISTANCE) { nd++; return false; } else return true; }
+    static bool checkDistance(const int p0,const int p1) {
+        float d = distance(p0,p1);
+        if (d > DISTANCE*radius(p0)) {
+            nd++;
+            return false;
+        }
+        else return true;
+    }
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
     static long checkLabels(std::vector<int> &p);

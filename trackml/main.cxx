@@ -23,7 +23,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 100
+#define MAXPARTICLES 10
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
@@ -235,9 +235,9 @@ long checkTracks(map<int,vector<int> >  &tracks) {
     return error;
 }
 
-void transform(Particle &particle, std::vector<Point> &points) {
+void transform(Particle &particle, std::vector<treePoint> &points) {
     
-    vector<Point> tmpvec;
+    vector<treePoint> tmpvec;
     long nhits = (long)particle.hit.size();
     static int trackid = 0;
     
@@ -247,7 +247,7 @@ void transform(Particle &particle, std::vector<Point> &points) {
         vector<int> &h = particle.hit;
         int id = h[i];
         point h1 = Tracker::hits[id]*0.001; // in m
-        Point p(h1.x,h1.y,h1.z,id,trackid,i);
+        treePoint p(h1.x,h1.y,h1.z,id,trackid,i);
         tmpvec.push_back(p);
     }
     
@@ -267,10 +267,10 @@ void makeTrain2()
         for (int j = 0; j< PHIDIM; j++) {
             int tube1 = start_list[i].first;
             for (auto &a : Tracker::tube[tube1][j]) {
-                Point &p1 = Tracker::points[a];
+                treePoint &p1 = Tracker::points[a];
                 int tube2 = start_list[i].second;
                 for (auto &b : Tracker::tube[tube2][j]) {
-                    Point &p2 = Tracker::points[b];
+                    treePoint &p2 = Tracker::points[b];
                     if (p1.truth() == p2.truth()) {
                         ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,1.0); //wright combination
                         wright++;
@@ -352,7 +352,7 @@ void makeTrain3seed()
     long wright=1,wrong=1;
     // Combine 3 hits
     for (auto p : Tracker::particles) {
-        vector<Point> hits;
+        vector<treePoint> hits;
         transform(p,hits);
         
         // Sort the hits according to distance from origin
@@ -362,8 +362,8 @@ void makeTrain3seed()
         int nhits = (int)hits.size();
         if (nhits < 3) return;
         
-        Point &hit1 = hits[0];
-        Point &hit2 = hits[1];
+        treePoint &hit1 = hits[0];
+        treePoint &hit2 = hits[1];
 
         int istart = 2;
         float d = hit1.distance(hit2); // CHeck for double hits
@@ -383,7 +383,7 @@ void makeTrain3seed()
         l2 = Tracker::getLayer(vol,lay);
 
         for (int i=istart; i<nhits; i++)    {
-            Point &hit3 = hits[i];
+            treePoint &hit3 = hits[i];
             geo = Tracker::meta[hit3.id()];
             vol = geo.x;
             lay = geo.y;
@@ -408,7 +408,7 @@ void makeTrain3Continuous()
     long wright=1,wrong=1;
     // Combine 3 hits
     for (auto p : Tracker::particles) {
-        vector<Point> hits;
+        vector<treePoint> hits;
         transform(p,hits);
         
         // Sort the hits according to distance from origin
@@ -418,9 +418,9 @@ void makeTrain3Continuous()
         int nhits = (int)hits.size();
         if (nhits < 3) return;
         for (int i=0; i<nhits-2; i++)    {
-            Point &hit1 = hits[i];
-            Point &hit2 = hits[i+1];
-            Point &hit3 = hits[i+2];
+            treePoint &hit1 = hits[i];
+            treePoint &hit2 = hits[i+1];
+            treePoint &hit3 = hits[i+2];
             
             double l1(0),l2(0),l3(0);
             point geo = Tracker::meta[hit1.id()];

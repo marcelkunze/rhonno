@@ -9,23 +9,17 @@
 
 class Point
 {
-private:
-    int _id;                // Hit id
-    int _label;             // Label
-    int _truth;             // True id
-    int _layer;             // layer index (0...47)
-    int _twin;              // Double hit index
-    float _x, _y, _z;      // Cartesian coordinate
-    float _r,_phi,_theta;  // Spherical coordinates
-    float _rz;             // Cylindrical coordinates
+protected:
+    int _id;               // Hit id
+    float _x, _y, _z;      // Cartesian coordinates
+    float _rz,_phi,_theta; // Cylinder coordinates
+    float _r;              // Spherical coordinates
     float _distance;       // Distance from test point
-    std::vector<int> _adjacent; // id of adjacent points
-    std::vector<float> _recall;  // and recall values
 public:
-    Point(void):_id(0),_label(0), _truth(0), _x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_rz(0),_distance(0) {}
+    Point(void):_id(0),_x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_rz(0),_distance(0) {}
     Point(const Point &p);
-    Point(double x, double y, double z, int id=-1, int label=-1, int truth=-1);
-    Point(float x, float y, float z, int id=-1, int label=-1, int truth=-1);
+    Point(double x, double y, double z, int id=-1);
+    Point(float x, float y, float z, int id=-1);
     Point operator+(const Point p) const { return Point(_x+p._x,_y+p._y,_z+p._z);}
     Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
     bool operator<(const Point p) const { return _id<p._id;}
@@ -33,15 +27,14 @@ public:
     static bool sortRz(const Point &a,const Point &b);
     static bool sortDist(const Point &a,const Point &b);
     static bool sortId(const Point &a,const Point &b);
-    static bool sortRecall(const Point &a,const Point &b);
     static float angleBetween(const Point &a,const Point &b,const Point &c);
     static float dot(const Point &a,const Point &b);
     static Point circleCenter(const Point &p1,const Point &p2,const Point &p3);
     static float circleRadius(const Point &p1,const Point &p2,const Point &p3);
     static bool comparison(const Point &a,const Point &b);
-    double distance(const Point &a);
+    float distance() { return _distance;}
+    float distance(const Point &a);
     static float distance(const Point &a, const Point &b);
-    static int classifyAPoint(std::vector<Point> &arr, int k, Point &p, int label);
     inline float x() const {return _x;}
     inline float y() const {return _y;}
     inline float z() const {return _z;}
@@ -50,6 +43,25 @@ public:
     inline float phi() const {return _phi;}
     inline float rz() const {return _rz;}
     inline int id() const {return _id;}
+    inline void setid(int id) { _id = id;}
+};
+
+class treePoint : public Point
+{
+private:
+    int _label;             // Label
+    int _truth;             // True id
+    int _layer;             // layer index (0...47)
+    int _twin;              // Double hit index
+    std::vector<int> _adjacent; // id of adjacent points
+    std::vector<float> _recall;  // and recall values
+public:
+    treePoint() : Point {}, _label(0), _truth(0) {};
+    treePoint(const treePoint &p);
+    treePoint(double x, double y, double z, int id=-1, int label=-1, int truth=-1);
+    treePoint(float x, float y, float z, int id=-1, int label=-1, int truth=-1);
+    static bool sortRecall(const treePoint &a,const treePoint &b);
+    static int classifyAPoint(std::vector<treePoint> &arr, int k, treePoint &p, int label);
     inline int label() const {return _label;}
     inline int truth() const {return _truth;}
     inline int layer() const {return _layer;}
@@ -62,9 +74,9 @@ public:
     inline void settruth(int truth) { _truth = truth;}
     inline void setlayer(int layer) { _layer = layer;}
     inline void settwin(int twin) { _twin = twin;}
-    inline void setid(int id) { _id = id;}
     inline void setneighbour(int neighbour, double recall=-1.0) { _adjacent.push_back(neighbour); _recall.push_back(recall);}
 };
+
 
 // Used to sort an array of points by increasing
 // order of distance from origin
@@ -98,7 +110,7 @@ bool Point::sortId(const Point &a,const Point &b)
 
 // Used to sort an array of points by decreasing recall
 inline
-bool Point::sortRecall(const Point &a,const Point &b)
+bool treePoint::sortRecall(const treePoint &a,const treePoint &b)
 {
     return (a.recall(0) > b.recall(0));
 }
@@ -166,7 +178,7 @@ bool Point::comparison(const Point &a,const Point &b)
 }
 
 inline
-double Point::distance(const Point &a)
+float Point::distance(const Point &a)
 {
     _distance =  sqrt((a._x - _x) * (a._x - _x) +
                       (a._y - _y) * (a._y - _y) +
@@ -188,7 +200,7 @@ float Point::distance(const Point &a, const Point &b)
 // groups and returns 0 if p belongs to group 0, else
 // 1 (belongs to group label).
 inline
-int Point::classifyAPoint(std::vector<Point> &arr, int k, Point &p, int label=1)
+int treePoint::classifyAPoint(std::vector<treePoint> &arr, int k, treePoint &p, int label=1)
 {
     // Fill distances of all points from p
     for (auto it=arr.begin(); it != arr.end(); ++it) it->_distance = p.distance(*it);
