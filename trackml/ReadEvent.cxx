@@ -43,6 +43,8 @@ int layerNHits[Geo::NLayers];
 #define SIGMA 0.001
 #define VERBOSE false
 #define TRACKML
+#define DELTAPHI 0.1
+#define DELTATHE 0.1
 
 TRandom r;
 
@@ -52,7 +54,7 @@ void combine2(xParticle &p1, xParticle &p2);
 void combine3(xParticle &p1, xParticle &p2);
 void combine2(xParticle &p1);
 void combine3(xParticle &p1);
-void combine3continuos(xParticle &p1);
+void combine3serial(xParticle &p1);
 void readEvent( const char *directory, int event, bool loadMC );
 void GenerateTrack(std::vector<treePoint> &points, int np, double delta, double radius, double phi, double gamma, double error);
 
@@ -167,7 +169,7 @@ int main()
             //while (ip == index) index = rand()%nParticles;
             //Particle &p2 = mParticles[index];
             combine2(p1); // Produce training data (2 hits)
-            combine3(p1); // Produce training data (3 hits)
+            combine3serial(p1); // Produce training data (3 hits)
             
         }
         
@@ -441,7 +443,7 @@ void combine3(xParticle &p)
     treePoint &hit2 = hits[1];
     double l1(0),l2(0),l3(0);
     int istart = 2;
-    float d = hit1.distance(hit2); // CHeck for double hits
+    float d = hit1.distance(hit2); // Check for double hits
     if (d<TWINDIST) {
         hit2 = hits[2];
         istart = 3;
@@ -457,7 +459,7 @@ void combine3(xParticle &p)
     
 }
     
-void combine3continuous(xParticle &p)
+void combine3serial(xParticle &p)
 {
     vector<treePoint> hits;
     transform(p,hits,MCHITS);
@@ -474,8 +476,8 @@ void combine3continuous(xParticle &p)
         treePoint &hit2 = hits[i+1];
         treePoint &hit3 = hits[i+2];
         ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
-        double phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
-        double theta3 = r.Rndm()*M_PI;
+        double phi3 = hit3.phi() - DELTAPHI * 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
+        double theta3 = hit3.theta() - DELTATHE * 2.*(0.5-r.Rndm())*M_PI;
         double z3 = hit3.rz() * cos(theta3);
         ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),phi3,z3,hit1.rz(),hit2.rz(),hit3.rz(),0.0); // wrong combination
     }

@@ -57,7 +57,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
 // Look for seeding points by hit pair combinations in the innnermost layers
 vector<pair<int, int> > Tracker::findSeeds()
 {
-    const int n=5; // Seeding layer combinations
+    const int n=6; // Seeding layer combinations
     const int start_list[6][2] = {{0,1}, {11,12}, {4,5}, {0,4}, {0,11}, {18,19}};
     
     static int ntrack(1);
@@ -215,7 +215,7 @@ long Tracker::addHits(int p0,int p1,int start,int phi,int the,std::vector<triple
         {23,{-1}},
         {24,{26}},
         {25,{27}},
-        {26,{228}},
+        {26,{28}},
         {27,{29}},
         {28,{30,31,33}},
         {29,{31}},
@@ -250,24 +250,25 @@ long Tracker::addHits(int p0,int p1,int start,int phi,int the,std::vector<triple
     long found(0);
     for (int i=0; i<laylist.size(); i++) {
         int nextlayer = laylist[i];
+        if (nextlayer<0 || nextlayer>47) break;
         //cout << "dephth " << dephth << " layer " << l << endl;
-        auto &seed = tube[start][phi][the];
-        for (auto &it : seed)
+        auto &seed1 = tube[nextlayer][phi][the];
+        for (auto &it1 : seed1)
         {
-            if (assignment[it] != 0) continue; // Point has benn already used
+            if (assignment[it1] != 0) continue; // Point has benn already used
             //if (!checkTheta(p1,it)) continue;
             //if (!checkRadius(p1,it)) continue;
-            float d = distance(p1,it);
-            //if (d>DISTANCE*r) { nd++; continue; }
+            float d = distance(p1,it1);
+            if (d>DISTANCE*r) { nd++; continue; }
             //if (!checkDistance(p1,it)) continue;
             
-            double recall = checkTracklet(p0,p1,it); // Point is a candidate on the next layer
+            double recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
             
             if (recall > 0) {
-                t.z = it;
+                t.z = it1;
                 t.r = recall;
                 triples.push_back(t);
-                assignment[it] = assignment[p0];
+                assignment[it1] = assignment[p0];
                 // Add double hits
                 int twin = points[t.z].twin();
                 if (twin > 0) {
@@ -279,14 +280,13 @@ long Tracker::addHits(int p0,int p1,int start,int phi,int the,std::vector<triple
                     assignment[twin] = assignment[s];
                     if (_verbose) cout << "addHits: Added double hit " << twin << endl;
                 }
-                found++;
-                if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 OK " << recall << endl;
+                found +=  addHits(p1,it1,nextlayer,phi,the,triples);
+                if (_verbose) cout << t.x << " " << t.y << " " << it1 << ": R3 OK " << recall << endl;
             }
             else
-                if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK " << recall << endl;
+                if (_verbose) cout << t.x << " " << t.y << " " << it1 << ": R3 NOK " << recall << endl;
         }
         
-        found +=  addHits(p0,p1,nextlayer,phi,the,triples);
     }
     
     return found;

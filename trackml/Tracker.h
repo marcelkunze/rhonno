@@ -14,7 +14,7 @@
 #define MAXKNN 5
 #define THRESHOLD2 0.90
 #define THRESHOLD3 0.95
-#define DISTANCE 0.5
+#define DISTANCE 1.0
 #define DELTAR   0.5
 #define DELTATHE 0.1
 #define DELTANN  0.1

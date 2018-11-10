@@ -23,7 +23,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 2
+#define MAXPARTICLES 4
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
