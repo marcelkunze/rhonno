@@ -171,7 +171,7 @@ public:
     static long addHits(int p0, int p1, int layer,int phi,int the,std::vector<triple> &triples);
     static long addHitsCached(int p0,int p1,int phi,std::vector<triple> &triples);
     inline
-    static bool checkRadius(const int p0,const int p1) { double dr = abs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }
+    static bool checkRadius(const int p0,const int p1) { double dr = fabs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }
     inline
     static bool checkTheta(const int p0,const int p1) { float dt = fabs(points[p0].theta()-points[p1].theta()); if (dt > DELTATHE) { nt++; return false; } else return true; }
     inline
