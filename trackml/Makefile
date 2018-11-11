@@ -17,13 +17,13 @@ SOURCES=main.cxx
 SHLIB=Tracker.cxx Point.cxx find.cxx swimmer.cxx XMLP.cxx
 
 HEADERS=$(SRC:.cxx=.h)
-OBJECTS=$(SOURCES:.cxx=.o) $(SOURCES1:.cxx=.o) $(SHLIB:.cxx=.o)
+OBJECTS=$(SOURCES:.cxx=.o) $(SHLIB:.cxx=.o)
 EXECUTABLE=tracker
 LIBRARY=libtrackml.so
 
 all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS) $(LIBRARY) digraph.h
+$(EXECUTABLE): $(OBJECTS) $(LIBRARY)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
 ReadEvent: $(OBJECTS1) $(LIBRARY)
@@ -37,7 +37,4 @@ $(LIBRARY): Tracker.o Point.o find.o swimmer.o XMLP.o XMLP.h Point.h Tracker.h
 
 
 clean:
-	rm Readevent $(EXECUTABLE) $(LIBRARY) $(OBJECTS)
-
-cleanall:
-	rm reco $(OBJECTS) *.~ *.root
+	rm Readevent $(EXECUTABLE) $(LIBRARY) $(OBJECTS) $(OBJECTS1)

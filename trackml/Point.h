@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <cmath>
+#include <algorithm>
 
 class Point
 {
@@ -16,7 +17,7 @@ protected:
     float _r;              // Spherical coordinates
     float _distance;       // Distance from test point
 public:
-    Point(void):_id(0),_x(0),_y(0),_z(0),_r(0),_phi(0),_theta(0),_rz(0),_distance(0) {}
+    Point(void):_id(0),_x(0),_y(0),_z(0),_rz(0),_phi(0),_theta(0),_r(0),_distance(0) {}
     Point(const Point &p);
     Point(double x, double y, double z, int id=-1);
     Point(float x, float y, float z, int id=-1);
@@ -66,9 +67,9 @@ public:
     inline int truth() const {return _truth;}
     inline int layer() const {return _layer;}
     inline int twin() const {return _twin;}
-    inline int neighbour(int i) const {if (i<_adjacent.size()) return _adjacent[i]; else return -1;}
+    inline int neighbour(unsigned int i) const {if (i<_adjacent.size()) return _adjacent[i]; else return -1;}
     inline std::vector<int> &neighbours() {return _adjacent;}
-    inline int recall(int i) const {if (i<_recall.size()) return _recall[i]; else return -1;}
+    inline int recall(unsigned int i) const {if (i<_recall.size()) return _recall[i]; else return -1;}
     inline std::vector<float> &recalls() {return _recall;}
     inline void setlabel(int label) { _label = label;}
     inline void settruth(int truth) { _truth = truth;}
@@ -149,7 +150,7 @@ Point Point::circleCenter(const Point &p1,const Point &p2,const Point &p3)
     double cd =   (offset - pow(p3._x, 2) - pow(p3._y, 2))/2.0;
     double det =  (p1._x - p2._x) * (p2._y - p3._y) - (p2._x - p3._x)* (p1._y - p2._y);
     
-    if (abs(det) < 0.0000001) { return center; }
+    if (fabs(det) < 0.0000001) { return center; }
     
     double idet = 1/det;
     
