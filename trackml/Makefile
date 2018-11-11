@@ -17,7 +17,7 @@ SOURCES=main.cxx
 SHLIB=Tracker.cxx Point.cxx find.cxx swimmer.cxx XMLP.cxx
 
 HEADERS=$(SRC:.cxx=.h)
-OBJECTS=$(SOURCES:.cxx=.o)
+OBJECTS=$(SOURCES:.cxx=.o) $(SOURCES1:.cxx=.o) $(SHLIB:.cxx=.o)
 EXECUTABLE=tracker
 LIBRARY=libtrackml.so
 
