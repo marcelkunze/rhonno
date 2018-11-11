@@ -90,7 +90,7 @@ int main(int argc, char**argv) {
         int vol = geo.x;
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
-        //if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
+        if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
         if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();

@@ -5,10 +5,13 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <vector>
 #include <map>
 #include <memory>
 #include <set>
 #include <stack>
+#include <algorithm>
+#include <functional>
 
 template <typename T>
 class Graph

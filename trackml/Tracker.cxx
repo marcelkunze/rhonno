@@ -48,7 +48,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     // Sort the hits into the detector layers
     cout << "Sorting hits..." << endl;
     readTubes();
-    setupCache();
+    //setupCache();
     
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
@@ -237,7 +237,7 @@ int Tracker::samepart(int a, int b) {
 // Print an integer hit id track vector
 void Tracker::print(vector<int> const &input)
 {
-    for (int i = 0; i < input.size(); i++) {
+    for (unsigned int i = 0; i < input.size(); i++) {
         cout << input.at(i) << ' ';
     }
     cout << endl;
@@ -375,6 +375,8 @@ void Tracker::readTubes() {
         float t = points[i].theta();
         int phi  = PHIFACTOR*(M_PI+p);
         int the  = THEFACTOR*(M_PI+t);
+	if (phi>=PHIDIM) phi = PHIDIM-1;
+	if (the>=THEDIM) the = THEDIM-1;
         tube[points[i].layer()][phi][the].push_back(i);
         if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << " phi: " << phi << " the: " << the << endl;
     }
@@ -496,13 +498,13 @@ void Tracker::setupCache() {
     
     for (int i = 0; i < 48; i++) {
         const auto laylist = layers.at(i);
-        for (int j = 0; j <PHIDIM; j++) {
-            for (int k=0;k<THEDIM;k++) {
+        for (unsigned int j = 0; j <PHIDIM; j++) {
+            for (unsigned int k=0;k<THEDIM;k++) {
                 auto &slice1 = tube[i][j][k];
                 for (auto &it1 : slice1) {
                     float r = radius(it1);
                     vector<pair<int,float> > tmpvec;
-                    for (int l = 0; l <laylist.size(); l++) {
+                    for (unsigned int l = 0; l <laylist.size(); l++) {
                         int l1 = laylist[l];
                         auto &slice2 = tube[l1][j][k];
                         for (auto &it2 : slice2) {
@@ -576,7 +578,7 @@ void Tracker::readTruth(string base_path,int filenum) {
             exit(0);
         }
         
-        int newID = it->second;
+        unsigned int newID = it->second;
         if( newID < 0 || newID>= particles.size() ){
             cout<<"Mapped particle ID is wrong!!!"<<endl;
             cout<<"ID= "<<hit_id<<" new ID "<<newID<<endl;
@@ -651,10 +653,10 @@ void Tracker::sortTracks() {
             v.push_back(hit_id);
         }
         sort(v.begin(), v.end(), track_cmp);
-        for (int i = 0; i < v.size(); i++)
+        for (unsigned int i = 0; i < v.size(); i++)
             p.second[i] = v[i];
         int bad = 0;
-        for (int i = 2; i < v.size(); i++) {
+        for (unsigned int i = 2; i < v.size(); i++) {
             point&a = truth_pos[p.second[i-2]];
             point&b = truth_pos[p.second[i-1]];
             point&c = truth_pos[p.second[i]];
@@ -833,12 +835,12 @@ void Tracker::readHits(string base_path, int filenum) {
     
     initLayers();
     
-    for (int hit_id = 1; hit_id < hits.size(); hit_id++) {
+    for (unsigned int hit_id = 1; hit_id < hits.size(); hit_id++) {
         metai_weight[truth_part[hit_id]][metai[hit_id]] += truth_weight[hit_id];
     }
     
     map<double, double> mir[48], mar[48];
-    for (int i = 1; i < hits.size(); i++) {
+    for (unsigned int i = 1; i < hits.size(); i++) {
         int mi = metai[i];
         if (layer[mi].type != Disc) continue;
         double &mir_ = mir[mi][polar[i].z];
@@ -864,7 +866,7 @@ void Tracker::readHits(string base_path, int filenum) {
     
     metaz.resize(hits.size());
     metaz[0] = 0;
-    for (int i = 1; i < hits.size(); i++) {
+    for (unsigned int i = 1; i < hits.size(); i++) {
         int mi = metai[i];
         metaz[i] = meta[i].z;
         if (layer[mi].type == Disc)
@@ -938,7 +940,7 @@ point Tracker::normalize(point a) {
 
 //Calculate direction of each hit with cell's data
 void Tracker::initHitDir() {
-    for (int hit_id = 1; hit_id < hits.size(); hit_id++) {
+    for (unsigned int hit_id = 1; hit_id < hits.size(); hit_id++) {
         point m = meta[hit_id];
         Detector&d = detectors[int(m.x)*10000000+int(m.y)*10000+int(m.z)];
         
