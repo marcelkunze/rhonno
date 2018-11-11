@@ -57,7 +57,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
 // Look for seeding points by hit pair combinations in the innnermost layers
 vector<pair<int, int> > Tracker::findSeeds()
 {
-    const int n=6; // Seeding layer combinations
+    const int n=5; // Seeding layer combinations
     const int start_list[6][2] = {{0,1}, {11,12}, {4,5}, {0,4}, {0,11}, {18,19}};
     
     static int ntrack(1);
@@ -101,7 +101,7 @@ vector<pair<int, int> > Tracker::findSeeds()
 //Find pairs using a neural network
 vector<pair<int, int> > Tracker::findPairs() {
     
-    const int n = 30;//How many pairs of layers to consider. Roughly proportional to run-time, and setting this to 30 gave practically the same score (less than 0.0002 reduction)
+    const int n = 5;//How many pairs of layers to consider. Roughly proportional to run-time, and setting this to 30 gave practically the same score (less than 0.0002 reduction)
     const pair<int, int> start_list[100] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}, {1, 2}, {5, 6}, {12, 13}, {13, 14}, {6, 7}, {2, 3}, {3, 18}, {19, 20}, {0, 2}, {20, 21}, {1, 4}, {7, 8}, {11, 18}, {1, 11}, {14, 15}, {4, 18}, {2, 18}, {21, 22}, {0, 18}, {1, 18}, {24, 26}, {36, 38}, {15, 16}, {8, 9}, {22, 23}, {9, 10}, {16, 17}, {38, 40}, {5, 18}, {18, 24}, {18, 36}, {12, 18}, {40, 42}, {28, 30}, {26, 28}, {0, 12}, {18, 20}, {6, 18}, {2, 11}, {13, 18}, {2, 4}, {0, 5}, {19, 36}, {19, 24}, {4, 6}, {19, 22}, {20, 22}, {11, 13}, {3, 19}, {7, 18}, {14, 18}, {3, 4}, {22, 25}, {1, 3}, {20, 24}, {15, 18}, {3, 11}, {22, 37}, {30, 32}, {42, 44}, {8, 18}, {9, 18}, {8, 26}, {15, 38}, {20, 36}, {14, 36}, {7, 24}, {1, 5}, {16, 18}, {22, 24}, {18, 22}, {25, 27}, {16, 40}, {10, 30}, {25, 26}, {17, 40}, {36, 39}, {1, 12}, {10, 28}, {7, 26}, {17, 42}, {24, 27}, {21, 24}, {23, 37}, {13, 36}, {15, 36}, {22, 36}, {14, 38}, {8, 28}, {19, 21}, {6, 24}, {9, 28}, {16, 38}, {0, 3}};
     
     static int ntrack(0);
@@ -116,7 +116,7 @@ vector<pair<int, int> > Tracker::findPairs() {
                     //tracking.add(a);
                     for (auto b : tube[start_list[i].second][j][k]) {
                         if (assignment[b] != 0) continue;
-                        double recall = recall2(points[a],points[b])[0];
+                        double recall = checkTracklet(a,b);
                         if (recall > THRESHOLD2) {
                             assignment[a] = ntrack;
                             //assignment[b] = ntrack;
@@ -167,8 +167,8 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed,std::vector<tri
 long Tracker::findTriples(vector<pair<int,int> > seed, vector<triple> &triples) {
     
     for (auto &it : seed) {
-        int phi  = (int)(M_PI+points[it.second].phi())*PHIFACTOR;
-        int the  = (int)(M_PI+points[it.second].theta())*THEFACTOR;
+        int phi  = PHIFACTOR*(M_PI+points[it.second].phi());
+        int the  = THEFACTOR*(M_PI+points[it.second].theta());
         int l = points[it.second].layer();
         vector<triple> trip;
         addHits(it.first,it.second,l,phi,the,trip);
@@ -259,7 +259,8 @@ long Tracker::addHits(int p0,int p1,int start,int phi,int the,std::vector<triple
             //if (!checkTheta(p1,it)) continue;
             //if (!checkRadius(p1,it)) continue;
             float d = distance(p1,it1);
-            if (d>DISTANCE*r) { nd++; continue; }
+            float dr = distance(p1,it1)*r;
+            if (dr>DISTANCE) { nd++; continue; }
             //if (!checkDistance(p1,it)) continue;
             
             double recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer

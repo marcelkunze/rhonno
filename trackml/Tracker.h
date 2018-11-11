@@ -3,7 +3,7 @@
 // Neural Network based tracker
 // M.Kunze, Heidelberg University, 2018
 
-//#define PAIRS
+#define PAIRS
 //#define SWIMMER
 
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
@@ -12,9 +12,9 @@
 #define TRACKLET 2
 #define TWINDIST 0.0051
 #define MAXKNN 5
-#define THRESHOLD2 0.90
-#define THRESHOLD3 0.95
-#define DISTANCE 1.0
+#define THRESHOLD2 0.80
+#define THRESHOLD3 0.90
+#define DISTANCE 1.2
 #define DELTAR   0.5
 #define DELTATHE 0.1
 #define DELTANN  0.1
@@ -22,8 +22,8 @@
 #define MAXDIM 120000
 #define PHIDIM 13
 #define PHIFACTOR 2
-#define THEDIM 25
-#define THEFACTOR 4
+#define THEDIM 13
+#define THEFACTOR 2
 
 #define SCORE true
 

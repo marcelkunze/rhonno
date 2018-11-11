@@ -23,7 +23,7 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 4
+#define MAXPARTICLES 10
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
@@ -94,7 +94,7 @@ int main(int argc, char**argv) {
         if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
-        cout << "Track  " << n << " {";
+        if (VERBOSE) cout << "Track  " << n << " {";
         int oldl = -1;
         for (auto &id : t) {
             auto it = Tracker::track_hits.find(id);
@@ -111,11 +111,13 @@ int main(int argc, char**argv) {
             int l = Tracker::getLayer(vol,lay);
             layer[nhits] = l;
             nhits++;
-            if (l != oldl) cout << l << ",";
+           if (VERBOSE) if (l != oldl) cout << l << ",";
             oldl = l;
         }
-        cout << "-1}" << endl;
-        if (n<100) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
+        if (VERBOSE) {
+            cout << "-1}" << endl;
+            if (n<100) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
+        }
     }
     
     if (nhits > MAXHITS) nhits = MAXHITS;
@@ -191,7 +193,7 @@ int main(int argc, char**argv) {
         makeTrain2();
         ntuple2->Write();
         ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
-        makeTrain3seed();
+        makeTrain3();
         ntuple3->Write();
         delete ntuple2;
         delete ntuple3;
@@ -299,41 +301,40 @@ void makeTrain3()
         long nhits = p.hits;
         if (nhits < 3) continue;
         vector<int> &h = p.hit;
-        int id1 = h[0];
-        int id2 = h[1];
-        point x1 = Tracker::hits[id1]*0.001; // in m
-        point x2 = Tracker::hits[id2]*0.001; // in m
-        Point p1(x1.x,x1.y,x1.z);
-        Point p2(x2.x,x2.y,x2.z);
-        int istart = 2;
-        float d = p1.distance(p2);
-        if (d<TWINDIST) {
-            id2 = h[2];
-            istart = 3;
-        }
-        point geo = Tracker::meta[id1];
-        int vol = geo.x;
-        int lay = geo.y;
-        int l1 = Tracker::getLayer(vol,lay);
-        geo = Tracker::meta[id2];
-        vol = geo.x;
-        lay = geo.y;
-        int l2 = Tracker::getLayer(vol,lay);
-        
-        for (int i=istart; i<nhits; i++)    {
-            // Select 3 continuous points
-            int id3 = h[i];
-            point x3 = Tracker::hits[id3]*0.001; // in m
-            Point p3(x3.x,x3.y,x3.z);
-            point geo = Tracker::meta[id3];
+        for (int i=0; i<nhits-3; i++)    {
+            int id1 = h[i];
+            int id2 = h[i+1];
+            point x1 = Tracker::hits[id1]*0.001; // in m
+            point x2 = Tracker::hits[id2]*0.001; // in m
+            Point p1(x1.x,x1.y,x1.z);
+            Point p2(x2.x,x2.y,x2.z);
+            float d = p1.distance(p2);
+            if (d<TWINDIST) {
+                i++;
+                id2 = h[i+1];
+            }
+            point geo = Tracker::meta[id1];
             int vol = geo.x;
             int lay = geo.y;
+            int l1 = Tracker::getLayer(vol,lay);
+            geo = Tracker::meta[id2];
+            vol = geo.x;
+            lay = geo.y;
+            int l2 = Tracker::getLayer(vol,lay);
+        
+            // Select 3 continuous points
+            int id3 = h[i+2];
+            point x3 = Tracker::hits[id3]*0.001; // in m
+            Point p3(x3.x,x3.y,x3.z);
+            geo = Tracker::meta[id3];
+            vol = geo.x;
+            lay = geo.y;
             int l3 = Tracker::getLayer(vol,lay);
             ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,1.0); //wright combination
             wright++;
             // Select last point randomly in the same layer
-            int phi = (int)(M_PI+p3.phi())*PHIFACTOR;
-            int the = (int)(M_PI+p3.theta())*THEFACTOR;
+            int phi = PHIFACTOR*(M_PI+p3.phi());
+            int the = THEFACTOR*(M_PI+p3.theta());
             auto tube = Tracker::tube[l3][phi][the];
             if (tube.size()==0) continue;
             int index = tube.size()*r.Rndm();

@@ -371,8 +371,10 @@ void Tracker::readTubes() {
     
     long nhits = points.size();
     for (int i = 0; i < nhits; i++) {
-        int phi  = (int)(M_PI+points[i].phi())*PHIFACTOR;
-        int the  = (int)(M_PI+points[i].theta())*THEFACTOR;
+        float p = points[i].phi();
+        float t = points[i].theta();
+        int phi  = PHIFACTOR*(M_PI+p);
+        int the  = THEFACTOR*(M_PI+t);
         tube[points[i].layer()][phi][the].push_back(i);
         if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << " phi: " << phi << " the: " << the << endl;
     }
