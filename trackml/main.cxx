@@ -3,6 +3,7 @@
 
 #include "Tracker.h"
 #include "Point.h"
+#include "Graph.h"
 #include "TNtuple.h"
 #include "TRandom.h"
 #include "TString.h"
@@ -35,7 +36,7 @@
 const std::string base_path = "/Users/marcel/workspace/train_sample/";
 
 //Which event to run, this may be overwritten by main()'s arguments
-int filenum = 21100;
+int filenum = 21105;
 
 using namespace std;
 
@@ -64,7 +65,6 @@ int main(int argc, char**argv) {
     Tracker::verbose(VERBOSE);
     
     if (EVALUATION) {
-        Tracker::readBlacklist(base_path,filenum);
         Tracker::readParticles(base_path,filenum);
         Tracker::readTruth(base_path,filenum);
         Tracker::sortTracks();
@@ -77,7 +77,7 @@ int main(int argc, char**argv) {
     
     long nhits = Tracker::hits.size();
     float x[nhits],y[nhits],z[nhits];
-    int label[nhits],truth[nhits],layer[nhits];
+    int label[nhits],truth[nhits],layer[nhits],module[nhits];
     
     nhits = 0;
     int n = 0;
@@ -90,12 +90,13 @@ int main(int argc, char**argv) {
         int vol = geo.x;
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
-        if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
+        //if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
         if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
         if (VERBOSE) cout << "Track  " << n << " {";
         int oldl = -1;
+        int oldindex = -1;
         for (auto &id : t) {
             auto it = Tracker::track_hits.find(id);
             if (it==Tracker::track_hits.end()) continue;
@@ -108,23 +109,42 @@ int main(int argc, char**argv) {
             point geo = Tracker::meta[id];
             int vol = geo.x;
             int lay = geo.y;
+            int mod = geo.z;
             int l = Tracker::getLayer(vol,lay);
             layer[nhits] = l;
-            nhits++;
-           if (VERBOSE) if (l != oldl) cout << l << ",";
+            module[nhits] = mod;
+            int index = MODULES*l + mod;
+            // Add the hit pair to the tracking graph
+            if (oldindex>-1 && oldindex!=index) {
+                Point p1(x[nhits-1],y[nhits-1],z[nhits-1]);
+                Point p2(x[nhits],y[nhits],z[nhits]);
+                double recall = Tracker::recall2(p1, p2)[0];
+                //if (recall > THRESHOLD2)
+                    Tracker::tracking.add(oldindex,index,1000*recall);
+            }
+            if (VERBOSE) cout << "{" << index << ","  << l << "," << mod << "},";
             oldl = l;
+            oldindex = index;
+            nhits++;
         }
+        Tracker::tracking.add(oldindex,-1);
         if (VERBOSE) {
             cout << "-1}" << endl;
             if (n<100) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
         }
     }
-    
+    if (VERBOSE) {
+        cout << Tracker::tracking << endl;
+        auto modpath = serialize(Tracker::tracking);
+        cout << "modpath:" << endl;
+        for (auto &it : modpath) Tracker::print(it.second);
+    }
+
     if (nhits > MAXHITS) nhits = MAXHITS;
     cout << "Hits: " << nhits << endl;
     
     cout << endl << "Running Tracker:" << endl;
-    long nt = Tracker::findTracks((int)nhits,x,y,z,layer,label,truth);
+    long nt = Tracker::findTracks((int)nhits,x,y,z,layer,module,label,truth);
     
     // Show the results
     cout << "Labels: ";
@@ -308,18 +328,15 @@ void makeTrain3()
             point x2 = Tracker::hits[id2]*0.001; // in m
             Point p1(x1.x,x1.y,x1.z);
             Point p2(x2.x,x2.y,x2.z);
-            float d = p1.distance(p2);
-            if (d<TWINDIST) {
-                i++;
-                id2 = h[i+1];
-            }
             point geo = Tracker::meta[id1];
             int vol = geo.x;
             int lay = geo.y;
+            int mod = geo.z;
             int l1 = Tracker::getLayer(vol,lay);
             geo = Tracker::meta[id2];
             vol = geo.x;
             lay = geo.y;
+            mod = geo.z;
             int l2 = Tracker::getLayer(vol,lay);
         
             // Select 3 continuous points
@@ -329,21 +346,21 @@ void makeTrain3()
             geo = Tracker::meta[id3];
             vol = geo.x;
             lay = geo.y;
+            mod = geo.z;
             int l3 = Tracker::getLayer(vol,lay);
             ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,1.0); //wright combination
             wright++;
-            // Select last point randomly in the same layer
-            int phi = PHIFACTOR*(M_PI+p3.phi());
-            int the = THEFACTOR*(M_PI+p3.theta());
-            auto tube = Tracker::tube[l3][phi][the];
-            if (tube.size()==0) continue;
-            int index = tube.size()*r.Rndm();
-            int idr = tube[index];
-            point x4 = Tracker::hits[idr]*0.001; // in m
-            Point p4(x4.x,x4.y,x4.z);
-            if (r.Rndm()<wright/wrong) {
-                ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p4.rz(),p4.phi(),p4.z(),l1,l2,l3,0.0); //wrong combination
-                wrong++;
+            // Select last point randomly in the same module
+            int index = MODULES*lay + mod;
+            auto hits = Tracker::module[index];
+            for (auto idr : hits) {
+                if (idr==id3) continue; // Same point
+                point x4 = Tracker::hits[idr]*0.001; // in m
+                Point p4(x4.x,x4.y,x4.z);
+                if (r.Rndm()<wright/wrong) {
+                    ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p4.rz(),p4.phi(),p4.z(),l1,l2,l3,0.0); //wrong combination
+                    wrong++;
+                }
             }
         }
     }

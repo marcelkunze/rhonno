@@ -25,7 +25,7 @@ using namespace std;
 
 
 // Find tracks from points
-int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* labels,int *truth)
+int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* module,int* label,int *truth)
 {
     std::clock_t c_start = std::clock();
     
@@ -39,9 +39,10 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     cout << "Reading hits..." << endl;
     for (int i=0;i<nhits;i++) {
         assignment[i] = 0;
-        labels[i] = 0;
-        treePoint p = treePoint(x[i],y[i],z[i],i,labels[i],truth[i]);
-        p.setlayer(layers[i]);
+        label[i] = 0;
+        treePoint p = treePoint(x[i],y[i],z[i],i,label[i],truth[i]);
+        p.setlayer(layer[i]);
+        p.setmodule(module[i]);
         points.push_back(p);
     }
     
@@ -63,10 +64,17 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     auto pairs = findSeeds();
 #endif
     cout << pairs.size() << " pairs" << endl;
-    
+    if (_verbose) {
+        for (auto p : pairs) cout << "{" << p.first << "," << p.second << "}, ";
+        cout << endl;
+    }
+
     c_end = std::clock();
     time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+    
+    // Score the solution
+    if (SCORE) scorePairs(pairs);
     
     // Search triples and add suiting combinations to the graph
     cout << "Searching triples..." << endl;
@@ -100,13 +108,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
     cout << endl << "Number of tracklets   : " << tracklet.size() << endl;
     //cout << "Number of short tracks: " << shortpath.size() << endl;
     if (tracklet.size() == 0) exit(0);
-    
-    // Score the solution
-    if (SCORE) scorePairs(pairs);
-    
-    // extend the tracklet vector to outer layers
-    
-    //  TBD
     
     // Sort the tracklet vector according to the tracklet length
     //sort(tracklet.begin(), tracklet.end(), sortFunc);
@@ -167,7 +168,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         int id = v[0];
         for (auto j : v) {
             na++;
-            labels[j] = it.first;
+            label[j] = it.first;
             points[j].setlabel(it.first);
             if (j == id++)
                 nc ++;
@@ -176,7 +177,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layers,int* la
         }
     }
     
-    for (int i=0;i<nhits;i++) if (labels[i] == 0) napoints++;
+    for (int i=0;i<nhits;i++) if (label[i] == 0) napoints++;
     
     cout << "Number of hits                      : " << nhits << endl;
     cout << "Number of double hits               : " << ntwins << endl;
@@ -284,9 +285,23 @@ double Tracker::checkTracklet(int p0,int p1)
 
 
 // Recall function for triple
-double Tracker::checkTracklet(int p0,int p1,int p2)
+double Tracker::checkTracklet(int p1,int p2,int p3)
 {
-    double recall = recall3(points[p0],points[p1],points[p2])[0];
+    Point &point1 = points[p1];
+    Point &point2 = points[p2];
+    Point &point3 = points[p3];
+
+    Point v1 = point2 - point1;
+    Point v2 = point3 - point1;
+    double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
+    if (angle<0.5*M_PI) {
+        if (angle>DELTANN) { np++; return 0.0; } // Check 0 deg.
+    }
+    else {
+        if ((M_PI-angle)>DELTANN) { np++; return 0.0; } // Check 180 deg.
+    }
+    
+    double recall = recall3(point1,point2,point3)[0];
     bool ok = recall>THRESHOLD3;
     recall = ok ? recall : -recall;
     if (ok) n1++;
@@ -317,17 +332,6 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
 {
     static XMLP net(NETFILE3);
     static float x[9]={0.,0.,0.,0.,0.,0.,0.,0.,0.};
-    static double null[1]={0.0};
-    
-    Point v1 = p2 - p1;
-    Point v2 = p3 - p1;
-    double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
-    if (angle<0.5*M_PI) {
-        if (angle>DELTANN) { np++; return null; } // Check 0 deg.
-    }
-    else {
-        if ((M_PI-angle)>DELTANN) { np++; return null; } // Check 180 deg.
-    }
     
     x[0]     = p1.rz();     // rz1
     x[1]     = p1.phi();    // phi1
@@ -346,7 +350,7 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
 // Generate an index to address the detector layers 0..47
 int Tracker::getLayer(int volume_id, int layer_id) {
     
-    const int itopo[48] = {10,9,8,7,6,5,4,0,1,2,3,11,12,13,14,15,16,17,34,32,30,28,26,24,18,19,20,21,36,38,40,42,44,46,35,33,31,29,27,25,22,23,37,39,41,43,45,47};
+    const int itopo[LAYERS] = {10,9,8,7,6,5,4,0,1,2,3,11,12,13,14,15,16,17,34,32,30,28,26,24,18,19,20,21,36,38,40,42,44,46,35,33,31,29,27,25,22,23,37,39,41,43,45,47};
     const int metai_list[9][7] = {{0,1,2,3,4,5,6},{7,8,9,10,-1,-1,-1},{11,12,13,14,15,16,17},{18,19,20,21,22,23,-1},{24,25,26,27,-1,-1,-1},{28,29,30,31,32,33,-1},{34,35,36,37,38,39,-1},{40,41,-1,-1,-1,-1,-1},{42,43,44,45,46,47}};
     
     if (volume_id<7 || volume_id>18) return -1;
@@ -371,14 +375,21 @@ void Tracker::readTubes() {
     
     long nhits = points.size();
     for (int i = 0; i < nhits; i++) {
+        int l = points[i].layer();
+        if (l<0 || l>=LAYERS) continue;
+        int m = points[i].module();
+        if (m<0 || m>=MODULES) continue;
         float p = points[i].phi();
         float t = points[i].theta();
         int phi  = PHIFACTOR*(M_PI+p);
         int the  = THEFACTOR*(M_PI+t);
-	if (phi>=PHIDIM) phi = PHIDIM-1;
-	if (the>=THEDIM) the = THEDIM-1;
-        tube[points[i].layer()][phi][the].push_back(i);
-        if (_verbose) cout << "Point " << i << " layer:" << points[i].layer() << " phi: " << phi << " the: " << the << endl;
+        if (phi>=PHIDIM) phi = PHIDIM-1;
+        if (the>=THEDIM) the = THEDIM-1;
+        tube[l][phi][the].push_back(i);
+        int index = MODULES*l + m;
+        module[index].push_back(i);
+        modules[l].insert(index);
+        if (_verbose) cout << "Point " << i << " phi:" << phi << " theta:" << the << " layer:" << l << " module: " << m << " index: " << index << endl;
     }
     
     for (int i = 0; i < 48; i++) {
@@ -393,136 +404,14 @@ void Tracker::readTubes() {
                     sort(tube[i][j][k].begin(), tube[i][j][k].end(), r_cmp);
         }
     }
-    
-    // Filter double hits and run k nearest neighbour
-    cout << "Filter double hits..." << endl;
-    for (int i = 0; i < 48; i++) {
-        for (int j = 0; j <PHIDIM; j++) {
-            for (int k=0;k<THEDIM;k++) {
-                auto pvec = tube[i][j][k];
-                if (_verbose) {
-                    long size = pvec.size();
-                    if (size > 0) {
-                        cout << "Tube " << i << " phi " << j << " theta " << k << " size: " << size << endl;
-                        for (auto it : pvec) cout << it << ",";
-                        cout << endl;
-                    }
-                }
-                if (pvec.size()<2) continue;
-                for (auto it1 = pvec.begin(); it1 != pvec.end()-1; it1++) {
-                    int id1 = *it1;
-                    treePoint &p1 = points[id1];
-                    for (auto it2 = it1+1; it2 != pvec.end(); it2++) {
-                        int id2 = *it2;
-                        treePoint &p2 = points[id2];
-                        double d = distance(id1,id2);
-                        //if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
-                        if (d<TWINDIST) {
-                            if (id1<id2)
-                                p1.settwin(id2);
-                            else
-                                p2.settwin(id1);
-                            ntwins++;
-                            if (_verbose) cout << "Twin " << id1 << "," << id2 << ":" << d << endl;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
-// Driver function to sort the vector elements
-// by second element of pairs
-bool sortbysec(const pair<int,int> &a,
-               const pair<int,int> &b)
-{
-    return (a.second < b.second);
-}
-
-// Prepare a cache for KNN point search
-void Tracker::setupCache() {
-    
-    static const std::map<int,vector<int> > layers{
-        {0,{1,4,11}},
-        {1,{2,4,11}},
-        {2,{3,18}},
-        {3,{18}},
-        {4,{5}},
-        {5,{6,24}},
-        {6,{7}},
-        {7,{8,26}},
-        {8,{9}},
-        {9,{10,30}},
-        {10,{34}},
-        {11,{12,18}},
-        {12,{13}},
-        {13,{14,16,38}},
-        {14,{15,38}},
-        {15,{16,40}},
-        {16,{17}},
-        {17,{46}},
-        {18,{19,24,36}},
-        {19,{20,24,36}},
-        {20,{21,24,36}},
-        {21,{22,25,27,37}},
-        {22,{23,25,37}},
-        {23,{-1}},
-        {24,{26}},
-        {25,{27}},
-        {26,{28}},
-        {27,{29}},
-        {28,{30,31,33}},
-        {29,{31}},
-        {30,{32}},
-        {31,{33}},
-        {32,{34}},
-        {33,{35}},
-        {34,{-1}},
-        {35,{-1}},
-        {36,{38,41}},
-        {37,{39}},
-        {38,{40}},
-        {39,{41}},
-        {40,{42}},
-        {41,{43}},
-        {42,{44,47}},
-        {43,{45}},
-        {44,{46}},
-        {45,{47}},
-        {46,{-1}},
-        {47,{-1}},
-    };
-    
-    cout << "Setting up KNN cache..." << endl;
-    
-    for (int i = 0; i < 48; i++) {
-        const auto laylist = layers.at(i);
-        for (unsigned int j = 0; j <PHIDIM; j++) {
-            for (unsigned int k=0;k<THEDIM;k++) {
-                auto &slice1 = tube[i][j][k];
-                for (auto &it1 : slice1) {
-                    float r = radius(it1);
-                    vector<pair<int,float> > tmpvec;
-                    for (unsigned int l = 0; l <laylist.size(); l++) {
-                        int l1 = laylist[l];
-                        auto &slice2 = tube[l1][j][k];
-                        for (auto &it2 : slice2) {
-                            if (!checkTheta(it1,it2)) continue;
-                            float d = distance(it1,it2);
-                            if (d<DISTANCE*r) {
-                                tmpvec.push_back(make_pair(it2,d));
-                            }
-                        }
-                    }
-                    if (tmpvec.size()==0) continue;
-                    sort(tmpvec.begin(),tmpvec.end(),sortbysec);
-                    if (tmpvec.size()>MAXKNN) tmpvec.resize(MAXKNN);
-                    for (auto it : tmpvec) knn[it1][j][k].push_back(it.first);
-                }
-            }
-        }
+    for (int i = 0; i < MODULES; i++) {
+        if (layer[i].type == Disc)
+            sort(module[i].begin(), module[i].end(), z_cmp);
+        else
+            sort(module[i].begin(), module[i].end(), r_cmp);
     }
+    
 }
 
 bool Tracker::z_cmp(const int a, const int&b) { return points[a].z() < points[b].z(); }
@@ -578,8 +467,8 @@ void Tracker::readTruth(string base_path,int filenum) {
             exit(0);
         }
         
-        unsigned int newID = it->second;
-        if( newID < 0 || newID>= particles.size() ){
+        int newID = it->second;
+        if( newID < 0 || newID>= (int)particles.size() ){
             cout<<"Mapped particle ID is wrong!!!"<<endl;
             cout<<"ID= "<<hit_id<<" new ID "<<newID<<endl;
             exit(0);
@@ -671,7 +560,7 @@ void Tracker::sortTracks() {
 
 
 void Tracker::initOrder() {
-    int handpicked[48] = {};
+    int handpicked[LAYERS] = {};
     int c = 0;
     for (int i = 0; i < 4; i++) handpicked[c++] = 7+i;
     for (int i = 0; i < 7; i++) handpicked[c++] = 7-1-i;
@@ -688,7 +577,7 @@ void Tracker::initOrder() {
         handpicked[c++] = 28+i;
         handpicked[c++] = 42+i;
     }
-    for (int i = 0; i < 48; i++) {
+    for (int i = 0; i < LAYERS; i++) {
         topo[i] = handpicked[i];
         itopo[topo[i]] = i;
         //cout << itopo[i] << "," ;
@@ -744,20 +633,20 @@ void Tracker::initLayers() {
         layer[i+40].avgr = avgr3[i];
         layer[i+40].type = Tube;
     }
-    Layer layer2[48];
-    for (int i = 0; i < 48; i++) layer2[i] = layer[i];
-    for (int i = 0; i < 48; i++) layer[i] = layer2[topo[i]];
+    Layer layer2[LAYERS];
+    for (int i = 0; i < LAYERS; i++) layer2[i] = layer[i];
+    for (int i = 0; i < LAYERS; i++) layer[i] = layer2[topo[i]];
     
     layer[0].var0 = 1e-3;
     layer[1].var0 = 5e-4;
     for (int i = 2; i < 18; i++) layer[i].var0 = 3e-4;
     for (int i = 18; i < 22; i++) layer[i].var0 = 5e-2;
-    for (int i = 22; i < 48; i++) layer[i].var0 = i%2 || i == 22 ? 9 : 0.1;
+    for (int i = 22; i < LAYERS; i++) layer[i].var0 = i%2 || i == 22 ? 9 : 0.1;
     
     for (int i = 0; i < 4; i++) layer[i].var1 = 0.5;
     for (int i = 4; i < 18; i++) layer[i].var1 = 5;
     for (int i = 18; i < 24; i++) layer[i].var1 = 7;
-    for (int i = 24; i < 48; i++) layer[i].var1 = i%2 ? 19 : 11;
+    for (int i = 24; i < LAYERS; i++) layer[i].var1 = i%2 ? 19 : 11;
 }
 
 
@@ -793,7 +682,7 @@ void Tracker::readHits(string base_path, int filenum) {
     }
     cout << "Detectors: " << c << endl;
     
-    for (int i = 0; i < 48; i++) {
+    for (int i = 0; i < LAYERS; i++) {
         layer[i].minr = layer[i].minz = 1e9;
         layer[i].maxr = layer[i].maxz =-1e9;
     }
@@ -839,7 +728,7 @@ void Tracker::readHits(string base_path, int filenum) {
         metai_weight[truth_part[hit_id]][metai[hit_id]] += truth_weight[hit_id];
     }
     
-    map<double, double> mir[48], mar[48];
+    map<double, double> mir[LAYERS], mar[LAYERS];
     for (unsigned int i = 1; i < hits.size(); i++) {
         int mi = metai[i];
         if (layer[mi].type != Disc) continue;
@@ -850,8 +739,8 @@ void Tracker::readHits(string base_path, int filenum) {
         mar_ = max(mar_, polar[i].x);
     }
     
-    map<double, int> zi[48];
-    for (int mi = 0; mi < 48; mi++) {
+    map<double, int> zi[LAYERS];
+    for (int mi = 0; mi < LAYERS; mi++) {
         if (layer[mi].type != Disc) continue;
         int k = 0;
         for (auto p : mir[mi]) {
@@ -1022,8 +911,10 @@ unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0),Tracke
 vector<point> Tracker::hits; //hit position
 vector<Particle> Tracker::particles; //true tracks
 map<long long,int> Tracker::partIDmap; // create particle ID->index map
-vector<int> Tracker::knn[MAXDIM][PHIDIM][THEDIM];
-vector<int> Tracker::tube[48][PHIDIM][THEDIM]; // List of hits in each layer
+//vector<int> Tracker::knn[MAXDIM][MODULES];
+vector<int> Tracker::module[LAYERS*MODULES]; // List of hits in each layer
+set<int> Tracker::modules[LAYERS]; // List of modules in each layer
+vector<int> Tracker::tube[LAYERS][PHIDIM][THEDIM]; // List of hits in each layer
 map<long long, vector<int> > Tracker::truth_tracks; //truth hit ids in each track
 map<long long, point> Tracker::track_hits; // Find points in hits
 int Tracker::assignment[MAXDIM];
@@ -1037,13 +928,13 @@ map<long long, point> Tracker::start_pos; //start position
 map<long long, point> Tracker::start_mom; //start momentum
 map<long long, int> Tracker::part_q; //start charge
 map<long long, int> Tracker::part_hits; // = truth_tracks[particle_id].size()
-int Tracker::topo[48], Tracker::itopo[48]; //reordering of layers for approximate sorting
+int Tracker::topo[LAYERS], Tracker::itopo[LAYERS]; //reordering of layers for approximate sorting
 vector<point> Tracker::polar; //hit position in polar / cylindrical coordinates
 vector<point> Tracker::meta; //volume_id / layer_id / module_id
 vector<int> Tracker::metai, Tracker::metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
-double Tracker::disc_z[48][4];
-Layer Tracker::layer[48];
-double Tracker::z_minr[48][4], Tracker::z_maxr[48][4];
+double Tracker::disc_z[LAYERS][4];
+Layer Tracker::layer[LAYERS];
+double Tracker::z_minr[LAYERS][4], Tracker::z_maxr[LAYERS][4];
 map<int, Detector> Tracker::detectors;
 vector<std::pair<pair<int, int>, double> > Tracker::hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
 point Tracker::hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit

@@ -17,8 +17,8 @@ template <typename T>
 class Graph
 {
 private:
-    std::set<T>                   fNodes;
-    std::map<T, std::map<T, int>> fEdges;
+    std::set<T>                    fNodes;
+    std::map<T, std::map<T, int> > fEdges;
 public:
     
     void add(T n) // node

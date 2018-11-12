@@ -53,6 +53,7 @@ private:
     int _label;             // Label
     int _truth;             // True id
     int _layer;             // layer index (0...47)
+    int _module;            // module index (1...3192)
     int _twin;              // Double hit index
     std::vector<int> _adjacent; // id of adjacent points
     std::vector<float> _recall;  // and recall values
@@ -66,6 +67,7 @@ public:
     inline int label() const {return _label;}
     inline int truth() const {return _truth;}
     inline int layer() const {return _layer;}
+    inline int module() const {return _module;}
     inline int twin() const {return _twin;}
     inline int neighbour(unsigned int i) const {if (i<_adjacent.size()) return _adjacent[i]; else return -1;}
     inline std::vector<int> &neighbours() {return _adjacent;}
@@ -74,6 +76,7 @@ public:
     inline void setlabel(int label) { _label = label;}
     inline void settruth(int truth) { _truth = truth;}
     inline void setlayer(int layer) { _layer = layer;}
+    inline void setmodule(int module) { _module = module;}
     inline void settwin(int twin) { _twin = twin;}
     inline void setneighbour(int neighbour, double recall=-1.0) { _adjacent.push_back(neighbour); _recall.push_back(recall);}
 };

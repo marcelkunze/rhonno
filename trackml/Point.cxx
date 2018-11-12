@@ -46,6 +46,7 @@ treePoint::treePoint(double x, double y, double z, int id, int label, int truth)
     _label = label;
     _truth = truth;
     _layer = -1;
+    _module = -1;
     _twin = -1;
     _x = x;
     _y = y;
@@ -63,6 +64,7 @@ treePoint::treePoint(float x, float y, float z, int id, int label, int truth)
     _label = label;
     _truth = truth;
     _layer = -1;
+    _module = -1;
     _twin = -1;
     _x = x;
     _y = y;
@@ -80,6 +82,7 @@ treePoint::treePoint(const treePoint &p)
     _label = p._label;
     _truth = p._truth;
     _layer = p._layer;
+    _module = p._module;
     _twin = p._twin;
     _x = p._x;
     _y = p._y;

@@ -3,7 +3,7 @@
 // Neural Network based tracker
 // M.Kunze, Heidelberg University, 2018
 
-#define PAIRS
+//#define PAIRS
 //#define SWIMMER
 
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
@@ -12,18 +12,20 @@
 #define TRACKLET 2
 #define TWINDIST 0.0051
 #define MAXKNN 5
-#define THRESHOLD2 0.80
-#define THRESHOLD3 0.90
+#define THRESHOLD2 0.50
+#define THRESHOLD3 0.50
 #define DISTANCE 1.2
 #define DELTAR   0.5
 #define DELTATHE 0.1
-#define DELTANN  0.1
+#define DELTANN  0.25
 
-#define MAXDIM 120000
+#define MAXDIM 150000
+#define LAYERS 48
+#define MODULES 3200
 #define PHIDIM 13
 #define PHIFACTOR 2
-#define THEDIM 13
-#define THEFACTOR 2
+#define THEDIM 25
+#define THEFACTOR 4
 
 #define SCORE true
 
@@ -110,7 +112,9 @@ class Tracker {
 public:
     static int assignment[MAXDIM]; // hit hs been used
     static Graph<int> paths, tracking;
-    static std::vector<int> tube[48][PHIDIM][THEDIM]; // List of hits in each layer
+    static std::vector<int> module[LAYERS*MODULES]; // List of hits in each module
+    static std::set<int> modules[LAYERS]; // List of modules in each layer
+    static std::vector<int> tube[LAYERS][PHIDIM][THEDIM]; // List of hits in each layer
     static std::vector<treePoint> points; // hit Points
     static std::vector<point> hits; //hit position
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
@@ -121,7 +125,7 @@ public:
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static std::vector<point> meta; //volume_id / layer_id / module_id
 private:
-    static std::vector<int> knn[MAXDIM][PHIDIM][THEDIM];
+    //static std::vector<int> knn[MAXDIM][MODULES];
     static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
     static double truth_weight[MAXDIM]; //weighting of each hit
     static long long truth_part[MAXDIM]; //particle this hit belongs to
@@ -132,12 +136,12 @@ private:
     static std::map<long long, point> start_mom; //start momentum
     static std::map<long long, int> part_q; //start charge
     static std::map<long long, int> part_hits; // = truth_tracks[particle_id].size()
-    static int topo[48], itopo[48]; //reordering of layers for approximate sorting
-    static double disc_z[48][4];
+    static int topo[LAYERS], itopo[LAYERS]; //reordering of layers for approximate sorting
+    static double disc_z[LAYERS][4];
     static const int Tube = 0, Disc = 1;
     static constexpr double Bfield = 1673.0; //Empirical field strengh, to scale the momentum
-    static Layer layer[48];
-    static double z_minr[48][4], z_maxr[48][4];
+    static Layer layer[LAYERS];
+    static double z_minr[LAYERS][4], z_maxr[LAYERS][4];
     static std::map<int, Detector> detectors;
     static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
     static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
@@ -159,17 +163,16 @@ public:
     inline
     static float radius(const int &a) { return sqrt(_x[a]*_x[a]+_y[a]*_y[a]+_z[a]*_z[a]); }
     static void verbose(bool verbose=true) {_verbose = verbose;}
-    static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *label,int *truth);
-    static void setupCache();
+    static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *module,int *label,int *truth);
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
     static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
+    static std::vector<std::pair<int, int> > findSeedsPhiTheta();
     static std::vector<std::pair<int, int> > findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
     static long findTriples(std::vector<std::pair<int,int> > seed, std::vector<triple> &triples);
     static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
-    static long addHits(int p0, int p1, int layer,int phi,int the,std::vector<triple> &triples);
-    static long addHitsCached(int p0,int p1,int phi,std::vector<triple> &triples);
+    static long addHits(int p0, int p1, int module,std::vector<triple> &triples);
     inline
     static bool checkRadius(const int p0,const int p1) { double dr = fabs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }
     inline
@@ -185,6 +188,8 @@ public:
     }
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
+    static double* recall2(Point &p1, Point &p2);
+    static double* recall3(Point &p1, Point &p2, Point &p3);
     static long checkLabels(std::vector<int> &p);
     static long checkTracks(std::map<int,std::vector<int> >  &tracks);
     static long seedstotal,seedsok;
@@ -199,12 +204,10 @@ public:
     static void sortTracks();
     static int getLayer(int volume, int layer);
     static void scorePairs(std::vector<std::pair<int, int> >&pairs);
-private:
     static void print(std::vector<int> const &input);
+private:
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
     static bool sortDist(const int a,const int b);
-    static double* recall2(Point &p1, Point &p2);
-    static double* recall3(Point &p1, Point &p2, Point &p3);
     static bool z_cmp(const int a, const int&b);
     static bool r_cmp(const int&a, const int&b);
     static int samepart(int a, int b);
