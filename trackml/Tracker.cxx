@@ -386,10 +386,7 @@ void Tracker::readTubes() {
         if (phi>=PHIDIM) phi = PHIDIM-1;
         if (the>=THEDIM) the = THEDIM-1;
         tube[l][phi][the].push_back(i);
-        int index = MODULES*l + m;
-        module[index].push_back(i);
-        modules[l].insert(index);
-        if (_verbose) cout << "Point " << i << " phi:" << phi << " theta:" << the << " layer:" << l << " module: " << m << " index: " << index << endl;
+        if (_verbose) cout << "Point " << i << " phi:" << phi << " theta:" << the << " layer:" << l << " module: " << m << endl;
     }
     
     for (int i = 0; i < 48; i++) {
@@ -405,13 +402,6 @@ void Tracker::readTubes() {
         }
     }
 
-    for (int i = 0; i < MODULES; i++) {
-        if (layer[i].type == Disc)
-            sort(module[i].begin(), module[i].end(), z_cmp);
-        else
-            sort(module[i].begin(), module[i].end(), r_cmp);
-    }
-    
     // Filter double hits
     cout << "Filter double hits..." << endl;
     for (int i = 0; i < LAYERS; i++) {
@@ -439,11 +429,11 @@ void Tracker::readTubes() {
                         if (d<TWINDIST) {
                             if (id1<id2) {
                                 p1.settwin(id2);
-                                //assignment[id2] = 1;
+                                //assignment[id2] = -1;
                             }
                             else {
                                 p2.settwin(id1);
-                                //assignment[id1] = 1;
+                                //assignment[id1] = -11;
                             }
                             ntwins++;
                             if (_verbose) cout << "Twin " << id1 << "," << id2 << ":" << d << endl;
@@ -453,6 +443,28 @@ void Tracker::readTubes() {
             }
         }
     }
+    
+    // Prepare rhe hits in modules
+
+    for (int i = 0; i < nhits; i++) {
+        //if (assignment[i] != 0) continue; // Skip doiuble hits
+        int l = points[i].layer();
+        if (l<0 || l>=LAYERS) continue;
+        int m = points[i].module();
+        if (m<0 || m>=MODULES) continue;
+        int index = MODULES*l + m;
+        module[index].push_back(i);
+        modules[l].insert(index);
+    }
+    
+    for (int i = 0; i < MODULES; i++) {
+        if (layer[i].type == Disc)
+            sort(module[i].begin(), module[i].end(), z_cmp);
+        else
+            sort(module[i].begin(), module[i].end(), r_cmp);
+    }
+    
+
 }
 
 bool Tracker::z_cmp(const int a, const int&b) { return points[a].z() < points[b].z(); }

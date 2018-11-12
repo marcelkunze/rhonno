@@ -12,7 +12,7 @@
 #define TRACKLET 2
 #define TWINDIST 0.0051
 #define MAXKNN 5
-#define THRESHOLD2 0.50
+#define THRESHOLD2 0.70
 #define THRESHOLD3 0.50
 #define DISTANCE 1.2
 #define DELTAR   0.5

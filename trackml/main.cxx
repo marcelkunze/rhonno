@@ -36,11 +36,12 @@
 const std::string base_path = "/Users/marcel/workspace/train_sample/";
 
 //Which event to run, this may be overwritten by main()'s arguments
-int filenum = 21105;
+int filenum = 21100;
 
 using namespace std;
 
 void makeTrain2();
+void makeTrain2PhiTheta();
 void makeTrain3();
 void makeTrain3seed();
 void makeTrain3Continuous();
@@ -120,7 +121,7 @@ int main(int argc, char**argv) {
                 Point p2(x[nhits],y[nhits],z[nhits]);
                 double recall = Tracker::recall2(p1, p2)[0];
                 //if (recall > THRESHOLD2)
-                    Tracker::tracking.add(oldindex,index,1000*recall);
+                Tracker::tracking.add(oldindex,index,1000*recall);
             }
             if (VERBOSE) cout << "{" << index << ","  << l << "," << mod << "},";
             oldl = l;
@@ -139,7 +140,7 @@ int main(int argc, char**argv) {
         cout << "modpath:" << endl;
         for (auto &it : modpath) Tracker::print(it.second);
     }
-
+    
     if (nhits > MAXHITS) nhits = MAXHITS;
     cout << "Hits: " << nhits << endl;
     
@@ -210,7 +211,7 @@ int main(int argc, char**argv) {
         auto f = TFile::Open(fname,"RECREATE");
         cout << endl << "Generating training data file " << fname << endl;
         ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
-        makeTrain2();
+        makeTrain2PhiTheta();
         ntuple2->Write();
         ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
         makeTrain3();
@@ -286,6 +287,47 @@ void makeTrain2()
     
     long wright=1,wrong=1;
     for (int i = 0; i < n; i++) {
+        int tube1 = start_list[i].first;
+        for (auto start : Tracker::modules[tube1]) { // all modules in first layer
+            const auto edgelist = Tracker::tracking.edges(start);
+            if (edgelist.size() == 0) continue;
+            int l1 = start/MODULES;
+            //int m1 = start%MODULES;
+            for (auto edge : edgelist) {
+                int nextindex = edge.first;
+                if (nextindex<0) break;
+                int l2 = nextindex/MODULES;
+                //int m2 = nextindex%MODULES;
+                for (auto a : Tracker::module[start]) { // all hits in module
+                    treePoint &p1 = Tracker::points[a];
+                    for (auto &b : Tracker::module[nextindex]) {
+                        treePoint &p2 = Tracker::points[b];
+                        if (p1.truth() == p2.truth()) {
+                            ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),l1,l2,1.0); //wright combination
+                            wright++;
+                        }
+                        else {
+                            if (r.Rndm()<wright/wrong) {
+                                ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),l1,l2,0.0); //wrong combination
+                                wrong++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    cout << "makeTrain2 Wright: " << wright << " Wrong: " << wrong << endl;
+}
+// Look for seeding points by hit pair combinations in the innnermost layers
+void makeTrain2PhiTheta()
+{
+    
+    const int n=50; // hit pair layer combinations
+    pair<int, int> start_list[100] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}, {1, 2}, {5, 6}, {12, 13}, {13, 14}, {6, 7}, {2, 3}, {3, 18}, {19, 20}, {0, 2}, {20, 21}, {1, 4}, {7, 8}, {11, 18}, {1, 11}, {14, 15}, {4, 18}, {2, 18}, {21, 22}, {0, 18}, {1, 18}, {24, 26}, {36, 38}, {15, 16}, {8, 9}, {22, 23}, {9, 10}, {16, 17}, {38, 40}, {5, 18}, {18, 24}, {18, 36}, {12, 18}, {40, 42}, {28, 30}, {26, 28}, {0, 12}, {18, 20}, {6, 18}, {2, 11}, {13, 18}, {2, 4}, {0, 5}, {19, 36}, {19, 24}, {4, 6}, {19, 22}, {20, 22}, {11, 13}, {3, 19}, {7, 18}, {14, 18}, {3, 4}, {22, 25}, {1, 3}, {20, 24}, {15, 18}, {3, 11}, {22, 37}, {30, 32}, {42, 44}, {8, 18}, {9, 18}, {8, 26}, {15, 38}, {20, 36}, {14, 36}, {7, 24}, {1, 5}, {16, 18}, {22, 24}, {18, 22}, {25, 27}, {16, 40}, {10, 30}, {25, 26}, {17, 40}, {36, 39}, {1, 12}, {10, 28}, {7, 26}, {17, 42}, {24, 27}, {21, 24}, {23, 37}, {13, 36}, {15, 36}, {22, 36}, {14, 38}, {8, 28}, {19, 21}, {6, 24}, {9, 28}, {16, 38}, {0, 3}};
+    
+    long wright=1,wrong=1;
+    for (int i = 0; i < n; i++) {
         for (int j = 0; j< PHIDIM; j++) {
             for (int k = 0; k<THEDIM; k++) {
                 int tube1 = start_list[i].first;
@@ -311,6 +353,7 @@ void makeTrain2()
     }
     cout << "makeTrain2 Wright: " << wright << " Wrong: " << wrong << endl;
 }
+
 
 // Look for seeding points by hit pair combinations in the innnermost layers
 void makeTrain3()
@@ -338,7 +381,7 @@ void makeTrain3()
             lay = geo.y;
             mod = geo.z;
             int l2 = Tracker::getLayer(vol,lay);
-        
+            
             // Select 3 continuous points
             int id3 = h[i+2];
             point x3 = Tracker::hits[id3]*0.001; // in m

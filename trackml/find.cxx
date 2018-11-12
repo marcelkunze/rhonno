@@ -22,12 +22,13 @@ vector<pair<int, int> > Tracker::findSeeds()
         for (auto start : modules[tube1]) { // all modules in first layer
             const auto edgelist = tracking.edges(start);
             if (edgelist.size() == 0) continue;
-            int l1 = start/MODULES;
-            int m1 = start%MODULES;
+            //int l1 = start/MODULES;
+            //int m1 = start%MODULES;
             for (auto edge : edgelist) {
                 int nextindex = edge.first;
-                int l2 = nextindex/MODULES;
-                int m2 = nextindex%MODULES;
+                if (nextindex<0) break;
+                //int l2 = nextindex/MODULES;
+                //int m2 = nextindex%MODULES;
                 for (auto a : module[start]) { // all hits in module
                     if (assignment[a] != 0) continue;
                     auto b = module[nextindex]; // all hits in following modules
