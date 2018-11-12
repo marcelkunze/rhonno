@@ -412,6 +412,47 @@ void Tracker::readTubes() {
             sort(module[i].begin(), module[i].end(), r_cmp);
     }
     
+    // Filter double hits
+    cout << "Filter double hits..." << endl;
+    for (int i = 0; i < LAYERS; i++) {
+        for (int j = 0; j <PHIDIM; j++) {
+            for (int k=0;k<THEDIM;k++) {
+                auto pvec = tube[i][j][k];
+                if (_verbose) {
+                    long size = pvec.size();
+                    if (size > 0) {
+                        cout << "Tube " << i << " phi " << j << " theta " << k << " size: " << size << endl;
+                        for (auto it : pvec) cout << it << ",";
+                        cout << endl;
+                    }
+                }
+                
+                if (pvec.size()<2) continue;
+                for (auto it1 = pvec.begin(); it1 != pvec.end()-1; it1++) {
+                    int id1 = *it1;
+                    treePoint &p1 = points[id1];
+                    for (auto it2 = it1+1; it2 != pvec.end(); it2++) {
+                        int id2 = *it2;
+                        treePoint &p2 = points[id2];
+                        double d = distance(id1,id2);
+                        //if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
+                        if (d<TWINDIST) {
+                            if (id1<id2) {
+                                p1.settwin(id2);
+                                //assignment[id2] = 1;
+                            }
+                            else {
+                                p2.settwin(id1);
+                                //assignment[id1] = 1;
+                            }
+                            ntwins++;
+                            if (_verbose) cout << "Twin " << id1 << "," << id2 << ":" << d << endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 bool Tracker::z_cmp(const int a, const int&b) { return points[a].z() < points[b].z(); }

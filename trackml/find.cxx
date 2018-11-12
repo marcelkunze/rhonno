@@ -32,9 +32,7 @@ vector<pair<int, int> > Tracker::findSeeds()
                     if (assignment[a] != 0) continue;
                     auto b = module[nextindex]; // all hits in following modules
                     if (b.size() == 0) continue;
-                    vector<pair<int,float> > seed = findSeeds(a,b);
-                    long n = seed.size();
-                    if (n > 0) assignment[a] = ntrack++;
+                    vector<pair<int,float> > seed = findSeeds(ntrack++,a,b);
                     for (auto &it : seed) pairs.push_back(make_pair(a, it.first));
                 }
             }
@@ -49,8 +47,8 @@ vector<pair<int, int> > Tracker::findSeeds()
 }
 
 
-// Look for seeding points using a KNN search and a neural network to identify hit pairs
-std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighbours)
+// Look for seeding points using a neural network to identify hit pairs
+std::vector<pair<int,float> > Tracker::findSeeds(int ntrack,int s,std::vector<int> &neighbours)
 {
     vector<pair<int,float> > seed;
     if (assignment[s] !=  0) return seed;
@@ -71,6 +69,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
             seed.push_back(make_pair(it,(float)recall));
             paths.add(s,it,1000*recall);
             //paths.add(it,s,1000*recall);
+            assignment[s] = ntrack;
             // Add double hits
             int twin = p0.twin();
             if (twin > 0) {
@@ -78,7 +77,7 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s, std::vector<int> &neighb
                 seed.push_back(make_pair(twin,(float)recall));
                 paths.add(s,twin,1000*recall);
                 //paths.add(twin,s,1000*recall);
-                assignment[twin] = assignment[s];
+                assignment[twin] = ntrack;
                 
                 if (_verbose) cout << "findSeeds: Added double hit " << twin << endl;
             }
@@ -114,9 +113,7 @@ vector<pair<int, int> > Tracker::findSeedsPhiTheta()
                     int tube2 = start_list[i][1];
                     auto b = tube[tube2][j][k];
                     if (b.size() == 0) continue;
-                    vector<pair<int,float> > seed = findSeeds(a,b);
-                    long n = seed.size();
-                    if (n > 0) assignment[a] = ntrack++;
+                    vector<pair<int,float> > seed = findSeeds(ntrack++,a,b);
                     for (auto &it : seed) pairs.push_back(make_pair(a, it.first));
                 }
                 
@@ -147,7 +144,6 @@ vector<pair<int, int> > Tracker::findPairs() {
             for (int k=0;k<THEDIM;k++) {
                 for (auto a : tube[start_list[i].first][j][k]) {
                     if (assignment[a] != 0) continue;
-                    //tracking.add(a);
                     for (auto b : tube[start_list[i].second][j][k]) {
                         if (assignment[b] != 0) continue;
                         double recall = checkTracklet(a,b);

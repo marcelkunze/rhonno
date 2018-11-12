@@ -166,7 +166,7 @@ public:
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *module,int *label,int *truth);
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
-    static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
+    static std::vector<std::pair<int,float> > findSeeds(int track,int p,std::vector<int> &points);
     static std::vector<std::pair<int, int> > findSeedsPhiTheta();
     static std::vector<std::pair<int, int> > findSeeds();
     static std::vector<std::pair<int, int> > findPairs();
