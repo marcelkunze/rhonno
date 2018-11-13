@@ -30,12 +30,15 @@ public:
     static bool sortId(const Point &a,const Point &b);
     static float angleBetween(const Point &a,const Point &b,const Point &c);
     static float dot(const Point &a,const Point &b);
+    static Point cross(const Point &a,const Point &b);
     static Point circleCenter(const Point &p1,const Point &p2,const Point &p3);
     static float circleRadius(const Point &p1,const Point &p2,const Point &p3);
     static bool comparison(const Point &a,const Point &b);
+    static float magnitude(const Point &a);
     float distance() { return _distance;}
     float distance(const Point &a);
     static float distance(const Point &a, const Point &b);
+    static float distance3(Point &a,Point &b,Point &c);
     inline float x() const {return _x;}
     inline float y() const {return _y;}
     inline float z() const {return _z;}
@@ -139,6 +142,10 @@ float Point::dot(const Point &a,const Point &b)
     return product / (r1 * r2);
 }
 
+inline Point Point::cross(const Point &a,const Point &b) {
+    return Point(a._y*b._z-a._z*b._y, a._z*b._x-a._x*b._z, a._x*b._y-a._y*b._x);
+}
+
 // Calculate the circle center through 3 points
 inline
 Point Point::circleCenter(const Point &p1,const Point &p2,const Point &p3)
@@ -182,6 +189,12 @@ bool Point::comparison(const Point &a,const Point &b)
 }
 
 inline
+float Point::magnitude(const Point &a)
+{
+    return sqrt(a._x*a._x+a._y*a._y+a._z*a._z);
+}
+
+inline
 float Point::distance(const Point &a)
 {
     _distance =  sqrt((a._x - _x) * (a._x - _x) +
@@ -197,6 +210,15 @@ float Point::distance(const Point &a, const Point &b)
                      (a._y - b._y) * (a._y - b._y) +
                      (a._z - b._z) * (a._z - b._z));
     return d;
+}
+
+inline float Point::distance3(Point &a,Point &b,Point &c) {
+    const Point x = a-b;
+    const Point y = a-c;
+    const Point z = c-b;
+    float d = magnitude( cross(x,y)) / magnitude(z);
+    return d;
+    
 }
 
 // This function finds classification of point p using

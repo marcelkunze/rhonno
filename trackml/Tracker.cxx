@@ -47,7 +47,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     }
     
     // Sort the hits into the detector layers
-    cout << "Sorting hits..." << endl;
+    cout << "Setting up..." << endl;
     readTubes();
     //setupCache();
     
@@ -72,12 +72,12 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
         cout << endl;
     }
 
+    if (SCORE) scorePairs(pairs);
+
     c_end = std::clock();
     time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
-    // Score the solution
-    if (SCORE) scorePairs(pairs);
     
     // Search triples and add suiting combinations to the graph
     cout << "Searching triples..." << endl;
@@ -91,9 +91,12 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
         cout << endl;
     }
     
+    if (SCORE) scoreTriples(triples);
+    
     c_end = std::clock();
     time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+
 #endif
     
     // Assemble tracklets from the seeds/pairs
@@ -109,14 +112,16 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     tracklet = serialize(tracking);
 #endif
     
-    c_end = std::clock();
-    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
-    
     // Exvaluate the results
     cout << endl << "Number of tracklets   : " << tracklet.size() << endl;
     //cout << "Number of short tracks: " << shortpath.size() << endl;
     if (tracklet.size() == 0) exit(0);
+
+    if (SCORE) scorePaths(tracklet);
+
+    c_end = std::clock();
+    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     // Sort the tracklet vector according to the tracklet length
     //sort(tracklet.begin(), tracklet.end(), sortFunc);
@@ -126,48 +131,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
         cout << "Tracklets:" << endl;
         for (auto &it : tracklet) print(it.second);
     }
-    
-    // Print out the shot tracks vector
-    //if (_verbose) {
-    //    cout << "Short Tracklets:" << endl;
-    //    for (auto &it:shortpath) print(it);
-    //}
-    
-    // Re-assign the short paths to tracklets
-    int napoints = 0;
-    int rapoints = 0;
-    //for (auto &it:shortpath) napoints += it.size();
-    
-#ifdef REASSIGN
-    cout << endl << "Re-assign n/a hits to tracklets..." << endl;
-    
-    for (auto &it1:tracklet) {
-        vector<int> &t1 = it1;
-        int seed1 = t1[t1.size()-1]; // last hit
-        int seed2 = t1[t1.size()-2]; // 2nd last hit
-        for (auto &it2:shortpath) {
-            vector<int> &t2 = it2;
-            int seed3 = t2[0];
-            double recall = Recall3(points[seed1],points[seed2],points[seed3])[0];
-            if (recall>THRESHOLD) {
-                for (int i=0;i<t2.size();i++) {
-                    t1.push_back(t2[i]);
-                    rapoints++;
-                }
-                shortpath.erase(it2);
-                *it2--;
-                break;
-            }
-        }
-    }
-    
-    // Print out the tracks vector
-    if (_verbose) {
-        cout << "Tracklets after re-assignment:" << endl;
-        for (auto &it : tracklet) print(it);
-    }
-    
-#endif
     
     // Assign labels
     int na = 0;
@@ -186,14 +149,25 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
         }
     }
     
-    for (int i=0;i<nhits;i++) if (label[i] == 0) napoints++;
+    // Check the assignment
     
+    if (SCORE) {
+        map<int, int> map_assignment;
+        for (int i = 1; i < hits.size(); i++)
+            if (label[i]>0) map_assignment[i] = label[i];
+        
+        scoreAssignment(map_assignment);
+        investigateAssignment(tracklet);
+    }
+
+    c_end = std::clock();
+    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+
     cout << "Number of hits                      : " << nhits << endl;
     cout << "Number of double hits               : " << ntwins << endl;
     cout << "Number of assigned points           : " << na << endl;
     cout << "Number of correctly assigned points : " << nc << endl;
-    cout << "Number of unassigned points         : " << napoints << endl;
-    cout << "Number of reassigned points : " << rapoints << endl;
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
     cout << "Radius   <" << DELTAR << ": " << nr <<endl;
     cout << "Theta    <" << DELTATHE << ": " << nt <<endl;
@@ -210,10 +184,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     perc = 0.0;
     if (trackletstotal>0) perc = 100. * trackletsok / (double) trackletstotal;
     cout << "findTracks: " << perc << "%" << endl << endl;
-    
-    c_end = std::clock();
-    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     return (int) tracklet.size();
 }
@@ -954,9 +924,195 @@ void Tracker::scorePairs(vector<pair<int, int> >&pairs) {
     for (long long p : found) {
         score += part_weight[p];
     }
-    cout << "Score: " << score << " from " << pairs.size() << " pairs" << endl << endl;
+    cout << "Score: " << score << " from " << pairs.size() << " pairs" << endl;
 }
 
+
+void Tracker::scoreTriples(vector<triple>&triples) {
+    set<long long> found;
+    for (auto p : triples) {
+        if (samepart(p.x, p.y) && samepart(p.x, p.z)) {
+            found.insert(truth_part[p.x]);
+        }
+    }
+    double score = 0;
+    for (long long p : found) {
+        score += part_weight[p];
+    }
+    cout << "Score: " << score << " from " << triples.size() << " triples" << endl;
+}
+
+
+void Tracker::scorePaths(map<int,vector<int> > &paths) {
+    int total_length = 0;
+    map<long long, double> score_part;
+    for (auto &path : paths) {
+        
+        total_length += path.second.size();
+        map<long long, int> count;
+        for (int i : path.second)
+            count[truth_part[i]]++;
+        long long part=0;
+        int ma = 0;
+        for (auto p : count) {
+            if (p.second >= ma) {
+                ma = p.second;
+                part = p.first;
+            }
+        }
+        double w = 0;
+        for (int j : path.second) {
+            if (truth_part[j] == part) w += truth_weight[j];
+        }
+        score_part[part] = max(score_part[part], w);
+    }
+    double score = 0;
+    for (auto p : score_part) if (p.first) score += p.second;
+    cout << "Score: " << score << " from " << paths.size() << " paths with " << total_length << " hits" << endl;
+}
+
+
+void Tracker::scoreAssignment(map<int, int>& assignment) {
+    map<int, int> track_length;
+    for (auto p : assignment)
+        track_length[p.second]++;
+    
+    double score = 0, score2 = 0;
+    for (auto it : truth_tracks) {
+        map<int, int> c;
+        for (int i : it.second)
+            if (assignment.count(i))
+                c[assignment[i]]++;
+        int pick = -1, maxlen = -1;
+        for (auto p : c)
+            if (p.second*2 > maxlen &&
+                p.second*2 > track_length[p.first]) { pick = p.first; maxlen = p.second*2; }
+        if (pick == -1) continue;
+        
+        for (int i : it.second)
+            if (assignment[i] == pick) {
+                if (maxlen > it.second.size()) score += truth_weight[i];
+                else score2 += truth_weight[i];
+            }
+    }
+    //"Final score: " should be the same as the official score (except for blacklisted electrons)
+    cout << "Final score:  " << score << " from " << assignment.size() << " hits out of " << hits.size()-1 << endl;
+    cout << "Short score:  " << score+score2 << " from " << assignment.size() << " hits out of " << hits.size()-1 << endl;
+}
+
+//Investigate some stats on the assignment, to try to see of there are any more points to gather
+void Tracker::investigateAssignment(map<int,vector<int> > &solution_paths) {
+    cout << solution_paths.size() << endl;
+    int good = 0;
+    map<long long, int> goodc;
+    double stolen = 0, missing = 0, between = 0, duplicate = 0, wrong = 0;
+    for (int i = 1; i < solution_paths.size(); i++) {
+        map<long long, int> c;
+        long long bestp = -1;
+        int mi = solution_paths[i].size();
+        int missed = 0;
+        for (int j : solution_paths[i]) {
+            if (j <= 0) {missed++;continue;}
+            c[truth_part[j]]++;
+            if (c[truth_part[j]]*2 > mi) bestp = truth_part[j];
+        }
+        if (bestp != -1) {
+            goodc[bestp]++;
+            if (goodc[bestp] == 1) {
+                set<int> found, m;
+                for (int j : truth_tracks[bestp]) found.insert(j);
+                int mi = 1e9, ma = -1;
+                for (int j : solution_paths[i]) {
+                    int k = abs(j);
+                    if (truth_part[k] == bestp && j <= 0) stolen += truth_weight[k];
+                    if (truth_part[k] == bestp) {
+                        found.erase(k);
+                        mi = min(mi, metai[k]);
+                        ma = max(ma, metai[k]);
+                        m.insert(metai[k]);
+                    }
+                }
+                for (int j : found) {
+                    missing += truth_weight[j];
+                    if (metai[j] > mi && metai[j] < ma) between += truth_weight[j];
+                    if (m.count(metai[j])) duplicate += truth_weight[j];
+                }
+                good++;
+            }
+            //log(-scorepathDensity(solution_paths[i])) << endl;
+        } else {
+            int bad = 0;
+            for (int k = 1; k < solution_paths[i].size()-1; k++) {
+                auto&v = solution_paths[i];
+                if (v[k-1] > 0 && v[k] < 0 && v[k+1] > 0) bad = 1;
+            }
+            //cerr << bad*1./solution_paths[i].size() << endl;
+            for (int j : solution_paths[i])
+                if (j > 0)
+                    wrong += truth_weight[j];
+        }
+    }
+    cout << good << endl;
+    cout << "Stolen: " << stolen << endl;
+    cout << "Missing: " << missing << endl;
+    cout << "Between: " << between << endl;
+    cout << "Duplicate: " << duplicate << endl;
+    cout << "Wrong: " << wrong << endl;
+    double outside = 0;
+    for (auto&p : part_weight)
+        if (!goodc.count(p.first)) outside += p.second;
+    cout << "Outside: " << outside << endl;
+    
+    
+    map<int, int> map_assignment;
+    for (int i = 1; i < solution_paths.size(); i++)
+        for (int j : solution_paths[i])
+            if (j > 0)
+                map_assignment[j] = i;
+    
+    double completely = 0;
+    for (auto&t : truth_tracks) {
+        map<int, int> c;
+        for (int i : t.second)
+            if (map_assignment[i])
+                c[map_assignment[i]]++;
+        int ma = 0;
+        for (auto&p : c) ma = max(ma, p.second);
+        if (ma <= 2) completely += part_weight[t.first];
+    }
+    cout << "Completely lost: " << completely << endl;
+}
+
+
+//Score triple based on the deviation from a perfect helix, no prior that it should be straight
+double Tracker::scoreTriple(int ai, int bi, int ci) {
+    point center;
+    double radius;
+    circle(hits[ai], hits[bi], hits[ci], center, radius);
+    
+    point cb = hits[ci]-hits[bi];
+    point ba = hits[bi]-hits[ai];
+    double ang_cb = asin(dist(cb.x, cb.y)*.5/radius)*2;
+    double ang_ba = asin(dist(ba.x, ba.y)*.5/radius)*2;
+    if (radius != radius || fabs(radius) > 1e50) {
+        ang_cb = dist(cb.x, cb.y);
+        ang_ba = dist(ba.x, ba.y);
+    }
+    if (ba.z*cb.z < 0) ang_ba *= -1;
+    
+    //if (dist(cb.x, cb.y)*.5/radius > M_PI/2 || dist(ba.x, ba.y)*.5/radius > M_PI/2) return 1e9;
+    //-radius*2e-5+
+    double x = ba.z ? (fabs(cb.z*ang_ba/ba.z-ang_cb))*radius : 1e9;
+    double y = ang_cb ? (fabs(cb.z*ang_ba/ang_cb-ba.z)) : 1e9;
+    double score = min(x, y);//, fabs(cb.z-ba.z*ang_cb/ang_ba)));
+    /*
+     cout << endl;
+     cout << truth_mom[bi]*part_q[truth_part[bi]] << endl;
+     point rr = hits[bi]-center;
+     if (cb.x*rr.y-cb.y*rr.x > 0) ang_cb *= -1;
+     cout << point(-rr.y, rr.x, cb.z/ang_cb) << endl;*/
+    return score;
+}
 
 // Data initialization
 

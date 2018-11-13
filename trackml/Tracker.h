@@ -15,7 +15,7 @@
 #define TRACKLET 2
 #define TWINDIST 0.0051
 #define THRESHOLD2 0.70
-#define THRESHOLD3 0.998
+#define THRESHOLD3 0.90
 #define DISTANCE 1.5
 #define DELTAR   0.5
 #define DELTATHE 0.1
@@ -47,17 +47,20 @@ struct point {
     double x, y, z;
     point() {}
     point(double x, double y, double z) : x(x),y(y),z(z) {}
-    inline point operator-(const point&p) {
+    inline point operator-(const point &p) {
         return point(x-p.x, y-p.y, z-p.z);
     }
-    inline point operator+(const point&p) {
+    inline point operator+(const point &p) {
         return point(x+p.x, y+p.y, z+p.z);
     }
-    inline double operator*(const point&p) {
+    inline double operator*(const point &p) {
         return x*p.x+y*p.y+z*p.z;
     }
     inline point operator*(double f) {
         return point(x*f, y*f, z*f);
+    }
+    inline point cross(point f) const {
+        return point(y*f.z-z*f.y, z*f.x-x*f.z, x*f.y-y*f.x);
     }
     inline
     double distance(const point &a)
@@ -68,7 +71,29 @@ struct point {
     }
 };
 
-inline double dist(const point&p) { return sqrt(p.x*p.x+p.y*p.y+p.z*p.z); }
+inline double dist(const point &p) { return sqrt(p.x*p.x+p.y*p.y+p.z*p.z); }
+
+inline double dist3(point &a,point &b,point &c) {
+    const point x = a-b;
+    const point y = a-c;
+    const point z = c-b;
+    double d = dist( x.cross(y)) / dist(z);
+    return d;
+    
+}
+
+//Find circle with center p, radius r, going through a, b, and c (in xy plane)
+inline void circle(point&a, point&b, point&c, point&p, double&r) {
+    double ax = a.x-c.x, ay = a.y-c.y, bx = b.x-c.x, by = b.y-c.y;
+    double aa = ax*ax+ay*ay, bb = bx*bx+by*by;
+    double idet = .5/(ax*by-ay*bx);
+    p.x = (aa*by-bb*ay)*idet;
+    p.y = (ax*bb-bx*aa)*idet;
+    p.z = 0;
+    r = dist(p.x, p.y);
+    p.x += c.x;
+    p.y += c.y;
+}
 
 //Structure for storing promising triples of hits
 struct triple {
@@ -207,7 +232,12 @@ public:
     static void readTubes();
     static void sortTracks();
     static int getLayer(int volume, int layer);
-    static void scorePairs(std::vector<std::pair<int, int> >&pairs);
+    static void scorePairs(std::vector<std::pair<int, int> > &pairs);
+    static void scoreTriples(std::vector<triple> &triples);
+    static void scorePaths(std::map<int,std::vector<int> > &paths);
+    static void scoreAssignment(std::map<int, int>& assignment);
+    static void investigateAssignment(std::map<int,std::vector<int> > &solution_paths);
+    static double scoreTriple(int ai, int bi, int ci);
     static void print(std::vector<int> const &input);
 private:
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );

@@ -79,9 +79,9 @@ std::vector<pair<int,float> > Tracker::findSeeds(int s,std::vector<int> &neighbo
     for (auto it:neighbours)
     {
         if (assignment[it] > 0) continue;
-        if (!checkTheta(s,it)) continue;
-        if (!checkRadius(s,it)) continue;
-        if (!checkDistance(s,it)) continue;
+        //if (!checkTheta(s,it)) continue;
+        //if (!checkRadius(s,it)) continue;
+        //if (!checkDistance(s,it)) continue;
         
         double recall = checkTracklet(s,it); // Search for hit pairs
         if (recall > 0) {
@@ -190,9 +190,9 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed)
     
     for (auto &it : seed)
     {
-        if (!checkTheta(p1,it)) continue;
-        if (!checkRadius(p1,it)) continue;
-        if (!checkDistance(p1,it)) continue;
+        //if (!checkTheta(p1,it)) continue;
+        //if (!checkRadius(p1,it)) continue;
+        //if (!checkDistance(p1,it)) continue;
         
         double recall = checkTracklet(p0,p1,it);
         if (recall > 0) {
@@ -264,14 +264,20 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             if (assignment[it1] > 0) continue; // Point has benn already used
             if (!checkTheta(p1,it1)) continue;
             if (!checkRadius(p1,it1)) continue;
-            float d = distance(p1,it1);
-            float dr = d*r;
-            if (dr>DISTANCE) { nd++; continue; }
+            //float d = distance(p1,it1);
+            //float dr = d*r;
+            //if (dr>DISTANCE) { nd++; continue; }
             //if (!checkDistance(p1,it1)) continue;
-            
+            Point &a = points[p0];
+            Point &b = points[p1];
+            Point &c = points[it1];
+            float d = Point::distance3(a,b,c); // distance of it from line p0-p1
+            if (d>0.008) { nd++; continue; }
+
             double recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
+            //double recall = scoreTriple(p0,p1,it1); // Point is a candidate on the next layer
             
-            if (recall > 0) {
+            if (recall > THRESHOLD3) {
                 t.z = it1;
                 t.r = recall;
                 triples.push_back(t);
