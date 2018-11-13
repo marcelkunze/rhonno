@@ -58,12 +58,15 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     // Search neighbouring hits and generate a weighted directed graph
 #ifdef PAIRS
     cout << "Searching pairs..." << endl;
-    auto pairs = findPairs();
-#else
-    cout << "Searching seeds..." << endl;
-    auto pairs = findSeeds();
+    long npairs = findPairs();
 #endif
-    cout << pairs.size() << " pairs" << endl;
+
+#ifdef SEEDS
+    cout << "Searching seeds..." << endl;
+    long npairs = findSeeds();
+#endif
+    
+    cout << npairs << " pairs" << endl;
     if (_verbose) {
         for (auto p : pairs) cout << "{" << p.first << "," << p.second << "}, ";
         cout << endl;
@@ -78,9 +81,10 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     
     // Search triples and add suiting combinations to the graph
     cout << "Searching triples..." << endl;
-    
-    vector<triple> triples;
-    long ntriples = findTriples(pairs,triples);
+
+#ifdef TRIPLETS
+    triples.clear();
+    long ntriples = findTriples();
     cout << ntriples << " triples" << endl;
     if (_verbose) {
         for (auto t: triples) cout << t.x << " " << t.y << " " << t.z << "(" << t.r << ") ";
@@ -90,14 +94,19 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     c_end = std::clock();
     time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
+#endif
     
     // Assemble tracklets from the seeds/pairs
+    map<int,vector<int> > tracklet;
+    
 #ifdef SWIMMER
     cout << "Searching tracks with swimmer..." << endl;
-    auto tracklet = swimmer();
-#else
+    tracklet = swimmer();
+#endif
+    
+#ifdef GRAPH
     cout << "Searching tracks by analyzing directed weighted graph..." << endl;
-    auto tracklet = serialize(paths);
+    tracklet = serialize(tracking);
 #endif
     
     c_end = std::clock();
@@ -435,8 +444,8 @@ void Tracker::readTubes() {
                                 p2.settwin(id1);
                                 //assignment[id1] = -11;
                             }
-                            ntwins++;
                             if (_verbose) cout << "Twin " << id1 << "," << id2 << ":" << d << endl;
+                            ntwins++;
                         }
                     }
                 }
@@ -447,7 +456,7 @@ void Tracker::readTubes() {
     // Prepare rhe hits in modules
 
     for (int i = 0; i < nhits; i++) {
-        //if (assignment[i] != 0) continue; // Skip doiuble hits
+        //if (assignment[i] > 0) continue; // Skip doiuble hits
         int l = points[i].layer();
         if (l<0 || l>=LAYERS) continue;
         int m = points[i].module();
@@ -955,8 +964,10 @@ float* Tracker::_x;
 float* Tracker::_y;
 float* Tracker::_z;
 bool Tracker::_verbose(false);
-vector<treePoint> Tracker::points;
-Graph<int> Tracker::paths, Tracker::tracking;
+vector<treePoint> Tracker::points; // hit Points
+vector<pair<int, int> > Tracker::pairs; // hit pair combinations
+vector<triple> Tracker::triples; // hit triple combinations
+Graph<int> Tracker::paths, Tracker::tracking; // graph to represent particle paths and tracking information
 long Tracker::seedsok(0),Tracker::seedstotal(0);
 long Tracker::trackletsok(0),Tracker::trackletstotal(0);
 unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0);

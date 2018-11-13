@@ -3,29 +3,31 @@
 // Neural Network based tracker
 // M.Kunze, Heidelberg University, 2018
 
+#define SEEDS
 //#define PAIRS
+#define TRIPLETS
 //#define SWIMMER
+#define GRAPH
 
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
 #define TRACKLET 2
 #define TWINDIST 0.0051
-#define MAXKNN 5
 #define THRESHOLD2 0.70
-#define THRESHOLD3 0.50
-#define DISTANCE 1.2
+#define THRESHOLD3 0.998
+#define DISTANCE 1.5
 #define DELTAR   0.5
 #define DELTATHE 0.1
-#define DELTANN  0.25
+#define DELTANN  0.1
 
 #define MAXDIM 150000
 #define LAYERS 48
 #define MODULES 3200
 #define PHIDIM 13
 #define PHIFACTOR 2
-#define THEDIM 25
-#define THEFACTOR 4
+#define THEDIM 13
+#define THEFACTOR 2
 
 #define SCORE true
 
@@ -111,7 +113,9 @@ struct Particle // structure for truth particle info
 class Tracker {
 public:
     static int assignment[MAXDIM]; // hit hs been used
-    static Graph<int> paths, tracking;
+    static std::vector<std::pair<int, int> > pairs; // hit pair combinations
+    static std::vector<triple> triples; // hit triple combinations
+    static Graph<int> paths, tracking; // graph to represent particle paths and tracking information
     static std::vector<int> module[LAYERS*MODULES]; // List of hits in each module
     static std::set<int> modules[LAYERS]; // List of modules in each layer
     static std::vector<int> tube[LAYERS][PHIDIM][THEDIM]; // List of hits in each layer
@@ -166,12 +170,12 @@ public:
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *module,int *label,int *truth);
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
-    static std::vector<std::pair<int,float> > findSeeds(int track,int p,std::vector<int> &points);
-    static std::vector<std::pair<int, int> > findSeedsPhiTheta();
-    static std::vector<std::pair<int, int> > findSeeds();
-    static std::vector<std::pair<int, int> > findPairs();
-    static long findTriples(std::vector<std::pair<int,int> > seed, std::vector<triple> &triples);
-    static long findTriples(int p0,int p1,std::vector<int> &points,std::vector<triple> &triples);
+    static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
+    static long findSeedsPhiTheta();
+    static long findSeeds();
+    static long findPairs();
+    static long findTriples();
+    static long findTriples(int p0,int p1,std::vector<int> &points);
     static long addHits(int p0, int p1, int module,std::vector<triple> &triples);
     inline
     static bool checkRadius(const int p0,const int p1) { double dr = fabs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }

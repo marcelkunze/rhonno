@@ -29,7 +29,7 @@
 #define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE true
+#define VERBOSE false
 #define MAXTRACK 10
 #define MAXLABEL 100
 
@@ -41,8 +41,10 @@ int filenum = 21100;
 using namespace std;
 
 void makeTrain2();
+void makeTrain2pairs();
 void makeTrain2PhiTheta();
 void makeTrain3();
+void makeTrain3triples();
 void makeTrain3seed();
 void makeTrain3Continuous();
 long checkTracks(std::map<int,std::vector<int> >  &tracks);
@@ -115,28 +117,28 @@ int main(int argc, char**argv) {
             layer[nhits] = l;
             module[nhits] = mod;
             int index = MODULES*l + mod;
-            // Add the hit pair to the tracking graph
+            // Add the hit pair to the paths graph
             if (oldindex>-1 && oldindex!=index) {
                 Point p1(x[nhits-1],y[nhits-1],z[nhits-1]);
                 Point p2(x[nhits],y[nhits],z[nhits]);
                 double recall = Tracker::recall2(p1, p2)[0];
                 //if (recall > THRESHOLD2)
-                Tracker::tracking.add(oldindex,index,1000*recall);
+                Tracker::paths.add(oldindex,index,1000*recall);
             }
             if (VERBOSE) cout << "{" << index << ","  << l << "," << mod << "},";
             oldl = l;
             oldindex = index;
             nhits++;
         }
-        Tracker::tracking.add(oldindex,-1);
+        Tracker::paths.add(oldindex,-1);
         if (VERBOSE) {
             cout << "-1}" << endl;
             if (n<100) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
         }
     }
     if (VERBOSE) {
-        cout << Tracker::tracking << endl;
-        auto modpath = serialize(Tracker::tracking);
+        cout << Tracker::paths << endl;
+        auto modpath = serialize(Tracker::paths);
         cout << "modpath:" << endl;
         for (auto &it : modpath) Tracker::print(it.second);
     }
@@ -211,10 +213,10 @@ int main(int argc, char**argv) {
         auto f = TFile::Open(fname,"RECREATE");
         cout << endl << "Generating training data file " << fname << endl;
         ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
-        makeTrain2PhiTheta();
+        makeTrain2pairs();
         ntuple2->Write();
         ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
-        makeTrain3();
+        makeTrain3triples();
         ntuple3->Write();
         delete ntuple2;
         delete ntuple3;
@@ -279,6 +281,29 @@ void transform(Particle &particle, std::vector<treePoint> &points) {
 }
 
 // Look for seeding points by hit pair combinations in the innnermost layers
+void makeTrain2pairs()
+{
+    long wright=1,wrong=1;
+    for (auto pair : Tracker::pairs) {
+        treePoint &p1 = Tracker::points[pair.first];
+        treePoint &p2 = Tracker::points[pair.second];
+        int l1 = p1.layer();
+        int l2 = p2.layer();
+        if (p1.truth() == p2.truth()) {
+            ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),l1,l2,1.0); //wright combination
+            wright++;
+        }
+        else {
+            if (r.Rndm()<wright/wrong) {
+                ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),l1,l2,0.0); //wrong combination
+                wrong++;
+            }
+        }
+    }
+    cout << "makeTrain2pairs Wright: " << wright << " Wrong: " << wrong << endl;
+}
+
+// Look for seeding points by hit pair combinations in the innnermost layers
 void makeTrain2()
 {
     
@@ -289,7 +314,7 @@ void makeTrain2()
     for (int i = 0; i < n; i++) {
         int tube1 = start_list[i].first;
         for (auto start : Tracker::modules[tube1]) { // all modules in first layer
-            const auto edgelist = Tracker::tracking.edges(start);
+            const auto edgelist = Tracker::paths.edges(start);
             if (edgelist.size() == 0) continue;
             int l1 = start/MODULES;
             //int m1 = start%MODULES;
@@ -351,7 +376,32 @@ void makeTrain2PhiTheta()
             }
         }
     }
-    cout << "makeTrain2 Wright: " << wright << " Wrong: " << wrong << endl;
+    cout << "makeTrain2PhiTheta Wright: " << wright << " Wrong: " << wrong << endl;
+}
+
+// Look for seeding points by hit pair combinations in the innnermost layers
+void makeTrain3triples()
+{
+    long wright=1,wrong=1;
+    for (auto triple : Tracker::triples) {
+        treePoint &p1 = Tracker::points[triple.x];
+        treePoint &p2 = Tracker::points[triple.y];
+        treePoint &p3 = Tracker::points[triple.z];
+        int l1 = p1.layer();
+        int l2 = p2.layer();
+        int l3 = p3.layer();
+        if (p1.truth() == p2.truth() && p1.truth() == p3.truth()) {
+            ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,1.0); //wright combination
+            wright++;
+        }
+        else {
+            if (r.Rndm()<wright/wrong) {
+                ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,0.0); //wrong combination
+                wrong++;
+            }
+        }
+    }
+    cout << "makeTrain3triples Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
 
@@ -463,7 +513,7 @@ void makeTrain3seed()
         }
         
     }
-    cout << "makeTrain3: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
+    cout << "makeTrain3seed: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
 // Look for seeding points by hit pair combinations in the innnermost layers

@@ -517,9 +517,7 @@ void combine2(xParticle &p1, xParticle &p2)
     // Combine 2 hits of mixed tracks
     for (auto it1=hits1.begin(); it1!=hits1.end()-1; it1++)    {
         treePoint hit1 = *it1;
-        int n=0;
         for (auto it2=it1; it2!=hits1.end(); it2++)    {
-            if (n++>MAXKNN) break;
             treePoint hit2 = *it2;
             if (hit1.truth()==hit2.truth()) continue;
             double d = hit1.distance(hit2);
