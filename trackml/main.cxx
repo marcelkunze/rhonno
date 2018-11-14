@@ -90,6 +90,7 @@ int main(int argc, char**argv) {
     start[0] = 0;
     end[0] = -1;
     for (auto &track : Tracker::truth_tracks) {
+        if (n++ >= MAXPARTICLES) break;
         truepairs.push_back(make_pair(nhits,nhits+1));
         vector<int> t = track.second;
         point geo = Tracker::meta[t[0]]; // Check the first layer of a hit
@@ -97,7 +98,6 @@ int main(int argc, char**argv) {
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
         //if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
-        if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
         //if (VERBOSE) cout << "Track  " << n << " {";
@@ -136,7 +136,6 @@ int main(int argc, char**argv) {
         Tracker::paths.add(oldindex,-1);
         if (VERBOSE) {
             //cout << "-1}" << endl;
-            if (n<100) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
         }
     }
     
@@ -144,7 +143,8 @@ int main(int argc, char**argv) {
         //auto modpath = serialize(Tracker::paths);
         //cout << "modpath:" << endl;
         //for (auto &it : modpath) Tracker::print(it.second);
-        
+        for (int i=1;i<n;i++) cout << "Track " << i << ": " << start[i] << "-" << end[i] << endl;
+
         cout << truepairs.size() << " true pairs" << endl;
         for (auto p : truepairs) cout << "{" << p.first << "," << p.second << "}, ";
         cout << endl;
