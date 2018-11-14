@@ -17,8 +17,8 @@ template <typename T>
 class Graph
 {
 private:
-    std::set<T>                    fNodes;
-    std::map<T, std::map<T, int> > fEdges;
+    std::set<T>                      fNodes;
+    std::map<T, std::map<T, float> > fEdges;
 public:
     
     void add(T n) // node
@@ -28,14 +28,14 @@ public:
         (void)fEdges[n];
     }
     
-    void add(const T& n1, const T& n2, int d = 0) // edge
+    void add(const T& n1, const T& n2, float d = 0.0) // edge
     {
         add(n1);
         add(n2);
         auto& adj = fEdges[n1];
         auto  n   = adj.find(n2);
         if (n != adj.end()) {
-            int& d1 = n->second;
+            float& d1 = n->second;
             if (d < d1) d1 = d;
         } else {
             adj[n2] = d;
@@ -47,14 +47,14 @@ public:
         return fNodes;
     }
     
-    const std::map<T, int>& edges(const T& n) const
+    const std::map<T, float>& edges(const T& n) const
     {
-        static const std::map<T, int> null;
+        static const std::map<T, float> null;
         if (fEdges.find(n)==fEdges.end()) return null; // The node does not exist
         return fEdges.at(n);
     }
 
-    bool areConnected(const T& n1, const T& n2, int& d) const
+    bool areConnected(const T& n1, const T& n2, float& d) const
     {
         if (fEdges.find(n1)==fEdges.end()) return false; // The node does not exist
         auto c = fEdges.at(n1);
@@ -69,7 +69,7 @@ public:
     
     bool areConnected(const T& n1, const T& n2) const
     {
-        int d;
+        float d;
         return areConnected(n1, n2, d);
     }
 };
@@ -130,9 +130,9 @@ inline std::vector<std::vector<T> > parallelize(const Graph<T>& g)
     //        level(n -> {})            = 0
     //        level(n -> {m1,m2,...})    = 1 + max(level(mi))
     //-----------------------------------------------------------
-    typedef std::function<int(const Graph<T>& g, const T& n1, std::map<T, int>&)> Levelfun;
+    typedef std::function<int(const Graph<T>& g, const T& n1, std::map<T, float>&)> Levelfun;
     
-    Levelfun level = [&level](const Graph<T>& g, const T& n1, std::map<T, int>& levelcache) -> int {
+    Levelfun level = [&level](const Graph<T>& g, const T& n1, std::map<T, float>& levelcache) -> int {
         auto p = levelcache.find(n1);
         if (p != levelcache.end()) {
             return p->second;
@@ -145,7 +145,7 @@ inline std::vector<std::vector<T> > parallelize(const Graph<T>& g)
         }
     };
     
-    std::map<T, int> levelcache;
+    std::map<T, float> levelcache;
     // compute the level of each node in the graph
     int l = -1;
     for (const T& n : g.nodes()) {

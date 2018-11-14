@@ -123,7 +123,7 @@ int main(int argc, char**argv) {
                 Point p2(x[nhits],y[nhits],z[nhits]);
                 double recall = Tracker::recall2(p1, p2)[0];
                 //if (recall > THRESHOLD2)
-                Tracker::paths.add(oldindex,index,1000*recall);
+                Tracker::paths.add(oldindex,index,recall);
             }
             if (VERBOSE) cout << "{" << index << ","  << l << "," << mod << "},";
             oldl = l;
@@ -235,6 +235,7 @@ long checkTracks(map<int,vector<int> >  &tracks) {
     for (auto it : tracks) {
         if (it.first==0) continue; // track 0 holds the unassigned hits
         if (!VERBOSE && n++>MAXTRACK) break;
+        if (it.second.size()==0) continue;
         auto t = it.second;
         long id = t[0];
         long errorid = 0;

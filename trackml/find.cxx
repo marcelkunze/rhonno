@@ -8,6 +8,14 @@
 
 using namespace std;
 
+// Driver function to sort the vector elements
+// by second element of pairs
+bool sortbysec(const pair<int,float> &a,
+               const pair<int,float> &b)
+{
+    return (a.second < b.second);
+}
+
 // Look for seeding points by hit pair combinations in the innnermost layers
 long Tracker::findSeeds()
 {
@@ -24,27 +32,57 @@ long Tracker::findSeeds()
         for (auto start : modules[layer1]) { // all modules in first layer
             const auto edgelist = paths.edges(start);
             if (edgelist.size() == 0) continue;
-            //int l1 = start/MODULES;
-            //int m1 = start%MODULES;
+            int l1 = start/MODULES;
+            int m1 = start%MODULES;
+            if (_verbose) cout << "// Layer " << l1 << " module " << m1 <<
+                endl;
             for (auto edge : edgelist) {
                 int nextindex = edge.first;
                 if (nextindex<0) break;
-                //int l2 = nextindex/MODULES;
-                //int m2 = nextindex%MODULES;
+                int l2 = nextindex/MODULES;
+                int m2 = nextindex%MODULES;
+                if (_verbose) cout << "-> Layer " << l2 << " module " << m2 << endl;
                 for (auto a : module[start]) { // all hits in module
+                    
                     if (assignment[a] > 0) continue;
+                    
+                    int twin = points[a].twin();
+                    if (twin>0) {
+                        pairs.push_back(make_pair(a,twin));
+                        tracking.add(a,twin,1.0);
+                        assignment[a] = ntrack;
+                        break;
+                    }
+                    
+                    // Generate seeding points
                     auto b = module[nextindex]; // all hits in following modules
                     if (b.size() == 0) continue;
-                    
-                    vector<pair<int,float> > seed = findSeeds(a,b); // between following modules in the paths graph
-                    
-                    for (auto &it : seed) {
-                        pairs.push_back(make_pair(a,it.first));
-                        tracking.add(a,it.first,it.second*1000.);
-                        //tracking.add(it.first,a,it.second*1000.);
-                        //assignment[it.first] = ntrack;
+                    vector<pair<int,float> > seed;
+                    for (auto it:b)
+                    {
+                        if (assignment[it] > 0) continue;
+                        double recall = checkTracklet(a,it); // Search for hit pairs
+                        if (recall < THRESHOLD2) continue;
+                        float d = distance(a,it);
+                        seed.push_back(make_pair(it,d));
                     }
+                    if (seed.size()==0) continue;
+                    
+                    // Sort seeds according to their value
+                    sort(seed.begin(),seed.end(),sortbysec);
+                    
+                    auto s = seed.begin(); // Take the seed with the shortest distance
+                    int id = s->first;
+                    float d = s->second;
+                    float recall = checkTracklet(a,id);
+                    
+                    if (!checkTheta(a,id)) continue;
+                    if (!checkPhi(a,id)) continue;
+                    if (_verbose) cout << a << " " << id << ": R2 OK " << recall << " d " << d << endl;
+                    pairs.push_back(make_pair(a,id));
+                    assignment[id] = ntrack;
                     assignment[a] = ntrack++;
+                    tracking.add(a,id,recall);
                 }
             }
         }
@@ -60,45 +98,6 @@ long Tracker::findSeeds()
          
     return pairs.size();
 }
-
-
-// Look for seeding points using a neural network to identify hit pairs
-std::vector<pair<int,float> > Tracker::findSeeds(int s,std::vector<int> &neighbours)
-{
-    vector<pair<int,float> > seed;
-    if (assignment[s] >  0) return seed;
-    
-    treePoint &p0 = points[s];
-    int twin = p0.twin();
-    if (twin > 0) {
-        if (twin>p0.id()) seed.push_back(make_pair(twin,1.0));
-        return seed;
-    }
-        
-    // Generate seeding points
-    for (auto it:neighbours)
-    {
-        if (assignment[it] > 0) continue;
-        //if (!checkTheta(s,it)) continue;
-        //if (!checkRadius(s,it)) continue;
-        //if (!checkDistance(s,it)) continue;
-        
-        double recall = checkTracklet(s,it); // Search for hit pairs
-        if (recall > 0) {
-            if (_verbose) cout << s << " " << it << ": R2 OK " << recall << endl;
-            seed.push_back(make_pair(it,(float)recall));
-        }
-        else
-            if (_verbose) cout << s << " " << it << ": R2 NOK " << recall << endl;
-    }
-    
-    long size = seed.size();
-    seedstotal += size;
-    //seedsok += checkLabels(seed);
-    
-    return seed;
-}
-
 
 // Look for seeding points by hit pair combinations in the innnermost layers
 long Tracker::findSeedsPhiTheta()
@@ -121,17 +120,31 @@ long Tracker::findSeedsPhiTheta()
                     auto b = tube[tube2][j][k];
                     if (b.size() == 0) continue;
                     
-                    vector<pair<int,float> > seed = findSeeds(a,b);
-                    
-                    for (auto &it : seed) {
-                        pairs.push_back(make_pair(a,it.first));
-                        tracking.add(a,it.first,it.second*1000.);
-                        //tracking.add(it.first,a,it.second*1000.);
-                        assignment[it.first] = ntrack;
+                    vector<pair<int,float> > seed;
+                    for (auto it:b)
+                    {
+                        if (assignment[it] > 0) continue;
+                        double recall = checkTracklet(a,it); // Search for hit pairs
+                        seed.push_back(make_pair(it,(float)recall));
                     }
+                    if (seed.size()==0) continue;
+                    
+                    // Sort seeds according to their value
+                    sort(seed.begin(),seed.end(),sortbysec);
+                    
+                    auto s = seed.begin(); // Take the seed with the highest value
+                    int id = s->first;
+                    float recall = s->second;
+                    if (recall < THRESHOLD2) continue;
+                    if (!checkTheta(a,id)) continue;
+                    if (!checkPhi(a,id)) continue;
+                    double d = distance(a,id);
+                    if (_verbose) cout << a << " " << id << ": R2 OK " << recall << " d " << d << endl;
+                    pairs.push_back(make_pair(a,id));
+                    assignment[id] = ntrack;
                     assignment[a] = ntrack++;
+                    tracking.add(a,id,recall);
                 }
-                
             }
         }
     }
@@ -167,8 +180,8 @@ long Tracker::findPairs() {
                             assignment[a] = ntrack;
                             //assignment[b] = ntrack;
                             pairs.push_back(make_pair(a, b));
-                            tracking.add(a,b,recall*1000);
-                            tracking.add(b,a,recall*1000);
+                            tracking.add(a,b,recall);
+                            tracking.add(b,a,recall);
                         }
                     }
                 }
@@ -186,7 +199,7 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed)
     t.x = p0;
     t.y = p1;
     
-    triples.clear();
+    //triples.clear();
     
     for (auto &it : seed)
     {
@@ -214,7 +227,7 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed)
 // Generate tracklets of 3 points wrt. the first point in seed
 long Tracker::findTriples() {
 
-    triples.clear();
+    //triples.clear();
 
     for (auto &it : pairs) {
         int l = points[it.second].layer();
@@ -224,8 +237,8 @@ long Tracker::findTriples() {
         vector<triple> trip;
         addHits(it.first,it.second,index,trip);
         for (auto t: trip) {
-            tracking.add(t.y,t.z,1000*t.r);
-            //  tracking.add(t.z,t.y,1000*t.r);
+            tracking.add(t.y,t.z,t.r);
+            //  tracking.add(t.z,t.y,t.r);
             //assignment[t.z] = assignment[t.y]  = assignment[t.x];
         }
         triples.insert(triples.end(),trip.begin(),trip.end()); // append the candidates
@@ -262,8 +275,7 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
         for (auto &it1 : seed1)
         {
             if (assignment[it1] > 0) continue; // Point has benn already used
-            if (!checkTheta(p1,it1)) continue;
-            if (!checkRadius(p1,it1)) continue;
+            //if (!checkTheta(p1,it1)) continue;
             //float d = distance(p1,it1);
             //float dr = d*r;
             //if (dr>DISTANCE) { nd++; continue; }

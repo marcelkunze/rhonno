@@ -14,11 +14,9 @@
 
 #define TRACKLET 2
 #define TWINDIST 0.0051
-#define THRESHOLD2 0.70
+#define THRESHOLD2 0.90
 #define THRESHOLD3 0.90
 #define DISTANCE 1.5
-#define DELTAR   0.5
-#define DELTATHE 0.1
 #define DELTANN  0.1
 
 #define MAXDIM 150000
@@ -175,7 +173,7 @@ private:
     static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
     static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
 
-    static unsigned long nr, nd, np, nt, n1, n2, n3, n4, ntwins;
+    static unsigned long nd, np, nt, n1, n2, n3, n4, ntwins;
     static bool _verbose;
     static float *_x;
     static float *_y;
@@ -195,7 +193,6 @@ public:
     static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *module,int *label,int *truth);
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
-    static std::vector<std::pair<int,float> > findSeeds(int p,std::vector<int> &points);
     static long findSeedsPhiTheta();
     static long findSeeds();
     static long findPairs();
@@ -203,9 +200,19 @@ public:
     static long findTriples(int p0,int p1,std::vector<int> &points);
     static long addHits(int p0, int p1, int module,std::vector<triple> &triples);
     inline
-    static bool checkRadius(const int p0,const int p1) { double dr = fabs(points[p0].r()-points[p0].r()); if (dr > DELTAR) { nr++; return false;} else return true; }
+    static bool checkModule(const int p0,const int p1) {return points[p0].module()!=points[p1].module();}
     inline
-    static bool checkTheta(const int p0,const int p1) { float dt = fabs(points[p0].theta()-points[p1].theta()); if (dt > DELTATHE) { nt++; return false; } else return true; }
+    static bool checkTheta(const int p0,const int p1) {
+        int x1 = THEFACTOR*(M_PI+points[p0].theta());
+        int x2 = THEFACTOR*(M_PI+points[p1].theta());
+        return x1 == x2;
+    }
+    inline
+    static bool checkPhi(const int p0,const int p1) {
+        int x1 = PHIFACTOR*(M_PI+points[p0].phi());
+        int x2 = PHIFACTOR*(M_PI+points[p1].phi());
+        return x1 == x2;
+    }
     inline
     static bool checkDistance(const int p0,const int p1) {
         float d = distance(p0,p1);

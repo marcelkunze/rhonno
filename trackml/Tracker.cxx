@@ -169,8 +169,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     cout << "Number of assigned points           : " << na << endl;
     cout << "Number of correctly assigned points : " << nc << endl;
     cout << "Distance <" << DISTANCE << ": " << nd <<endl;
-    cout << "Radius   <" << DELTAR << ": " << nr <<endl;
-    cout << "Theta    <" << DELTATHE << ": " << nt <<endl;
     cout << "PhiNN    <" << DELTANN << ": " << np <<endl;
     cout << "Threshold2 " << THRESHOLD2 << ": " << n4 << " R2 OK" << endl;
     cout << "Threshold3 " << THRESHOLD3 << ": " << n1 << " R3 OK" << endl;
@@ -405,7 +403,7 @@ void Tracker::readTubes() {
                         treePoint &p2 = points[id2];
                         double d = distance(id1,id2);
                         //if (_verbose) cout << "Distance " << id0 << "," << id1 << ":" << d << endl;
-                        if (d<TWINDIST) {
+                        if (d<TWINDIST && checkModule(id1,id2)) { // short distance in different modules
                             if (id1<id2) {
                                 p1.settwin(id2);
                                 //assignment[id2] = -1;
@@ -1126,7 +1124,7 @@ vector<triple> Tracker::triples; // hit triple combinations
 Graph<int> Tracker::paths, Tracker::tracking; // graph to represent particle paths and tracking information
 long Tracker::seedsok(0),Tracker::seedstotal(0);
 long Tracker::trackletsok(0),Tracker::trackletstotal(0);
-unsigned long Tracker::nr(0),Tracker::nd(0),Tracker::np(0),Tracker::nt(0);
+unsigned long Tracker::nd(0),Tracker::np(0),Tracker::nt(0);
 unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0),Tracker::ntwins(0);
 vector<point> Tracker::hits; //hit position
 vector<Particle> Tracker::particles; //true tracks

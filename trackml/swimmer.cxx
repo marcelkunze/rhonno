@@ -19,7 +19,7 @@ map<int,vector<int> > Tracker::swimmer() {
     for (auto &ip : points) {
         int a = ip.id();
         int n = 0;
-        map<int,int> const &path = tracking.edges(a);
+        map<int,float> const &path = tracking.edges(a);
         if (path.size()==0) continue;
         
         for (auto &it : path ) {
