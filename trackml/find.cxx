@@ -90,9 +90,7 @@ long Tracker::findSeeds()
     }
     
     // Print the tracking graph
-    if (_verbose) {
-        cout << tracking << endl;
-    }
+    if (_verbose) tracking.print();
     
     sort(pairs.begin(),pairs.end());
          
@@ -150,7 +148,7 @@ long Tracker::findSeedsPhiTheta()
     }
     
     if (_verbose) {
-        cout << tracking << endl;
+        tracking.print();
     }
     
     return pairs.size();
@@ -243,7 +241,7 @@ long Tracker::findTriples() {
         }
         triples.insert(triples.end(),trip.begin(),trip.end()); // append the candidates
     }
-    if (_verbose) cout << tracking << endl;
+    if (_verbose) tracking.print();
     return triples.size();
 }
 

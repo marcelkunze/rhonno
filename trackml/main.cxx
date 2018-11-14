@@ -53,6 +53,7 @@ void transform(Particle &particle, std::vector<Point> &points);
 
 TNtuple *ntuple2,*ntuple3;
 TRandom r;
+vector<pair<int,int> > truepairs;
 
 int main(int argc, char**argv) {
     //Read which event to run from arguments, default is event # 1000
@@ -68,6 +69,7 @@ int main(int argc, char**argv) {
     Tracker::verbose(VERBOSE);
     
     if (EVALUATION) {
+        Tracker::readGraph("paths.csv",Tracker::paths);
         Tracker::readParticles(base_path,filenum);
         Tracker::readTruth(base_path,filenum);
         Tracker::sortTracks();
@@ -88,6 +90,7 @@ int main(int argc, char**argv) {
     start[0] = 0;
     end[0] = -1;
     for (auto &track : Tracker::truth_tracks) {
+        truepairs.push_back(make_pair(nhits,nhits+1));
         vector<int> t = track.second;
         point geo = Tracker::meta[t[0]]; // Check the first layer of a hit
         int vol = geo.x;
@@ -97,7 +100,7 @@ int main(int argc, char**argv) {
         if (n++ >= MAXPARTICLES) break;
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
-        if (VERBOSE) cout << "Track  " << n << " {";
+        //if (VERBOSE) cout << "Track  " << n << " {";
         int oldl = -1;
         int oldindex = -1;
         for (auto &id : t) {
@@ -125,23 +128,30 @@ int main(int argc, char**argv) {
                 //if (recall > THRESHOLD2)
                 Tracker::paths.add(oldindex,index,recall);
             }
-            if (VERBOSE) cout << "{" << index << ","  << l << "," << mod << "},";
+            //if (VERBOSE) cout << "{" << index << ","  << l << "," << mod << "},";
             oldl = l;
             oldindex = index;
             nhits++;
         }
         Tracker::paths.add(oldindex,-1);
         if (VERBOSE) {
-            cout << "-1}" << endl;
+            //cout << "-1}" << endl;
             if (n<100) cout << "Track " << n << ": " << start[n] << "-" << end[n] << endl;
         }
     }
+    
     if (VERBOSE) {
-        cout << Tracker::paths << endl;
-        auto modpath = serialize(Tracker::paths);
-        cout << "modpath:" << endl;
-        for (auto &it : modpath) Tracker::print(it.second);
+        //auto modpath = serialize(Tracker::paths);
+        //cout << "modpath:" << endl;
+        //for (auto &it : modpath) Tracker::print(it.second);
+        
+        cout << truepairs.size() << " true pairs" << endl;
+        for (auto p : truepairs) cout << "{" << p.first << "," << p.second << "}, ";
+        cout << endl;
     }
+    
+    // Write path data to file
+    Tracker::writeGraph("paths.csv",Tracker::paths);
     
     if (nhits > MAXHITS) nhits = MAXHITS;
     cout << "Hits: " << nhits << endl;

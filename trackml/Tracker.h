@@ -230,6 +230,8 @@ public:
     static long checkTracks(std::map<int,std::vector<int> >  &tracks);
     static long seedstotal,seedsok;
     static long trackletstotal,trackletsok;
+    static void writeGraph(std::string filename, Graph<int> &g);
+    static void readGraph(std::string filename, Graph<int> &g);
     static void readBlacklist(std::string base_path,int filenum);
     static void readTruth(std::string base_path,int filenum);
     static void readParticles(std::string base_path,int filenum);

@@ -14,6 +14,7 @@
 #include "XMLP.h"
 #include <ctime>
 #include <iostream>
+#include <fstream>
 #include <utility>
 #include <algorithm>
 #include <iterator>
@@ -184,6 +185,30 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     cout << "findTracks: " << perc << "%" << endl << endl;
     
     return (int) tracklet.size();
+}
+
+
+// Write path data to file
+void Tracker::writeGraph(string filename, Graph<int> &g) {
+    cout << "Writing graph data to " << filename << endl;
+    ofstream path(filename);
+    path << g;
+    path.close();
+}
+
+
+// Read path data from file
+void Tracker::readGraph(string filename, Graph<int> &g) {
+    cout << "Reading graph data from " << filename << endl;
+    ifstream input;
+    input.open(filename);
+    if (!input.is_open()) {
+        cerr << "couldn't open filename" << endl;
+    }
+    else {
+        input >> g;
+        input.close();
+    }
 }
 
 

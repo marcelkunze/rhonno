@@ -72,6 +72,34 @@ public:
         float d;
         return areConnected(n1, n2, d);
     }
+    
+    void print(std::ostream& file=std::cout)
+    {
+        std::string sep      = "";
+        bool   nok = false;
+        
+        file << "Graph {";
+        for (const T& n : nodes()) {
+            nok    = true;
+            bool cok = false;
+            if (edges(n).size()==0) continue;
+            for (const auto& c : edges(n)) {
+                cok = true;
+                if (c.second == 0) {
+                    file << sep << n << "->" << (c.first);
+                } else {
+                    file << sep << n << '-' << c.second << "->" << (c.first);
+                }
+                sep = ", ";
+            }
+            if (!cok) {
+                file << sep << n;
+            }
+            sep = ", ";
+        }
+        file << "}" << std::endl;
+    }
+
 };
 
 
@@ -167,30 +195,27 @@ inline std::vector<std::vector<T> > parallelize(const Graph<T>& g)
 template <typename T>
 inline std::ostream& operator<<(std::ostream& file, const Graph<T>& g)
 {
-    std::string sep      = "";
-    bool   nok = false;
-    
-    file << "Graph {";
     for (const T& n : g.nodes()) {
-        nok    = true;
-        bool cok = false;
         if (g.edges(n).size()==0) continue;
         for (const auto& c : g.edges(n)) {
-            cok = true;
-            if (c.second == 0) {
-                file << sep << n << "->" << (c.first);
-            } else {
-                file << sep << n << '-' << c.second << "->" << (c.first);
-            }
-            sep = ", ";
+                file << n << " " << c.second << " " << (c.first) << '\n';
         }
-        if (!cok) {
-            file << sep << n;
-        }
-        sep = ", ";
     }
     
-    return file << "}";
+    return file;
+}
+
+template <typename T>
+inline std::istream& operator>>(std::istream& file, Graph<T>& g)
+{
+    int n1,n2;
+    float weight;
+    while (file.good()) {
+        file >> n1 >> weight >> n2;
+        g.add(n1,n2,weight);
+    }
+    
+    return file;
 }
 
 #endif
