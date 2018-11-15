@@ -26,7 +26,7 @@ using namespace std;
 
 
 // Find tracks from points
-int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int* layer,int* module,int* label,int *truth)
+int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int* layer,int* module,int* label,int *truth,int *hitid)
 {
     std::clock_t c_start = std::clock();
     
@@ -39,7 +39,8 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     _volume = volume;
     _layer = layer;
     _module = module;
-    
+    _hitid = hitid;
+
     points.reserve(nhits);
     
     // Set up a cache for the point coordinates
@@ -51,13 +52,16 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
         p.setvolume(volume[i]);
         p.setlayer(layer[i]);
         p.setmodule(module[i]);
+        p.sethitid(hitid[i]);
         points.push_back(p);
     }
     
     // Sort the hits into the detector layers
     cout << "Setting up..." << endl;
+    readDetectors(FILEPATH);
+    initHitDir();
     readTubes();
-    
+
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
@@ -891,7 +895,8 @@ void Tracker::readCells(string base_path,int filenum) {
 
 //Calculate direction of each hit with cell's data
 void Tracker::initHitDir() {
-    for (int hit_id = 1; hit_id < hits.size(); hit_id++) {
+    for (auto &p : points) {
+        int hit_id = p.hitid();
         point m = meta[hit_id];
         Detector &d = detectors[int(m.x)*10000000+int(m.y)*10000+int(m.z)];
         
@@ -943,6 +948,10 @@ void Tracker::initHitDir() {
             if (hit_dir[hit_id][k]*hits[hit_id] < 0)
                 hit_dir[hit_id][k] = hit_dir[hit_id][k]*-1;
 
+        p.setcx(hit_dir[hit_id][1].x);
+        p.setcy(hit_dir[hit_id][1].y);
+        p.setcz(hit_dir[hit_id][1].z);
+
         //Write out missalignment to ground truth for plotting
         //if (metai[hit_id] == 0)
         //    cerr << acos(max(fabs(hit_dir[hit_id][0]*truth_mom[hit_id]),
@@ -970,8 +979,9 @@ int Tracker::good_pair(int a, int b) {
 //Angle between line through hits ai-bi and cell's data direction of at hit id ai
 double Tracker::dir_miss(int ai, int bi) {
     Point d = points[ai]-points[bi];
-    Point dir(d.cx(),d.cy(),d.cz());
-    return acos(fabs(dir*d)); // Direction between hit and cell
+    Point dir(points[ai].cx(),points[ai].cy(),points[ai].cz());
+    double dot = Point::dot(dir,d);
+    return acos(fabs(dot)); // Direction between hit and cell
 }
 
 
@@ -1263,6 +1273,7 @@ float* Tracker::_cz;
 int* Tracker::_volume;
 int* Tracker::_layer;
 int* Tracker::_module;
+int* Tracker::_hitid;
 bool Tracker::_verbose(false);
 vector<treePoint> Tracker::points; // hit Points
 vector<pair<int, int> > Tracker::pairs; // hit pair combinations

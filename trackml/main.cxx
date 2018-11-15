@@ -24,12 +24,12 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10
+#define MAXPARTICLES 10000
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE true
+#define VERBOSE false
 #define MAXTRACK 10
 #define MAXLABEL 100
 
@@ -76,9 +76,6 @@ int main(int argc, char**argv) {
     }
     Tracker::readHits(base_path,filenum);
     Tracker::readCells(base_path,filenum);
-    Tracker::readDetectors(base_path);
-    Tracker::initHitDir();
-
     
     long nParticles = Tracker::truth_tracks.size();
     if (nParticles>MAXPARTICLES) nParticles = MAXPARTICLES;
@@ -86,7 +83,7 @@ int main(int argc, char**argv) {
     
     long nhits = Tracker::hits.size();
     float x[nhits],y[nhits],z[nhits],cx[nhits],cy[nhits],cz[nhits];
-    int label[nhits],truth[nhits],volume[nhits],layer[nhits],module[nhits];
+    int label[nhits],truth[nhits],volume[nhits],layer[nhits],module[nhits],hitid[nhits];
     for (int i=0;i<nhits;i++) {
         if (Tracker::hit_dir[nhits][0].x != 0.0)
         cout << i << " " << Tracker::hit_dir[nhits][0].x << " " << Tracker::hit_dir[nhits][0].y << " " << Tracker::hit_dir[nhits][0].z << endl;
@@ -119,6 +116,7 @@ int main(int argc, char**argv) {
             z[nhits] = hit.z; // in mm
             label[nhits] = 0;
             truth[nhits] = n; // true track assignment
+            hitid[nhits] = id;
             point geo = Tracker::meta[id];
             int vol = geo.x;
             int lay = geo.y;
@@ -169,7 +167,7 @@ int main(int argc, char**argv) {
     cout << "Hits: " << nhits << endl;
     
     cout << endl << "Running Tracker:" << endl;
-    long nt = Tracker::findTracks((int)nhits,x,y,z,cx,cy,cz,volume,layer,module,label,truth);
+    long nt = Tracker::findTracks((int)nhits,x,y,z,cx,cy,cz,volume,layer,module,label,truth,hitid);
     
     // Show the results
     cout << "Labels: ";

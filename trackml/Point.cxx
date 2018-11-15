@@ -1,9 +1,10 @@
 #include "Point.h"
 #include <cmath>
 
-Point::Point(double x, double y, double z, double cx, double cy, double cz, int id)
+Point::Point(double x, double y, double z, double cx, double cy, double cz, int id, int hitid)
 {
     _id = id;
+    _hitid = hitid;
     _x = x;
     _y = y;
     _z = z;
@@ -17,9 +18,10 @@ Point::Point(double x, double y, double z, double cx, double cy, double cz, int 
     _distance = 0.0;
 }
 
-Point::Point(float x, float y, float z, float cx, float cy, float cz, int id)
+Point::Point(float x, float y, float z, float cx, float cy, float cz, int id, int hitid)
 {
     _id = id;
+    _hitid = hitid;
     _x = x;
     _y = y;
     _z = z;
@@ -36,6 +38,7 @@ Point::Point(float x, float y, float z, float cx, float cy, float cz, int id)
 Point::Point(const Point &p)
 {
     _id = p._id;
+    _hitid = p._hitid;
     _x = p._x;
     _y = p._y;
     _z = p._z;
@@ -52,6 +55,7 @@ Point::Point(const Point &p)
 treePoint::treePoint(double x, double y, double z, double cx, double cy, double cz, int id, int label, int truth)
 {
     _id = id;
+    _hitid = -1;
     _label = label;
     _truth = truth;
     _volume = -1;
@@ -74,6 +78,7 @@ treePoint::treePoint(double x, double y, double z, double cx, double cy, double 
 treePoint::treePoint(float x, float y, float z, float cx, float cy, float cz, int id, int label, int truth)
 {
     _id = id;
+    _hitid = -1;
     _label = label;
     _truth = truth;
     _volume = -1;
@@ -96,6 +101,7 @@ treePoint::treePoint(float x, float y, float z, float cx, float cy, float cz, in
 treePoint::treePoint(const treePoint &p)
 {
     _id = p._id;
+    _hitid = p._hitid;
     _label = p._label;
     _truth = p._truth;
     _volume = p._volume;

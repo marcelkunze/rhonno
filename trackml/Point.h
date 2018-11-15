@@ -12,6 +12,7 @@ class Point
 {
 protected:
     int _id;                // Hit id
+    int _hitid;             // TrackML hit id
     double _x,_y,_z;        // Cartesian coordinates
     double _cx,_cy,_cz;     // Directional cosines
     double _rz,_phi,_theta; // Cylinder coordinates
@@ -20,8 +21,8 @@ protected:
 public:
     Point(void):_id(0),_x(0),_y(0),_z(0),_cx(0),_cy(0),_cz(0),_rz(0),_phi(0),_theta(0),_r(0),_distance(0) {}
     Point(const Point &p);
-    Point(double x,double y,double z,double cx=0.,double cy=0.,double cz=0.,int id=-1);
-    Point(float x,float y,float z,float cx=0.,float cy=0.,float cz=0.,int id=-1);
+    Point(double x,double y,double z,double cx=0.,double cy=0.,double cz=0.,int id=-1,int hitid=-1);
+    Point(float x,float y,float z,float cx=0.,float cy=0.,float cz=0.,int id=-1,int hitid=-1);
     inline Point operator+(const Point p) const { return Point(_x+p._x,_y+p._y,_z+p._z);}
     inline Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
     inline double operator*(const Point &p) { return _x*p._x + _y*p._y + _z*p._z; }
@@ -56,7 +57,13 @@ public:
     inline double phi() const {return _phi;}
     inline double rz() const {return _rz;}
     inline int id() const {return _id;}
+    inline int hitid() const {return _hitid;}
     inline void setid(int id) { _id = id;}
+    inline void sethitid(int id) { _hitid = id;}
+    inline void setcx(double cx) { _cx = cx;}
+    inline void setcy(double cy) { _cy = cy;}
+    inline void setcz(double cz) { _cz = cz;}
+
 };
 
 class treePoint : public Point

@@ -9,6 +9,7 @@
 //#define SWIMMER
 #define GRAPH
 
+#define FILEPATH "/Users/marcel/workspace/train_sample/"
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
@@ -172,6 +173,7 @@ private:
 
     static unsigned long nd, np, nt, n1, n2, n3, n4, ntwins;
     static bool _verbose;
+    static int *_hitid;
     static int *_volume;
     static int *_layer;
     static int *_module;
@@ -193,7 +195,7 @@ public:
     inline
     static float radius(const int &a) { return sqrt(_x[a]*_x[a]+_y[a]*_y[a]+_z[a]*_z[a]); }
     static void verbose(bool verbose=true) {_verbose = verbose;}
-    static int findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int *layer,int *module,int *label,int *truth);
+    static int findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int *layer,int *module,int *label,int *truth,int *hitid);
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
     static long findSeedsPhiTheta();
