@@ -419,7 +419,7 @@ void combine2(xParticle &p)
         treePoint &hit1 = hits[i];
         treePoint &hit2 = hits[i+1];
         double l1(0),l2(0);
-        ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,hit1.truth()+1); //true combination
+        ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,1.0); //true combination
         double phi2 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r2
         double theta2 = r.Rndm()*M_PI;
         double z2 = hit2.rz() * cos(theta2);
@@ -450,7 +450,7 @@ void combine3(xParticle &p)
     }
     for (int i=istart; i<nhits; i++)    {
        treePoint &hit3 = hits[i];
-        ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
+        ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,1.0); //true combination
         double phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
         double theta3 = r.Rndm()*M_PI;
         double z3 = hit3.rz() * cos(theta3);
@@ -475,7 +475,7 @@ void combine3serial(xParticle &p)
         treePoint &hit1 = hits[i];
         treePoint &hit2 = hits[i+1];
         treePoint &hit3 = hits[i+2];
-        ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
+        ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,1.0); //true combination
         double phi3 = hit3.phi() - DELTAPHI * 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
         double theta3 = hit3.theta() - DELTATHE * 2.*(0.5-r.Rndm())*M_PI;
         double z3 = hit3.rz() * cos(theta3);
@@ -499,7 +499,7 @@ void combine2(xParticle &p1, xParticle &p2)
     for (auto it=hits1.begin(); it!=hits1.end()-1; it++)    {
         treePoint hit1 = *it;
         treePoint hit2 = *(it+1);
-        ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,hit1.truth()+1); //true combination
+        ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,1.0); //true combination
        it->settruth(1);
     }
     
@@ -507,7 +507,7 @@ void combine2(xParticle &p1, xParticle &p2)
     for (auto it=hits2.begin(); it!=hits2.end()-1; it++)    {
         treePoint hit1 = *it;
         treePoint hit2 = *(it+1);
-        ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,hit1.truth()+1); //true combination
+        ntuple2->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),l1,l2,1.0); //true combination
         it->settruth(2);
     }
     
@@ -556,8 +556,8 @@ void combine3(xParticle &p1, xParticle &p2)
         treePoint &hit22 = *(it2+1);
         treePoint &hit23 = *(it2+2);
         
-        ntuple3->Fill(hit11.rz(),hit11.phi(),hit11.z(),hit12.rz(),hit12.phi(),hit12.z(),hit13.rz(),hit13.phi(),hit13.z(),l1,l2,l3,hit11.truth()+1); //true combination
-        ntuple3->Fill(hit21.rz(),hit21.phi(),hit21.z(),hit22.rz(),hit22.phi(),hit22.z(),hit23.rz(),hit23.phi(),hit23.z(),l1,l2,l3,hit21.truth()+1); //true combination
+        ntuple3->Fill(hit11.rz(),hit11.phi(),hit11.z(),hit12.rz(),hit12.phi(),hit12.z(),hit13.rz(),hit13.phi(),hit13.z(),l1,l2,l3,1.0); //true combination
+        ntuple3->Fill(hit21.rz(),hit21.phi(),hit21.z(),hit22.rz(),hit22.phi(),hit22.z(),hit23.rz(),hit23.phi(),hit23.z(),l1,l2,l3,1.0); //true combination
 
         // Consider hits within a DISTANCE*r
         if (hit11.distance(hit21)<DISTANCE*hit11.r()) ntuple3->Fill(hit11.rz(),hit11.phi(),hit11.z(),hit12.rz(),hit12.phi(),hit12.z(),hit21.rz(),hit21.phi(),hit21.z(),l1,l2,l3,0.0); // wrong combination
@@ -672,9 +672,9 @@ void readEvent( const char *directory, int event, bool loadMC )
             }
             Hit hit;
             hit.hitID = h[0];
-            hit.x = 0.001 * h[1]; // [m]
-            hit.y = 0.001 * h[2]; // [m]
-            hit.z = 0.001 * h[3]; // [m]
+            hit.x = h[1]; // [mm]
+            hit.y = h[2]; // [mm]
+            hit.z = h[3]; // [mm]
             hit.r = sqrt( hit.x*hit.x + hit.y*hit.y );
             hit.phi = atan2( hit.y, hit.x );
             hit.module = h[6];
@@ -772,9 +772,9 @@ void readEvent( const char *directory, int event, bool loadMC )
             int nhits = (int) f[9];
             if( nhits==0 ) continue; // no hits belong to the particle
             xParticle p( nhits );
-            p.x = 0.001 * f[2]; // [m]
-            p.y = 0.001 * f[3]; // [m]
-            p.z = 0.001 * f[4]; // [m]
+            p.x = f[2]; // [mm]
+            p.y = f[3]; // [mm]
+            p.z = f[4]; // [mm]
             p.r = sqrt(p.x*p.x+p.y*p.y);
             p.px = f[5];
             p.py = f[6];
@@ -823,9 +823,9 @@ void readEvent( const char *directory, int event, bool loadMC )
             Hit &hit = mHits[mHitsMC.size()];
             
             hitmc.hitID = (int)mHitsMC.size();
-            hitmc.x = 0.001 * mc[2]; // convert to [m]
-            hitmc.y = 0.001 * mc[3]; // convert to [m]
-            hitmc.z = 0.001 * mc[4]; // convert to [m]
+            hitmc.x = mc[2]; // convert to [m]
+            hitmc.y = mc[3]; // convert to [m]
+            hitmc.z = mc[4]; // convert to [m]
             hitmc.partID = -1;
             hitmc.w = mc[8]; // weight
             hitmc.px = mc[5];

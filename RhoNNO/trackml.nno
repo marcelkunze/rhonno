@@ -17,7 +17,7 @@ networkpath ../Networks
 file event000021101.root
 file event000021102.root
 file event000021103.root
-file event000021104.root
+#file event000021104.root
 #file event000021105.root
 #file event000021106.root
 #file event000021107.root
@@ -26,7 +26,7 @@ file event000021104.root
 
 #set up the input layer (use branch names)
 tree tracks
-input rz1:phi1:z1:rz2:phi2:z2:l1:l2
+input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:l1:l2
 #input rz1:phi1:r1*cos(theta1):rz2:phi2:r2*cos(theta2)
 #input r1:phi1:theta1:r2:phi2:theta2
 

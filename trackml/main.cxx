@@ -24,12 +24,12 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10000
+#define MAXPARTICLES 2
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE false
+#define VERBOSE true
 #define MAXTRACK 10
 #define MAXLABEL 100
 
@@ -69,7 +69,7 @@ int main(int argc, char**argv) {
     Tracker::verbose(VERBOSE);
     
     if (EVALUATION) {
-        Tracker::readGraph("paths.csv",Tracker::paths);
+        //Tracker::readGraph("paths.csv",Tracker::paths);
         Tracker::readParticles(base_path,filenum);
         Tracker::readTruth(base_path,filenum);
         Tracker::sortTracks();
@@ -87,7 +87,10 @@ int main(int argc, char**argv) {
     long nhits = Tracker::hits.size();
     float x[nhits],y[nhits],z[nhits],cx[nhits],cy[nhits],cz[nhits];
     int label[nhits],truth[nhits],volume[nhits],layer[nhits],module[nhits];
-    
+    for (int i=0;i<nhits;i++) {
+        if (Tracker::hit_dir[nhits][0].x != 0.0)
+        cout << i << " " << Tracker::hit_dir[nhits][0].x << " " << Tracker::hit_dir[nhits][0].y << " " << Tracker::hit_dir[nhits][0].z << endl;
+    }
     nhits = 0;
     int n = 0;
     int start[nParticles+1],end[nParticles+1];
@@ -111,9 +114,9 @@ int main(int argc, char**argv) {
             auto it = Tracker::track_hits.find(id);
             if (it==Tracker::track_hits.end()) continue;
             point &hit = it->second;
-            x[nhits] = hit.x * 0.001; // in m
-            y[nhits] = hit.y * 0.001; // in m;
-            z[nhits] = hit.z * 0.001; // in m;
+            x[nhits] = hit.x; // in mm
+            y[nhits] = hit.y; // in mm
+            z[nhits] = hit.z; // in mm
             label[nhits] = 0;
             truth[nhits] = n; // true track assignment
             point geo = Tracker::meta[id];
@@ -127,6 +130,7 @@ int main(int argc, char**argv) {
             cx[nhits] = Tracker::hit_dir[nhits][0].x;
             cy[nhits] = Tracker::hit_dir[nhits][0].y;
             cz[nhits] = Tracker::hit_dir[nhits][0].z;
+            //cout << nhits << " " << cx[nhits] << " " << cy[nhits] << " " << cz[nhits] << endl;
             int index = MODULES*l + mod;
             // Add the hit pair to the paths graph
             if (oldindex>-1 && oldindex!=index) {
@@ -465,8 +469,8 @@ void makeTrain3()
         for (int i=0; i<nhits-3; i++)    {
             int id1 = h[i];
             int id2 = h[i+1];
-            point x1 = Tracker::hits[id1]*0.001; // in m
-            point x2 = Tracker::hits[id2]*0.001; // in m
+            point x1 = Tracker::hits[id1]; // in mm
+            point x2 = Tracker::hits[id2]; // in mm
             Point p1(x1.x,x1.y,x1.z);
             Point p2(x2.x,x2.y,x2.z);
             point geo = Tracker::meta[id1];
@@ -482,7 +486,7 @@ void makeTrain3()
             
             // Select 3 continuous points
             int id3 = h[i+2];
-            point x3 = Tracker::hits[id3]*0.001; // in m
+            point x3 = Tracker::hits[id3]; // in mm
             Point p3(x3.x,x3.y,x3.z);
             geo = Tracker::meta[id3];
             vol = geo.x;

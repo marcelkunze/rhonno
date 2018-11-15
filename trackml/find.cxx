@@ -282,7 +282,7 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             Point &b = points[p1];
             Point &c = points[it1];
             float d = Point::distance3(a,b,c); // distance of it from line p0-p1
-            if (d>0.008) { nd++; continue; }
+            if (d>MAXDIST) { nd++; continue; }
 
             double recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
             //double recall = scoreTriple(p0,p1,it1); // Point is a candidate on the next layer

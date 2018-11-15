@@ -324,12 +324,12 @@ double* Tracker::recall2(Point &p1, Point &p2)
     static XMLP net(NETFILE2);
     static float x[6]={0.,0.,0.,0.,0.,0.};
     
-    x[0]     = p1.rz();     // rz1
-    x[1]     = p1.phi();    // phi1
-    x[2]     = p1.z();      // z1
-    x[3]     = p2.rz();     // rz2
-    x[4]     = p2.phi();    // phi2
-    x[5]     = p2.z();      // z2
+    x[0]     = p1.rz()*0.001;   // rz1 [m]
+    x[1]     = p1.phi();        // phi1
+    x[2]     = p1.z()*0.001;    // z1 [m]
+    x[3]     = p2.rz()*0.001;   // rz2 [m]
+    x[4]     = p2.phi();        // phi2
+    x[5]     = p2.z()*0.001;    // z2 [m]
     
     return net.Recallstep(x);
 }
@@ -341,15 +341,15 @@ double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
     static XMLP net(NETFILE3);
     static float x[9]={0.,0.,0.,0.,0.,0.,0.,0.,0.};
     
-    x[0]     = p1.rz();     // rz1
-    x[1]     = p1.phi();    // phi1
-    x[2]     = p1.z();      // z1
-    x[3]     = p2.rz();     // rz2
-    x[4]     = p2.phi();    // phi2
-    x[5]     = p2.z();      // z2
-    x[6]     = p3.rz();     // rz3
-    x[7]     = p3.phi();    // phi3
-    x[8]     = p3.z();      // z3
+    x[0]     = p1.rz()*0.001;   // rz1 [m]
+    x[1]     = p1.phi();        // phi1
+    x[2]     = p1.z()*0.001;    // z1 [m]
+    x[3]     = p2.rz()*0.001;   // rz2 [m]
+    x[4]     = p2.phi();        // phi2
+    x[5]     = p2.z()*0.001;    // z2 [m]
+    x[6]     = p3.rz()*0.001;   // rz3 [m]
+    x[7]     = p3.phi();        // phi3
+    x[8]     = p3.z()*0.001;    // z3 [m]
     
     return net.Recallstep(x);
 }
@@ -942,8 +942,14 @@ void Tracker::initHitDir() {
         for (int k = 0; k < 2; k++)
             if (hit_dir[hit_id][k]*hits[hit_id] < 0)
                 hit_dir[hit_id][k] = hit_dir[hit_id][k]*-1;
+
+        //Write out missalignment to ground truth for plotting
+        //if (metai[hit_id] == 0)
+        //    cerr << acos(max(fabs(hit_dir[hit_id][0]*truth_mom[hit_id]),
+        //                     fabs(hit_dir[hit_id][1]*truth_mom[hit_id]))/dist(truth_mom[hit_id])) << endl;
     }
 }
+
 
 // Logistic regression model
 

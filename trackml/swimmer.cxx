@@ -25,7 +25,7 @@ map<int,vector<int> > Tracker::swimmer() {
         for (auto &it : path ) {
             //if (n>NEIGHBOURS) break;
             int id = it.first;
-            float recall = 0.001*it.second;
+            float recall = it.second;
             ip.setneighbour(id,recall);
             points[a].setneighbour(id,recall);
             n++;

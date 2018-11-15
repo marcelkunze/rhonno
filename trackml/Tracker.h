@@ -13,19 +13,20 @@
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
 #define TRACKLET 2
-#define TWINDIST 0.0051
+#define TWINDIST 5.1
 #define THRESHOLD2 0.90
-#define THRESHOLD3 0.90
-#define DISTANCE 1.5
+#define THRESHOLD3 0.50
+#define DISTANCE 1500.
 #define DELTANN  0.1
+#define MAXDIST  8.0
 
 #define MAXDIM 150000
 #define LAYERS 48
 #define MODULES 3200
-#define PHIDIM 6
-#define PHIFACTOR 1
-#define THEDIM 6
-#define THEFACTOR 1
+#define PHIDIM 13
+#define PHIFACTOR 2
+#define THEDIM 13
+#define THEFACTOR 2
 
 #define SCORE true
 
