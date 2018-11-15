@@ -631,7 +631,7 @@ void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks)
         p1->cd();
         // creating a view
         TView *view = TView::CreateView(1);
-        view->SetRange(-2,-2,-2,2,2,2); // draw in a 2 meter cube
+        view->SetRange(-2000,-2000,-2000,2000,2000,2000); // draw in a 2 meter cube
         // Draw axis
         TAxis3D rulers;
         rulers.Draw();
