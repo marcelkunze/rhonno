@@ -253,7 +253,6 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
     triple t;
     t.x = p0;
     t.y = p1;
-    float r = radius(p1);
     
     if (start<0 || start>MODULES*LAYERS) return 0;
     const auto edgelist = paths.edges(start); // Get the list of possible connected modules
@@ -274,15 +273,11 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
         {
             if (assignment[it1] > 0) continue; // Point has benn already used
             //if (!checkTheta(p1,it1)) continue;
-            //float d = distance(p1,it1);
-            //float dr = d*r;
-            //if (dr>DISTANCE) { nd++; continue; }
-            //if (!checkDistance(p1,it1)) continue;
             Point &a = points[p0];
             Point &b = points[p1];
             Point &c = points[it1];
             float d = Point::distance3(a,b,c); // distance of it from line p0-p1
-            if (d>MAXDIST) { nd++; continue; }
+            if (d>DISTANCE) { nd++; continue; }
 
             double recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
             //double recall = scoreTriple(p0,p1,it1); // Point is a candidate on the next layer

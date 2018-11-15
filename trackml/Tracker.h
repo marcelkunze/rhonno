@@ -15,10 +15,9 @@
 #define TRACKLET 2
 #define TWINDIST 5.1
 #define THRESHOLD2 0.90
-#define THRESHOLD3 0.50
-#define DISTANCE 1500.
+#define THRESHOLD3 0.90
+#define DISTANCE 8.0
 #define DELTANN  0.1
-#define MAXDIST  8.0
 
 #define MAXDIM 150000
 #define LAYERS 48
@@ -216,15 +215,6 @@ public:
         int x1 = PHIFACTOR*(M_PI+points[p0].phi());
         int x2 = PHIFACTOR*(M_PI+points[p1].phi());
         return x1 == x2;
-    }
-    inline
-    static bool checkDistance(const int p0,const int p1) {
-        float d = distance(p0,p1);
-        if (d > DISTANCE*radius(p0)) {
-            nd++;
-            return false;
-        }
-        else return true;
     }
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
