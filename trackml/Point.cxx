@@ -1,12 +1,15 @@
 #include "Point.h"
 #include <cmath>
 
-Point::Point(double x, double y, double z, int id)
+Point::Point(double x, double y, double z, double cx, double cy, double cz, int id)
 {
     _id = id;
     _x = x;
     _y = y;
     _z = z;
+    _cx = cx;
+    _cy = cy;
+    _cz = cz;
     _r = sqrt(_x*_x+_y*_y+_z*_z);
     _rz = sqrt(_x*_x+_y*_y);
     _phi = atan2(_y,_x);
@@ -14,12 +17,15 @@ Point::Point(double x, double y, double z, int id)
     _distance = 0.0;
 }
 
-Point::Point(float x, float y, float z, int id)
+Point::Point(float x, float y, float z, float cx, float cy, float cz, int id)
 {
     _id = id;
     _x = x;
     _y = y;
     _z = z;
+    _cx = cx;
+    _cy = cy;
+    _cz = cz;
     _r = sqrt(_x*_x+_y*_y+_z*_z);
     _rz = sqrt(_x*_x+_y*_y);
     _phi = atan2(_y,_x);
@@ -33,6 +39,9 @@ Point::Point(const Point &p)
     _x = p._x;
     _y = p._y;
     _z = p._z;
+    _cx = p._cx;
+    _cy = p._cy;
+    _cz = p._cz;
     _r = p._r;
     _rz = p._rz;
     _phi = p._phi;
@@ -40,17 +49,21 @@ Point::Point(const Point &p)
     _distance = p._distance;
 }
 
-treePoint::treePoint(double x, double y, double z, int id, int label, int truth)
+treePoint::treePoint(double x, double y, double z, double cx, double cy, double cz, int id, int label, int truth)
 {
     _id = id;
     _label = label;
     _truth = truth;
+    _volume = -1;
     _layer = -1;
     _module = -1;
     _twin = -1;
     _x = x;
     _y = y;
     _z = z;
+    _cx = cx;
+    _cy = cy;
+    _cz = cz;
     _r = sqrt(_x*_x+_y*_y+_z*_z);
     _rz = sqrt(_x*_x+_y*_y);
     _phi = atan2(_y,_x);
@@ -58,17 +71,21 @@ treePoint::treePoint(double x, double y, double z, int id, int label, int truth)
     _distance = 0.0;
 }
 
-treePoint::treePoint(float x, float y, float z, int id, int label, int truth)
+treePoint::treePoint(float x, float y, float z, float cx, float cy, float cz, int id, int label, int truth)
 {
     _id = id;
     _label = label;
     _truth = truth;
+    _volume = -1;
     _layer = -1;
     _module = -1;
     _twin = -1;
     _x = x;
     _y = y;
     _z = z;
+    _cx = cx;
+    _cy = cy;
+    _cz = cz;
     _r = sqrt(_x*_x+_y*_y+_z*_z);
     _rz = sqrt(_x*_x+_y*_y);
     _phi = atan2(_y,_x);
@@ -81,12 +98,16 @@ treePoint::treePoint(const treePoint &p)
     _id = p._id;
     _label = p._label;
     _truth = p._truth;
+    _volume = p._volume;
     _layer = p._layer;
     _module = p._module;
     _twin = p._twin;
     _x = p._x;
     _y = p._y;
     _z = p._z;
+    _cx = p._cx;
+    _cy = p._cy;
+    _cz = p._cz;
     _r = p._r;
     _rz = p._rz;
     _phi = p._phi;

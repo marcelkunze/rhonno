@@ -22,10 +22,10 @@
 #define MAXDIM 150000
 #define LAYERS 48
 #define MODULES 3200
-#define PHIDIM 13
-#define PHIFACTOR 2
-#define THEDIM 13
-#define THEFACTOR 2
+#define PHIDIM 6
+#define PHIFACTOR 1
+#define THEDIM 6
+#define THEFACTOR 1
 
 #define SCORE true
 
@@ -45,21 +45,11 @@ struct point {
     double x, y, z;
     point() {}
     point(double x, double y, double z) : x(x),y(y),z(z) {}
-    inline point operator-(const point &p) {
-        return point(x-p.x, y-p.y, z-p.z);
-    }
-    inline point operator+(const point &p) {
-        return point(x+p.x, y+p.y, z+p.z);
-    }
-    inline double operator*(const point &p) {
-        return x*p.x+y*p.y+z*p.z;
-    }
-    inline point operator*(double f) {
-        return point(x*f, y*f, z*f);
-    }
-    inline point cross(point f) const {
-        return point(y*f.z-z*f.y, z*f.x-x*f.z, x*f.y-y*f.x);
-    }
+    inline point operator-(const point &p) { return point(x-p.x, y-p.y, z-p.z); }
+    inline point operator+(const point &p) { return point(x+p.x, y+p.y, z+p.z); }
+    inline double operator*(const point &p) { return x*p.x+y*p.y+z*p.z; }
+    inline point operator*(double f) { return point(x*f, y*f, z*f); }
+    inline point cross(point f) const { return point(y*f.z-z*f.y, z*f.x-x*f.z, x*f.y-y*f.x); }
     inline
     double distance(const point &a)
     {
@@ -67,6 +57,7 @@ struct point {
                      (a.y - y) * (a.y - y) +
                      (a.z - z) * (a.z - z));
     }
+
 };
 
 inline double dist(const point &p) { return sqrt(p.x*p.x+p.y*p.y+p.z*p.z); }
@@ -80,8 +71,14 @@ inline double dist3(point &a,point &b,point &c) {
     
 }
 
+inline point normalize(point a) {
+    point ret = a*(1./dist(a));
+    if (ret.z < 0) ret = ret*-1;
+    return ret;
+}
+
 //Find circle with center p, radius r, going through a, b, and c (in xy plane)
-inline void circle(point&a, point&b, point&c, point&p, double&r) {
+inline void circle(point&a, point&b, point&c, point&p, double &r) {
     double ax = a.x-c.x, ay = a.y-c.y, bx = b.x-c.x, by = b.y-c.y;
     double aa = ax*ax+ay*ay, bb = bx*bx+by*by;
     double idet = .5/(ax*by-ay*bx);
@@ -151,6 +148,8 @@ public:
     static std::map<long long, point> track_hits; // Find points in hits
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
     static std::vector<point> meta; //volume_id / layer_id / module_id
+    static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
+    static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
 private:
     //static std::vector<int> knn[MAXDIM][MODULES];
     static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
@@ -170,11 +169,15 @@ private:
     static Layer layer[LAYERS];
     static double z_minr[LAYERS][4], z_maxr[LAYERS][4];
     static std::map<int, Detector> detectors;
-    static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
-    static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
 
     static unsigned long nd, np, nt, n1, n2, n3, n4, ntwins;
     static bool _verbose;
+    static int *_volume;
+    static int *_layer;
+    static int *_module;
+    static float *_cx;
+    static float *_cy;
+    static float *_cz;
     static float *_x;
     static float *_y;
     static float *_z;
@@ -190,7 +193,7 @@ public:
     inline
     static float radius(const int &a) { return sqrt(_x[a]*_x[a]+_y[a]*_y[a]+_z[a]*_z[a]); }
     static void verbose(bool verbose=true) {_verbose = verbose;}
-    static int findTracks(int nhits,float *x,float *y,float *z,int *layer,int *module,int *label,int *truth);
+    static int findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int *layer,int *module,int *label,int *truth);
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
     static long findSeedsPhiTheta();
@@ -238,9 +241,17 @@ public:
     static void readHits(std::string base_path,int filenum);
     static void readCells(std::string base_path,int filenum);
     static void readDetectors(std::string base_path);
+    static void initHitDir();
     static void readTubes();
     static void sortTracks();
     static int getLayer(int volume, int layer);
+    static int good_pair(int a, int b);
+    static double dir_miss(int ai, int bi);
+    static bool getFeatures3(int ai, int bi, float *feature);
+    static double wdistr(double r1, double dr, double az, double dz, double w);
+    static double wdist(Point&a, Point&d, double w);
+    static double zdist(Point&a, Point&b);
+    static double zdist2(Point&a, Point&b);
     static void scorePairs(std::vector<std::pair<int, int> > &pairs);
     static void scoreTriples(std::vector<triple> &triples);
     static void scorePaths(std::map<int,std::vector<int> > &paths);
@@ -257,8 +268,6 @@ private:
     static bool track_cmp(int a, int b);
     static void initOrder();
     static void initLayers();
-    static point normalize(point a);
-    static void initHitDir();
 };
 
 #endif

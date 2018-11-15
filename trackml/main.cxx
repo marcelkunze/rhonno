@@ -24,12 +24,12 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 100
+#define MAXPARTICLES 10000
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE true
+#define VERBOSE false
 #define MAXTRACK 10
 #define MAXLABEL 100
 
@@ -51,7 +51,7 @@ long checkTracks(std::map<int,std::vector<int> >  &tracks);
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks);
 void transform(Particle &particle, std::vector<Point> &points);
 
-TNtuple *ntuple2,*ntuple3;
+TNtuple *ntuple1,*ntuple2,*ntuple3;
 TRandom r;
 vector<pair<int,int> > truepairs;
 
@@ -75,14 +75,18 @@ int main(int argc, char**argv) {
         Tracker::sortTracks();
     }
     Tracker::readHits(base_path,filenum);
+    Tracker::readCells(base_path,filenum);
+    Tracker::readDetectors(base_path);
+    Tracker::initHitDir();
+
     
     long nParticles = Tracker::truth_tracks.size();
     if (nParticles>MAXPARTICLES) nParticles = MAXPARTICLES;
     cout << "Particles: " << nParticles << endl;
     
     long nhits = Tracker::hits.size();
-    float x[nhits],y[nhits],z[nhits];
-    int label[nhits],truth[nhits],layer[nhits],module[nhits];
+    float x[nhits],y[nhits],z[nhits],cx[nhits],cy[nhits],cz[nhits];
+    int label[nhits],truth[nhits],volume[nhits],layer[nhits],module[nhits];
     
     nhits = 0;
     int n = 0;
@@ -117,8 +121,12 @@ int main(int argc, char**argv) {
             int lay = geo.y;
             int mod = geo.z;
             int l = Tracker::getLayer(vol,lay);
+            volume[nhits] = vol;
             layer[nhits] = l;
             module[nhits] = mod;
+            cx[nhits] = Tracker::hit_dir[nhits][0].x;
+            cy[nhits] = Tracker::hit_dir[nhits][0].y;
+            cz[nhits] = Tracker::hit_dir[nhits][0].z;
             int index = MODULES*l + mod;
             // Add the hit pair to the paths graph
             if (oldindex>-1 && oldindex!=index) {
@@ -144,7 +152,7 @@ int main(int argc, char**argv) {
         //cout << "modpath:" << endl;
         //for (auto &it : modpath) Tracker::print(it.second);
         for (int i=1;i<n;i++) cout << "Track " << i << ": " << start[i] << "-" << end[i] << endl;
-
+        
         cout << truepairs.size() << " true pairs" << endl;
         for (auto p : truepairs) cout << "{" << p.first << "," << p.second << "}, ";
         cout << endl;
@@ -157,7 +165,7 @@ int main(int argc, char**argv) {
     cout << "Hits: " << nhits << endl;
     
     cout << endl << "Running Tracker:" << endl;
-    long nt = Tracker::findTracks((int)nhits,x,y,z,layer,module,label,truth);
+    long nt = Tracker::findTracks((int)nhits,x,y,z,cx,cy,cz,volume,layer,module,label,truth);
     
     // Show the results
     cout << "Labels: ";
@@ -222,12 +230,15 @@ int main(int argc, char**argv) {
         TString fname = filePrefix+".root";
         auto f = TFile::Open(fname,"RECREATE");
         cout << endl << "Generating training data file " << fname << endl;
+        ntuple1 = new TNtuple("pairs","training data","f0:f1:f2:f3:f4:f5:l1:l2:truth");
         ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
         makeTrain2pairs();
+        ntuple1->Write();
         ntuple2->Write();
         ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
         makeTrain3triples();
         ntuple3->Write();
+        delete ntuple1;
         delete ntuple2;
         delete ntuple3;
         f->Close();
@@ -295,19 +306,45 @@ void transform(Particle &particle, std::vector<treePoint> &points) {
 void makeTrain2pairs()
 {
     long wright=1,wrong=1;
-    for (auto pair : Tracker::pairs) {
-        treePoint &p1 = Tracker::points[pair.first];
-        treePoint &p2 = Tracker::points[pair.second];
-        int l1 = p1.layer();
-        int l2 = p2.layer();
-        if (p1.truth() == p2.truth()) {
-            ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),l1,l2,1.0); //wright combination
-            wright++;
-        }
-        else {
-            if (r.Rndm()<wright/wrong) {
-                ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),l1,l2,0.0); //wrong combination
-                wrong++;
+    
+    const int n = 100;
+    pair<int, int> start_list[100] = {{0, 1}, {11, 12}, {4, 5}, {0, 4}, {0, 11}, {18, 19}, {1, 2}, {5, 6}, {12, 13}, {13, 14}, {6, 7}, {2, 3}, {3, 18}, {19, 20}, {0, 2}, {20, 21}, {1, 4}, {7, 8}, {11, 18}, {1, 11}, {14, 15}, {4, 18}, {2, 18}, {21, 22}, {0, 18}, {1, 18}, {24, 26}, {36, 38}, {15, 16}, {8, 9}, {22, 23}, {9, 10}, {16, 17}, {38, 40}, {5, 18}, {18, 24}, {18, 36}, {12, 18}, {40, 42}, {28, 30}, {26, 28}, {0, 12}, {18, 20}, {6, 18}, {2, 11}, {13, 18}, {2, 4}, {0, 5}, {19, 36}, {19, 24}, {4, 6}, {19, 22}, {20, 22}, {11, 13}, {3, 19}, {7, 18}, {14, 18}, {3, 4}, {22, 25}, {1, 3}, {20, 24}, {15, 18}, {3, 11}, {22, 37}, {30, 32}, {42, 44}, {8, 18}, {9, 18}, {8, 26}, {15, 38}, {20, 36}, {14, 36}, {7, 24}, {1, 5}, {16, 18}, {22, 24}, {18, 22}, {25, 27}, {16, 40}, {10, 30}, {25, 26}, {17, 40}, {36, 39}, {1, 12}, {10, 28}, {7, 26}, {17, 42}, {24, 27}, {21, 24}, {23, 37}, {13, 36}, {15, 36}, {22, 36}, {14, 38}, {8, 28}, {19, 21}, {6, 24}, {9, 28}, {16, 38}, {0, 3}};
+    
+    const int features = 6;
+    float feature[features];
+    
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j< PHIDIM; j++) {
+            for (int k = 0; k<THEDIM; k++) {
+                
+                for (auto a : Tracker::tube[start_list[i].first][j][k]) {
+                    if (Tracker::tube[start_list[i].first][j][k].size()==0) continue;
+                    for (auto b : Tracker::tube[start_list[i].second][j][k]) {
+                        if (Tracker::tube[start_list[i].second][j][k].size()==0) continue;
+                        treePoint &pa = Tracker::points[a];
+                        treePoint &pb = Tracker::points[b];
+                        double dot = pa.x()*pb.x()+pa.y()*pb.y();
+                        double alen = dist2(pa.x(), pa.y());
+                        double blen = dist2(pb.x(), pb.y());
+                        if (dot < 0 || dot*dot < alen*blen*(.7*.7)) continue;
+                        
+                        dot += pa.z()*pb.z();
+                        alen += pa.z()*pa.z();
+                        blen += pb.z()*pb.z();
+                        if (dot < 0 || dot*dot < alen*blen*(.7*.7)) continue;
+                        
+                        int g = Tracker::good_pair(a, b);
+                        
+                        if (g==0 && r.Rndm()>wright/wrong) continue;
+                        wright += g!=0;
+                        wrong  += g==0;
+                        float l1 = pa.layer();
+                        float l2 = pb.layer();
+                        if (Tracker::getFeatures3(a, b, feature))
+                            ntuple1->Fill(feature[0],feature[1],feature[2],feature[3],feature[4],feature[5],l1,l2,g);
+                        
+                    }
+                }
             }
         }
     }

@@ -26,13 +26,19 @@ using namespace std;
 
 
 // Find tracks from points
-int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* module,int* label,int *truth)
+int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int* layer,int* module,int* label,int *truth)
 {
     std::clock_t c_start = std::clock();
     
     _x = x;
     _y = y;
     _z = z;
+    _cx = cx;
+    _cy = cy;
+    _cz = cz;
+    _volume = volume;
+    _layer = layer;
+    _module = module;
     
     points.reserve(nhits);
     
@@ -41,7 +47,8 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     for (int i=0;i<nhits;i++) {
         assignment[i] = 0;
         label[i] = 0;
-        treePoint p = treePoint(x[i],y[i],z[i],i,label[i],truth[i]);
+        treePoint p = treePoint(x[i],y[i],z[i],cx[i],cy[i],cz[i],i,label[i],truth[i]);
+        p.setvolume(volume[i]);
         p.setlayer(layer[i]);
         p.setmodule(module[i]);
         points.push_back(p);
@@ -50,7 +57,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,int* layer,int* mod
     // Sort the hits into the detector layers
     cout << "Setting up..." << endl;
     readTubes();
-    //setupCache();
     
     std::clock_t c_end = std::clock();
     double time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
@@ -837,14 +843,20 @@ void Tracker::readDetectors(string base_path) {
     cout << tmpstr << endl;
     
     Detector d;
-    while (fscanf(fp, "%d,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &d.volume_id, &d.layer_id, &d.module_id, &d.c.x, &d.c.y, &d.c.z,
+    point c,rx,ry,rz;
+    while (fscanf(fp, "%d,%d,%d,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &d.volume_id, &d.layer_id, &d.module_id, &c.x, &c.y, &c.z,
                   // &d.rx.x, &d.rx.y, &d.rx.z,
                   // &d.ry.x, &d.ry.y, &d.ry.z,
                   // &d.rz.x, &d.rz.y, &d.rz.z,
-                  &d.rx.x, &d.ry.x, &d.rz.x,
-                  &d.rx.y, &d.ry.y, &d.rz.y,
-                  &d.rx.z, &d.ry.z, &d.rz.z,
+                  &rx.x, &ry.x, &rz.x,
+                  &rx.y, &ry.y, &rz.y,
+                  &rx.z, &ry.z, &rz.z,
                   &d.d, &d.minw, &d.maxw, &d.h, &d.cell_w, &d.cell_h) == 21) {
+        d.c =  c;
+        d.rx = rx;
+        d.ry = ry;
+        d.rz = rz;
+
         //if (d.module_id >= 10000 || d.layer_id >= 1000 || d.volume_id >= 100) cout << "What!?" << endl;
         detectors[d.volume_id*10000000+d.layer_id*10000+d.module_id] = d;
     }
@@ -875,25 +887,20 @@ void Tracker::readCells(string base_path,int filenum) {
     fclose(fp);
 }
 
-point Tracker::normalize(point a) {
-    point ret = a*(1./dist(a));
-    if (ret.z < 0) ret = ret*-1;
-    return ret;
-}
 
 
 //Calculate direction of each hit with cell's data
 void Tracker::initHitDir() {
-    for (unsigned int hit_id = 1; hit_id < hits.size(); hit_id++) {
+    for (int hit_id = 1; hit_id < hits.size(); hit_id++) {
         point m = meta[hit_id];
-        Detector&d = detectors[int(m.x)*10000000+int(m.y)*10000+int(m.z)];
+        Detector &d = detectors[int(m.x)*10000000+int(m.y)*10000+int(m.z)];
         
         //if (!hit_cells[hit_id].size()) cout << "Hit with zero cells" << endl;
         //if (metai[hit_id] < 18) continue;
         
         //Use linear regression for direction
         double mx = 0, my = 0, mw = 0;
-        auto&cells = hit_cells[hit_id];
+        auto &cells = hit_cells[hit_id];
         for (auto&c : cells) {
             double w = c.second;
             double x = c.first.first*d.cell_w;
@@ -917,6 +924,10 @@ void Tracker::initHitDir() {
         double a = mxx-myy, b = 2*mxy;
         double x = a+b+sqrt(a*a+b*b);
         double y =-a+b+sqrt(a*a+b*b);
+        if (0) {
+            double lambda = (mxx+myy+sqrt(a*a+b*b))/2;
+            cout << lambda << ' ' << (mxx*x+mxy*y)/x << ' ' << (mxy*x+myy*y)/y << endl;
+        }
         
         //Analytical formula for z
         double z = 2*d.d*(fabs(x)/d.cell_w+fabs(y)/d.cell_h+1e-8);
@@ -931,10 +942,108 @@ void Tracker::initHitDir() {
         for (int k = 0; k < 2; k++)
             if (hit_dir[hit_id][k]*hits[hit_id] < 0)
                 hit_dir[hit_id][k] = hit_dir[hit_id][k]*-1;
-        
     }
 }
 
+// Logistic regression model
+
+//Decides which pairs to fit logistic model to
+int Tracker::good_pair(int a, int b) {
+    if (!samepart(a, b)) return 0;
+    point s = start_pos[truth_part[a]];
+    if (s.x*s.x+s.y*s.y < 0.01) return 2; // within circle of 1 cm
+    auto &v = truth_tracks[truth_part[a]];
+    int ai = metai[a], bi = metai[b];
+    if (ai > bi) swap(ai, bi);
+    for (int i : v)
+        if (metai[i] < ai || (metai[i] > ai && metai[i] < bi)) return 2;
+    return 1;
+}
+
+
+//Angle between line through hits ai-bi and cell's data direction of at hit id ai
+double Tracker::dir_miss(int ai, int bi) {
+    Point d = points[ai]-points[bi];
+    Point dir(d.cx(),d.cy(),d.cz());
+    return acos(fabs(dir*d)); // Direction between hit and cell
+}
+
+
+//Get some features for the logistic regression model
+bool Tracker::getFeatures3(int ai, int bi, float *feature) {
+    Point a = points[ai], b = points[bi];
+    Point d = a-b;
+    
+    double r1 = dist(a.x(), a.y());
+    double r2 = dist(b.x(), b.y());
+    double dr = r2-r1;
+    
+    feature[0] = dir_miss(ai, bi);//Cell's data of ai
+    feature[1] = dir_miss(bi, ai);//Cell's data of bi
+    //Different distances from origin (like how far does the line through ai-bi pass from the origin)
+    feature[2] = wdist(a, d, 0);
+    feature[3] = zdist2(a, b);
+    feature[4] = wdistr(r1, dr, a.z(), d.z(), 1);
+    feature[5] = wdist(a, d, 1);
+    
+    for (int i=0;i<6;i++) {
+        if (isnan(feature[i])) {
+            cout << "NAN " << i << endl;
+            return false;
+        }
+        if (feature[i]==0.0) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+//Different distances from origin (like how far does the line through ai-bi pass from the origin)
+double Tracker::wdistr(double r1, double dr, double az, double dz, double w) {
+    double pp = r1*r1+az*az*w;
+    double pd = r1*dr+az*dz*w;
+    double dd = dr*dr+dz*dz*w;
+    if (fabs(dd)<1.E-9) return 0.0;
+    double result = pp-pd*pd/dd;
+    if (result<0) return 0.0;
+    return sqrt(result);
+}
+
+double Tracker::wdist(Point &a, Point &d, double w) {
+    double pp = a.x()*a.x()+a.y()*a.y()+a.z()*a.z()*w;
+    double pd = a.x()*d.x()+a.y()*d.y()+a.z()*d.z()*w;
+    double dd = d.x()*d.x()+d.y()*d.y()+d.z()*d.z()*w;
+    if (fabs(dd)<1.E-9) return 0.0;
+    double result = pp-pd*pd/dd;
+    if (result<0) return 0.0;
+    return sqrt(result);
+}
+
+double Tracker::zdist(Point &a, Point&b) {
+    static Point origin(0.,0.,0.);
+    Point p;
+    double r;
+    Point::circle(origin, a, b, p, r);
+    double ang_ab = 2*asin(dist(a.x()-b.x(), a.y()-b.y())*.5/r);
+    double ang_a = 2*asin(dist(a.x(), a.y())*.5/r);
+    return fabs(a.z()-(b.z()-a.z())*ang_a/ang_ab);
+}
+
+double Tracker::zdist2(Point &a, Point &b) {
+    static Point origin(0.,0.,0.);
+    Point p;
+    double r;
+    Point::circle(origin, a, b, p, r);
+    double ang_ab = 2*asin(dist(a.x()-b.x(), a.y()-b.y())*.5/r);
+    double ang_a = 2*asin(dist(a.x(), a.y())*.5/r);
+    if (fabs(ang_a)<1.E-9) return 0.0;
+
+    return fabs(b.z()-a.z()-a.z()*ang_ab/ang_a);
+}
+
+
+// Scores and assignment
 
 void Tracker::scorePairs(vector<pair<int, int> >&pairs) {
     set<long long> found;
@@ -1142,6 +1251,12 @@ double Tracker::scoreTriple(int ai, int bi, int ci) {
 float* Tracker::_x;
 float* Tracker::_y;
 float* Tracker::_z;
+float* Tracker::_cx;
+float* Tracker::_cy;
+float* Tracker::_cz;
+int* Tracker::_volume;
+int* Tracker::_layer;
+int* Tracker::_module;
 bool Tracker::_verbose(false);
 vector<treePoint> Tracker::points; // hit Points
 vector<pair<int, int> > Tracker::pairs; // hit pair combinations
