@@ -24,12 +24,12 @@
 #include <stack>
 #include <queue>
 
-#define MAXPARTICLES 10000
+#define MAXPARTICLES 10
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE false
+#define VERBOSE true
 #define MAXTRACK 10
 #define MAXLABEL 100
 
@@ -132,11 +132,11 @@ int main(int argc, char**argv) {
             int index = MODULES*l + mod;
             // Add the hit pair to the paths graph
             if (oldindex>-1 && oldindex!=index) {
-                Point p1(x[nhits-1],y[nhits-1],z[nhits-1]);
-                Point p2(x[nhits],y[nhits],z[nhits]);
-                double recall = Tracker::recall2(p1, p2)[0];
+                //Point p1(x[nhits-1],y[nhits-1],z[nhits-1]);
+                //Point p2(x[nhits],y[nhits],z[nhits]);
+                //double recall = Tracker::recall2(p1, p2)[0];
                 //if (recall > THRESHOLD2)
-                Tracker::paths.add(oldindex,index,recall);
+                Tracker::paths.add(oldindex,index,1.0);
             }
             //if (VERBOSE) cout << "{" << index << ","  << l << "," << mod << "},";
             oldl = l;
@@ -150,9 +150,9 @@ int main(int argc, char**argv) {
     }
     
     if (VERBOSE) {
-        //auto modpath = serialize(Tracker::paths);
-        //cout << "modpath:" << endl;
-        //for (auto &it : modpath) Tracker::print(it.second);
+        auto modpath = serialize(Tracker::paths);
+        cout << "modpath:" << endl;
+        for (auto &it : modpath) Tracker::print(it.second);
         for (int i=1;i<n;i++) cout << "Track " << i << ": " << start[i] << "-" << end[i] << endl;
         
         cout << truepairs.size() << " true pairs" << endl;
@@ -337,7 +337,7 @@ void makeTrain2pairs()
                         
                         int g = Tracker::good_pair(a, b);
                         
-                        if (g==0 && r.Rndm()>wright/wrong) continue;
+                        if (g==0 && r.Rndm()>0.25*wright/wrong) continue;
                         wright += g!=0;
                         wrong  += g==0;
                         float l1 = pa.layer();

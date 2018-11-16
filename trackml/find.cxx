@@ -19,8 +19,8 @@ bool sortbysec(const pair<int,float> &a,
 // Look for seeding points by hit pair combinations in the innnermost layers
 long Tracker::findSeeds()
 {
-    const int n=5; // Seeding layer combinations
-    const int start_list[6][2] = {{0,1}, {11,12}, {4,5}, {0,4}, {0,11}, {18,19}};
+    const int n=4; // Seeding layer combinations
+    const int start_list[4][2] = {{0,1}, {11,12}, {4,5}, {18,19}};
     
     static int ntrack(1);
     
@@ -34,8 +34,7 @@ long Tracker::findSeeds()
             if (edgelist.size() == 0) continue;
             int l1 = start/MODULES;
             int m1 = start%MODULES;
-            if (_verbose) cout << "// Layer " << l1 << " module " << m1 <<
-                endl;
+            if (_verbose) cout << "Start layer " << l1 << " module " << m1 << endl;
             for (auto edge : edgelist) {
                 int nextindex = edge.first;
                 if (nextindex<0) break;
@@ -51,7 +50,9 @@ long Tracker::findSeeds()
                         pairs.push_back(make_pair(a,twin));
                         tracking.add(a,twin,1.0);
                         assignment[a] = ntrack;
-                        break;
+                        assignment[twin] = ntrack;
+                        if (_verbose) cout << "-> Add twin " << a << " " << twin << endl;
+                        continue;
                     }
                     
                     // Generate seeding points
@@ -62,7 +63,10 @@ long Tracker::findSeeds()
                     {
                         if (assignment[it] > 0) continue;
                         double recall = checkTracklet(a,it); // Search for hit pairs
-                        if (recall < THRESHOLD2) continue;
+                        if (recall < THRESHOLD2) {
+                            if (_verbose) cout << a << " " << it << ": R2 NOK " << recall << endl;
+                            continue;
+                        }
                         float d = distance(a,it);
                         seed.push_back(make_pair(it,d));
                     }
@@ -76,8 +80,8 @@ long Tracker::findSeeds()
                     float d = s->second;
                     float recall = checkTracklet(a,id);
                     
-                    if (!checkTheta(a,id)) continue;
-                    if (!checkPhi(a,id)) continue;
+                    //if (!checkTheta(a,id)) continue;
+                    //if (!checkPhi(a,id)) continue;
                     if (_verbose) cout << a << " " << id << ": R2 OK " << recall << " d " << d << endl;
                     pairs.push_back(make_pair(a,id));
                     assignment[id] = ntrack;
@@ -225,9 +229,14 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &seed)
 // Generate tracklets of 3 points wrt. the first point in seed
 long Tracker::findTriples() {
 
-    //triples.clear();
+    triples.clear();
 
+    for (int i=0;i<MAXDIM;i++) assignment[i] = 0;
+    
+    static int ntrack = 1;
     for (auto &it : pairs) {
+        if (assignment[it.first]>0) continue;
+        assignment[it.first] = ntrack++;
         int l = points[it.second].layer();
         int m = points[it.second].module();
         int index = MODULES*l + m;
@@ -277,7 +286,10 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             Point &b = points[p1];
             Point &c = points[it1];
             float d = Point::distance3(a,b,c); // distance of it from line p0-p1
-            if (d>DISTANCE) { nd++; continue; }
+            if (d>DISTANCE) {
+                if (_verbose) cout << it1 << " -> distance " << d << endl;
+                nd++; continue;
+            }
 
             double recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
             //double recall = scoreTriple(p0,p1,it1); // Point is a candidate on the next layer

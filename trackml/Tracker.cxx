@@ -287,7 +287,8 @@ long Tracker::checkLabels(std::vector<int> &ip)
 // Recall function for 2 points
 double Tracker::checkTracklet(int p0,int p1)
 {
-    double recall = recall2(points[p0],points[p1])[0];
+    //double recall = recall2(points[p0],points[p1])[0];
+    double recall = recallPair(points[p0],points[p1])[0];
     bool ok = recall>THRESHOLD2;
     recall = ok ? recall : -recall;
     if (ok) n4++;
@@ -302,7 +303,7 @@ double Tracker::checkTracklet(int p1,int p2,int p3)
     Point &point1 = points[p1];
     Point &point2 = points[p2];
     Point &point3 = points[p3];
-
+/*
     Point v1 = point2 - point1;
     Point v2 = point3 - point1;
     double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
@@ -312,7 +313,7 @@ double Tracker::checkTracklet(int p1,int p2,int p3)
     else {
         if ((M_PI-angle)>DELTANN) { np++; return 0.0; } // Check 180 deg.
     }
-    
+*/
     double recall = recall3(point1,point2,point3)[0];
     bool ok = recall>THRESHOLD3;
     recall = ok ? recall : -recall;
@@ -334,6 +335,25 @@ double* Tracker::recall2(Point &p1, Point &p2)
     x[3]     = p2.rz()*0.001;   // rz2 [m]
     x[4]     = p2.phi();        // phi2
     x[5]     = p2.z()*0.001;    // z2 [m]
+    
+    return net.Recallstep(x);
+}
+
+// Recall function for 2 points
+double* Tracker::recallPair(Point &p1, Point &p2)
+{
+    static XMLP net(NETFILE1);
+    static float x[6]={0.,0.,0.,0.,0.,0.};
+    static double null[1]={0.};
+    
+    if (!getFeatures3(p1.id(), p2.id(), x)) return null;
+    
+    // x[0] //Cell's data of p1
+    // x[1] //Cell's data of p2
+    x[2]     *= 0.001;   // distances from origin r (wdist x,y)
+    x[3]     *= 0.001;   // zdist2
+    x[4]     *= 0.001;   // wdistr
+    x[5]     *= 0.001;   // wdist x,y,z
     
     return net.Recallstep(x);
 }
@@ -459,7 +479,7 @@ void Tracker::readTubes() {
     // Prepare rhe hits in modules
 
     for (int i = 0; i < nhits; i++) {
-        //if (assignment[i] > 0) continue; // Skip doiuble hits
+        //if (assignment[i] > 0) continue; // Skip double hits
         int l = points[i].layer();
         if (l<0 || l>=LAYERS) continue;
         int m = points[i].module();
@@ -467,13 +487,22 @@ void Tracker::readTubes() {
         int index = MODULES*l + m;
         module[index].push_back(i);
         modules[l].insert(index);
+        if (_verbose) cout << i << " " << l << " " << m << " " << index << endl;
     }
     
-    for (int i = 0; i < MODULES; i++) {
-        if (layer[i].type == Disc)
-            sort(module[i].begin(), module[i].end(), z_cmp);
-        else
-            sort(module[i].begin(), module[i].end(), r_cmp);
+    for (int l =0;l<LAYERS;l++) {
+        for (auto m : modules[l]) {
+            if (module[m].size()==0) continue;
+            if (layer[l].type == Disc)
+                sort(module[m].begin(), module[m].end(), z_cmp);
+            else
+                sort(module[m].begin(), module[m].end(), r_cmp);
+            
+            if (_verbose) {
+                cout << "Module " << m << ":";
+                print(module[m]);
+            }
+        }
     }
     
 
@@ -962,11 +991,54 @@ void Tracker::initHitDir() {
 
 // Logistic regression model
 
+//Return features for logistic regression of a triple. L has cell's data angle errors, return logarithm of inverse radius of helix
+double Tracker::scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float *L) {
+    Point a = points[ai], b = points[bi], c = points[ci];
+    //Find circle with center p, radius r, going through a, b, and c (in xy plane)
+    double ax = a.x()-c.x(), ay = a.y()-c.y(), bx = b.x()-c.x(), by = b.y()-c.y();
+    double aa = ax*ax+ay*ay, bb = bx*bx+by*by;
+    double idet = .5/(ax*by-ay*bx);
+    double x = (aa*by-bb*ay)*idet;
+    double y = (ax*bb-bx*aa)*idet;
+    double z = 0.0;
+    double r = dist(x,y), ir = 1./r;
+    x += c.x();
+    y += c.y();
+
+    for (int k = 0; k < 3; k++) {
+        int di = k ? k==2 ? ci : bi : ai;
+        double rx = points[di].x()-x, ry = points[di].y()-y;
+        
+        Point ca = points[ci]-points[ai];
+        double ang_ca = asin(dist(ca.x(), ca.y())*.5*ir)*2;
+        double cross = rx*ca.y()-ry*ca.x();
+        
+        double dx,dy,dz;
+        if (ir) {
+            dx =-ry*ang_ca;
+            dy = rx*ang_ca;
+            dz = ca.z();
+            if (cross < 0) dz *= -1;
+        } else {
+            dx = ca.x();
+            dy = ca.y();
+            dz = ca.z();
+        }
+
+        Point dir(dx,dy,dz);
+        Point d(points[ai].cx(),points[ai].cy(),points[ai].cz());
+        double dot = Point::dot(dir,d);
+        L[k] = acos(fabs(dot));
+    }
+    return log(ir);
+}
+
+
 //Decides which pairs to fit logistic model to
 int Tracker::good_pair(int a, int b) {
     if (!samepart(a, b)) return 0;
     point s = start_pos[truth_part[a]];
-    if (s.x*s.x+s.y*s.y < 0.01) return 2; // within circle of 1 cm
+    if (s.x*s.x+s.y*s.y < 100) return 2; // within circle of 1 cm
     auto &v = truth_tracks[truth_part[a]];
     int ai = metai[a], bi = metai[b];
     if (ai > bi) swap(ai, bi);
@@ -987,7 +1059,7 @@ double Tracker::dir_miss(int ai, int bi) {
 
 //Get some features for the logistic regression model
 bool Tracker::getFeatures3(int ai, int bi, float *feature) {
-    Point a = points[ai], b = points[bi];
+    Point &a = points[ai], &b = points[bi];
     Point d = a-b;
     
     double r1 = dist(a.x(), a.y());
@@ -1020,7 +1092,6 @@ double Tracker::wdistr(double r1, double dr, double az, double dz, double w) {
     double pp = r1*r1+az*az*w;
     double pd = r1*dr+az*dz*w;
     double dd = dr*dr+dz*dz*w;
-    if (fabs(dd)<1.E-9) return 0.0;
     double result = pp-pd*pd/dd;
     if (result<0) return 0.0;
     return sqrt(result);
@@ -1030,7 +1101,6 @@ double Tracker::wdist(Point &a, Point &d, double w) {
     double pp = a.x()*a.x()+a.y()*a.y()+a.z()*a.z()*w;
     double pd = a.x()*d.x()+a.y()*d.y()+a.z()*d.z()*w;
     double dd = d.x()*d.x()+d.y()*d.y()+d.z()*d.z()*w;
-    if (fabs(dd)<1.E-9) return 0.0;
     double result = pp-pd*pd/dd;
     if (result<0) return 0.0;
     return sqrt(result);
@@ -1053,8 +1123,6 @@ double Tracker::zdist2(Point &a, Point &b) {
     Point::circle(origin, a, b, p, r);
     double ang_ab = 2*asin(dist(a.x()-b.x(), a.y()-b.y())*.5/r);
     double ang_a = 2*asin(dist(a.x(), a.y())*.5/r);
-    if (fabs(ang_a)<1.E-9) return 0.0;
-
     return fabs(b.z()-a.z()-a.z()*ang_ab/ang_a);
 }
 

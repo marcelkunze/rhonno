@@ -10,23 +10,24 @@
 #define GRAPH
 
 #define FILEPATH "/Users/marcel/workspace/train_sample/"
+#define NETFILE1 "/Users/marcel/workspace/rhonno/trackml/XMLP1.net"
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
 #define TRACKLET 2
 #define TWINDIST 5.1
-#define THRESHOLD2 0.90
+#define THRESHOLD2 0.50
 #define THRESHOLD3 0.90
-#define DISTANCE 8.0
-#define DELTANN  0.1
+#define DISTANCE 180.0
+#define DELTANN  0.08
 
 #define MAXDIM 150000
 #define LAYERS 48
-#define MODULES 3200
-#define PHIDIM 13
-#define PHIFACTOR 2
-#define THEDIM 13
-#define THEFACTOR 2
+#define MODULES 10000
+#define PHIDIM 7
+#define PHIFACTOR 1
+#define THEDIM 7
+#define THEFACTOR 1
 
 #define SCORE true
 
@@ -221,6 +222,7 @@ public:
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
     static double* recall2(Point &p1, Point &p2);
+    static double* recallPair(Point &p1, Point &p2);
     static double* recall3(Point &p1, Point &p2, Point &p3);
     static long checkLabels(std::vector<int> &p);
     static long checkTracks(std::map<int,std::vector<int> >  &tracks);
@@ -240,6 +242,7 @@ public:
     static int getLayer(int volume, int layer);
     static int good_pair(int a, int b);
     static double dir_miss(int ai, int bi);
+    static double scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float* L);
     static bool getFeatures3(int ai, int bi, float *feature);
     static double wdistr(double r1, double dr, double az, double dz, double w);
     static double wdist(Point&a, Point&d, double w);
