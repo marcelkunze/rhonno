@@ -11,13 +11,13 @@
 class Point
 {
 protected:
-    int _id;                // Hit id
-    int _hitid;             // TrackML hit id
-    double _x,_y,_z;        // Cartesian coordinates
-    double _cx,_cy,_cz;     // Directional cosines
-    double _rz,_phi,_theta; // Cylinder coordinates
-    double _r;              // Spherical coordinates
-    double _distance;       // Distance from test point
+    int _id;               // Hit id
+    int _hitid;            // TrackML hit id
+    float _x,_y,_z;        // Cartesian coordinates
+    float _cx,_cy,_cz;     // Directional cosines
+    float _rz,_phi,_theta; // Cylinder coordinates
+    float _r;              // Spherical coordinates
+    float _distance;       // Distance from test point
 public:
     Point(void):_id(0),_x(0),_y(0),_z(0),_cx(0),_cy(0),_cz(0),_rz(0),_phi(0),_theta(0),_r(0),_distance(0) {}
     Point(const Point &p);
@@ -33,36 +33,36 @@ public:
     static bool sortRz(const Point &a,const Point &b);
     static bool sortDist(const Point &a,const Point &b);
     static bool sortId(const Point &a,const Point &b);
-    static double angleBetween(const Point &a,const Point &b,const Point &c);
+    static float angleBetween(const Point &a,const Point &b,const Point &c);
     static Point normalize(Point a);
-    static double dot(const Point &a,const Point &b);
+    static float dot(const Point &a,const Point &b);
     static Point cross(const Point &a,const Point &b);
     static void circle(Point&a, Point&b, Point&c, Point&p, double &r);
     static Point circleCenter(const Point &p1,const Point &p2,const Point &p3);
-    static double circleRadius(const Point &p1,const Point &p2,const Point &p3);
+    static float circleRadius(const Point &p1,const Point &p2,const Point &p3);
     static bool comparison(const Point &a,const Point &b);
-    static double magnitude(const Point &a);
+    static float magnitude(const Point &a);
     float distance() { return _distance;}
     float distance(const Point &a);
-    static double distance(const Point &a, const Point &b);
-    static double distance3(Point &a,Point &b,Point &c);
-    inline double x() const {return _x;}
-    inline double y() const {return _y;}
-    inline double z() const {return _z;}
-    inline double cx() { return _cx;}
-    inline double cy() { return _cy;}
-    inline double cz() { return _cz;}
-    inline double r() const {return _r;}
-    inline double theta() const {return _theta;}
-    inline double phi() const {return _phi;}
-    inline double rz() const {return _rz;}
+    static float distance(const Point &a, const Point &b);
+    static float distance3(Point &a,Point &b,Point &c);
+    inline float x() const {return _x;}
+    inline float y() const {return _y;}
+    inline float z() const {return _z;}
+    inline float cx() { return _cx;}
+    inline float cy() { return _cy;}
+    inline float cz() { return _cz;}
+    inline float r() const {return _r;}
+    inline float theta() const {return _theta;}
+    inline float phi() const {return _phi;}
+    inline float rz() const {return _rz;}
     inline int id() const {return _id;}
     inline int hitid() const {return _hitid;}
     inline void setid(int id) { _id = id;}
     inline void sethitid(int id) { _hitid = id;}
-    inline void setcx(double cx) { _cx = cx;}
-    inline void setcy(double cy) { _cy = cy;}
-    inline void setcz(double cz) { _cz = cz;}
+    inline void setcx(float cx) { _cx = cx;}
+    inline void setcy(float cy) { _cy = cy;}
+    inline void setcz(float cz) { _cz = cz;}
 
 };
 
@@ -143,11 +143,11 @@ bool treePoint::sortRecall(const treePoint &a,const treePoint &b)
 
 // Calculate the angle between two vectors defined by (a,b) and (a,c)
 inline
-double Point::angleBetween(const Point &a,const Point &b,const Point &c)
+float Point::angleBetween(const Point &a,const Point &b,const Point &c)
 {
     Point v1 = b - a;
     Point v2 = c - a;
-    double angle = acos(dot(v1,v2));
+    float angle = acos(dot(v1,v2));
     return angle;
 }
 
@@ -160,12 +160,15 @@ Point Point::normalize(Point a) {
 
 // Calculate the scalar product between two vectors a and b
 inline
-double Point::dot(const Point &a,const Point &b)
+float Point::dot(const Point &a,const Point &b)
 {
     double r1 = sqrt(a._x*a._x + a._y*a._y + a._z*a._z);
     double r2 = sqrt(b._x*b._x + b._y*b._y + b._z*b._z);
     double product = a._x*b._x + a._y*b._y + a._z*b._z;
-    return product / (r1 * r2);
+    double result = product / (r1 * r2);
+    if (result>1.0) result = 1.0;
+    if (result<-1.0) result = -1.0;
+    return result;
 }
 
 inline Point Point::cross(const Point &a,const Point &b) {
@@ -210,7 +213,7 @@ Point Point::circleCenter(const Point &p1,const Point &p2,const Point &p3)
 
 // Calculate the circle radius through 3 points
 inline
-double Point::circleRadius(const Point &p1,const Point &p2,const Point &p3)
+float Point::circleRadius(const Point &p1,const Point &p2,const Point &p3)
 {
     Point center = circleCenter(p1,p2,p3);
     double radius = sqrt( pow(p2._x - center._x,2) + pow(p2._y-center._y,2));
@@ -227,7 +230,7 @@ bool Point::comparison(const Point &a,const Point &b)
 }
 
 inline
-double Point::magnitude(const Point &a)
+float Point::magnitude(const Point &a)
 {
     return sqrt(a._x*a._x+a._y*a._y+a._z*a._z);
 }
@@ -242,7 +245,7 @@ float Point::distance(const Point &a)
 }
 
 inline
-double Point::distance(const Point &a, const Point &b)
+float Point::distance(const Point &a, const Point &b)
 {
     float d =  sqrt((a._x - b._x) * (a._x - b._x) +
                      (a._y - b._y) * (a._y - b._y) +
@@ -250,7 +253,7 @@ double Point::distance(const Point &a, const Point &b)
     return d;
 }
 
-inline double Point::distance3(Point &a,Point &b,Point &c) {
+inline float Point::distance3(Point &a,Point &b,Point &c) {
     const Point x = a-b;
     const Point y = a-c;
     const Point z = c-b;

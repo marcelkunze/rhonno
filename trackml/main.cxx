@@ -41,17 +41,16 @@ int filenum = 21100;
 using namespace std;
 
 void makeTrain2();
-void makeTrain2pairs();
+void makeTrainPairs();
 void makeTrain2PhiTheta();
 void makeTrain3();
-void makeTrain3triples();
-void makeTrain3seed();
-void makeTrain3Continuous();
+void makeTrainTriples();
+void makeTrain3PhiTheta();
 long checkTracks(std::map<int,std::vector<int> >  &tracks);
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks);
 void transform(Particle &particle, std::vector<Point> &points);
 
-TNtuple *ntuple1,*ntuple2,*ntuple3;
+TNtuple *ntuple1,*ntuple2,*ntuple3,*ntuple4;
 TRandom r;
 vector<pair<int,int> > truepairs;
 
@@ -234,15 +233,18 @@ int main(int argc, char**argv) {
         cout << endl << "Generating training data file " << fname << endl;
         ntuple1 = new TNtuple("pairs","training data","f0:f1:f2:f3:f4:f5:l1:l2:truth");
         ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
-        makeTrain2pairs();
+        makeTrainPairs();
         ntuple1->Write();
         ntuple2->Write();
         ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
-        makeTrain3triples();
+        ntuple4 = new TNtuple("triples","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:f0:f1:f2:l1:l2:l3:truth");
+        makeTrainTriples();
         ntuple3->Write();
+        ntuple4->Write();
         delete ntuple1;
         delete ntuple2;
         delete ntuple3;
+        delete ntuple4;
         f->Close();
     }
     
@@ -295,7 +297,7 @@ void transform(Particle &particle, std::vector<treePoint> &points) {
     for (int i=0;i<nhits;i++) {
         vector<int> &h = particle.hit;
         int id = h[i];
-        point h1 = Tracker::hits[id]*0.001; // in m
+        point h1 = Tracker::hits[id]; // in mm
         treePoint p(h1.x,h1.y,h1.z,id,trackid,i);
         tmpvec.push_back(p);
     }
@@ -305,7 +307,7 @@ void transform(Particle &particle, std::vector<treePoint> &points) {
 }
 
 // Look for seeding points by hit pair combinations in the innnermost layers
-void makeTrain2pairs()
+void makeTrainPairs()
 {
     long wright=1,wrong=1;
     
@@ -350,7 +352,7 @@ void makeTrain2pairs()
             }
         }
     }
-    cout << "makeTrain2pairs Wright: " << wright << " Wrong: " << wrong << endl;
+    cout << "makeTrainPairs Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
 // Look for seeding points by hit pair combinations in the innnermost layers
@@ -394,6 +396,8 @@ void makeTrain2()
     }
     cout << "makeTrain2 Wright: " << wright << " Wrong: " << wrong << endl;
 }
+
+
 // Look for seeding points by hit pair combinations in the innnermost layers
 void makeTrain2PhiTheta()
 {
@@ -430,7 +434,7 @@ void makeTrain2PhiTheta()
 }
 
 // Look for seeding points by hit pair combinations in the innnermost layers
-void makeTrain3triples()
+void makeTrain3()
 {
     long wright=1,wrong=1;
     for (auto triple : Tracker::triples) {
@@ -451,125 +455,71 @@ void makeTrain3triples()
             }
         }
     }
-    cout << "makeTrain3triples Wright: " << wright << " Wrong: " << wrong << endl;
+    cout << "makeTrain3 Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
 
 // Look for seeding points by hit pair combinations in the innnermost layers
-void makeTrain3()
+void makeTrainTriples()
 {
     long wright=1,wrong=1;
-    // Combine 3 hits
-    for (auto p : Tracker::particles) {
-        long nhits = p.hits;
-        if (nhits < 3) continue;
-        vector<int> &h = p.hit;
-        for (int i=0; i<nhits-3; i++)    {
-            int id1 = h[i];
-            int id2 = h[i+1];
-            point x1 = Tracker::hits[id1]; // in mm
-            point x2 = Tracker::hits[id2]; // in mm
-            Point p1(x1.x,x1.y,x1.z);
-            Point p2(x2.x,x2.y,x2.z);
-            point geo = Tracker::meta[id1];
-            int vol = geo.x;
-            int lay = geo.y;
-            int mod = geo.z;
-            int l1 = Tracker::getLayer(vol,lay);
-            geo = Tracker::meta[id2];
-            vol = geo.x;
-            lay = geo.y;
-            mod = geo.z;
-            int l2 = Tracker::getLayer(vol,lay);
-            
-            // Select 3 continuous points
-            int id3 = h[i+2];
-            point x3 = Tracker::hits[id3]; // in mm
-            Point p3(x3.x,x3.y,x3.z);
-            geo = Tracker::meta[id3];
-            vol = geo.x;
-            lay = geo.y;
-            mod = geo.z;
-            int l3 = Tracker::getLayer(vol,lay);
-            ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,1.0); //wright combination
-            wright++;
-            // Select last point randomly in the same module
-            int index = MODULES*lay + mod;
-            auto hits = Tracker::module[index];
-            for (auto idr : hits) {
-                if (idr==id3) continue; // Same point
-                point x4 = Tracker::hits[idr]*0.001; // in m
-                Point p4(x4.x,x4.y,x4.z);
-                if (r.Rndm()<wright/wrong) {
-                    ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p4.rz(),p4.phi(),p4.z(),l1,l2,l3,0.0); //wrong combination
-                    wrong++;
-                }
-            }
-        }
-    }
-    cout << "makeTrain3: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
-}
 
-// Look for seeding points by hit pair combinations in the innnermost layers
-void makeTrain3seed()
-{
-    long wright=1,wrong=1;
-    // Combine 3 hits
-    for (auto p : Tracker::particles) {
-        vector<treePoint> hits;
-        transform(p,hits);
+    // Combine 3 continuous hits
+    for (int i=0;i<Tracker::points.size()-3;i++) {
         
-        // Sort the hits according to distance from origin
-        sort(hits.begin(),hits.end(),Point::sortRad);
-        
-        // Combine 3 hits
-        int nhits = (int)hits.size();
-        if (nhits < 3) return;
-        
-        treePoint &hit1 = hits[0];
-        treePoint &hit2 = hits[1];
-        
-        int istart = 2;
-        float d = hit1.distance(hit2); // CHeck for double hits
-        if (d<TWINDIST) {
-            hit2 = hits[2];
-            istart = 3;
-        }
-        
-        double l1(0),l2(0),l3(0);
-        point geo = Tracker::meta[hit1.id()];
+        treePoint &p1= Tracker::points[i];
+        int id1 = p1.id();
+        point geo = Tracker::meta[p1.hitid()];
         int vol = geo.x;
         int lay = geo.y;
-        l1 = Tracker::getLayer(vol,lay);
-        geo = Tracker::meta[hit2.id()];
+        int mod = geo.z;
+        float l1 = Tracker::getLayer(vol,lay);
+        
+        treePoint &p2 = Tracker::points[i+1];
+        int id2 = p2.id();
+        geo = Tracker::meta[p2.hitid()];
         vol = geo.x;
         lay = geo.y;
-        l2 = Tracker::getLayer(vol,lay);
-        
-        for (int i=istart; i<nhits; i++)    {
-            treePoint &hit3 = hits[i];
-            geo = Tracker::meta[hit3.id()];
-            vol = geo.x;
-            lay = geo.y;
-            l3 = Tracker::getLayer(vol,lay);
+        mod = geo.z;
+        float l2 = Tracker::getLayer(vol,lay);
             
-            ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
+        treePoint &p3 = Tracker::points[i+2];
+        int id3 = p3.id();
+        geo = Tracker::meta[p3.hitid()];
+        vol = geo.x;
+        lay = geo.y;
+        mod = geo.z;
+        float l3 = Tracker::getLayer(vol,lay);
+        
+        float f[3];
+        Tracker::scoreTripleLogRadius_and_HitDir(id1,id2,id3,f);
+        
+        if (p1.truth() == p2.truth() && p1.truth() == p3.truth()) {
+            float x[16]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],l1,l2,l3,1.0};
+            ntuple4->Fill(x); //wright combination
             wright++;
-            double phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
-            double theta3 = r.Rndm()*M_PI;
-            double z3 = hit3.rz() * cos(theta3);
-            ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),phi3,z3,l1,l2,l3,0.0); // wrong combination
+        }
+
+        int index = MODULES*lay + mod;
+        for (auto idr : Tracker::module[index]) {
+            if (idr==id1 || idr==id2 || idr==id3) continue; // Do not take the same hit
+            treePoint &p3 = Tracker::points[idr];
+            Tracker::scoreTripleLogRadius_and_HitDir(id1,id2,idr,f);
+            float x[16]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],l1,l2,l3,0.0};
+            ntuple4->Fill(x); //wrong combination
             wrong++;
         }
         
     }
-    cout << "makeTrain3seed: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
+    cout << "makeTrainTriples: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
+
 // Look for seeding points by hit pair combinations in the innnermost layers
-void makeTrain3Continuous()
+void makeTrain3PhiTheta()
 {
     long wright=1,wrong=1;
+    
     // Combine 3 hits
     for (auto p : Tracker::particles) {
         vector<treePoint> hits;
@@ -609,7 +559,7 @@ void makeTrain3Continuous()
             wrong++;
         }
     }
-    cout << "makeTrain3Continuous: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
+    cout << "makeTrain3PhiTheta: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks)

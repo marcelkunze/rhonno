@@ -314,7 +314,8 @@ double Tracker::checkTracklet(int p1,int p2,int p3)
         if ((M_PI-angle)>DELTANN) { np++; return 0.0; } // Check 180 deg.
     }
 */
-    double recall = recall3(point1,point2,point3)[0];
+    //double recall = recall3(point1,point2,point3)[0];
+    double recall = recallTriple(point1,point2,point3)[0];
     bool ok = recall>THRESHOLD3;
     recall = ok ? recall : -recall;
     if (ok) n1++;
@@ -355,6 +356,31 @@ double* Tracker::recallPair(Point &p1, Point &p2)
     x[4]     *= 0.001;   // wdistr
     x[5]     *= 0.001;   // wdist x,y,z
     
+    return net.Recallstep(x);
+}
+
+
+// Recall function for 2 points
+double* Tracker::recallTriple(Point &p1, Point &p2, Point &p3)
+{
+    static XMLP net(NETFILE4);
+    static float x[12]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.}, y[3]={0.,0.,0.};
+    
+    scoreTripleLogRadius_and_HitDir(p1.id(),p2.id(),p3.id(),y);
+    
+    x[0]    = p1.rz()*0.001;   // rz1 [m]
+    x[1]    = p1.phi();        // phi1
+    x[2]    = p1.z()*0.001;    // z1 [m]
+    x[3]    = p2.rz()*0.001;   // rz2 [m]
+    x[4]    = p2.phi();        // phi2
+    x[5]    = p2.z()*0.001;    // z2 [m]
+    x[6]    = p3.rz()*0.001;   // rz3 [m]
+    x[7]    = p3.phi();        // phi3
+    x[8]    = p3.z()*0.001;    // z3 [m]
+    x[9]    = y[0];            //Cell's data of p1
+    x[10]   = y[1];            //Cell's data of p2
+    x[11]   = y[2];            //Cell's data of p3
+
     return net.Recallstep(x);
 }
 
@@ -993,9 +1019,13 @@ void Tracker::initHitDir() {
 
 //Return features for logistic regression of a triple. L has cell's data angle errors, return logarithm of inverse radius of helix
 double Tracker::scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float *L) {
-    Point a = points[ai], b = points[bi], c = points[ci];
+
     //Find circle with center p, radius r, going through a, b, and c (in xy plane)
+    
+    Point a = points[ai], b = points[bi], c = points[ci];
     double ax = a.x()-c.x(), ay = a.y()-c.y(), bx = b.x()-c.x(), by = b.y()-c.y();
+    if (ax*by-ay*bx == 0.0) return 0.0; // Make sure to have independent points
+
     double aa = ax*ax+ay*ay, bb = bx*bx+by*by;
     double idet = .5/(ax*by-ay*bx);
     double x = (aa*by-bb*ay)*idet;
@@ -1029,7 +1059,13 @@ double Tracker::scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float *L) {
         Point d(points[ai].cx(),points[ai].cy(),points[ai].cz());
         double dot = Point::dot(dir,d);
         L[k] = acos(fabs(dot));
+        if (isnan(L[k])) {
+            cout << "NAN " << k << endl;
+            return 0.0;
+        }
+
     }
+
     return log(ir);
 }
 
@@ -1101,6 +1137,7 @@ double Tracker::wdist(Point &a, Point &d, double w) {
     double pp = a.x()*a.x()+a.y()*a.y()+a.z()*a.z()*w;
     double pd = a.x()*d.x()+a.y()*d.y()+a.z()*d.z()*w;
     double dd = d.x()*d.x()+d.y()*d.y()+d.z()*d.z()*w;
+    if (fabs(dd)<1.E-7) dd = 1.E-7;
     double result = pp-pd*pd/dd;
     if (result<0) return 0.0;
     return sqrt(result);
@@ -1122,8 +1159,11 @@ double Tracker::zdist2(Point &a, Point &b) {
     double r;
     Point::circle(origin, a, b, p, r);
     double ang_ab = 2*asin(dist(a.x()-b.x(), a.y()-b.y())*.5/r);
-    double ang_a = 2*asin(dist(a.x(), a.y())*.5/r);
-    return fabs(b.z()-a.z()-a.z()*ang_ab/ang_a);
+    double d = dist(a.x(), a.y())*0.5/r;
+    if (d>1.0) d = 1.0;
+    double ang_a = 2*asin(d);
+    double zdist = fabs(b.z()-a.z()-a.z()*ang_ab/ang_a);
+    return zdist;
 }
 
 

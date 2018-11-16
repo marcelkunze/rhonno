@@ -13,6 +13,7 @@
 #define NETFILE1 "/Users/marcel/workspace/rhonno/trackml/XMLP1.net"
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
+#define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
 
 #define TRACKLET 2
 #define TWINDIST 5.1
@@ -224,6 +225,7 @@ public:
     static double* recall2(Point &p1, Point &p2);
     static double* recallPair(Point &p1, Point &p2);
     static double* recall3(Point &p1, Point &p2, Point &p3);
+    static double* recallTriple(Point &p1, Point &p2, Point &p3);
     static long checkLabels(std::vector<int> &p);
     static long checkTracks(std::map<int,std::vector<int> >  &tracks);
     static long seedstotal,seedsok;
