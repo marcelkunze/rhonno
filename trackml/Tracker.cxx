@@ -12,18 +12,18 @@
 #include "Tracker.h"
 #include "Point.h"
 #include "XMLP.h"
+#include "PolarModule.h"
+
 #include <ctime>
+#include <utility>
 #include <iostream>
 #include <fstream>
-#include <utility>
-#include <algorithm>
 #include <iterator>
 #include <vector>
 #include <map>
-#include <set>
+#include <algorithm>
 
 using namespace std;
-
 
 // Find tracks from points
 int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int* layer,int* module,int* label,int *truth,int *hitid)
@@ -102,14 +102,23 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
         cout << endl;
     }
     
+#endif
+
+#ifdef TOPQUARK
+    PolarModule mod[48];
+    for (int i = 0; i < 48; i++)
+        mod[i] = PolarModule(i);
+
+    vector<triple> straight_triples = findTriples(pairs, mod, 1,0.5);
+    for (auto&t : straight_triples) triples.push_back(t);
+#endif
+
     if (SCORE) scoreTriples(triples);
-    
+
     c_end = std::clock();
     time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
 
-#endif
-    
     // Assemble tracklets from the seeds/pairs
     map<int,vector<int> > tracklet;
     

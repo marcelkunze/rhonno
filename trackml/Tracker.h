@@ -6,6 +6,7 @@
 #define SEEDS
 //#define PAIRS
 #define TRIPLETS
+//#define TOPQUARK
 //#define SWIMMER
 #define GRAPH
 
@@ -39,6 +40,8 @@
 #include <vector>
 #include <map>
 #include <set>
+
+struct PolarModule;
 
 inline double dist(double x, double y) { return sqrt(x*x+y*y); }
 inline double dist2(double x, double y) { return (x*x+y*y); }
@@ -135,6 +138,9 @@ struct Particle // structure for truth particle info
 
 class Tracker {
 public:
+    static const int Tube = 0, Disc = 1;
+    static Layer layer[LAYERS];
+    static double disc_z[LAYERS][4];
     static int assignment[MAXDIM]; // hit hs been used
     static std::vector<std::pair<int, int> > pairs; // hit pair combinations
     static std::vector<triple> triples; // hit triple combinations
@@ -166,10 +172,7 @@ private:
     static std::map<long long, int> part_q; //start charge
     static std::map<long long, int> part_hits; // = truth_tracks[particle_id].size()
     static int topo[LAYERS], itopo[LAYERS]; //reordering of layers for approximate sorting
-    static double disc_z[LAYERS][4];
-    static const int Tube = 0, Disc = 1;
     static constexpr double Bfield = 1673.0; //Empirical field strengh, to scale the momentum
-    static Layer layer[LAYERS];
     static double z_minr[LAYERS][4], z_maxr[LAYERS][4];
     static std::map<int, Detector> detectors;
 
@@ -205,6 +208,7 @@ public:
     static long findPairs();
     static long findTriples();
     static long findTriples(int p0,int p1,std::vector<int> &points);
+    static std::vector<triple> findTriples(std::vector<std::pair<int, int> > &pairs, PolarModule *mod, int method, double target);
     static long addHits(int p0, int p1, int module,std::vector<triple> &triples);
     inline
     static bool checkModule(const int p0,const int p1) {return points[p0].module()!=points[p1].module();}

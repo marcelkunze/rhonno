@@ -82,6 +82,10 @@ int main(int argc, char**argv) {
         if (Tracker::hit_dir[nhits][0].x != 0.0)
         cout << i << " " << Tracker::hit_dir[nhits][0].x << " " << Tracker::hit_dir[nhits][0].y << " " << Tracker::hit_dir[nhits][0].z << endl;
     }
+    
+    // Prepare the trackml data to run the track finder
+    // Geberate a graph to represent the track hits in the modules
+    
     nhits = 0;
     int n = 0;
     int start[nParticles+1],end[nParticles+1];
@@ -219,7 +223,7 @@ int main(int argc, char**argv) {
     // Check the results
     checkTracks(tracks);
     
-    // Generate a training sample for hit pairs
+    // Generate a training sample for hit pairs and triples
     if (TRAINFILE) {
         TString filePrefix;
         filePrefix.Form("%sevent%09d",base_path.c_str(),filenum);

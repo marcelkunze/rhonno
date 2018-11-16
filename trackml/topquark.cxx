@@ -4,6 +4,7 @@
 // Reading trackml event data
 
 #include "Tracker.h"
+#include "PolarModule.h"
 
 using namespace std;
 
@@ -838,4 +839,645 @@ double Tracker::scoreTriple(int ai, int bi, int ci) {
      cout << point(-rr.y, rr.x, cb.z/ang_cb) << endl;*/
     return score;
 }
+
+int adj_thres = 1000; //TODO: tweak
+//Decides how curved "approximately straight" helices are supposed to be
+const double stretch = 0.02;
+//List of coordinates for each layer, used to estimate outlier densities
+vector<double> sorted_hits[48];
+//Acceleration look-up table for faster lookup in sorted_hits
+const int crude_steps = 1<<10;
+int crudeIndex[48][crude_steps];
+//Scaling to get sorted_hits in range [0,crude_steps)
+pair<double, double> crudeIndex_a[48];
+//Accumulated polynomial coefficients of second order polynomial for O(1) density look-up. Second dimension (20000) must be bigger than number of hits in the most populated layer
+double poly[48][20000][3];
+//reused global array for storing matching hits from PolarModule->getNear function
+int match[200000];
+//Number of directly adjacent hits in layers
+int next_layer[48][48];
+
+inline int getIndex(int&li, double x) {
+    int ci = x*crudeIndex_a[li].first+crudeIndex_a[li].second;
+    ci = min(crude_steps-1, max(0, ci));
+    int i = crudeIndex[li][ci];
+    //cout << x << ' ' << sorted_hits[li][i] << ' ' << crudeIndex_a[li].first << endl;
+    //if (i < 1) i = 1;
+    //if (i > sorted_hits[li].size()-2) i = sorted_hits[li].size()-2;
+    //static int c = 0, d = 0;
+    //while (i+1 < sorted_hits[li].size() && x >= sorted_hits[li][i]) i++, c++;
+    //while (i && x < sorted_hits[li][i-1]) i--, c++;
+    
+    //Might segfault sometimes :)
+    while (x >= sorted_hits[li][i]) i++;
+    while (x < sorted_hits[li][i-1]) i--;
+    
+    //d++;
+    //if (d%1000000 == 0) cout << c*1./d << ' ' << c << ' ' << d << endl;
+    /*{
+     int j = upper_bound(sorted_hits[li].begin(), sorted_hits[li].end(), x)-sorted_hits[li].begin();
+     if (j != i) {
+     cout << i << ' ' << j << endl;
+     cout << x << endl;
+     cout << sorted_hits[li][i-1] << ' ' << sorted_hits[li][i] << ' ' << sorted_hits[li][i+1] << endl;
+     cout << sorted_hits[li][j-1] << ' ' << sorted_hits[li][j] << ' ' << sorted_hits[li][j+1] << endl;
+     cout << endl;
+     
+     }
+     }*/
+    return i;//max(0,min(i,int(sorted_hits[li].size())-1));
+}
+
+//Init everything needed for fast density calculations, includes most global variables above
+void initDensity3() {
+    vector<int>*tube = new vector<int>[48]();
+    
+    for (int i = 1; i < Tracker::hits.size(); i++) {
+        if (!Tracker::assignment[i])
+            tube[Tracker::metai[i]].push_back(i);
+    }
+    
+    for (int li = 0; li < 48; li++) {
+        sorted_hits[li].clear();
+        if (Tracker::layer[li].type == Tracker::Tube) {
+            for (int i : tube[li])
+                sorted_hits[li].push_back(Tracker::hits[i].z);
+        } else {
+            for (int i : tube[li])
+                sorted_hits[li].push_back(Tracker::polar[i].x);
+        }
+        sorted_hits[li].push_back(-1e50);
+        sorted_hits[li].push_back(1e50);
+        sort(sorted_hits[li].begin(), sorted_hits[li].end());
+        
+        double minx = *next(sorted_hits[li].begin())-1e-8;
+        double maxx = *next(sorted_hits[li].rbegin())+1e-8;
+        //cout << maxx << ' ' << minx << endl;
+        double f = crude_steps/(maxx-minx);
+        crudeIndex_a[li] = make_pair(f, -minx*f);
+        
+        for (int i = 0; i < crude_steps; i++) {
+            double x = (i+.5)/f+minx;
+            crudeIndex[li][i] = upper_bound(sorted_hits[li].begin(), sorted_hits[li].end(), x)-sorted_hits[li].begin();
+        }
+        double acc[3] = {};
+        for (int i = 1; i < sorted_hits[li].size(); i++) {
+            for (int j = 0; j < 3; j++) poly[li][i][j] = acc[j];
+            double x = sorted_hits[li][i];
+            for (int j = 0; j < 3; j++)
+                acc[j] += pow(x, j);
+        }
+    }
+    delete[]tube;
+}
+
+//Get expected number of hits on layer "li" in area (in polar/cylindrical coordnates) spanned by (p-dp)^2-dot(p-dp, xp)^2 < tt
+double getDensity3(point&dp, point&xp, double tt, int li) {
+    Layer&l = Tracker::layer[li];
+    
+    double x0, dx, dy;
+    if (l.type == Tracker::Tube) {
+        x0 = dp.z;
+        dx = xp.z;
+        dy = xp.y;
+    } else {
+        x0 = dp.x;
+        dx = xp.x;
+        dy = xp.y;
+    }
+    double b = tt*(1-dy*dy)/(1-dx*dx-dy*dy);
+    double a = sqrt(1-dx*dx-dy*dy)/((1-dy*dy)*M_PI*dp.x);
+    double rx = sqrt(b);
+    
+    /*int ai = getIndex(li, x0-rx);
+     int bi = getIndex(li, x0);
+     int ci = getIndex(li, x0+rx);
+     
+     double ret =
+     ((poly[li][bi][0]-poly[li][ai][0])*(rx-x0)+
+     (poly[li][bi][1]-poly[li][ai][1])*(1)+
+     (poly[li][ci][0]-poly[li][bi][0])*(rx+x0)+
+     (poly[li][ci][1]-poly[li][bi][1])*(-1))*a;
+     if (ret < 0) {
+     cout << x0-rx << ' ' << x0 << ' ' << x0+rx << endl;
+     cout << sorted_hits[li][ai] << ' ' << sorted_hits[li][bi] << ' ' << sorted_hits[li][ci] << endl;
+     cout << ret << ' ' << getDensity2(dp, xp, tt, li) << endl;
+     cout << ai << ' ' << bi << ' ' << ci << endl;
+     cout << poly[li][ai][0] << ' ' << poly[li][ai][1] << endl;
+     cout << poly[li][bi][0] << ' ' << poly[li][bi][1] << endl;
+     cout << poly[li][ci][0] << ' ' << poly[li][ci][1] << endl;
+     cout << endl;
+     ret = 1e-8;
+     }
+     return ret;*/
+    
+    int ai = getIndex(li, x0-rx);
+    int bi = getIndex(li, x0+rx);
+    if (bi-ai > 10) {//Approximate integration by 2. order polynomial approximation to half disc
+        //cout << ai << ' ' << bi << endl;
+        const double A = 21*M_PI/64., B = -15*M_PI/64.;
+        double ib = 1./b;
+        double c0 = A+B*x0*x0*ib, c1 = -2*B*ib*x0, c2 = B*ib;
+        double ret =
+        ((poly[li][bi][0]-poly[li][ai][0])*c0+
+         (poly[li][bi][1]-poly[li][ai][1])*c1+
+         (poly[li][bi][2]-poly[li][ai][2])*c2)*a*rx;
+        return max(ret,0.);
+    } else { //Exact integration, uses half disc
+        double density = 0;
+        for(int i = ai; i < bi; i++) {
+            double x = sorted_hits[li][i]-x0;
+            double h = a*sqrt(b-x*x);/// *it;
+            //cout << h << endl;
+            density += h;
+        }
+        return density;
+    }
+}
+
+//Find density by binary search
+//This means we want to find (and return) tt such that getDensity3(dp, xp, tt, li) = target
+double findDensity(point &dp, point &xp, double target, int li) {
+    double Ad = 0, A = 0, B = 1, Bd;
+    while (1) {
+        Bd = getDensity3(dp, xp, B, li);
+        //cout << B << ' ' << Bd << endl;
+        if (B > 1e20) {
+            cout << "No density?" << endl;
+            //cout << dp << ' ' << xp << ' ' << li << endl;
+            exit(0);
+        }
+        if (Bd > target) break;
+        B *= 10;
+        if (target/Bd < 1e8) B = max(B, target/Bd);
+    }
+    double mid = B/2;
+    int cc = 0;
+    while (1) {
+        double density = getDensity3(dp, xp, mid, li);
+        if (density > target) B = mid, Bd = density;
+        else A = mid, Ad = density;
+        
+        //cout << A << ' ' << mid << ' ' << B << ' ' << density << endl;
+        if ((B-A) < A*1e-3 || density > target*0.9 && density < target*1.1 || cc >= 100) break;
+        mid = max(A*0.9+B*0.1, min(B*0.9+A*0.1, (target-Ad)*(B-A)/(Bd-Ad)+A));
+        if (++cc == 100) { //Should never happen
+            cout << "Warning: Infinite loop in findDensity" << endl;
+            /*cout << dp << endl;
+             cout << xp << endl;
+             cout << mid << endl;
+             cout << target << endl;
+             cout << li << endl;
+             exit(0);*/
+        }
+    }
+    return mid;
+}
+
+//Prepare ellipse equation of collision between line extrapolated through hits with id "ai" and "bi" and layer "li". Return collision coordinate "d", in polar coordinates "dp", ellipse stretching "xp", and direction of hit in polar coordnates "bap". "target" describes the layer, possibly corrected for a single point we are evaluating a helix quadruple
+int prepareTripleScore(int ai, int bi, int li, point&d, point&dp, point&xp, point&bap, point target) {
+    const double slack = 1.00; //No slack
+    
+    Layer&l = Tracker::layer[li];
+    point&a = Tracker::hits[ai], &b = Tracker::hits[bi];
+    
+    point ba = b-a;
+    if (l.type == Tracker::Tube) {
+        double vv = ba.x*ba.x+ba.y*ba.y;
+        double pv = ba.x*a.x+ba.y*a.y;
+        double pp = a.x*a.x+a.y*a.y;
+        double RR = target.x*target.x;
+        double sq = pv*pv-vv*(pp-RR);
+        if (sq < 0) return -1;
+        
+        double t = (-pv+sqrt(sq))/vv;
+        if (t < 0 || !vv) return -1;
+        d.x = a.x+ba.x*t;
+        d.y = a.y+ba.y*t;
+        d.z = a.z+ba.z*t;
+        
+        if (d.z < l.minz*slack || d.z > l.maxz*slack) return -1;
+        
+        dp = point(dist(d.x,d.y),atan2(d.y,d.x),d.z);
+        
+        xp = point(0, -dp.x*(ba.x*ba.x+ba.y*ba.y), ba.z);
+        bap = point(ba.x*d.x+ba.y*d.y, d.x*ba.y-d.y*ba.x, ba.z*dp.x);
+        
+        bap = bap*(1./bap.x);
+    } else if (l.type == Tracker::Disc) {
+        double t = (target.z-a.z)/ba.z;
+        if (t < 0 || !ba.z) return -1;
+        d.x = a.x+ba.x*t;
+        d.y = a.y+ba.y*t;
+        d.z = a.z+ba.z*t;
+        
+        dp = point(dist(d.x,d.y),atan2(d.y,d.x),d.z);
+        
+        if (dp.x < l.minr*(1./slack) || dp.x > l.maxr*slack) return -1;
+        
+        xp = point(ba.x*d.y-ba.y*d.x, d.x*ba.x+d.y*ba.y, 0);
+        bap = point(ba.x*d.x+ba.y*d.y, d.x*ba.y-d.y*ba.x, ba.z*dp.x);
+        
+        bap = bap*(1./bap.z);
+    }
+    double xp2 = xp.x*xp.x+xp.y*xp.y+xp.z*xp.z;
+    if (xp2)
+        xp = xp*sqrt((1-stretch)/xp2);
+    return 0;
+}
+
+//Default is using average position in the layer
+int prepareTripleScore(int ai, int bi, int li, point&d, point&dp, point&xp, point&bap) {
+    Layer&l = Tracker::layer[li];
+    point target(l.avgr, 0, l.avgz);
+    return prepareTripleScore(ai, bi, li, d, dp, xp, bap, target);
+}
+
+//Use the prepared "dp", "xp", "bap" and return the area that is closer to the collision line (taking into account xp for elliptic behaviour) compared to the hit with id "ci"
+double evaluateScore(int ci, point&dp, point&xp, point&bap) {
+    point&r = Tracker::polar[ci];
+    point err = r-dp;
+    if (err.y > M_PI) err.y -= M_PI*2;
+    if (err.y <-M_PI) err.y += M_PI*2;
+    err.y *= dp.x;
+    
+    err = err-bap*(Tracker::layer[Tracker::metai[ci]].type == Tracker::Disc ? err.z : err.x);
+    double r2 = err*err-pow(err*xp, 2);
+    return r2;
+}
+
+
+//Return this if no points were found, somewhat tunable parameter
+const double density_eps = 1e-6;
+
+//map<pair<pair<int, int>, int >, double> scoreTripleDensity_mem;
+
+//How many outliers do we expect to fit better than "ci" in the triple "ai", "bi", "ci"?
+double scoreTripleDensity(int ai, int bi, int ci) {
+    /*auto memi = make_pair(make_pair(ai, bi), ci);
+     double&memo = scoreTripleDensity_mem[memi];
+     if (!memo) {
+     */
+    point d, dp, xp, bap;
+    if (prepareTripleScore(ai, bi, Tracker::metai[ci], d, dp, xp, bap, Tracker::polar[ci])) return 1e9;
+    double s = evaluateScore(ci, dp, xp, bap);
+    s = getDensity3(dp, xp, s, Tracker::metai[ci]);
+    return s+density_eps;
+    /*
+     memo = s+density_eps;
+     }
+     return memo;*/
+}
+
+//Score triple based on the deviation from a perfect helix, no prior that it should be straight
+double scoreTriple(int ai, int bi, int ci) {
+    point center;
+    double radius;
+    circle(Tracker::hits[ai], Tracker::hits[bi], Tracker::hits[ci], center, radius);
+    
+    point cb = Tracker::hits[ci]-Tracker::hits[bi];
+    point ba = Tracker::hits[bi]-Tracker::hits[ai];
+    double ang_cb = asin(dist(cb.x, cb.y)*.5/radius)*2;
+    double ang_ba = asin(dist(ba.x, ba.y)*.5/radius)*2;
+    if (radius != radius || fabs(radius) > 1e50) {
+        ang_cb = dist(cb.x, cb.y);
+        ang_ba = dist(ba.x, ba.y);
+    }
+    if (ba.z*cb.z < 0) ang_ba *= -1;
+    
+    //if (dist(cb.x, cb.y)*.5/radius > M_PI/2 || dist(ba.x, ba.y)*.5/radius > M_PI/2) return 1e9;
+    //-radius*2e-5+
+    double x = ba.z ? (fabs(cb.z*ang_ba/ba.z-ang_cb))*radius : 1e9;
+    double y = ang_cb ? (fabs(cb.z*ang_ba/ang_cb-ba.z)) : 1e9;
+    double score = min(x, y);//, fabs(cb.z-ba.z*ang_cb/ang_ba)));
+    /*
+     cout << endl;
+     cout << truth_mom[bi]*part_q[truth_part[bi]] << endl;
+     point rr = hits[bi]-center;
+     if (cb.x*rr.y-cb.y*rr.x > 0) ang_cb *= -1;
+     cout << point(-rr.y, rr.x, cb.z/ang_cb) << endl;*/
+    return score;
+}
+
+//Return features for logistic regression of a triple. L has cell's data angle errors, return logarithm of inverse radius of helix
+double scoreTripleLogRadius_and_HitDir(int ai, int bi, int ci, double*L) {
+    point a = Tracker::hits[ai], b = Tracker::hits[bi], c = Tracker::hits[ci];
+    //Find circle with center p, radius r, going through a, b, and c (in xy plane)
+    double ax = a.x-c.x, ay = a.y-c.y, bx = b.x-c.x, by = b.y-c.y;
+    double aa = ax*ax+ay*ay, bb = bx*bx+by*by;
+    double idet = .5/(ax*by-ay*bx);
+    point p;
+    p.x = (aa*by-bb*ay)*idet;
+    p.y = (ax*bb-bx*aa)*idet;
+    p.z = 0;
+    double r = dist(p.x, p.y), ir = 1./r;
+    p.x += c.x;
+    p.y += c.y;
+    
+    for (int k = 0; k < 3; k++) {
+        int di = k ? k==2 ? ci : bi : ai;
+        double rx = Tracker::hits[di].x-p.x, ry = Tracker::hits[di].y-p.y;
+        
+        point ca = Tracker::hits[ci]-Tracker::hits[ai];
+        double ang_ca = asin(dist(ca.x, ca.y)*.5*ir)*2;
+        double cross = rx*ca.y-ry*ca.x;
+        
+        point dir;
+        if (ir) {
+            dir.x =-ry*ang_ca;
+            dir.y = rx*ang_ca;
+            dir.z = ca.z;
+            if (cross < 0) dir.z *= -1;
+        } else {
+            dir = ca;
+        }
+        L[k] = acos(max(fabs(Tracker::hit_dir[di][0]*dir),
+                        fabs(Tracker::hit_dir[di][1]*dir))/dist(dir));
+    }
+    return log(ir);
+}
+
+//1 for accepted, scores the triple based on a logistic regression model
+int acceptTriple(const triple&t) {
+    double A = log(scoreTriple(t.x, t.y, t.z)+1e-8);
+    double B = log(scoreTripleDensity(t.x, t.y, t.z));
+    double C = log(scoreTripleDensity(t.z, t.y, t.x));
+    double L[3];
+    double D = scoreTripleLogRadius_and_HitDir(t.x,t.y,t.z,L);
+    double w[121] = {-13.215482291516638, -0.519368174205195, -0.6019168737814719, -0.400773825827796, -3.0689189279504614, -8.21987444638849, -1.773083608093787, -3.7271459966647913, -0.18753136282696767, -0.1700350202416788, -0.13325020734065293, -0.0712787103124509, 2.2365502305889295, -0.38264699613950004, -1.5996361946235698, 0.02602607302842127, -0.04090477074387659, -0.12800207114108786, -2.0616314706262706, 0.9350417490331662, -0.6313327964001432, 0.00830034532077729, -0.1021716887039019, 0.3719980432444666, 0.43818671158350325, 0.0338130884608543, 0.19225191422472998, -0.33226136371623366, -1.0631299954951279, -1.3290857109832128, 8.50340840417112, 4.489339976769724, -3.6866359902477703, -1.530677908510526, -0.3660375991432235, -0.2832850515900752, -0.003067393550643885, -0.06185860378584967, -0.004472073355177509, -0.034047188478205974, 0.056232208303619684, -0.09251101374546467, -0.3186456107148592, -0.011497406815609599, 0.0040898730087192275, 0.04166475101451824, 0.5313081554181062, 0.05691563704023761, 0.004054188315119864, 0.009440976068230187, 0.015452389083207108, 0.02857025202533131, -0.01788978369714811, -0.014820867725080077, -0.0032975179225221054, -0.2739810756530984, -0.209895536224461, -0.05555070596049059, -3.8393234795148445, -0.39189992715019867, 0.5302884318217037, -1.0560724732243318, 0.5808249742500916, 0.2085127159157602, -0.002879796716268462, -0.008289453513497825, -0.013327308424637882, 0.034516052559319284, 0.05612738574267425, -0.04698958101602463, 0.0007407605230615924, -0.015547995524776616, 0.06280040184070336, -0.056422842974113374, -0.02553695075115984, -0.030162351232030156, -0.216209409546151, 0.03852063554031595, -0.0693834129966963, -1.0570960495204662, 0.6811799884934827, 0.3386224510850844, -0.10244400357684635, -0.17437169642288441, 0.527447777429105, -0.0009197072806774356, -0.004512546596535816, -0.026048615023175962, -0.016165328699534447, -0.007957908851240184, -0.01677913671380496, 0.00448514125782629, -0.0164129789525374, -0.04792927265651915, 0.3459064488723725, 0.08305188504334206, -0.4177214300084773, -0.09227473501037928, 0.04508615512899353, -0.03988016215006392, 0.029600325479286028, -0.2533468783999991, -0.1438693183062194, -0.17942937900359165, -1.277174888294048, -0.12050721012197445, -1.306910361564254, -0.056617003726385146, -1.1681337555296898, 0.06259298498866638, -6.501290522349262, -10.841239719611016, 2.156866020752887, 1.3871764445557901, 4.945464722802966, -4.26463890108575, -1.510051189434741, -3.140021739172429, -5.693045331329942, 1.1610084032964856, 2.2204604560570425};
+    double x[8] = {1,A,B,C,D,L[0],L[1],L[2]};
+    int c = 0;
+    double score = 0;
+    for (int i = 0; i < 8; i++) {
+        for (int j = i; j < 8; j++) {
+            double a = x[i]*x[j];
+            for (int k = j; k < 8; k++)
+                score += a*x[k]*w[c++];
+        }
+    }
+    //cout << score << ' ' << w[120] << endl;
+    return score > w[120];
+}
+
+//Extend triples based on hits "ai" and "bi" to layer "li", add then to "triples", do this using an approximate straight line going through a and b (though taking into account some slightly curved helices by looking into an elliptic region given by "dp", "xp" and "bap". Again postfix "p" for polar coordinates)
+double extendTripleLine(vector<triple>&triples, int ai, int bi, point&a, point&b, int li, PolarModule&mod, int rev = 0) {
+    point d, dp, xp, bap;
+    if (prepareTripleScore(ai, bi, li, d, dp, xp, bap)) return 0;
+    
+    //xp = normalize(xp)*0.999;
+    //xp = point(0,0,0.5);
+    const double target0 = 0.1, target = 10;//0.5;
+    
+    //double mid0 = -findDensity(dp, xp, target0, li);
+    double mid = findDensity(dp, xp, target, li);
+    
+    int matches = mod.getNear(dp, xp, bap, mid, match);
+    
+    int mini;
+    double best = target;
+    vector<pair<double, int> > v;
+    for (int i = 0; i < matches; i++) {
+        int ci = match[i];
+        //if (ci == ai || ci == bi) continue;
+        double s = scoreTriple(ai, bi, ci);//evaluateScore(ci, dp, xp, bap);//
+        v.push_back(make_pair(s, ci));
+    }
+    //Take only best ones
+    sort(v.begin(), v.end());
+    for (int i = 0; i < v.size(); i++) {
+        if (i >= target) break;
+        triple t(ai, bi, v[i].second);
+        if (rev) swap(t.x,t.z);
+        if (acceptTriple(t)) //Prune most triples
+            triples.push_back(t);
+    }
+    return 1;
+    //cout << added << endl;
+}
+
+//Approximate magnetic field strengh as a function of z coordinate, decays drastically near the ends
+double field(double z) {
+    z *= 1./2750;
+    double z2 = z*z;
+    return 1.002-z*3e-2-z2*(0.55-0.3*(1-z2));
+}
+
+//Similar to prepareTripleScore, but now we extend the helix that passes through hits with id "ai", "bi", "ci". Assumes li > metai[ci] if sign = 1, and metai[bi] < li < metai[ci] if sign = -1
+int prepareQuadrupleScore(int ai, int bi, int ci, int li, point&d, point&dp, point&xp, point&dirp, point target, double sign = 1) {
+    Layer&l = Tracker::layer[li];
+    
+    point p;
+    double r, ir;
+    
+    point c = Tracker::hits[ci];
+    point cb = Tracker::hits[ci]-Tracker::hits[bi];//c-b;
+    double ang_cb;
+    
+    if (0) {
+        point a = Tracker::hits[ai], b = Tracker::hits[bi], c = Tracker::hits[ci];
+        
+        //TODO: test if has bieffects
+        if (l.type == Tracker::Disc && (c.z-b.z)*(target.z-c.z) < 0) return -1;
+        
+        //Find circle with center p, radius r, going through a, b, and c (in xy plane)
+        double ax = a.x-c.x, ay = a.y-c.y, bx = b.x-c.x, by = b.y-c.y;
+        double aa = ax*ax+ay*ay, bb = bx*bx+by*by;
+        double idet = .5/(ax*by-ay*bx);
+        point p;
+        p.x = (aa*by-bb*ay)*idet;
+        p.y = (ax*bb-bx*aa)*idet;
+        p.z = 0;
+        double r = dist(p.x, p.y), ir = 1./r;
+        p.x += c.x;
+        p.y += c.y;
+        
+        ang_cb = asin(dist(cb.x, cb.y)*.5*ir)*2;
+    }
+    
+    if (1) { //Take into account varying magnetic field strength
+        point a = Tracker::hits[ai], b = Tracker::hits[bi], c = Tracker::hits[ci];
+        if (l.type == Tracker::Disc && (c.z-b.z)*(target.z-c.z)*sign < 0) return -1;
+        double B1 = field((a.z+b.z)*.5), B2 = field((b.z+c.z)*.5), B3;
+        if (l.type == Tracker::Disc) B3 = field((c.z+target.z)*.5);
+        else B3 = field(c.z);
+        //B1 = B2 = B3 = 1;
+        double ax = b.x-a.x, ay = b.y-a.y, bx = c.x-b.x, by = c.y-b.y;
+        double aa = ax*ax+ay*ay, dot = ax*bx+ay*by, cross = ax*by-ay*bx;
+        double alpha = B2/(2*B3), beta = (-B1*aa-B2*dot)/(2*cross*B3);
+        //alpha *= -1;
+        double rx = alpha*bx-beta*by, ry = alpha*by+beta*bx;
+        p = point(c.x-rx, c.y-ry, 0);
+        r = dist(rx, ry);
+        ir = 1./r;
+        /*cout << endl;
+         //cout << (rx*ax+ry*ay)/(ax*ax+ay*ay) << endl;
+         //cout << (rx*bx+ry*by)/(bx*bx+by*by) << endl;
+         
+         point p(c.x-rx, c.y-ry, 0);
+         cout << dist(a.x-p.x, a.y-p.y) << ' ' << dist(b.x-p.x, b.y-p.y) << ' ' << dist(c.x-p.x, c.y-p.y) << endl;
+         cout << r << ' ' << dist(rx, ry) << endl;*/
+        ang_cb = B3/B2*asin(dist(cb.x, cb.y)*.5*ir*B2/B3)*2;
+    }
+    
+    //exit(0);
+    
+    const double slack = 1.00;
+    
+    xp = point(0,0,0); //Circle for now
+    
+    if (l.type == Tracker::Tube) {
+        double RR = target.x*target.x, pp = dist2(p.x, p.y);
+        double s = .5+(RR-r*r)/(2*pp);
+        double sq = RR/pp-s*s;
+        
+        /*
+         if (truth_part[ai] == 4506417142702082LL) {
+         cout << sq << endl;
+         cout << metai[ai] << ' ' << metai[bi] << ' ' << metai[ci] << endl;
+         }
+         */
+        
+        if (sq < 0) return -1;
+        
+        double t = sqrt(sq);
+        if (p.y*c.x-p.x*c.y < 0) t *= -1;
+        d.x = p.x*s+p.y*t;
+        d.y = p.y*s-p.x*t;
+        
+        point dc = d-c;
+        double A = dist(dc.x, dc.y);
+        double B = A*.5*ir;
+        double ang_dc = asin(B)*2;
+        if (dc.x*cb.x+dc.y*cb.y < 0) ang_cb *= -1;
+        
+        d.z = c.z+cb.z*ang_dc/ang_cb;
+        
+        if (!(d.z > l.minz*slack && d.z < l.maxz*slack)) return -1;
+        
+        point dir;
+        double s_ = target.x/pp, t_ = s_*(1-s)/t;
+        dir.x = p.x*s_+p.y*t_;
+        dir.y = p.y*s_-p.x*t_;
+        dir.z = (dc.x*dir.x+dc.y*dir.y)*ir*cb.z/(ang_cb*A*sqrt(1-B*B));
+        
+        dp = point(dist(d.x,d.y), atan2(d.y, d.x), d.z);
+        dirp = point(d.x*dir.x+d.y*dir.y, d.x*dir.y-d.y*dir.x, dir.z*dp.x);
+        //cout << dirp << endl; //dirp.x = l.avgr
+        
+        dirp = dirp*(1./dirp.x);
+        
+    } else if (l.type == Tracker::Disc) {
+        d.z = target.z;
+        double fac = ang_cb/cb.z;
+        double ang_dc = (d.z-c.z)*fac;
+        
+        double sa = sin(ang_dc), ca = cos(ang_dc);
+        
+        double rx = c.x-p.x, ry = c.y-p.y;
+        double cross = rx*cb.y-ry*cb.x;
+        if (cross < 0) sa *= -1;
+        
+        d.x = ca*rx-sa*ry+p.x;
+        d.y = sa*rx+ca*ry+p.y;
+        
+        
+        point dir;
+        dir.x =-fac*(rx*sa+ry*ca);
+        dir.y = fac*(rx*ca-ry*sa);
+        dir.z = cross < 0 ? -1 : 1;
+        
+        
+        dp = point(dist(d.x,d.y), atan2(d.y, d.x), d.z);
+        
+        if (!(dp.x > l.minr*(1./slack) && dp.x < l.maxr*slack)) return -1;
+        
+        dirp = point(d.x*dir.x+d.y*dir.y, d.x*dir.y-d.y*dir.x, dir.z*dp.x);
+        //cout << dirp << endl; //dirp.x = l.avgr
+        
+        dirp = dirp*(1./dirp.z);
+    }
+    return 0;
+}
+
+//Default target is average position of layer
+int prepareQuadrupleScore(int ai, int bi, int ci, int li, point&d, point&dp, point&xp, point&bap, double sign = 1) {
+    Layer&l = Tracker::layer[li];
+    point target(l.avgr, 0, l.avgz);
+    return prepareQuadrupleScore(ai, bi, ci, li, d, dp, xp, bap, target, sign);
+}
+
+//Extend triples using origin, similar to extendTripleLine. Except that it uses the assumption that the particle start in the origin instead of the straight line assumption. This is not used, as the triples starting from the origin are easy anyway, and therefore captured by extendTripleLine.
+double extendTripleOrigin(vector<triple>&triples, int ai, int bi, point&a, point&b, int li, PolarModule&mod, double target = 0.5, int rev = 0) {
+    Tracker::hits[0] = Tracker::polar[0] = point(0,0,0);
+    
+    point d, dp, xp, bap;
+    if (prepareQuadrupleScore(0, ai, bi, li, d, dp, xp, bap)) return 0;
+    
+    //const double target0 = 0.1, target = 0.5;
+    
+    //double mid0 = findDensity(dp, xp, target0, li);
+    double mid = findDensity(dp, xp, target, li);
+    
+    int matches = mod.getNear(dp, xp, bap, mid, match);
+    
+    int mini;
+    double best = target;
+    vector<pair<double, int> > v;
+    for (int i = 0; i < matches; i++) {
+        int ci = match[i];
+        //double s = scoreTriple(ai, bi, ci);
+        double s = evaluateScore(ci, dp, xp, bap);
+        v.push_back(make_pair(s, ci));
+    }
+    if (!matches) return 0;
+    sort(v.begin(), v.end());
+    double thres = v[0].first*4;
+    for (int i = 0; i < v.size(); i++) {
+        if (i >= 2 || v[i].first > thres) break;// && v[i].first > mid0) break; //i >= 1 and added < 1 gives better than old
+        if (rev)
+            triples.push_back(triple(v[i].second, bi, ai));
+        else
+            triples.push_back(triple(ai, bi, v[i].second));
+    }
+    return 1;
+    //cout << added << endl;
+}
+
+//Expand all pairs into triples (possibly many triples per pair). method 1 uses origin assumption, method 0 uses straight line assumption.
+vector<triple> Tracker::findTriples(vector<pair<int, int> >&pairs, PolarModule* mod, int method = 0, double target = 0.5) {
+    vector<triple> triples;
+    vector<double> v[48];
+    for (auto p : pairs) {
+        int ai = p.first, bi = p.second;
+        //if (!samepart(ai, bi)) continue;
+        point&a = Tracker::hits[ai], &b = Tracker::hits[bi];
+        
+        int added = 0;
+        for (int li = Tracker::metai[bi]+1; added < 100*method+1 && li < 48; li++) {
+            if (next_layer[Tracker::metai[bi]][li] < adj_thres) continue;
+            if (method == 1 && extendTripleLine(triples, ai, bi, a, b, li, mod[li])) added++;
+            if (method == 0 && extendTripleOrigin(triples, ai, bi, a, b, li, mod[li], target)) added++;
+        }
+        //extendTriple(triples, ai, bi, a, b, metai[ai], mod[metai[ai]]);
+        //extendTriple(triples, ai, bi, a, b, metai[bi], mod[metai[bi]]);
+        /*for (int li = metai[ai]-1; li >= 0; li--) {
+         if (next_layer[li][metai[ai]] < adj_thres) continue;
+         if (method == 1 && extendTripleLine(triples, bi, ai, a, b, li, mod[li], 1)) break;
+         //if (extendTripleOrigin(triples, bi, ai, a, b, li, mod[li], 1)) break;
+         }*/
+    }
+    /*
+     for (int i = 0; i < 48; i++) {
+     sort(v[i].begin(), v[i].end());
+     double t = v[i].size() ? v[i][v[i].size()*99/100]+0.1 : 0.;
+     cout << t << ", ";
+     }
+     cout << endl;
+     */
+    
+    return triples;
+}
+
+
+
 
