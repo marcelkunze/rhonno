@@ -499,7 +499,7 @@ double Tracker::scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float *L) {
     double idet = .5/(ax*by-ay*bx);
     double x = (aa*by-bb*ay)*idet;
     double y = (ax*bb-bx*aa)*idet;
-    double z = 0.0;
+    //double z = 0.0;
     double r = dist(x,y), ir = 1./r;
     x += c.x();
     y += c.y();

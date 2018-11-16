@@ -13,7 +13,7 @@ ROOTGLIBS     = $(shell root-config --glibs)
 SOURCES1=ReadEvent.cxx Geo.cxx DataStructures.cxx 
 OBJECTS1=ReadEvent.o Geo.o DataStructures.o
 
-SOURCES=main.cxx
+SOURCES=main.cxx train.cxx
 SHLIB=Tracker.cxx data.cxx topquark.cxx Point.cxx find.cxx swimmer.cxx XMLP.cxx
 
 HEADERS=$(SRC:.cxx=.h)
