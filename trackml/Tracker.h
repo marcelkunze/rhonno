@@ -11,7 +11,7 @@
 #define GRAPH
 
 #define FILEPATH "/Users/marcel/workspace/train_sample/"
-#define NETFILE1 "/Users/marcel/workspace/rhonno/trackml/XMLP1.net"
+#define NETFILE1 "/Users/marcel/workspace/rhonno/trackml/XMLP1coord.net"
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
@@ -26,10 +26,10 @@
 #define MAXDIM 150000
 #define LAYERS 48
 #define MODULES 10000
-#define PHIDIM 7
-#define PHIFACTOR 1
-#define THEDIM 7
-#define THEFACTOR 1
+#define PHIDIM 13
+#define PHIFACTOR 2
+#define THEDIM 13
+#define THEFACTOR 2
 
 #define SCORE true
 
@@ -147,7 +147,7 @@ public:
     static Graph<int> paths, tracking; // graph to represent particle paths and tracking information
     static std::vector<int> module[LAYERS*MODULES]; // List of hits in each module
     static std::set<int> modules[LAYERS]; // List of modules in each layer
-    static std::vector<int> tube[LAYERS][PHIDIM][THEDIM]; // List of hits in each layer
+    static std::vector<int> tube[LAYERS+1][PHIDIM][THEDIM]; // List of hits in each layer
     static std::vector<treePoint> points; // hit Points
     static std::vector<point> hits; //hit position
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
@@ -159,11 +159,11 @@ public:
     static std::vector<point> meta; //volume_id / layer_id / module_id
     static std::vector<std::pair<std::pair<int, int>, double> > hit_cells[MAXDIM]; //pair<pair<ch0, ch1>, value>
     static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
-private:
-    //static std::vector<int> knn[MAXDIM][MODULES];
     static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
     static double truth_weight[MAXDIM]; //weighting of each hit
     static long long truth_part[MAXDIM]; //particle this hit belongs to
+private:
+    //static std::vector<int> knn[MAXDIM][MODULES];
     static std::set<long long> blacklist;
     static std::map<long long, double> part_weight; //weighting of each particle
     static std::map<long long, std::map<int, double> > metai_weight; //weighting of each particle hit, also adding duplicates
@@ -178,6 +178,7 @@ private:
 
     static unsigned long nd, np, nt, n1, n2, n3, n4, ntwins;
     static bool _verbose;
+    static long long *_trackid;
     static int *_hitid;
     static int *_volume;
     static int *_layer;
@@ -200,7 +201,7 @@ public:
     inline
     static float radius(const int &a) { return sqrt(_x[a]*_x[a]+_y[a]*_y[a]+_z[a]*_z[a]); }
     static void verbose(bool verbose=true) {_verbose = verbose;}
-    static int findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int *layer,int *module,int *label,int *truth,int *hitid);
+    static int findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int *layer,int *module,int *hitid,long long *trackid,int *label);
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);
     static long findSeedsPhiTheta();

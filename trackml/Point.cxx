@@ -52,12 +52,12 @@ Point::Point(const Point &p)
     _distance = p._distance;
 }
 
-treePoint::treePoint(double x, double y, double z, double cx, double cy, double cz, int id, int label, int truth)
+treePoint::treePoint(double x, double y, double z, double cx, double cy, double cz, int id, int label, long long trackid)
 {
     _id = id;
     _hitid = -1;
     _label = label;
-    _truth = truth;
+    _trackid = trackid;
     _volume = -1;
     _layer = -1;
     _module = -1;
@@ -75,12 +75,12 @@ treePoint::treePoint(double x, double y, double z, double cx, double cy, double 
     _distance = 0.0;
 }
 
-treePoint::treePoint(float x, float y, float z, float cx, float cy, float cz, int id, int label, int truth)
+treePoint::treePoint(float x, float y, float z, float cx, float cy, float cz, int id, int label, long long trackid)
 {
     _id = id;
     _hitid = -1;
     _label = label;
-    _truth = truth;
+    _trackid = trackid;
     _volume = -1;
     _layer = -1;
     _module = -1;
@@ -103,7 +103,7 @@ treePoint::treePoint(const treePoint &p)
     _id = p._id;
     _hitid = p._hitid;
     _label = p._label;
-    _truth = p._truth;
+    _trackid = p._trackid;
     _volume = p._volume;
     _layer = p._layer;
     _module = p._module;

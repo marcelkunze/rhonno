@@ -3,10 +3,144 @@
 
 #include "Tracker.h"
 #include "Point.h"
+#include "XMLP.h"
 #include <vector>
 #include <map>
 
 using namespace std;
+
+
+// Recall function for pairs
+double Tracker::checkTracklet(int p0,int p1)
+{
+    //double recall = recall2(points[p0],points[p1])[0];
+    double recall = recallPair(points[p0],points[p1])[0];
+    bool ok = recall>THRESHOLD2;
+    recall = ok ? recall : -recall;
+    if (ok) n4++;
+    n2++;
+    return recall;
+}
+
+
+// Recall function for triple
+double Tracker::checkTracklet(int p1,int p2,int p3)
+{
+    Point &point1 = points[p1];
+    Point &point2 = points[p2];
+    Point &point3 = points[p3];
+    /*
+     Point v1 = point2 - point1;
+     Point v2 = point3 - point1;
+     double angle = acos(Point::dot(v1,v2)); // Check angle between the last points
+     if (angle<0.5*M_PI) {
+     if (angle>DELTANN) { np++; return 0.0; } // Check 0 deg.
+     }
+     else {
+     if ((M_PI-angle)>DELTANN) { np++; return 0.0; } // Check 180 deg.
+     }
+     */
+    //double recall = recall3(point1,point2,point3)[0];
+    double recall = recallTriple(point1,point2,point3)[0];
+    bool ok = recall>THRESHOLD3;
+    recall = ok ? recall : -recall;
+    if (ok) n1++;
+    n3++;
+    return recall;
+}
+
+// Recall function for 2 points
+double* Tracker::recall2(Point &p1, Point &p2)
+{
+    static XMLP net(NETFILE2);
+    static float x[6]={0.,0.,0.,0.,0.,0.};
+    
+    x[0]     = p1.rz()*0.001;   // rz1 [m]
+    x[1]     = p1.phi();        // phi1
+    x[2]     = p1.z()*0.001;    // z1 [m]
+    x[3]     = p2.rz()*0.001;   // rz2 [m]
+    x[4]     = p2.phi();        // phi2
+    x[5]     = p2.z()*0.001;    // z2 [m]
+    
+    return net.Recallstep(x);
+}
+
+// Recall function for 2 points
+double* Tracker::recallPair(Point &p1, Point &p2)
+{
+    static XMLP net(NETFILE1);
+    static float x[12]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.}, y[6]={0.,0.,0.,0.,0.,0.};
+    static double null[1]={0.};
+    
+    if (!getFeatures3(p1.id(), p2.id(), y)) return null;
+
+    x[0]    = p1.rz()*0.001;   // rz1 [m]
+    x[1]    = p1.phi();        // phi1
+    x[2]    = p1.z()*0.001;    // z1 [m]
+    x[3]    = p2.rz()*0.001;   // rz2 [m]
+    x[4]    = p2.phi();        // phi2
+    x[5]    = p2.z()*0.001;    // z2 [m]
+    x[6]    = y[0];            // cell's data of p1
+    x[7]    = y[1];            // cell's data of p2
+    x[8]    = y[2]*0.001;      // distances from origin r (wdist x,y)
+    x[9]    = y[3]*0.001;      // zdist2
+    x[10]   = y[4]*0.001;      // wdistr
+    x[11]   = y[5]*0.001;      // wdist x,y,z
+/*
+    x[0]    = y[0];            // cell's data of p1
+    x[1]    = y[1];            // cell's data of p2
+    x[2]    = y[2]*0.001;      // distances from origin r (wdist x,y)
+    x[3]    = y[3]*0.001;      // zdist2
+    x[4]    = y[4]*0.001;      // wdistr
+    x[5]    = y[5]*0.001;      // wdist x,y,z
+*/
+    return net.Recallstep(x);
+}
+
+
+// Recall function for 2 points
+double* Tracker::recallTriple(Point &p1, Point &p2, Point &p3)
+{
+    static XMLP net(NETFILE4);
+    static float x[12]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.}, y[3]={0.,0.,0.};
+    
+    scoreTripleLogRadius_and_HitDir(p1.id(),p2.id(),p3.id(),y);
+    
+    x[0]    = p1.rz()*0.001;   // rz1 [m]
+    x[1]    = p1.phi();        // phi1
+    x[2]    = p1.z()*0.001;    // z1 [m]
+    x[3]    = p2.rz()*0.001;   // rz2 [m]
+    x[4]    = p2.phi();        // phi2
+    x[5]    = p2.z()*0.001;    // z2 [m]
+    x[6]    = p3.rz()*0.001;   // rz3 [m]
+    x[7]    = p3.phi();        // phi3
+    x[8]    = p3.z()*0.001;    // z3 [m]
+    x[9]    = y[0];            //Cell's data of p1
+    x[10]   = y[1];            //Cell's data of p2
+    x[11]   = y[2];            //Cell's data of p3
+    
+    return net.Recallstep(x);
+}
+
+
+// Recall function for 3 points
+double* Tracker::recall3(Point &p1, Point &p2, Point &p3)
+{
+    static XMLP net(NETFILE3);
+    static float x[9]={0.,0.,0.,0.,0.,0.,0.,0.,0.};
+    
+    x[0]     = p1.rz()*0.001;   // rz1 [m]
+    x[1]     = p1.phi();        // phi1
+    x[2]     = p1.z()*0.001;    // z1 [m]
+    x[3]     = p2.rz()*0.001;   // rz2 [m]
+    x[4]     = p2.phi();        // phi2
+    x[5]     = p2.z()*0.001;    // z2 [m]
+    x[6]     = p3.rz()*0.001;   // rz3 [m]
+    x[7]     = p3.phi();        // phi3
+    x[8]     = p3.z()*0.001;    // z3 [m]
+    
+    return net.Recallstep(x);
+}
 
 // Driver function to sort the vector elements
 // by second element of pairs

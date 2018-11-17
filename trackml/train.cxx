@@ -69,8 +69,9 @@ void makeTrainPairs()
                         wrong  += g==0;
                         float l1 = pa.layer();
                         float l2 = pb.layer();
+                        point v = Tracker::truth_pos[pa.hitid()];
                         if (Tracker::getFeatures3(a, b, feature)) {
-                            float x[16]={pa.rz(),pa.phi(),pa.z(),pb.rz(),pb.phi(),pb.z(),feature[0],feature[1],feature[2],feature[3],feature[4],feature[5],l1,l2,(float)g};
+                            float x[19]={pa.rz(),pa.phi(),pa.z(),pb.rz(),pb.phi(),pb.z(),feature[0],feature[1],feature[2],feature[3],feature[4],feature[5],l1,l2,(float)v.x,(float)v.y,(float)v.z,(float)g};
                             ntuple1->Fill(x);
                         }
                     }
@@ -105,7 +106,7 @@ void makeTrain2()
                     treePoint &p1 = Tracker::points[a];
                     for (auto &b : Tracker::module[nextindex]) {
                         treePoint &p2 = Tracker::points[b];
-                        if (p1.truth() == p2.truth()) {
+                        if (p1.trackid() == p2.trackid()) {
                             ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),l1,l2,1.0); //wright combination
                             wright++;
                         }
@@ -141,7 +142,7 @@ void makeTrain2PhiTheta()
                     int tube2 = start_list[i].second;
                     for (auto &b : Tracker::tube[tube2][j][k]) {
                         treePoint &p2 = Tracker::points[b];
-                        if (p1.truth() == p2.truth()) {
+                        if (p1.trackid() == p2.trackid()) {
                             ntuple2->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),tube1,tube2,1.0); //wright combination
                             wright++;
                         }
@@ -170,7 +171,7 @@ void makeTrain3()
         int l1 = p1.layer();
         int l2 = p2.layer();
         int l3 = p3.layer();
-        if (p1.truth() == p2.truth() && p1.truth() == p3.truth()) {
+        if (p1.trackid() == p2.trackid() && p1.trackid() == p3.trackid()) {
             ntuple3->Fill(p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),l1,l2,l3,1.0); //wright combination
             wright++;
         }
@@ -220,8 +221,10 @@ void makeTrainTriples()
         float f[3];
         Tracker::scoreTripleLogRadius_and_HitDir(id1,id2,id3,f);
         
-        if (p1.truth() == p2.truth() && p1.truth() == p3.truth()) {
-            float x[16]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],l1,l2,l3,1.0};
+        point v = Tracker::truth_pos[p1.hitid()];
+
+        if (p1.trackid() == p2.trackid() && p1.trackid() == p3.trackid()) {
+            float x[19]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,1.0};
             ntuple4->Fill(x); //wright combination
             wright++;
         }
@@ -231,7 +234,7 @@ void makeTrainTriples()
             if (idr==id1 || idr==id2 || idr==id3) continue; // Do not take the same hit
             treePoint &p3 = Tracker::points[idr];
             Tracker::scoreTripleLogRadius_and_HitDir(id1,id2,idr,f);
-            float x[16]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],l1,l2,l3,0.0};
+            float x[19]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,0.0};
             ntuple4->Fill(x); //wrong combination
             wrong++;
         }
@@ -276,7 +279,7 @@ void makeTrain3PhiTheta()
             lay = geo.y;
             l3 = Tracker::getLayer(vol,lay);
             
-            ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,hit1.truth()+1); //true combination
+            ntuple3->Fill(hit1.rz(),hit1.phi(),hit1.z(),hit2.rz(),hit2.phi(),hit2.z(),hit3.rz(),hit3.phi(),hit3.z(),l1,l2,l3,(float)hit1.trackid()+1); //true combination
             wright++;
             double phi3 = 2.*(0.5-r.Rndm())*M_PI; // Generate a random point on sphere with r3
             double theta3 = r.Rndm()*M_PI;
@@ -295,13 +298,13 @@ void trainNetworks(string base_path,int filenum) {
     TString fname = filePrefix+".root";
     auto f = TFile::Open(fname,"RECREATE");
     cout << endl << "Generating training data file " << fname << endl;
-    ntuple1 = new TNtuple("pairs","training data","rz1:phi1:z1:rz2:phi2:z2:f0:f1:f2:f3:f4:f5:l1:l2:truth");
+    ntuple1 = new TNtuple("pairs","training data","rz1:phi1:z1:rz2:phi2:z2:f0:f1:f2:f3:f4:f5:l1:l2:vx:vy:vz:truth");
     ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
     makeTrainPairs();
     ntuple1->Write();
     ntuple2->Write();
     ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
-    ntuple4 = new TNtuple("triples","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:f0:f1:f2:l1:l2:l3:truth");
+    ntuple4 = new TNtuple("triples","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:f0:f1:f2:l1:l2:l3:vx:vy:vz:truth");
     makeTrainTriples();
     ntuple3->Write();
     ntuple4->Write();

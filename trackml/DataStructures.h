@@ -11,6 +11,7 @@ using namespace std;
 struct Hit // container for hit information
 {
     int hitID; // hit id
+    long long id; // part id
     double x;
     double y;
     double z;
@@ -35,6 +36,7 @@ struct Hit // container for hit information
 struct HitMC // hit truth data, stored in an array parallel to hits
 {  
     int hitID; // hit id
+    long long id; // part id
     double x;
     double y;
     double z;
@@ -69,6 +71,7 @@ struct xParticle // structure for truth particle info
     ~xParticle() = default;
     void Print() const;
     
+    long long id; // part id
     double x;
     double y;
     double z;

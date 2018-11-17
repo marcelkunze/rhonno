@@ -19,6 +19,7 @@ int* Tracker::_volume;
 int* Tracker::_layer;
 int* Tracker::_module;
 int* Tracker::_hitid;
+long long *Tracker::_trackid;
 bool Tracker::_verbose(false);
 vector<treePoint> Tracker::points; // hit Points
 vector<pair<int, int> > Tracker::pairs; // hit pair combinations
@@ -34,7 +35,7 @@ map<long long,int> Tracker::partIDmap; // create particle ID->index map
 //vector<int> Tracker::knn[MAXDIM][MODULES];
 vector<int> Tracker::module[LAYERS*MODULES]; // List of hits in each layer
 set<int> Tracker::modules[LAYERS]; // List of modules in each layer
-vector<int> Tracker::tube[LAYERS][PHIDIM][THEDIM]; // List of hits in each layer
+vector<int> Tracker::tube[LAYERS+1][PHIDIM][THEDIM]; // List of hits in each layer
 map<long long, vector<int> > Tracker::truth_tracks; //truth hit ids in each track
 map<long long, point> Tracker::track_hits; // Find points in hits
 int Tracker::assignment[MAXDIM];

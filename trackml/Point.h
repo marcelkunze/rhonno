@@ -69,8 +69,8 @@ public:
 class treePoint : public Point
 {
 private:
-    int _label;             // Label
-    int _truth;             // True id
+    int _label;             // label
+    long long _trackid;     // track id
     int _volume;            // volume
     int _layer;             // layer index (0...47)
     int _module;            // module index (1...3192)
@@ -78,14 +78,14 @@ private:
     std::vector<int> _adjacent; // id of adjacent points
     std::vector<float> _recall;  // and recall values
 public:
-    treePoint() : Point {}, _label(0), _truth(0) {};
+    treePoint() : Point {}, _label(0), _trackid(0) {};
     treePoint(const treePoint &p);
-    treePoint(double x,double y,double z,double cx=0.,double cy=0.,double cz=0.,int id=-1,int label=-1,int truth=-1);
-    treePoint(float x,float y,float z,float cx=0.,float cy=0.,float cz=0.,int id=-1,int label=-1,int truth=-1);
+    treePoint(double x,double y,double z,double cx=0.,double cy=0.,double cz=0.,int id=-1,int label=-1,long long truth=-1);
+    treePoint(float x,float y,float z,float cx=0.,float cy=0.,float cz=0.,int id=-1,int label=-1,long long truth=-1);
     static bool sortRecall(const treePoint &a,const treePoint &b);
     static int classifyAPoint(std::vector<treePoint> &arr, int k, treePoint &p, int label);
     inline int label() const {return _label;}
-    inline int truth() const {return _truth;}
+    inline long long trackid() const {return _trackid;}
     inline int volume() const {return _volume;}
     inline int layer() const {return _layer;}
     inline int module() const {return _module;}
@@ -95,7 +95,7 @@ public:
     inline int recall(unsigned int i) const {if (i<_recall.size()) return _recall[i]; else return -1;}
     inline std::vector<float> &recalls() {return _recall;}
     inline void setlabel(int label) { _label = label;}
-    inline void settruth(int truth) { _truth = truth;}
+    inline void settrackid(long long trackid) { _trackid = trackid;}
     inline void setvolume(int volume) { _volume = volume;}
     inline void setlayer(int layer) { _layer = layer;}
     inline void setmodule(int module) { _module = module;}

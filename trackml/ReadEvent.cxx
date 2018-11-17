@@ -192,8 +192,9 @@ int main()
             if (nhits > MAXHITS) nhits = MAXHITS;
             cout << "Hits: " << nhits << endl;
             
-            float x[nhits],y[nhits],z[nhits];
-            int label[nhits],layer[nhits],truth[nhits];
+            float x[nhits],y[nhits],z[nhits],cx[nhits],cy[nhits],cz[nhits];
+            int label[nhits],volume[nhits],layer[nhits],module[nhits],hitid[nhits];
+            long long truth[nhits];
             int nt(0);
             
             double minr = FLT_MAX;
@@ -204,8 +205,14 @@ int main()
                 x[i] = h.x();
                 y[i] = h.y();
                 z[i] = h.z();
+                cx[i] = 0.0;
+                cy[i] = 0.0;
+                cz[i] = 0.0;
+                hitid[i] = h.id();
                 label[i] = 0;
+                volume[i] = hit.volume;
                 layer[i] = Tracker::getLayer(hit.volume,hit.layer);
+                module[i] = hit.module;
                 if (h.r() < minr) minr = h.r();
                 if (h.r() > maxr) maxr = h.r();
             }
@@ -214,7 +221,7 @@ int main()
  
 #ifdef FINDTRACKS
             cout << "Find tracks..." << endl;
-            nt = Tracker::findTracks((int)nhits,x,y,z,layer,label,truth);
+            nt = Tracker::findTracks((int)nhits,x,y,z,cx,cy,cz,volume,layer,module,hitid,truth,label);
 #endif
             // Assemble the tracks from label information
             nh = 0;
@@ -363,7 +370,7 @@ void transform(xParticle &particle, std::vector<treePoint> &points, bool mc=fals
     if (!mc) {
         for (int i=0;i<nhits;i++) {
             Hit &h1 = mHits[particle.hits[i]];
-            treePoint p(h1.x,h1.y,h1.z,h1.hitID,trackid,i);
+            treePoint p(h1.x,h1.y,h1.z,0.,0.,0.,h1.hitID,trackid,h1.id);
             tmpvec.push_back(p);
         }
     }
@@ -371,7 +378,7 @@ void transform(xParticle &particle, std::vector<treePoint> &points, bool mc=fals
         for (int i=0;i<nhits;i++) {
             HitMC &h1 = mHitsMC[particle.hits[i]];
             //Hit &h2 = mHits[particle.hits[i]];
-            treePoint p(h1.x,h1.y,h1.z,h1.hitID+1,trackid,i);
+            treePoint p(h1.x,h1.y,h1.z,0.,0.,0.,h1.hitID+1,trackid,h1.id);
             tmpvec.push_back(p);
         }
     }
@@ -772,6 +779,7 @@ void readEvent( const char *directory, int event, bool loadMC )
             int nhits = (int) f[9];
             if( nhits==0 ) continue; // no hits belong to the particle
             xParticle p( nhits );
+            p.id = f[0];
             p.x = f[2]; // [mm]
             p.y = f[3]; // [mm]
             p.z = f[4]; // [mm]
@@ -823,9 +831,11 @@ void readEvent( const char *directory, int event, bool loadMC )
             Hit &hit = mHits[mHitsMC.size()];
             
             hitmc.hitID = (int)mHitsMC.size();
-            hitmc.x = mc[2]; // convert to [m]
-            hitmc.y = mc[3]; // convert to [m]
-            hitmc.z = mc[4]; // convert to [m]
+            hitmc.id = mc[1];
+            hit.id = mc[1];
+            hitmc.x = mc[2];
+            hitmc.y = mc[3];
+            hitmc.z = mc[4];
             hitmc.partID = -1;
             hitmc.w = mc[8]; // weight
             hitmc.px = mc[5];

@@ -1019,7 +1019,7 @@ double findDensity(point &dp, point &xp, double target, int li) {
         else A = mid, Ad = density;
         
         //cout << A << ' ' << mid << ' ' << B << ' ' << density << endl;
-        if ((B-A) < A*1e-3 || density > target*0.9 && density < target*1.1 || cc >= 100) break;
+        if ((B-A) < A*1e-3 || (density > target*0.9 && density < target*1.1) || cc >= 100) break;
         mid = max(A*0.9+B*0.1, min(B*0.9+A*0.1, (target-Ad)*(B-A)/(Bd-Ad)+A));
         if (++cc == 100) { //Should never happen
             cout << "Warning: Infinite loop in findDensity" << endl;
