@@ -295,7 +295,7 @@ void trainNetworks(string base_path,int filenum) {
     TString fname = filePrefix+".root";
     auto f = TFile::Open(fname,"RECREATE");
     cout << endl << "Generating training data file " << fname << endl;
-    ntuple1 = new TNtuple("pairs","training data","f0:f1:f2:f3:f4:f5:l1:l2:truth");
+    ntuple1 = new TNtuple("pairs","training data","rz1:phi1:z1:rz2:phi2:z2:f0:f1:f2:f3:f4:f5:l1:l2:truth");
     ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
     makeTrainPairs();
     ntuple1->Write();
