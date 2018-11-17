@@ -1,6 +1,7 @@
 // Read the trackml data files and extract neural network training data
 // M.Kunze, Heidelberg University, 2018
 
+#include "TFile.h"
 #include "TNtuple.h"
 #include "TRandom.h"
 #include "Tracker.h"
@@ -8,7 +9,7 @@
 using namespace std;
 
 TRandom r;
-extern TNtuple *ntuple1,*ntuple2,*ntuple3,*ntuple4;
+TNtuple *ntuple1,*ntuple2,*ntuple3,*ntuple4;
 
 void transform(Particle &particle, std::vector<treePoint> &points) {
     
@@ -68,9 +69,10 @@ void makeTrainPairs()
                         wrong  += g==0;
                         float l1 = pa.layer();
                         float l2 = pb.layer();
-                        if (Tracker::getFeatures3(a, b, feature))
-                            ntuple1->Fill(feature[0],feature[1],feature[2],feature[3],feature[4],feature[5],l1,l2,g);
-                        
+                        if (Tracker::getFeatures3(a, b, feature)) {
+                            float x[16]={pa.rz(),pa.phi(),pa.z(),pb.rz(),pb.phi(),pb.z(),feature[0],feature[1],feature[2],feature[3],feature[4],feature[5],l1,l2,(float)g};
+                            ntuple1->Fill(x);
+                        }
                     }
                 }
             }
@@ -285,4 +287,29 @@ void makeTrain3PhiTheta()
     }
     cout << "makeTrain3PhiTheta: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
 }
+
+// Generate a training sample for hit pairs and triples
+void trainNetworks(string base_path,int filenum) {
+    TString filePrefix;
+    filePrefix.Form("%sevent%09d",base_path.c_str(),filenum);
+    TString fname = filePrefix+".root";
+    auto f = TFile::Open(fname,"RECREATE");
+    cout << endl << "Generating training data file " << fname << endl;
+    ntuple1 = new TNtuple("pairs","training data","f0:f1:f2:f3:f4:f5:l1:l2:truth");
+    ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
+    makeTrainPairs();
+    ntuple1->Write();
+    ntuple2->Write();
+    ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
+    ntuple4 = new TNtuple("triples","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:f0:f1:f2:l1:l2:l3:truth");
+    makeTrainTriples();
+    ntuple3->Write();
+    ntuple4->Write();
+    delete ntuple1;
+    delete ntuple2;
+    delete ntuple3;
+    delete ntuple4;
+    f->Close();
+}
+
 

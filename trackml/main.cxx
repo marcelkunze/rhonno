@@ -37,17 +37,11 @@ int filenum = 21100;
 
 using namespace std;
 
-void makeTrain2();
-void makeTrainPairs();
-void makeTrain2PhiTheta();
-void makeTrain3();
-void makeTrainTriples();
-void makeTrain3PhiTheta();
-long checkTracks(std::map<int,std::vector<int> >  &tracks);
+long checkTracks(map<int,vector<int> >  &tracks);
+void trainNetworks(string base_path,int filenum);
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks);
 
 vector<pair<int,int> > truepairs;
-TNtuple *ntuple1,*ntuple2,*ntuple3,*ntuple4;
 
 int main(int argc, char**argv) {
     //Read which event to run from arguments, default is event # 1000
@@ -224,28 +218,7 @@ int main(int argc, char**argv) {
     checkTracks(tracks);
     
     // Generate a training sample for hit pairs and triples
-    if (TRAINFILE) {
-        TString filePrefix;
-        filePrefix.Form("%sevent%09d",base_path.c_str(),filenum);
-        TString fname = filePrefix+".root";
-        auto f = TFile::Open(fname,"RECREATE");
-        cout << endl << "Generating training data file " << fname << endl;
-        ntuple1 = new TNtuple("pairs","training data","f0:f1:f2:f3:f4:f5:l1:l2:truth");
-        ntuple2 = new TNtuple("tracks","training data","rz1:phi1:z1:rz2:phi2:z2:l1:l2:truth");
-        makeTrainPairs();
-        ntuple1->Write();
-        ntuple2->Write();
-        ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
-        ntuple4 = new TNtuple("triples","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:f0:f1:f2:l1:l2:l3:truth");
-        makeTrainTriples();
-        ntuple3->Write();
-        ntuple4->Write();
-        delete ntuple1;
-        delete ntuple2;
-        delete ntuple3;
-        delete ntuple4;
-        f->Close();
-    }
+    if (TRAINFILE) trainNetworks(base_path,filenum);
     
     // Show the results in a canvas
     if (DRAW) draw(nhits,x,y,z,tracks);
