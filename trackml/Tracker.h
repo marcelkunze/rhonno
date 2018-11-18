@@ -3,33 +3,34 @@
 // Neural Network based tracker
 // M.Kunze, Heidelberg University, 2018
 
-#define SEEDS
-//#define PAIRS
-#define TRIPLETS
-//#define TOPQUARK
-//#define SWIMMER
-#define GRAPH
+// Methods to find pairs, triples, and paths
+#define SEEDFINDER
+//#define PAIRFINDER
+#define TRIPLEFINDER
+//#define TOPQUARKFINDER
+//#define SWIMMERFINDER
+#define GRAPHFINDER
 
 #define FILEPATH "/Users/marcel/workspace/train_sample/"
 #define NETFILE1 "/Users/marcel/workspace/rhonno/trackml/XMLP1coord.net"
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
-#define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP4.net"
+#define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 
 #define TRACKLET 2
 #define TWINDIST 5.1
-#define THRESHOLD2 0.50
-#define THRESHOLD3 0.90
-#define DISTANCE 180.0
+#define THRESHOLD2 0.60
+#define THRESHOLD3 0.65
+#define DISTANCE 11.0
 #define DELTANN  0.08
 
 #define MAXDIM 150000
 #define LAYERS 48
 #define MODULES 10000
-#define PHIDIM 7
-#define PHIFACTOR 1
-#define THEDIM 7
-#define THEFACTOR 1
+#define PHIDIM 13
+#define PHIFACTOR 2
+#define THEDIM 13
+#define THEFACTOR 2
 
 #define SCORE true
 
@@ -138,6 +139,7 @@ struct Particle // structure for truth particle info
 
 class Tracker {
 public:
+    static Point vertex;
     static const int Tube = 0, Disc = 1;
     static Layer layer[LAYERS];
     static double disc_z[LAYERS][4];

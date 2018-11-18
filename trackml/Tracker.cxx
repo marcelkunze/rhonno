@@ -67,12 +67,12 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     // Search neighbouring hits and generate a weighted directed graph
-#ifdef PAIRS
+#ifdef PAIRFINDER
     cout << "Searching pairs..." << endl;
     long npairs = findPairs();
 #endif
 
-#ifdef SEEDS
+#ifdef SEEDFINDER
     cout << "Searching seeds..." << endl;
     long npairs = findSeeds();
 #endif
@@ -93,18 +93,16 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     // Search triples and add suiting combinations to the graph
     cout << "Searching triples..." << endl;
 
-#ifdef TRIPLES
-    triples.clear();
+#ifdef TRIPLEFINDER
     long ntriples = findTriples();
     cout << ntriples << " triples" << endl;
     if (_verbose) {
         for (auto t: triples) cout << t.x << " " << t.y << " " << t.z << "(" << t.r << ") ";
         cout << endl;
     }
-    
 #endif
 
-#ifdef TOPQUARK
+#ifdef TOPQUARKFINDER
     PolarModule mod[48];
     for (int i = 0; i < 48; i++)
         mod[i] = PolarModule(i);
@@ -122,12 +120,12 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     // Assemble tracklets from the seeds/pairs
     map<int,vector<int> > tracklet;
     
-#ifdef SWIMMER
+#ifdef SWIMMERFINDER
     cout << "Searching tracks with swimmer..." << endl;
     tracklet = swimmer();
 #endif
     
-#ifdef GRAPH
+#ifdef GRAPHFINDER
     cout << "Searching tracks by analyzing directed weighted graph..." << endl;
     tracklet = serialize(tracking);
 #endif

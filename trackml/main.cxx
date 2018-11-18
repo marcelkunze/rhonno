@@ -21,12 +21,12 @@
 #include <vector>
 #include <algorithm>
 
-#define MAXPARTICLES 10000
+#define VERBOSE true
+#define MAXPARTICLES 10
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
 #define EVALUATION true
-#define VERBOSE false
 #define MAXTRACK 10
 #define MAXLABEL 100
 

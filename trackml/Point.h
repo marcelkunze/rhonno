@@ -260,13 +260,14 @@ float Point::distance(const Point &a, const Point &b)
     return d;
 }
 
-inline float Point::distance3(Point &a,Point &b,Point &c) {
+// Distance from Point c to line defined by a and b
+inline
+float Point::distance3(Point &a,Point &b,Point &c) {
     const Point x = a-b;
     const Point y = a-c;
     const Point z = c-b;
     float d = norm( cross(x,y)) / norm(z);
     return d;
-    
 }
 
 // This function finds classification of point p using

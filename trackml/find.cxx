@@ -215,7 +215,7 @@ bool sortbysec(const pair<int,float> &a,
 // Look for seeding points by hit pair combinations in the innnermost layers
 long Tracker::findSeeds()
 {
-    const int n=4; // Seeding layer combinations
+    const int n=3; // Seeding layer combinations
     const int start_list[4][2] = {{0,1}, {11,12}, {4,5}, {18,19}};
     
     static int ntrack(1);
@@ -252,20 +252,35 @@ long Tracker::findSeeds()
                     }
                     
                     // Generate seeding points
-                    auto b = module[nextindex]; // all hits in following modules
-                    if (b.size() == 0) continue;
+                    auto p = module[nextindex]; // all hits in following modules
+                    if (p.size() == 0) continue;
                     vector<pair<int,float> > seed;
-                    for (auto it:b)
+                    for (auto b:p)
                     {
-                        if (assignment[it] > 0) continue;
-                        double recall = checkTracklet(a,it); // Search for hit pairs
+                        if (assignment[b] > 0) continue;
+                        
+                        float d = Point::distance3(vertex,points[a],points[b]); // distance of it from line a-b
+                        if (d>DISTANCE) {
+                            if (_verbose) cout << a << " " << b << " <- distance " << d << endl;
+                            nd++; continue;
+                        }
+
+                        double recall = checkTracklet(a,b); // Search for hit pairs
                         if (recall < THRESHOLD2) {
-                            if (_verbose) cout << a << " " << it << ": R2 NOK " << recall << endl;
+                            if (_verbose) cout << a << " " << b << ": R2 NOK " << recall << endl;
                             continue;
                         }
-                        float d = distance(a,it);
-                        seed.push_back(make_pair(it,d));
+                        
+                        seed.push_back(make_pair(b,d));
+                        
+                        // Recalculate the vertex
+                        if (pairs.size()==2) {
+                            intersection(pairs[0].first, pairs[0].second, pairs[1].first, pairs[1].second, vertex);
+                            if (_verbose) cout << "vertex: " << vertex.x() << " " << vertex.y() << " " << vertex.z() << " " << endl;
+                        }
+                        
                     }
+                    
                     if (seed.size()==0) continue;
                     
                     // Sort seeds according to their value
@@ -280,9 +295,9 @@ long Tracker::findSeeds()
                     //if (!checkPhi(a,id)) continue;
                     if (_verbose) cout << a << " " << id << ": R2 OK " << recall << " d " << d << endl;
                     pairs.push_back(make_pair(a,id));
-                    assignment[id] = ntrack;
+                    tracking.add(a,id,d);
                     assignment[a] = ntrack++;
-                    tracking.add(a,id,recall);
+                    assignment[id] = ntrack;
                 }
             }
         }
@@ -391,15 +406,15 @@ long Tracker::findPairs() {
 
 
 // Generate tracklets of 3 points wrt. the first point in seed
-long Tracker::findTriples(int p0, int p1, std::vector<int> &seed)
+long Tracker::findTriples(int p0, int p1, std::vector<int> &pairs)
 {
     triple t;
     t.x = p0;
     t.y = p1;
     
-    //triples.clear();
+    triples.clear();
     
-    for (auto &it : seed)
+    for (auto &it : pairs)
     {
         //if (!checkTheta(p1,it)) continue;
         //if (!checkRadius(p1,it)) continue;
@@ -481,11 +496,6 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             Point &a = points[p0];
             Point &b = points[p1];
             Point &c = points[it1];
-            float d = Point::distance3(a,b,c); // distance of it from line p0-p1
-            if (d>DISTANCE) {
-                if (_verbose) cout << it1 << " -> distance " << d << endl;
-                nd++; continue;
-            }
 
             double recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
             //double recall = scoreTriple(p0,p1,it1); // Point is a candidate on the next layer

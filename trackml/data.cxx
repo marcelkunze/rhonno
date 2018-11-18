@@ -21,6 +21,7 @@ int* Tracker::_module;
 int* Tracker::_hitid;
 long long *Tracker::_trackid;
 bool Tracker::_verbose(false);
+Point Tracker::vertex;
 vector<treePoint> Tracker::points; // hit Points
 vector<pair<int, int> > Tracker::pairs; // hit pair combinations
 vector<triple> Tracker::triples; // hit triple combinations
