@@ -228,6 +228,7 @@ public:
         return x1 == x2;
     }
     static bool intersection(int A, int B, int C, int D, Point& ip);
+    static Point intersection2d(int A, int B, int C, int D);
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
     static double* recall2(Point &p1, Point &p2);

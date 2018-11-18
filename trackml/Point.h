@@ -27,6 +27,7 @@ public:
     inline Point operator-(const Point p) const { return Point(_x-p._x,_y-p._y,_z-p._z);}
     inline double operator*(const Point &p) { return _x*p._x + _y*p._y + _z*p._z; }
     inline Point operator*(double f) { return Point(_x*f, _y*f, _z*f); }
+    inline Point scale(double f) { return Point(_x*f, _y*f, _z*f); }
     inline Point cross(Point p) const { return Point(_y*p._z - _z*p._y, _z*p._x - _x*p._z, _x*p._y - _y*p._x);}
     bool operator<(const Point p) const { return _id<p._id;}
     static bool sortRad(const Point &a,const Point &b);
@@ -64,7 +65,7 @@ public:
     inline void setcx(float cx) { _cx = cx;}
     inline void setcy(float cy) { _cy = cy;}
     inline void setcz(float cz) { _cz = cz;}
-
+    static Point distBetweenLines(Point &p1, Point &p2, Point &p3, Point &p4);
 };
 
 class treePoint : public Point

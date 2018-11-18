@@ -123,3 +123,86 @@ treePoint::treePoint(const treePoint &p)
     _adjacent = p._adjacent;
     _recall = p._recall;
 }
+
+Point Point::distBetweenLines(Point &p1, Point &p2, Point &p3, Point &p4)
+{
+    Point u = p1 - p2;
+    Point v = p3 - p4;
+    Point w = p2 - p4;
+    
+    double a = dot(u,u);
+    double b = dot(u,v);
+    double c = dot(v,v);
+    double d = dot(u,w);
+    double e = dot(v,w);
+    double D = a*c - b*b;
+    double sD = D;
+    double tD = D;
+    
+    double SMALL_NUM = 0.00000001;
+    double tN(0.0), sN(0.0);
+    
+    // compute the line parameters of the two closest points
+    if (D < SMALL_NUM) { // the lines are almost parallel
+        sN = 0.0;       // force using point P0 on segment S1
+        sD = 1.0;       // to prevent possible division by 0.0 later
+        tN = e;
+        tD = c;
+    }
+    else {               // get the closest points on the infinite lines
+        double sN = (b*e - c*d);
+        double tN = (a*e - b*d);
+        if (sN < 0.0) {   // sc < 0 => the s=0 edge is visible
+            sN = 0.0;
+            tN = e;
+            tD = c;
+        }
+        else if (sN > sD) { // sc > 1 => the s=1 edge is visible
+            sN = sD;
+            tN = e + b;
+            tD = c;
+        }
+    }
+    
+    if (tN < 0.0)    {        //tc < 0 => the t=0 edge is visible
+        tN = 0.0;
+        sN = -d;
+        sD = a;
+        // recompute sc for this edge
+        if (-d < 0.0) sN = 0.0;
+        if (-d > a) sN = sD;
+        else if (tN > tD) {      // tc > 1 => the t=1 edge is visible
+            tN = tD;
+            sN = (-d + b);
+            sD = a;
+            // recompute sc for this edge
+            if ((-d + b) < 0.0) sN = 0.0;
+            if ((-d + b) > a) sN = sD;
+        }
+    }
+    
+    // finally do the division to get sc and tc
+    double sc(0.0), tc(0.0);
+    if(abs(sN) < SMALL_NUM)
+        sc = 0.0;
+    else
+        sc = sN / sD;
+    
+    if(abs(tN) < SMALL_NUM)
+        tc = 0.0;
+    else
+        tc = tN / tD;
+
+    //get the difference of the two closest points
+    Point scu = u.scale(sc);
+    Point tcv = v.scale(tc);
+    Point dP = w + scu - tcv;  // = S1(sc) - S2(tc)
+    double distance = norm(dP);
+    Point outV = dP; // vector connecting the closest points
+    
+    Point closestP1 = p2+scu; // Closest point on object 1
+    Point closestP2 = p4+tcv; // Closest point on object 2
+    
+    Point vertex = (closestP1+closestP2).scale(0.5);
+    return vertex;
+}

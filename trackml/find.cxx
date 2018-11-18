@@ -38,7 +38,7 @@ Tracker::intersection(int A, int B, int C, int D, Point& ip)
     return false;
 }
 
-Point intersection2d(int a, int b, int c, int d)
+Point Tracker::intersection2d(int a, int b, int c, int d)
 {
     treePoint &A = Tracker::points[a];
     treePoint &B = Tracker::points[b];
@@ -67,7 +67,9 @@ Point intersection2d(int a, int b, int c, int d)
     {
         double x = (b2*c1 - b1*c2)/determinant;
         double y = (a1*c2 - a2*c1)/determinant;
-        double z = A.z();
+        double z1 = A.z() + (B.z()-A.z())/(x-A.x());
+        double z2 = A.z() + (B.z()-A.z())/(y-A.y());
+        double z = 0.5*(z1+z2);
         return Point(x,y,z);
     }
 }
@@ -241,6 +243,17 @@ long Tracker::findSeeds()
                     
                     if (assignment[a] > 0) continue;
                     
+                    // Recalculate the vertex
+                    long n = pairs.size();
+                    if (n>2) {
+                        int a = pairs[n-1].first;
+                        int b = pairs[n-1].second;
+                        int c = pairs[n-2].first;
+                        int d = pairs[n-2].second;
+                        vertex = Point::distBetweenLines(points[a], points[b], points[c], points[d]);
+                        if (_verbose) cout << "vertex(" << a << "," << b << "," << c << "," << d <<"): " << vertex.x() << " " << vertex.y() << " " << vertex.z() << " " << endl;
+                    }
+                    
                     int twin = points[a].twin();
                     if (twin>0) {
                         pairs.push_back(make_pair(a,twin));
@@ -273,12 +286,6 @@ long Tracker::findSeeds()
                         
                         seed.push_back(make_pair(b,d));
                         
-                        // Recalculate the vertex
-                        if (pairs.size()==2) {
-                            intersection(pairs[0].first, pairs[0].second, pairs[1].first, pairs[1].second, vertex);
-                            if (_verbose) cout << "vertex: " << vertex.x() << " " << vertex.y() << " " << vertex.z() << " " << endl;
-                        }
-                        
                     }
                     
                     if (seed.size()==0) continue;
@@ -298,6 +305,7 @@ long Tracker::findSeeds()
                     tracking.add(a,id,d);
                     assignment[a] = ntrack++;
                     assignment[id] = ntrack;
+                    
                 }
             }
         }
