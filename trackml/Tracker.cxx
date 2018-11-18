@@ -93,7 +93,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     // Search triples and add suiting combinations to the graph
     cout << "Searching triples..." << endl;
 
-#ifdef TRIPLETS
+#ifdef TRIPLES
     triples.clear();
     long ntriples = findTriples();
     cout << ntriples << " triples" << endl;
@@ -250,8 +250,8 @@ bool operator==(const triple&a, const triple&b) {
 
 //does hits a and b correspond to the same particle?
 int Tracker::samepart(int a, int b) {
-    long long aa = points[a].hitid();
-    long long bb = points[b].hitid();
+    long long aa = points[a].trackid();
+    long long bb = points[b].trackid();
     return aa == bb && aa;
 }
 

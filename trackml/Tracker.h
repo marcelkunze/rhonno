@@ -26,10 +26,10 @@
 #define MAXDIM 150000
 #define LAYERS 48
 #define MODULES 10000
-#define PHIDIM 13
-#define PHIFACTOR 2
-#define THEDIM 13
-#define THEFACTOR 2
+#define PHIDIM 7
+#define PHIFACTOR 1
+#define THEDIM 7
+#define THEFACTOR 1
 
 #define SCORE true
 
