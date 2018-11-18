@@ -41,7 +41,8 @@ public:
     static Point circleCenter(const Point &p1,const Point &p2,const Point &p3);
     static float circleRadius(const Point &p1,const Point &p2,const Point &p3);
     static bool comparison(const Point &a,const Point &b);
-    static float magnitude(const Point &a);
+    static float norm(const Point &a);
+    static float norm2(const Point &a);
     float distance() { return _distance;}
     float distance(const Point &a);
     static float distance(const Point &a, const Point &b);
@@ -153,7 +154,7 @@ float Point::angleBetween(const Point &a,const Point &b,const Point &c)
 
 inline
 Point Point::normalize(Point a) {
-    Point ret = a*(1./Point::magnitude(a));
+    Point ret = a*(1./Point::norm(a));
     if (ret.z() < 0) ret = ret*-1;
     return ret;
 }
@@ -230,9 +231,15 @@ bool Point::comparison(const Point &a,const Point &b)
 }
 
 inline
-float Point::magnitude(const Point &a)
+float Point::norm(const Point &a)
 {
     return sqrt(a._x*a._x+a._y*a._y+a._z*a._z);
+}
+
+inline
+float Point::norm2(const Point &a)
+{
+    return a._x*a._x+a._y*a._y+a._z*a._z;
 }
 
 inline
@@ -257,7 +264,7 @@ inline float Point::distance3(Point &a,Point &b,Point &c) {
     const Point x = a-b;
     const Point y = a-c;
     const Point z = c-b;
-    float d = magnitude( cross(x,y)) / magnitude(z);
+    float d = norm( cross(x,y)) / norm(z);
     return d;
     
 }

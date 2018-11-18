@@ -147,7 +147,7 @@ public:
     static Graph<int> paths, tracking; // graph to represent particle paths and tracking information
     static std::vector<int> module[LAYERS*MODULES]; // List of hits in each module
     static std::set<int> modules[LAYERS]; // List of modules in each layer
-    static std::vector<int> tube[LAYERS+1][PHIDIM][THEDIM]; // List of hits in each layer
+    static std::vector<int> tube[LAYERS][PHIDIM][THEDIM]; // List of hits in each layer
     static std::vector<treePoint> points; // hit Points
     static std::vector<point> hits; //hit position
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
@@ -225,6 +225,7 @@ public:
         int x2 = PHIFACTOR*(M_PI+points[p1].phi());
         return x1 == x2;
     }
+    static bool intersection(int A, int B, int C, int D, Point& ip);
     static double checkTracklet(int p0,int p1);
     static double checkTracklet(int p0,int p1,int p2);
     static double* recall2(Point &p1, Point &p2);

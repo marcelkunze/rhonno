@@ -4,11 +4,73 @@
 #include "Tracker.h"
 #include "Point.h"
 #include "XMLP.h"
+#include <limits>
 #include <vector>
 #include <map>
 
 using namespace std;
 
+bool
+Tracker::intersection(int A, int B, int C, int D, Point& ip)
+// http://mathworld.wolfram.com/Line-LineIntersection.html
+// in 3d; will also work in 2d if z components are 0
+{
+    Point &a = points[A];
+    Point &b = points[B];
+    Point &c = points[C];
+    Point &d = points[D];
+
+    Point da = b - a;
+    Point db = d - c;
+    Point dc = c - a;
+    
+    if (Point::dot(dc, Point::cross(da,db)) != 0.0) // lines are not coplanar
+        return false;
+    
+    double s = Point::dot(Point::cross(dc, db), Point::cross(da, db)) / Point::norm2(Point::cross(da, db));
+    double t = Point::dot(Point::cross(dc, da), Point::cross(da, db)) / Point::norm2(Point::cross(da, db));
+    if ((s >= 0 && s <= 1) && (t >= 0 && t <= 1))
+    {
+        ip = Point(a.x()+da.x()*s,a.y()+da.y()*s,a.z()+da.z()*s);
+        return true;
+    }
+    
+    return false;
+}
+
+Point intersection2d(int a, int b, int c, int d)
+{
+    treePoint &A = Tracker::points[a];
+    treePoint &B = Tracker::points[b];
+    treePoint &C = Tracker::points[c];
+    treePoint &D = Tracker::points[d];
+
+    // Line AB represented as a1x + b1y = c1
+    double a1 = B.y() - A.y();
+    double b1 = A.x() - B.x();
+    double c1 = a1*(A.x()) + b1*(A.y());
+    
+    // Line CD represented as a2x + b2y = c2
+    double a2 = D.y() - C.y();
+    double b2 = C.x() - D.x();
+    double c2 = a2*(C.x())+ b2*(C.y());
+    
+    double determinant = a1*b2 - a2*b1;
+    
+    if (determinant == 0)
+    {
+        // The lines are parallel. This is simplified
+        // by returning a pair of FLT_MAX
+        return Point(1.E7, 1.E7, 1.E7);
+    }
+    else
+    {
+        double x = (b2*c1 - b1*c2)/determinant;
+        double y = (a1*c2 - a2*c1)/determinant;
+        double z = A.z();
+        return Point(x,y,z);
+    }
+}
 
 // Recall function for pairs
 double Tracker::checkTracklet(int p0,int p1)
