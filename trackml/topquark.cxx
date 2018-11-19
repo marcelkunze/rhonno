@@ -1455,6 +1455,36 @@ vector<triple> Tracker::findTriples(vector<pair<int, int> >&pairs, PolarModule* 
     return triples;
 }
 
+//Initialize next_layer
+void loadAdjacent(string base_path,string file) {
+    FILE*fp = fopen((base_path+file).c_str(), "r");
+    if (!fp) {
+        cout << "Could not open adjacency" << endl;
+        exit(0);
+    }
+    
+   for (int i = 0; i < 48; i++)
+       for (int j = 0; j < 48; j++)
+           int tmp = fscanf(fp, "%d", &next_layer[i][j]);
+    
+    fclose(fp);
+}
+
+//The next_layer adjacency matrix above is simply the output of this function summed over the 100 training events
+void truthAdjacent() {
+    //count_layer[48] = truth_tracks.size();
+    for (auto&p : Tracker::truth_tracks) {
+        int prev = -1;//48;
+        for (int i : p.second) {
+            int m = Tracker::metai[i];
+            //count_layer[m]++;
+            if (prev != -1) {
+                next_layer[prev][m]++;
+            }
+            prev = m;
+        }
+    }
+}
 
 
 

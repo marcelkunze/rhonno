@@ -7,12 +7,13 @@
 #define TRUTHFINDER
 //#define SEEDFINDER
 //#define PAIRFINDER
-#define TRIPLEFINDER
-//#define TOPQUARKFINDER
+//#define TRIPLEFINDER
+#define TOPQUARKFINDER
 //#define SWIMMERFINDER
 #define GRAPHFINDER
 
 #define FILEPATH "/Users/marcel/workspace/train_sample/"
+#define BASEPATH "/Users/marcel/workspace/rhonno/trackml/"
 #define NETFILE1 "/Users/marcel/workspace/rhonno/trackml/XMLP1.net"
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
