@@ -62,7 +62,7 @@ void makeTrainPairs()
                         blen += pb.z()*pb.z();
                         if (dot < 0 || dot*dot < alen*blen*(.7*.7)) continue;
                         
-                        int g = Tracker::good_pair(a, b);
+                        int g = Tracker::good_pair(pa, pb);
                         
                         if (g==0 && r.Rndm()>0.25*wright/wrong) continue;
                         wright += g!=0;
@@ -70,7 +70,7 @@ void makeTrainPairs()
                         float l1 = pa.layer();
                         float l2 = pb.layer();
                         point v = Tracker::truth_pos[pa.hitid()];
-                        if (Tracker::getFeatures3(a, b, feature)) {
+                        if (Tracker::getFeatures3(pa, pb, feature)) {
                             float x[19]={pa.rz(),pa.phi(),pa.z(),pb.rz(),pb.phi(),pb.z(),feature[0],feature[1],feature[2],feature[3],feature[4],feature[5],l1,l2,(float)v.x,(float)v.y,(float)v.z,(float)g};
                             ntuple1->Fill(x);
                         }
@@ -185,12 +185,15 @@ void makeTrain3()
     cout << "makeTrain3 Wright: " << wright << " Wrong: " << wrong << endl;
 }
 
+void initDensity3(void);
 
 // Look for seeding points by hit pair combinations in the innnermost layers
 void makeTrainTriples()
 {
     long wright=1,wrong=1;
 
+    initDensity3();
+    
     // Combine 3 continuous hits
     for (int i=0;i<Tracker::points.size()-3;i++) {
         
@@ -217,14 +220,26 @@ void makeTrainTriples()
         lay = geo.y;
         mod = geo.z;
         float l3 = Tracker::getLayer(vol,lay);
+
+        int good = Tracker::samepart(p1,p2) && Tracker::samepart(p2,p3);
+        if (good==0) continue;
         
-        float f[3];
-        Tracker::scoreTripleLogRadius_and_HitDir(id1,id2,id3,f);
-        
+        float f[7];
+        f[3] = Tracker::scoreTripleLogRadius_and_HitDir(p1,p2,p3,f);
+        f[4] = log(Tracker::scoreTriple(p1,p2,p3)+1e-8);
+        f[5] = log(Tracker::scoreTripleDensity(p1,p2,p3));
+        f[6] = log(Tracker::scoreTripleDensity(p3,p2,p1));
+        //cout << good << ' ' << A << ' ' << B << ' ' << C << ' ' << D << ' ' << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
+        for (int i=0;i<7;i++) {
+            if (isnan(f[i])) {
+                cout << "makeTrainTriples: NAN " << i << endl;
+            }
+        }
+
         point v = Tracker::truth_pos[p1.hitid()];
 
         if (p1.trackid() == p2.trackid() && p1.trackid() == p3.trackid()) {
-            float x[19]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,1.0};
+            float x[23]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],f[3],f[4],f[5],f[6],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,1.0};
             ntuple4->Fill(x); //wright combination
             wright++;
         }
@@ -233,8 +248,11 @@ void makeTrainTriples()
         for (auto idr : Tracker::module[index]) {
             if (idr==id1 || idr==id2 || idr==id3) continue; // Do not take the same hit
             treePoint &p3 = Tracker::points[idr];
-            Tracker::scoreTripleLogRadius_and_HitDir(id1,id2,idr,f);
-            float x[19]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,0.0};
+            f[3] = Tracker::scoreTripleLogRadius_and_HitDir(p1,p2,p3,f);
+            f[4] = log(Tracker::scoreTriple(p1,p2,p3)+1e-8);
+            f[5] = log(Tracker::scoreTripleDensity(p1,p2,p3));
+            f[6] = log(Tracker::scoreTripleDensity(p3,p2,p1));
+            float x[23]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],f[3],f[4],f[5],f[6],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,0.0};
             ntuple4->Fill(x); //wrong combination
             wrong++;
         }
@@ -304,7 +322,7 @@ void trainNetworks(string base_path,int filenum) {
     ntuple1->Write();
     ntuple2->Write();
     ntuple3 = new TNtuple("tracks3","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:l1:l2:l3:truth");
-    ntuple4 = new TNtuple("triples","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:f0:f1:f2:l1:l2:l3:vx:vy:vz:truth");
+    ntuple4 = new TNtuple("triples","training data","rz1:phi1:z1:rz2:phi2:z2:rz3:phi3:z3:f0:f1:f2:f3:f4:f5:f6:l1:l2:l3:vx:vy:vz:truth");
     makeTrainTriples();
     ntuple3->Write();
     ntuple4->Write();

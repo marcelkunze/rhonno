@@ -77,7 +77,6 @@ Point Tracker::intersection2d(int a, int b, int c, int d)
 // Recall function for pairs
 double Tracker::checkTracklet(int p0,int p1)
 {
-    //double recall = recall2(points[p0],points[p1])[0];
     double recall = recallPair(points[p0],points[p1])[0];
     bool ok = recall>THRESHOLD2;
     recall = ok ? recall : -recall;
@@ -90,9 +89,9 @@ double Tracker::checkTracklet(int p0,int p1)
 // Recall function for triple
 double Tracker::checkTracklet(int p1,int p2,int p3)
 {
-    Point &point1 = points[p1];
-    Point &point2 = points[p2];
-    Point &point3 = points[p3];
+    treePoint &point1 = points[p1];
+    treePoint &point2 = points[p2];
+    treePoint &point3 = points[p3];
     /*
      Point v1 = point2 - point1;
      Point v2 = point3 - point1;
@@ -130,13 +129,13 @@ double* Tracker::recall2(Point &p1, Point &p2)
 }
 
 // Recall function for 2 points
-double* Tracker::recallPair(Point &p1, Point &p2)
+double* Tracker::recallPair(treePoint &p1, treePoint &p2)
 {
     static XMLP net(NETFILE1);
     static float x[12]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.}, y[6]={0.,0.,0.,0.,0.,0.};
     static double null[1]={0.};
     
-    if (!getFeatures3(p1.id(), p2.id(), y)) return null;
+    if (!getFeatures3(p1, p2, y)) return null;
 
     x[0]    = p1.rz()*0.001;   // rz1 [m]
     x[1]    = p1.phi();        // phi1
@@ -163,12 +162,12 @@ double* Tracker::recallPair(Point &p1, Point &p2)
 
 
 // Recall function for 2 points
-double* Tracker::recallTriple(Point &p1, Point &p2, Point &p3)
+double* Tracker::recallTriple(treePoint &p1, treePoint &p2, treePoint &p3)
 {
     static XMLP net(NETFILE4);
-    static float x[12]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.}, y[3]={0.,0.,0.};
+    static float x[13]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.}, y[4]={0.,0.,0.,0.};
     
-    scoreTripleLogRadius_and_HitDir(p1.id(),p2.id(),p3.id(),y);
+    y[3]=scoreTripleLogRadius_and_HitDir(p1,p2,p3,y);
     
     x[0]    = p1.rz()*0.001;   // rz1 [m]
     x[1]    = p1.phi();        // phi1
@@ -182,7 +181,8 @@ double* Tracker::recallTriple(Point &p1, Point &p2, Point &p3)
     x[9]    = y[0];            //Cell's data of p1
     x[10]   = y[1];            //Cell's data of p2
     x[11]   = y[2];            //Cell's data of p3
-    
+    x[12]   = y[3];            //log(ir)
+
     return net.Recallstep(x);
 }
 
@@ -501,13 +501,18 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
         {
             if (assignment[it1] > 0) continue; // Point has benn already used
             //if (!checkTheta(p1,it1)) continue;
-            Point &a = points[p0];
-            Point &b = points[p1];
-            Point &c = points[it1];
+            treePoint &a = points[p0];
+            treePoint &b = points[p1];
+            treePoint &c = points[it1];
 
-            double recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
-            //double recall = scoreTriple(p0,p1,it1); // Point is a candidate on the next layer
+            double recall = 1.5 - scoreTriple(a,b,c); // Check helix propagation
+            if (recall<0) {
+                 if (_verbose) cout << endl << p0 << " " << p1 << " " << it1 << ": Score NOK " << recall << ", ";
+                continue;
+            }
             
+            recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
+
             if (recall > THRESHOLD3) {
                 t.z = it1;
                 t.r = recall;
@@ -522,4 +527,51 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
     }
     
     return found;
+}
+
+//Score triple based on the deviation from a perfect helix, no prior that it should be straight
+double Tracker::scoreTriple(treePoint &ai, treePoint &bi, treePoint &ci) {
+    Point center;
+    double radius;
+    Point::circle(ai, bi, ci, center, radius);
+    
+    Point cb = ci-bi;
+    Point ba = bi-ai;
+    double ang_cb = asin(dist(cb.x(), cb.y())*.5/radius)*2;
+    double ang_ba = asin(dist(ba.x(), ba.y())*.5/radius)*2;
+    if (radius != radius || fabs(radius) > 1e50) {
+        ang_cb = dist(cb.x(), cb.y());
+        ang_ba = dist(ba.x(), ba.y());
+    }
+    if (ba.z()*cb.z() < 0) ang_ba *= -1;
+    
+    //if (dist(cb.x, cb.y)*.5/radius > M_PI/2 || dist(ba.x, ba.y)*.5/radius > M_PI/2) return 1e9;
+    //-radius*2e-5+
+    double x = ba.z() ? (fabs(cb.z()*ang_ba/ba.z()-ang_cb))*radius : 1e9;
+    double y = ang_cb ? (fabs(cb.z()*ang_ba/ang_cb-ba.z())) : 1e9;
+    double score = min(x, y);//, fabs(cb.z-ba.z*ang_cb/ang_ba)));
+    /*
+     cout << endl;
+     cout << truth_mom[bi]*part_q[truth_part[bi]] << endl;
+     point rr = hits[bi]-center;
+     if (cb.x*rr.y-cb.y*rr.x > 0) ang_cb *= -1;
+     cout << point(-rr.y, rr.x, cb.z/ang_cb) << endl;*/
+    return score;
+}
+
+int prepareTripleScore(int ai, int bi, int li, point&d, point&dp, point&xp, point&bap, point target);
+double evaluateScore(int ci, point&dp, point&xp, point&bap);
+double getDensity3(point&dp, point&xp, double tt, int li);
+
+
+//How many outliers do we expect to fit better than "ci" in the triple "ai", "bi", "ci"?
+double Tracker::scoreTripleDensity(treePoint &a, treePoint &b, treePoint &c) {
+    int ai = a.hitid();
+    int bi = b.hitid();
+    int ci = c.hitid();
+    point d, dp, xp, bap;
+    if (prepareTripleScore(ai, bi, metai[ci], d, dp, xp, bap, polar[ci])) return 1e9;
+    double s = evaluateScore(ci, dp, xp, bap);
+    s = getDensity3(dp, xp, s, metai[ci]);
+    return s+1.e-6;
 }

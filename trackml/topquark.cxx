@@ -488,11 +488,10 @@ void Tracker::initHitDir() {
 // Logistic regression model
 
 //Return features for logistic regression of a triple. L has cell's data angle errors, return logarithm of inverse radius of helix
-double Tracker::scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float *L) {
+double Tracker::scoreTripleLogRadius_and_HitDir(treePoint &a,treePoint &b,treePoint &c,float *L) {
 
     //Find circle with center p, radius r, going through a, b, and c (in xy plane)
     
-    Point a = points[ai], b = points[bi], c = points[ci];
     double ax = a.x()-c.x(), ay = a.y()-c.y(), bx = b.x()-c.x(), by = b.y()-c.y();
     if (ax*by-ay*bx == 0.0) return 0.0; // Make sure to have independent points
 
@@ -506,10 +505,10 @@ double Tracker::scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float *L) {
     y += c.y();
 
     for (int k = 0; k < 3; k++) {
-        int di = k ? k==2 ? ci : bi : ai;
+        int di = k ? k==2 ? c.id() : b.id() : a.id();
         double rx = points[di].x()-x, ry = points[di].y()-y;
         
-        Point ca = points[ci]-points[ai];
+        Point ca = c-a;
         double ang_ca = asin(dist(ca.x(), ca.y())*.5*ir)*2;
         double cross = rx*ca.y()-ry*ca.x();
         
@@ -526,7 +525,7 @@ double Tracker::scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float *L) {
         }
 
         Point dir(dx,dy,dz);
-        Point d(points[ai].cx(),points[ai].cy(),points[ai].cz());
+        Point d(a.cx(),a.cy(),a.cz());
         double dot = Point::dot(dir,d);
         L[k] = acos(fabs(dot));
         if (isnan(L[k])) {
@@ -541,12 +540,12 @@ double Tracker::scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float *L) {
 
 
 //Decides which pairs to fit logistic model to
-int Tracker::good_pair(int a, int b) {
-    if (!samepart(a, b)) return 0;
-    point s = start_pos[truth_part[a]];
+int Tracker::good_pair(treePoint &pa, treePoint &pb) {
+    if (!samepart(pa, pb)) return 0;
+    point s = start_pos[truth_part[pa.hitid()]];
     if (s.x*s.x+s.y*s.y < 100) return 2; // within circle of 1 cm
-    auto &v = truth_tracks[truth_part[a]];
-    int ai = metai[a], bi = metai[b];
+    auto &v = truth_tracks[pa.trackid()];
+    int ai = pa.layer(), bi = pb.layer();
     if (ai > bi) swap(ai, bi);
     for (int i : v)
         if (metai[i] < ai || (metai[i] > ai && metai[i] < bi)) return 2;
@@ -555,25 +554,24 @@ int Tracker::good_pair(int a, int b) {
 
 
 //Angle between line through hits ai-bi and cell's data direction of at hit id ai
-double Tracker::dir_miss(int ai, int bi) {
-    Point d = points[ai]-points[bi];
-    Point dir(points[ai].cx(),points[ai].cy(),points[ai].cz());
+double Tracker::dir_miss(treePoint &a, treePoint &b) {
+    Point d = a-b;
+    Point dir(a.cx(),a.cy(),a.cz());
     double dot = Point::dot(dir,d);
     return acos(fabs(dot)); // Direction between hit and cell
 }
 
 
 //Get some features for the logistic regression model
-bool Tracker::getFeatures3(int ai, int bi, float *feature) {
-    Point &a = points[ai], &b = points[bi];
+bool Tracker::getFeatures3(treePoint &a, treePoint &b, float *feature) {
     Point d = a-b;
     
     double r1 = dist(a.x(), a.y());
     double r2 = dist(b.x(), b.y());
     double dr = r2-r1;
     
-    feature[0] = dir_miss(ai, bi);//Cell's data of ai
-    feature[1] = dir_miss(bi, ai);//Cell's data of bi
+    feature[0] = dir_miss(a, b);//Cell's data of ai
+    feature[1] = dir_miss(b, a);//Cell's data of bi
     //Different distances from origin (like how far does the line through ai-bi pass from the origin)
     feature[2] = wdist(a, d, 0);
     feature[3] = zdist2(a, b);
@@ -613,7 +611,7 @@ double Tracker::wdist(Point &a, Point &d, double w) {
     return sqrt(result);
 }
 
-double Tracker::zdist(Point &a, Point&b) {
+double Tracker::zdist(Point &a, Point &b) {
     static Point origin(0.,0.,0.);
     Point p;
     double r;
@@ -642,7 +640,7 @@ double Tracker::zdist2(Point &a, Point &b) {
 void Tracker::scorePairs(vector<pair<int, int> >&pairs) {
     set<long long> found;
     for (auto p : pairs) {
-        if (samepart(p.first, p.second)) {
+        if (samepart(points[p.first], points[p.second])) {
             found.insert(truth_part[p.first]);
         }
     }
@@ -657,7 +655,7 @@ void Tracker::scorePairs(vector<pair<int, int> >&pairs) {
 void Tracker::scoreTriples(vector<triple>&triples) {
     set<long long> found;
     for (auto p : triples) {
-        if (samepart(p.x, p.y) && samepart(p.x, p.z)) {
+        if (samepart(points[p.x], points[p.y]) && samepart(points[p.x], points[p.z])) {
             found.insert(truth_part[p.x]);
         }
     }

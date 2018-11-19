@@ -247,9 +247,9 @@ bool operator==(const triple&a, const triple&b) {
 
 
 //does hits a and b correspond to the same particle?
-int Tracker::samepart(int a, int b) {
-    long long aa = points[a].trackid();
-    long long bb = points[b].trackid();
+int Tracker::samepart(treePoint &a, treePoint &b) {
+    long long aa = a.trackid();
+    long long bb = b.trackid();
     return aa == bb && aa;
 }
 
