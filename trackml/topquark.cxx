@@ -10,6 +10,14 @@ using namespace std;
 
 // functions to read trackml data (taken from topquark)
 
+//does hits a and b correspond to the same particle?
+int samepart(int a, int b) {
+    long long aa = Tracker::truth_part[a];
+    long long bb = Tracker::truth_part[b];
+    return aa == bb && aa;
+}
+
+
 void Tracker::readBlacklist(string base_path,int filenum) {
     if (filenum < 1000) return;
     char file[1000];
@@ -808,35 +816,6 @@ void Tracker::investigateAssignment(map<int,vector<int> > &solution_paths) {
 }
 
 
-//Score triple based on the deviation from a perfect helix, no prior that it should be straight
-double Tracker::scoreTriple(int ai, int bi, int ci) {
-    point center;
-    double radius;
-    circle(hits[ai], hits[bi], hits[ci], center, radius);
-    
-    point cb = hits[ci]-hits[bi];
-    point ba = hits[bi]-hits[ai];
-    double ang_cb = asin(dist(cb.x, cb.y)*.5/radius)*2;
-    double ang_ba = asin(dist(ba.x, ba.y)*.5/radius)*2;
-    if (radius != radius || fabs(radius) > 1e50) {
-        ang_cb = dist(cb.x, cb.y);
-        ang_ba = dist(ba.x, ba.y);
-    }
-    if (ba.z*cb.z < 0) ang_ba *= -1;
-    
-    //if (dist(cb.x, cb.y)*.5/radius > M_PI/2 || dist(ba.x, ba.y)*.5/radius > M_PI/2) return 1e9;
-    //-radius*2e-5+
-    double x = ba.z ? (fabs(cb.z*ang_ba/ba.z-ang_cb))*radius : 1e9;
-    double y = ang_cb ? (fabs(cb.z*ang_ba/ang_cb-ba.z)) : 1e9;
-    double score = min(x, y);//, fabs(cb.z-ba.z*ang_cb/ang_ba)));
-    /*
-     cout << endl;
-     cout << truth_mom[bi]*part_q[truth_part[bi]] << endl;
-     point rr = hits[bi]-center;
-     if (cb.x*rr.y-cb.y*rr.x > 0) ang_cb *= -1;
-     cout << point(-rr.y, rr.x, cb.z/ang_cb) << endl;*/
-    return score;
-}
 
 int adj_thres = 1000; //TODO: tweak
 //Decides how curved "approximately straight" helices are supposed to be
@@ -1132,12 +1111,12 @@ double scoreTriple(int ai, int bi, int ci) {
     point center;
     double radius;
     circle(Tracker::hits[ai], Tracker::hits[bi], Tracker::hits[ci], center, radius);
-    
+    if (radius == 0.0) return 1.e9;
     point cb = Tracker::hits[ci]-Tracker::hits[bi];
     point ba = Tracker::hits[bi]-Tracker::hits[ai];
     double ang_cb = asin(dist(cb.x, cb.y)*.5/radius)*2;
     double ang_ba = asin(dist(ba.x, ba.y)*.5/radius)*2;
-    if (radius != radius || fabs(radius) > 1e50) {
+    if (isnan(radius) || fabs(radius) > 1e50) {
         ang_cb = dist(cb.x, cb.y);
         ang_ba = dist(ba.x, ba.y);
     }

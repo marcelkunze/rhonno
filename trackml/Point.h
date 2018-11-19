@@ -30,10 +30,10 @@ public:
     inline Point scale(double f) { return Point(_x*f, _y*f, _z*f); }
     inline Point cross(Point p) const { return Point(_y*p._z - _z*p._y, _z*p._x - _x*p._z, _x*p._y - _y*p._x);}
     bool operator<(const Point p) const { return _id<p._id;}
-    static bool sortRad(const Point &a,const Point &b);
-    static bool sortRz(const Point &a,const Point &b);
-    static bool sortDist(const Point &a,const Point &b);
-    static bool sortId(const Point &a,const Point &b);
+    static bool sortByRadius(const Point &a,const Point &b);
+    static bool sortByRz(const Point &a,const Point &b);
+    static bool sortByDistance(const Point &a,const Point &b);
+    static bool sortById(const Point &a,const Point &b);
     static float angleBetween(const Point &a,const Point &b,const Point &c);
     static Point normalize(Point a);
     static float dot(const Point &a,const Point &b);
@@ -82,8 +82,8 @@ private:
 public:
     treePoint() : Point {}, _label(0), _trackid(0) {};
     treePoint(const treePoint &p);
-    treePoint(double x,double y,double z,double cx=0.,double cy=0.,double cz=0.,int id=-1,int label=-1,long long truth=-1);
-    treePoint(float x,float y,float z,float cx=0.,float cy=0.,float cz=0.,int id=-1,int label=-1,long long truth=-1);
+    treePoint(double x,double y,double z,double cx=0.,double cy=0.,double cz=0.,int id=-1,int hitid=-1,int label=-1,long long truth=-1);
+    treePoint(float x,float y,float z,float cx=0.,float cy=0.,float cz=0.,int id=-1,int hitid=-1,int label=-1,long long truth=-1);
     static bool sortRecall(const treePoint &a,const treePoint &b);
     static int classifyAPoint(std::vector<treePoint> &arr, int k, treePoint &p, int label);
     inline int label() const {return _label;}
@@ -103,13 +103,14 @@ public:
     inline void setmodule(int module) { _module = module;}
     inline void settwin(int twin) { _twin = twin;}
     inline void setneighbour(int neighbour, double recall=-1.0) { _adjacent.push_back(neighbour); _recall.push_back(recall);}
+    static bool sortByLayer(const treePoint &a,const treePoint &b);
 };
 
 
 // Used to sort an array of points by increasing
 // order of distance from origin
 inline
-bool Point::sortRad(const Point &a,const Point &b)
+bool Point::sortByRadius(const Point &a,const Point &b)
 {
     return (a._r < b._r);
 }
@@ -117,21 +118,21 @@ bool Point::sortRad(const Point &a,const Point &b)
 // Used to sort an array of points by increasing
 // order of distance from origin in xy plane
 inline
-bool Point::sortRz(const Point &a,const Point &b)
+bool Point::sortByRz(const Point &a,const Point &b)
 {
     return (a._rz < b._rz);
 }
 
 // Used to sort an array of points by distance
 inline
-bool Point::sortDist(const Point &a,const Point &b)
+bool Point::sortByDistance(const Point &a,const Point &b)
 {
     return (a._distance < b._distance);
 }
 
 // Used to sort an array of points by increasing id
 inline
-bool Point::sortId(const Point &a,const Point &b)
+bool Point::sortById(const Point &a,const Point &b)
 {
     return (a._id < b._id);
 }
@@ -179,8 +180,11 @@ inline Point Point::cross(const Point &a,const Point &b) {
 
 //Find circle with center p, radius r, going through a, b, and c (in xy plane)
 inline void Point::circle(Point&a, Point&b, Point&c, Point&p, double &r) {
+    p = Point(0.,0.,0.);
+    r = 0.0;
     double ax = a.x()-c.x(), ay = a.y()-c.y(), bx = b.x()-c.x(), by = b.y()-c.y();
     double aa = ax*ax + ay*ay, bb = bx*bx + by*by;
+    if (ax*by == ay*bx) return;
     double idet = .5/(ax*by - ay*bx);
     double x = (aa*by - bb*ay)*idet;
     double y = (ax*bb - bx*aa)*idet;
@@ -298,6 +302,14 @@ int treePoint::classifyAPoint(std::vector<treePoint> &arr, int k, treePoint &p, 
     
     return (freq1 > freq2 ? 0 : 1);
 }
+
+// Used to sort an array of points by increasing layer
+inline
+bool treePoint::sortByLayer(const treePoint &a,const treePoint &b)
+{
+    return (a._layer < b._layer);
+}
+
 
 #endif
 

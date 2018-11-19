@@ -24,6 +24,7 @@ bool Tracker::_verbose(false);
 Point Tracker::vertex;
 vector<treePoint> Tracker::points; // hit Points
 vector<pair<int, int> > Tracker::pairs; // hit pair combinations
+vector<pair<int, int> > Tracker::truepairs; // true hit pair combinations
 vector<triple> Tracker::triples; // hit triple combinations
 Graph<int> Tracker::paths, Tracker::tracking; // graph to represent particle paths and tracking information
 long Tracker::seedsok(0),Tracker::seedstotal(0);

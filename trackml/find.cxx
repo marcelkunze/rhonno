@@ -505,8 +505,8 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             treePoint &b = points[p1];
             treePoint &c = points[it1];
 
-            double recall = 1.5 - scoreTriple(a,b,c); // Check helix propagation
-            if (recall<0) {
+            double recall = 1.0 - scoreTriple(a,b,c)/100.0; // Check helix propagation
+            if (recall<THRESHOLD3) {
                  if (_verbose) cout << endl << p0 << " " << p1 << " " << it1 << ": Score NOK " << recall << ", ";
                 continue;
             }
@@ -534,6 +534,7 @@ double Tracker::scoreTriple(treePoint &ai, treePoint &bi, treePoint &ci) {
     Point center;
     double radius;
     Point::circle(ai, bi, ci, center, radius);
+    if (radius == 0.0) return 1.e9;
     
     Point cb = ci-bi;
     Point ba = bi-ai;
@@ -556,6 +557,7 @@ double Tracker::scoreTriple(treePoint &ai, treePoint &bi, treePoint &ci) {
      point rr = hits[bi]-center;
      if (cb.x*rr.y-cb.y*rr.x > 0) ang_cb *= -1;
      cout << point(-rr.y, rr.x, cb.z/ang_cb) << endl;*/
+    if (score>100.) return 100.0;
     return score;
 }
 
@@ -575,3 +577,4 @@ double Tracker::scoreTripleDensity(treePoint &a, treePoint &b, treePoint &c) {
     s = getDensity3(dp, xp, s, metai[ci]);
     return s+1.e-6;
 }
+

@@ -21,8 +21,8 @@
 #include <vector>
 #include <algorithm>
 
-#define VERBOSE true
-#define MAXPARTICLES 10
+#define VERBOSE false
+#define MAXPARTICLES 10000
 #define MAXHITS 150000
 #define TRAINFILE true
 #define DRAW true
@@ -34,14 +34,14 @@ const std::string base_path = "/Users/marcel/workspace/train_sample/";
 
 //Which event to run, this may be overwritten by main()'s arguments
 int filenum = 21100;
+int maxparticles = MAXPARTICLES;
+bool verbose = VERBOSE;
 
 using namespace std;
 
 long checkTracks(map<int,vector<int> >  &tracks);
 void trainNetworks(string base_path,int filenum);
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks);
-
-vector<pair<int,int> > truepairs;
 
 int main(int argc, char**argv) {
     //Read which event to run from arguments, default is event # 1000
@@ -51,22 +51,30 @@ int main(int argc, char**argv) {
         filenum = atoi(argv[1]);
         cout << "Running on event #" << filenum << endl;
     }
+    if (argc >= 3) {
+        maxparticles = atoi(argv[2]);
+        cout << "Running on event #" << filenum << endl;
+    }
+    if (argc >= 4) {
+        verbose = atoi(argv[3])!=0;
+        cout << "Running on event #" << filenum << endl;
+    }
     ios::sync_with_stdio(false);
     cout << fixed;
     
-    Tracker::verbose(VERBOSE);
+    Tracker::verbose(verbose);
     
     if (EVALUATION) {
         //Tracker::readGraph("paths.csv",Tracker::paths);
         Tracker::readParticles(base_path,filenum);
         Tracker::readTruth(base_path,filenum);
-        Tracker::sortTracks();
+        //Tracker::sortTracks();
     }
     Tracker::readHits(base_path,filenum);
     Tracker::readCells(base_path,filenum);
     
     long nParticles = Tracker::truth_tracks.size();
-    if (nParticles>MAXPARTICLES) nParticles = MAXPARTICLES;
+    if (nParticles>maxparticles) nParticles = maxparticles;
     cout << "Particles: " << nParticles << endl;
     
     long nhits = Tracker::hits.size();
@@ -90,8 +98,8 @@ int main(int argc, char**argv) {
     for (auto &track : Tracker::particles) {
         vector<int> t = track.hit;
         if (t.size()==0) continue;
-        if (n++ >= MAXPARTICLES) break;
-        truepairs.push_back(make_pair(nhits,nhits+1));
+        if (n++ >= maxparticles) break;
+        Tracker::truepairs.push_back(make_pair(nhits,nhits+1));
         point geo = Tracker::meta[t[0]]; // Check the first layer of a hit
         int vol = geo.x;
         int lay = geo.y;
@@ -99,7 +107,7 @@ int main(int argc, char**argv) {
         //if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
         start[n] = end[n-1]+1;
         end[n] = end[n-1] + (int)t.size();
-        //if (VERBOSE) cout << "Track  " << n << " {";
+        //if (verbose) cout << "Track  " << n << " {";
         int oldl = -1;
         int oldindex = -1;
         for (auto &id : t) {
@@ -133,28 +141,25 @@ int main(int argc, char**argv) {
                 //if (recall > THRESHOLD2)
                 Tracker::paths.add(oldindex,index,1.0);
             }
-            //if (VERBOSE) cout << "{" << index << ","  << l << "," << mod << "},";
+            //if (verbose) cout << "{" << index << ","  << l << "," << mod << "},";
             oldl = l;
             oldindex = index;
             nhits++;
         }
         Tracker::paths.add(oldindex,-1);
-        if (VERBOSE) {
+        if (verbose) {
             //cout << "-1}" << endl;
         }
     }
-    
-    if (VERBOSE) {
+/*
+    if (verbose) {
         auto modpath = serialize(Tracker::paths);
         cout << "modpath:" << endl;
         for (auto &it : modpath) Tracker::print(it.second);
         for (int i=1;i<n;i++) cout << "Track " << i << ": " << start[i] << "-" << end[i] << endl;
-        
-        cout << truepairs.size() << " true pairs" << endl;
-        for (auto p : truepairs) cout << "{" << p.first << "," << p.second << "}, ";
         cout << endl;
     }
-    
+*/
     // Write path data to file
     Tracker::writeGraph("paths.csv",Tracker::paths);
     
@@ -194,7 +199,7 @@ int main(int argc, char**argv) {
     cout << "Assembling tracks..." << endl;
     map<int,vector<int> > tracks;
     
-    int is = VERBOSE ? 0 : 1; // track 0 holds the unassigned points
+    int is = verbose ? 0 : 1; // track 0 holds the unassigned points
     for(int track=is; track<=nt; track++) {
         vector<int> t;
         for (int j=0;j<nhits;j++) {
@@ -234,7 +239,7 @@ long checkTracks(map<int,vector<int> >  &tracks) {
     int n = 0;
     for (auto it : tracks) {
         if (it.first==0) continue; // track 0 holds the unassigned hits
-        if (!VERBOSE && n++>MAXTRACK) break;
+        if (!verbose && n++>MAXTRACK) break;
         if (it.second.size()==0) continue;
         auto t = it.second;
         long id = t[0];

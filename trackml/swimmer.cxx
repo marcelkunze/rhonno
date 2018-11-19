@@ -77,7 +77,7 @@ map<int,vector<int> > Tracker::swimmer() {
             p0 = p1;
         }
         
-        sort(pvec.begin(), pvec.end(), Point::sortId); // Sort the hits acording to the Id
+        sort(pvec.begin(), pvec.end(), Point::sortById); // Sort the hits acording to the Id
         vector<int> tmpvec;
         for (auto &ip : pvec) tmpvec.push_back(ip.id()); // Note the hit indices
         if (_verbose) print(tmpvec);

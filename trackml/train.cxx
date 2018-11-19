@@ -27,7 +27,7 @@ void transform(Particle &particle, std::vector<treePoint> &points) {
         tmpvec.push_back(p);
     }
     
-    sort(tmpvec.begin(),tmpvec.end(),Point::sortRz);
+    sort(tmpvec.begin(),tmpvec.end(),Point::sortByRz);
     points.insert(points.end(),tmpvec.begin(),tmpvec.end());
 }
 
@@ -186,6 +186,11 @@ void makeTrain3()
 }
 
 void initDensity3(void);
+double scoreTriple(int ai, int bi, int ci);
+double scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,double* L);
+double scoreTripleDensity(int a,int b,int c);
+int samepart(int a, int b);
+
 
 // Look for seeding points by hit pair combinations in the innnermost layers
 void makeTrainTriples()
@@ -194,69 +199,89 @@ void makeTrainTriples()
 
     initDensity3();
     
-    // Combine 3 continuous hits
-    for (int i=0;i<Tracker::points.size()-3;i++) {
+    for (auto &track : Tracker::particles) {
+        vector<int> t = track.hit;
+        if (t.size()<=2) continue;
+
+        for (int i=0;i<track.hits-2;i++) {
+
+            int id1 = t[i];
+            auto it1 = Tracker::track_hits.find(id1);
+            if (it1==Tracker::track_hits.end()) continue;
+            point &pp1= it1->second;
+            point geo = Tracker::meta[id1];
+            int vol = geo.x;
+            int lay = geo.y;
+            int mod = geo.z;
+            float l1 = Tracker::getLayer(vol,lay);
         
-        treePoint &p1= Tracker::points[i];
-        int id1 = p1.id();
-        point geo = Tracker::meta[p1.hitid()];
-        int vol = geo.x;
-        int lay = geo.y;
-        int mod = geo.z;
-        float l1 = Tracker::getLayer(vol,lay);
-        
-        treePoint &p2 = Tracker::points[i+1];
-        int id2 = p2.id();
-        geo = Tracker::meta[p2.hitid()];
-        vol = geo.x;
-        lay = geo.y;
-        mod = geo.z;
-        float l2 = Tracker::getLayer(vol,lay);
+            int id2 = t[i+1];
+            auto it2 = Tracker::track_hits.find(id2);
+            if (it2==Tracker::track_hits.end()) continue;
+            point &pp2= it2->second;
+            geo = Tracker::meta[id2];
+            vol = geo.x;
+            lay = geo.y;
+            mod = geo.z;
+            float l2 = Tracker::getLayer(vol,lay);
             
-        treePoint &p3 = Tracker::points[i+2];
-        int id3 = p3.id();
-        geo = Tracker::meta[p3.hitid()];
-        vol = geo.x;
-        lay = geo.y;
-        mod = geo.z;
-        float l3 = Tracker::getLayer(vol,lay);
+            int id3 = t[i+2];
+            auto it3 = Tracker::track_hits.find(id3);
+            if (it3==Tracker::track_hits.end()) continue;
+            point &pp3= it3->second;
+            geo = Tracker::meta[id3];
+            vol = geo.x;
+            lay = geo.y;
+            mod = geo.z;
+            float l3 = Tracker::getLayer(vol,lay);
 
-        int good = Tracker::samepart(p1,p2) && Tracker::samepart(p2,p3);
-        if (good==0) continue;
+            int good = samepart(id1,id2) && samepart(id2,id3);
+            if (good==0) continue;
         
-        float f[7];
-        f[3] = Tracker::scoreTripleLogRadius_and_HitDir(p1,p2,p3,f);
-        f[4] = log(Tracker::scoreTriple(p1,p2,p3)+1e-8);
-        f[5] = log(Tracker::scoreTripleDensity(p1,p2,p3));
-        f[6] = log(Tracker::scoreTripleDensity(p3,p2,p1));
-        //cout << good << ' ' << A << ' ' << B << ' ' << C << ' ' << D << ' ' << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
-        for (int i=0;i<7;i++) {
-            if (isnan(f[i])) {
-                cout << "makeTrainTriples: NAN " << i << endl;
+            float f[7];
+            double L[4];
+            L[3] = exp(scoreTripleLogRadius_and_HitDir(id1,id2,id3,L));
+            f[0] = L[0];
+            f[1] = L[1];
+            f[2] = L[2];
+            f[3] = L[3];
+            f[4] = scoreTriple(id1,id2,id3);
+            f[5] = scoreTripleDensity(id1,id2,id3);
+            f[6] = scoreTripleDensity(id3,id2,id1);
+            //cout << good << ' ' << A << ' ' << B << ' ' << C << ' ' << D << ' ' << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
+            for (int j=0;j<7;j++) {
+                if (isnan(f[j])) {
+                    cout << "makeTrainTriples: NAN " << j << endl;
+                }
             }
-        }
 
-        point v = Tracker::truth_pos[p1.hitid()];
+            point v = Tracker::truth_pos[id1];
+            Point p1(pp1.x,pp1.y,pp1.z);
+            Point p2(pp2.x,pp2.y,pp2.z);
+            Point p3(pp3.x,pp3.y,pp3.z);
 
-        if (p1.trackid() == p2.trackid() && p1.trackid() == p3.trackid()) {
             float x[23]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],f[3],f[4],f[5],f[6],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,1.0};
             ntuple4->Fill(x); //wright combination
             wright++;
-        }
 
-        int index = MODULES*lay + mod;
-        for (auto idr : Tracker::module[index]) {
-            if (idr==id1 || idr==id2 || idr==id3) continue; // Do not take the same hit
-            treePoint &p3 = Tracker::points[idr];
-            f[3] = Tracker::scoreTripleLogRadius_and_HitDir(p1,p2,p3,f);
-            f[4] = log(Tracker::scoreTriple(p1,p2,p3)+1e-8);
-            f[5] = log(Tracker::scoreTripleDensity(p1,p2,p3));
-            f[6] = log(Tracker::scoreTripleDensity(p3,p2,p1));
-            float x[23]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],f[3],f[4],f[5],f[6],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,0.0};
-            ntuple4->Fill(x); //wrong combination
-            wrong++;
+            int index = MODULES*lay + mod;
+            for (auto i : Tracker::module[index]) {
+                Point &p3 = Tracker::points[i];
+                int idr = p3.hitid();
+                if (idr==id1 || idr==id2 || idr==id3) continue; // Do not take the same hit
+                L[3] = exp(scoreTripleLogRadius_and_HitDir(id1,id2,id3,L));
+                f[0] = L[0];
+                f[1] = L[1];
+                f[2] = L[2];
+                f[3] = L[3];
+                f[4] = scoreTriple(id1,id2,idr);
+                f[5] = scoreTripleDensity(id1,id2,idr);
+                f[6] = scoreTripleDensity(id1,id2,idr);
+                float x[23]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],f[3],f[4],f[5],f[6],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,0.0};
+                ntuple4->Fill(x); //wrong combination
+                wrong++;
+            }
         }
-        
     }
     cout << "makeTrainTriples: " <<  Tracker::particles.size() << " particles. " << "Wright: " << wright << " Wrong: " << wrong << endl;
 }
@@ -273,7 +298,7 @@ void makeTrain3PhiTheta()
         transform(p,hits);
         
         // Sort the hits according to distance from origin
-        sort(hits.begin(),hits.end(),Point::sortRad);
+        sort(hits.begin(),hits.end(),Point::sortByRadius);
         
         // Combine 3 hits
         int nhits = (int)hits.size();

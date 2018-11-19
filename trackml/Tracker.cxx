@@ -48,11 +48,11 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     for (int i=0;i<nhits;i++) {
         assignment[i] = 0;
         label[i] = 0;
-        treePoint p = treePoint(x[i],y[i],z[i],cx[i],cy[i],cz[i],i,label[i],trackid[i]);
+        treePoint p = treePoint(x[i],y[i],z[i],cx[i],cy[i],cz[i],i,hitid[i],label[i]);
         p.setvolume(volume[i]);
         p.setlayer(layer[i]);
         p.setmodule(module[i]);
-        p.sethitid(hitid[i]);
+        p.settrackid(trackid[i]);
         points.push_back(p);
     }
     
@@ -76,7 +76,16 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     cout << "Searching seeds..." << endl;
     long npairs = findSeeds();
 #endif
-    
+
+#ifdef TRUTHFINDER
+    cout << "Searching truth..." << endl;
+    for (auto p : truepairs) {
+        pairs.push_back(p);
+        tracking.add(p.first,p.second,1.0);
+    }
+    long npairs = pairs.size();
+#endif
+
     cout << npairs << " pairs" << endl;
     if (_verbose) {
         for (auto p : pairs) cout << "{" << p.first << "," << p.second << "}, ";
@@ -270,12 +279,12 @@ bool Tracker::sortFunc( const vector<int>& p1,
     return p1.size() > p2.size();
 }
 
-
+/*
 // Sort two hits wrt distance
-bool Tracker::sortDist(const int a,const int b) {
-    return Point::sortDist(points[a],points[b]);
+bool Tracker::sortByDistance(const int a,const int b) {
+    return Point::sortByDistance(points[a],points[b]);
 }
-
+*/
 
 // CHeck whether the points in a vector belong to the same track
 long Tracker::checkLabels(std::vector<int> &ip)
@@ -399,7 +408,7 @@ void Tracker::readTubes() {
         int index = MODULES*l + m;
         module[index].push_back(i);
         modules[l].insert(index);
-        if (_verbose) cout << i << " " << l << " " << m << " " << index << endl;
+        //if (_verbose) cout << i << " " << l << " " << m << " " << index << endl;
     }
     
     for (int l =0;l<LAYERS;l++) {
@@ -411,8 +420,8 @@ void Tracker::readTubes() {
                 sort(module[m].begin(), module[m].end(), r_cmp);
             
             if (_verbose) {
-                cout << "Module " << m << ":";
-                print(module[m]);
+                //cout << "Module " << m << ":";
+                //print(module[m]);
             }
         }
     }
@@ -422,5 +431,3 @@ void Tracker::readTubes() {
 
 bool Tracker::z_cmp(const int a, const int&b) { return points[a].z() < points[b].z(); }
 bool Tracker::r_cmp(const int&a, const int&b) { return points[a].rz() < points[b].rz(); }
-
-

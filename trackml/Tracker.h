@@ -4,7 +4,8 @@
 // M.Kunze, Heidelberg University, 2018
 
 // Methods to find pairs, triples, and paths
-#define SEEDFINDER
+#define TRUTHFINDER
+//#define SEEDFINDER
 //#define PAIRFINDER
 #define TRIPLEFINDER
 //#define TOPQUARKFINDER
@@ -12,7 +13,7 @@
 #define GRAPHFINDER
 
 #define FILEPATH "/Users/marcel/workspace/train_sample/"
-#define NETFILE1 "/Users/marcel/workspace/rhonno/trackml/XMLP1coord.net"
+#define NETFILE1 "/Users/marcel/workspace/rhonno/trackml/XMLP1.net"
 #define NETFILE2 "/Users/marcel/workspace/rhonno/trackml/XMLP2.net"
 #define NETFILE3 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
 #define NETFILE4 "/Users/marcel/workspace/rhonno/trackml/XMLP3.net"
@@ -57,6 +58,8 @@ struct point {
     inline double operator*(const point &p) { return x*p.x+y*p.y+z*p.z; }
     inline point operator*(double f) { return point(x*f, y*f, z*f); }
     inline point cross(point f) const { return point(y*f.z-z*f.y, z*f.x-x*f.z, x*f.y-y*f.x); }
+    inline double norm() const { return sqrt(x*x+y*y+z*z); }
+    static bool sortByRadius(const point &a,const point &b);
     inline
     double distance(const point &a)
     {
@@ -66,6 +69,14 @@ struct point {
     }
 
 };
+
+// Used to sort an array of points by increasing
+// order of distance from origin
+inline
+bool point::sortByRadius(const point &a,const point &b)
+{
+    return (a.x*a.x+a.y*a.y+a.z*a.z < b.x*b.x+b.y*b.y+b.z*b.z);
+}
 
 inline double dist(const point &p) { return sqrt(p.x*p.x+p.y*p.y+p.z*p.z); }
 
@@ -86,8 +97,11 @@ inline point normalize(point a) {
 
 //Find circle with center p, radius r, going through a, b, and c (in xy plane)
 inline void circle(point&a, point&b, point&c, point&p, double &r) {
+    p=point(0.,0.,0.);
+    r = 0.0;
     double ax = a.x-c.x, ay = a.y-c.y, bx = b.x-c.x, by = b.y-c.y;
     double aa = ax*ax+ay*ay, bb = bx*bx+by*by;
+    if (ax*by == ay*bx) return;
     double idet = .5/(ax*by-ay*bx);
     p.x = (aa*by-bb*ay)*idet;
     p.y = (ax*bb-bx*aa)*idet;
@@ -145,6 +159,7 @@ public:
     static double disc_z[LAYERS][4];
     static int assignment[MAXDIM]; // hit hs been used
     static std::vector<std::pair<int, int> > pairs; // hit pair combinations
+    static std::vector<std::pair<int, int> > truepairs; // true hit pair combinations
     static std::vector<triple> triples; // hit triple combinations
     static Graph<int> paths, tracking; // graph to represent particle paths and tracking information
     static std::vector<int> module[LAYERS*MODULES]; // List of hits in each module
@@ -264,15 +279,13 @@ public:
     static void scorePaths(std::map<int,std::vector<int> > &paths);
     static void scoreAssignment(std::map<int, int>& assignment);
     static void investigateAssignment(std::map<int,std::vector<int> > &solution_paths);
-    static double scoreTriple(int ai, int bi, int ci);
     static double scoreTriple(treePoint &a, treePoint &b, treePoint &c);
-    static double scoreTripleLogRadius_and_HitDir(int ai,int bi,int ci,float* L);
     static double scoreTripleLogRadius_and_HitDir(treePoint &a,treePoint &b,treePoint &c,float* L);
     static double scoreTripleDensity(treePoint &a,treePoint &b,treePoint &c);
     static void print(std::vector<int> const &input);
 private:
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
-    static bool sortDist(const int a,const int b);
+//    static bool sortByDistance(const int a,const int b);
     static bool z_cmp(const int a, const int&b);
     static bool r_cmp(const int&a, const int&b);
     static bool track_cmp(int a, int b);
