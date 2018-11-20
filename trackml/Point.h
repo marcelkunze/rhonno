@@ -12,7 +12,7 @@ class Point
 {
 protected:
     int _id;               // Hit id
-    int _hitid;            // TrackML hit id
+    //int _hitid;            // TrackML hit id
     float _x,_y,_z;        // Cartesian coordinates
     float _cx,_cy,_cz;     // Directional cosines
     float _rz,_phi,_theta; // Cylinder coordinates
@@ -59,9 +59,9 @@ public:
     inline float phi() const {return _phi;}
     inline float rz() const {return _rz;}
     inline int id() const {return _id;}
-    inline int hitid() const {return _hitid;}
+    //inline int hitid() const {return _hitid;}
     inline void setid(int id) { _id = id;}
-    inline void sethitid(int id) { _hitid = id;}
+    //inline void sethitid(int id) { _hitid = id;}
     inline void setcx(float cx) { _cx = cx;}
     inline void setcy(float cy) { _cy = cy;}
     inline void setcz(float cz) { _cz = cz;}
@@ -82,8 +82,8 @@ private:
 public:
     treePoint() : Point {}, _label(0), _trackid(0) {};
     treePoint(const treePoint &p);
-    treePoint(double x,double y,double z,double cx=0.,double cy=0.,double cz=0.,int id=-1,int hitid=-1,int label=-1,long long truth=-1);
-    treePoint(float x,float y,float z,float cx=0.,float cy=0.,float cz=0.,int id=-1,int hitid=-1,int label=-1,long long truth=-1);
+    treePoint(double x,double y,double z,double cx=0.,double cy=0.,double cz=0.,int id=-1,int label=-1,long long truth=-1);
+    treePoint(float x,float y,float z,float cx=0.,float cy=0.,float cz=0.,int id=-1,int label=-1,long long truth=-1);
     static bool sortRecall(const treePoint &a,const treePoint &b);
     static int classifyAPoint(std::vector<treePoint> &arr, int k, treePoint &p, int label);
     inline int label() const {return _label;}

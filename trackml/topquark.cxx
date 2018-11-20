@@ -6,6 +6,8 @@
 #include "Tracker.h"
 #include "PolarModule.h"
 
+extern bool verbose;
+
 using namespace std;
 
 // functions to read trackml data (taken from topquark)
@@ -429,7 +431,7 @@ void Tracker::readCells(string base_path,int filenum) {
 //Calculate direction of each hit with cell's data
 void Tracker::initHitDir() {
     for (auto &p : points) {
-        int hit_id = p.hitid();
+        int hit_id = p.id();
         point m = meta[hit_id];
         Detector &d = detectors[int(m.x)*10000000+int(m.y)*10000+int(m.z)];
         
@@ -550,7 +552,7 @@ double Tracker::scoreTripleLogRadius_and_HitDir(treePoint &a,treePoint &b,treePo
 //Decides which pairs to fit logistic model to
 int Tracker::good_pair(treePoint &pa, treePoint &pb) {
     if (!samepart(pa, pb)) return 0;
-    point s = start_pos[truth_part[pa.hitid()]];
+    point s = start_pos[truth_part[pa.id()]];
     if (s.x*s.x+s.y*s.y < 100) return 2; // within circle of 1 cm
     auto &v = truth_tracks[pa.trackid()];
     int ai = pa.layer(), bi = pb.layer();
@@ -1221,13 +1223,21 @@ double extendTripleLine(vector<triple>&triples, int ai, int bi, point&a, point&b
     }
     //Take only best ones
     sort(v.begin(), v.end());
+    if (verbose) {
+        cout << "extendTripleLine " << ai << " " << bi <<": " << v.size() << " matches" << endl;
+        for (auto it : v) cout << "{" << it.first << "," << it.second << "},";
+        cout << endl;
+    }
     for (int i = 0; i < v.size(); i++) {
         if (i >= target) break;
         triple t(ai, bi, v[i].second);
         if (rev) swap(t.x,t.z);
-        if (acceptTriple(t)) //Prune most triples
+        if (acceptTriple(t)) { //Prune most triples
+            if (verbose) cout << "{" << t.x << "," << t.y << "," << t.z << "},";
             triples.push_back(t);
+        }
     }
+    if (verbose) cout << endl;
     return 1;
     //cout << added << endl;
 }

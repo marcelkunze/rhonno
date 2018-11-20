@@ -4,7 +4,7 @@
 Point::Point(double x, double y, double z, double cx, double cy, double cz, int id, int hitid)
 {
     _id = id;
-    _hitid = hitid;
+    //_hitid = hitid;
     _x = x;
     _y = y;
     _z = z;
@@ -21,7 +21,7 @@ Point::Point(double x, double y, double z, double cx, double cy, double cz, int 
 Point::Point(float x, float y, float z, float cx, float cy, float cz, int id, int hitid)
 {
     _id = id;
-    _hitid = hitid;
+    //_hitid = hitid;
     _x = x;
     _y = y;
     _z = z;
@@ -38,7 +38,7 @@ Point::Point(float x, float y, float z, float cx, float cy, float cz, int id, in
 Point::Point(const Point &p)
 {
     _id = p._id;
-    _hitid = p._hitid;
+    //_hitid = p._hitid;
     _x = p._x;
     _y = p._y;
     _z = p._z;
@@ -52,10 +52,10 @@ Point::Point(const Point &p)
     _distance = p._distance;
 }
 
-treePoint::treePoint(double x, double y, double z, double cx, double cy, double cz, int id, int hitid, int label, long long trackid)
+treePoint::treePoint(double x, double y, double z, double cx, double cy, double cz, int id, int label, long long trackid)
 {
     _id = id;
-    _hitid = hitid;
+    //_hitid = hitid;
     _label = label;
     _trackid = trackid;
     _volume = -1;
@@ -75,10 +75,10 @@ treePoint::treePoint(double x, double y, double z, double cx, double cy, double 
     _distance = 0.0;
 }
 
-treePoint::treePoint(float x, float y, float z, float cx, float cy, float cz, int id, int hitid, int label, long long trackid)
+treePoint::treePoint(float x, float y, float z, float cx, float cy, float cz, int id, int label, long long trackid)
 {
     _id = id;
-    _hitid = hitid;
+    //_hitid = hitid;
     _label = label;
     _trackid = trackid;
     _volume = -1;
@@ -101,7 +101,7 @@ treePoint::treePoint(float x, float y, float z, float cx, float cy, float cz, in
 treePoint::treePoint(const treePoint &p)
 {
     _id = p._id;
-    _hitid = p._hitid;
+    //_hitid = p._hitid;
     _label = p._label;
     _trackid = p._trackid;
     _volume = p._volume;

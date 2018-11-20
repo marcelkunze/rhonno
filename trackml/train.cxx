@@ -69,7 +69,7 @@ void makeTrainPairs()
                         wrong  += g==0;
                         float l1 = pa.layer();
                         float l2 = pb.layer();
-                        point v = Tracker::truth_pos[pa.hitid()];
+                        point v = Tracker::truth_pos[pa.id()];
                         if (Tracker::getFeatures3(pa, pb, feature)) {
                             float x[19]={pa.rz(),pa.phi(),pa.z(),pb.rz(),pb.phi(),pb.z(),feature[0],feature[1],feature[2],feature[3],feature[4],feature[5],l1,l2,(float)v.x,(float)v.y,(float)v.z,(float)g};
                             ntuple1->Fill(x);
@@ -229,9 +229,9 @@ void makeTrainTriples()
             }
 
             point v = Tracker::truth_pos[id1];
-            treePoint &p1 = Tracker::points[Tracker::hitIDmap[id1]];
-            treePoint &p2 = Tracker::points[Tracker::hitIDmap[id2]];
-            treePoint &p3 = Tracker::points[Tracker::hitIDmap[id3]];
+            treePoint &p1 = Tracker::points[id1];
+            treePoint &p2 = Tracker::points[id2];
+            treePoint &p3 = Tracker::points[id3];
             float l1 = p1.layer();
             float l2 = p2.layer();
             float l3 = p3.layer();
@@ -244,7 +244,7 @@ void makeTrainTriples()
             for (auto i : Tracker::module[index]) {
                 if (r.Rndm()>1.5*wright/wrong) continue;
                 treePoint &p3 = Tracker::points[i];
-                int idr = p3.hitid();
+                int idr = p3.id();
                 if (idr==id1 || idr==id2 || idr==id3) continue; // Do not take the same hit
                 L[3] = exp(scoreTripleLogRadius_and_HitDir(id1,id2,id3,L));
                 f[0] = L[0];

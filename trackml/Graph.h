@@ -28,7 +28,7 @@ public:
         (void)fEdges[n];
     }
     
-    void add(const T& n1, const T& n2, float d = 0.0) // edge
+    void add(const T& n1, const T& n2, float d = 0.0, bool increment = false) // edge
     {
         add(n1);
         add(n2);
@@ -36,7 +36,10 @@ public:
         auto  n   = adj.find(n2);
         if (n != adj.end()) {
             float& d1 = n->second;
-            if (d < d1) d1 = d;
+            if (increment)
+                d1++;
+            else
+                if (d > d1) d1 = d;
         } else {
             adj[n2] = d;
         }

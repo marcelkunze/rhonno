@@ -568,9 +568,9 @@ double getDensity3(point&dp, point&xp, double tt, int li);
 
 //How many outliers do we expect to fit better than "ci" in the triple "ai", "bi", "ci"?
 double Tracker::scoreTripleDensity(treePoint &a, treePoint &b, treePoint &c) {
-    int ai = a.hitid();
-    int bi = b.hitid();
-    int ci = c.hitid();
+    int ai = a.id();
+    int bi = b.id();
+    int ci = c.id();
     point d, dp, xp, bap;
     if (prepareTripleScore(ai, bi, metai[ci], d, dp, xp, bap, polar[ci])) return 1e9;
     double s = evaluateScore(ci, dp, xp, bap);

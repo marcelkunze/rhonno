@@ -34,7 +34,6 @@ unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0),Tracke
 vector<point> Tracker::hits; //hit position
 vector<Particle> Tracker::particles; //true tracks
 map<long long,int> Tracker::partIDmap; // create particle ID->index map
-map<int,int> Tracker::hitIDmap; // create particle ID->index map
 //vector<int> Tracker::knn[MAXDIM][MODULES];
 vector<int> Tracker::module[LAYERS*MODULES]; // List of hits in each layer
 set<int> Tracker::modules[LAYERS]; // List of modules in each layer
@@ -44,7 +43,8 @@ map<long long, point> Tracker::track_hits; // Find points in hits
 int Tracker::assignment[MAXDIM];
 point Tracker::truth_pos[MAXDIM], Tracker::truth_mom[MAXDIM]; //truth position and momentum
 double Tracker::truth_weight[MAXDIM]; //weighting of each hit
-long long Tracker::truth_part[MAXDIM]; //particle this hit belongs to
+long long Tracker::truth_part[MAXDIM]; //particle this hit belongs to (particle id)
+int Tracker::truth_assignment[MAXDIM]; //particle this hit belongs to (track number)
 set<long long> Tracker::blacklist;
 map<long long, double> Tracker::part_weight; //weighting of each particle
 map<long long, map<int, double> > Tracker::metai_weight; //weighting of each particle hit, also adding duplicates

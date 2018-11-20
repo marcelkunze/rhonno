@@ -22,6 +22,8 @@
 #include <map>
 #include <algorithm>
 
+extern int maxpairs, maxparticles;
+
 using namespace std;
 
 void loadAdjacent(string,string);
@@ -48,16 +50,15 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     
     // Set up a cache for the point coordinates
     cout << "Reading hits..." << endl;
-    for (int i=0;i<nhits;i++) {
+    for (int i=1;i<=nhits;i++) {
         assignment[i] = 0;
         label[i] = 0;
-        treePoint p = treePoint(x[i],y[i],z[i],cx[i],cy[i],cz[i],i,hitid[i],label[i]);
-        p.setvolume(volume[i]);
-        p.setlayer(layer[i]);
-        p.setmodule(module[i]);
-        p.settrackid(trackid[i]);
-        points.push_back(p);
-        hitIDmap[hitid[i]] = i; // Note the new index
+        treePoint point = treePoint(x[i],y[i],z[i],cx[i],cy[i],cz[i],hitid[i],label[i]);
+        point.setvolume(volume[i]);
+        point.setlayer(layer[i]);
+        point.setmodule(module[i]);
+        point.settrackid(trackid[i]);
+        points.push_back(point);
     }
     
     // Sort the hits into the detector layers
@@ -83,16 +84,28 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
 
 #ifdef TRUTHFINDER
     cout << "Searching truth..." << endl;
+    int n = 0;
     for (auto p : truepairs) {
+        if (n++>=maxpairs) break;
         pairs.push_back(p);
         tracking.add(p.first,p.second,1.0);
     }
     long npairs = pairs.size();
 #endif
+    
+    pairs.resize(maxpairs); // Set maximum number of pairs
 
     cout << npairs << " pairs" << endl;
     if (_verbose) {
-        for (auto p : pairs) cout << "{" << p.first << "," << p.second << "}, ";
+        for (auto p : pairs) {
+            int hit_id1 = p.first;
+            int hit_id2 = p.second;
+            long long part1 = Tracker::truth_part[hit_id1];
+            long long part2 = Tracker::truth_part[hit_id2];
+            int track1 = Tracker::truth_assignment[hit_id1];
+            int track2 = Tracker::truth_assignment[hit_id2];
+            cout << "{" << p.first << "(" << track1 << ")," << p.second << "(" << track2 << ")}, ";
+        }
         cout << endl;
     }
 
@@ -123,7 +136,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     PolarModule mod[48];
     for (int i = 0; i < 48; i++)
         mod[i] = PolarModule(i);
-
+/*
     // Transform to trackml indexing
     vector<pair<int,int> > toppairs;
     for (auto pa : pairs) {
@@ -132,14 +145,11 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
         pair<int,int> pb = make_pair(p1.hitid(), p2.hitid());
         toppairs.push_back(pb);
     }
-    
-    vector<triple> straight_triples = findTriples(toppairs, mod, 1,0.5);
+ */
+    vector<triple> straight_triples = findTriples(pairs, mod, 1,0.5);
     for (auto&t : straight_triples) {
         triples.push_back(t);
-        int id1 = hitIDmap[t.x];
-        int id2 = hitIDmap[t.y];
-        int id3 = hitIDmap[t.z];
-        tracking.add(id2,id3,t.r);
+        tracking.add(t.y,t.z,t.r);
     }
     
 #endif
@@ -352,18 +362,19 @@ void Tracker::readTubes() {
     
     long nhits = points.size();
     for (int i = 0; i < nhits; i++) {
-        int l = points[i].layer();
+        treePoint &point = points[i];
+        int l = point.layer();
         if (l<0 || l>=LAYERS) continue;
-        int m = points[i].module();
+        int m = point.module();
         if (m<0 || m>=MODULES) continue;
-        float p = points[i].phi();
-        float t = points[i].theta();
+        float p = point.phi();
+        float t = point.theta();
         int phi  = PHIFACTOR*(M_PI+p);
         int the  = THEFACTOR*(M_PI+t);
         if (phi>=PHIDIM) phi = PHIDIM-1;
         if (the>=THEDIM) the = THEDIM-1;
         tube[l][phi][the].push_back(i);
-        if (_verbose) cout << "Point " << i << " phi:" << phi << " theta:" << the << " layer:" << l << " module: " << m << endl;
+        //if (_verbose) cout << "Point " << i << " phi:" << phi << " theta:" << the << " layer:" << l << " module: " << m << endl;
     }
     
     for (int i = 0; i < 48; i++) {
@@ -385,6 +396,7 @@ void Tracker::readTubes() {
         for (int j = 0; j <PHIDIM; j++) {
             for (int k=0;k<THEDIM;k++) {
                 auto pvec = tube[i][j][k];
+/*
                 if (_verbose) {
                     long size = pvec.size();
                     if (size > 0) {
@@ -393,7 +405,7 @@ void Tracker::readTubes() {
                         cout << endl;
                     }
                 }
-                
+*/
                 if (pvec.size()<2) continue;
                 for (auto it1 = pvec.begin(); it1 != pvec.end()-1; it1++) {
                     int id1 = *it1;
@@ -412,7 +424,7 @@ void Tracker::readTubes() {
                                 p2.settwin(id1);
                                 //assignment[id1] = -11;
                             }
-                            if (_verbose) cout << "Twin " << id1 << "," << id2 << ":" << d << endl;
+                            //if (_verbose) cout << "Twin " << id1 << "," << id2 << ":" << d << endl;
                             ntwins++;
                         }
                     }

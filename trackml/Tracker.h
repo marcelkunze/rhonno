@@ -171,7 +171,6 @@ public:
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
     static std::vector<Particle> particles; //true tracks
     static std::map<long long,int> partIDmap; // create particle ID->index map
-    static std::map<int,int> hitIDmap; // create particle ID->index map
     static std::map<long long, std::vector<int> > truth_tracks; //truth hit ids in each track
     static std::map<long long, point> track_hits; // Find points in hits
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
@@ -180,7 +179,8 @@ public:
     static point hit_dir[MAXDIM][2]; //The two possible directions of the hit according to the cell's data for each hit
     static point truth_pos[MAXDIM], truth_mom[MAXDIM]; //truth position and momentum
     static double truth_weight[MAXDIM]; //weighting of each hit
-    static long long truth_part[MAXDIM]; //particle this hit belongs to
+    static long long truth_part[MAXDIM]; //particle this hit belongs to (particle id)
+    static int truth_assignment[MAXDIM]; //particle this hit belongs to (track number)
 private:
     //static std::vector<int> knn[MAXDIM][MODULES];
     static std::set<long long> blacklist;

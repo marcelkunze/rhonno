@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #define VERBOSE false
+#define MAXPAIRS 10
 #define MAXPARTICLES 10000
 #define MAXHITS 150000
 #define TRAINFILE true
@@ -34,7 +35,7 @@ const std::string base_path = "/Users/marcel/workspace/train_sample/";
 
 //Which event to run, this may be overwritten by main()'s arguments
 int filenum = 21100;
-int maxparticles = MAXPARTICLES;
+int maxpairs = MAXPAIRS, maxparticles = MAXPARTICLES;
 bool verbose = VERBOSE;
 
 using namespace std;
@@ -42,6 +43,7 @@ using namespace std;
 long checkTracks(map<int,vector<int> >  &tracks);
 void trainNetworks(string base_path,int filenum);
 void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks);
+bool samepart(int,int);
 
 int main(int argc, char**argv) {
     //Read which event to run from arguments, default is event # 1000
@@ -77,94 +79,77 @@ int main(int argc, char**argv) {
     if (nParticles>maxparticles) nParticles = maxparticles;
     cout << "Particles: " << nParticles << endl;
     
+    // Use 1 indexing to be compatible to trackml hit index
     long nhits = Tracker::hits.size();
-    float x[nhits],y[nhits],z[nhits],cx[nhits],cy[nhits],cz[nhits];
-    int label[nhits],volume[nhits],layer[nhits],module[nhits],hitid[nhits];
-    long long trackid[nhits];
+    float x[nhits+1],y[nhits+1],z[nhits+1],cx[nhits+1],cy[nhits+1],cz[nhits+1];
+    int label[nhits+1],volume[nhits+1],layer[nhits+1],module[nhits+1],hitid[nhits+1];
+    long long trackid[nhits+1];
     
-    for (int i=0;i<nhits;i++) {
-        if (Tracker::hit_dir[nhits][0].x != 0.0)
-        cout << i << " " << Tracker::hit_dir[nhits][0].x << " " << Tracker::hit_dir[nhits][0].y << " " << Tracker::hit_dir[nhits][0].z << endl;
+    for (int i=1;i<=nhits;i++) {
+        int hit_id = i+1;
+        point &hit = Tracker::hits[hit_id];
+        x[i] = hit.x; // in mm
+        y[i] = hit.y; // in mm
+        z[i] = hit.z; // in mm
+        label[i] = 0;
+        trackid[i] = Tracker::truth_part[hit_id]; // true track assignment
+        hitid[i] = hit_id;
+        point geo = Tracker::meta[hit_id];
+        int vol = geo.x;
+        int lay = geo.y;
+        int mod = geo.z;
+        int l = Tracker::getLayer(vol,lay);
+        volume[i] = vol;
+        layer[i] = l;
+        module[i] = mod;
+        cx[i] = Tracker::hit_dir[hit_id][0].x;
+        cy[i] = Tracker::hit_dir[hit_id][0].y;
+        cz[i] = Tracker::hit_dir[hit_id][0].z;
     }
     
     // Prepare the trackml data to run the track finder
     // Geberate a graph to represent the track hits in the modules
     
-    nhits = 0;
-    int n = 0;
-    int start[nParticles+1],end[nParticles+1];
-    start[0] = 0;
-    end[0] = -1;
+    int tracknumber = 1;
     for (auto &track : Tracker::particles) {
         vector<int> t = track.hit;
         if (t.size()==0) continue;
-        if (n++ >= maxparticles) break;
-        Tracker::truepairs.push_back(make_pair(nhits,nhits+1));
+        Tracker::truepairs.push_back(make_pair(t[0],t[1]));
         point geo = Tracker::meta[t[0]]; // Check the first layer of a hit
         int vol = geo.x;
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
-        //if (first!=0 && first!=4 && first!=11) continue; // track does not start at first layers
-        start[n] = end[n-1]+1;
-        end[n] = end[n-1] + (int)t.size();
-        //if (verbose) cout << "Track  " << n << " {";
-        int oldl = -1;
+        //if (first!=0 && first!=4 && first!=11) continue;
+        
         int oldindex = -1;
-        for (auto &id : t) {
-            auto it = Tracker::track_hits.find(id);
-            if (it==Tracker::track_hits.end()) continue;
-            point &hit = it->second;
-            x[nhits] = hit.x; // in mm
-            y[nhits] = hit.y; // in mm
-            z[nhits] = hit.z; // in mm
-            label[nhits] = 0;
-            trackid[nhits] = track.id; // true track assignment
-            hitid[nhits] = id;
-            point geo = Tracker::meta[id];
+        for (auto &hit_id : t) {
+            Tracker::truth_assignment[hit_id] = tracknumber;
+            point geo = Tracker::meta[hit_id];
             int vol = geo.x;
             int lay = geo.y;
             int mod = geo.z;
             int l = Tracker::getLayer(vol,lay);
-            volume[nhits] = vol;
-            layer[nhits] = l;
-            module[nhits] = mod;
-            cx[nhits] = Tracker::hit_dir[nhits][0].x;
-            cy[nhits] = Tracker::hit_dir[nhits][0].y;
-            cz[nhits] = Tracker::hit_dir[nhits][0].z;
-            //cout << nhits << " " << cx[nhits] << " " << cy[nhits] << " " << cz[nhits] << endl;
             int index = MODULES*l + mod;
             // Add the hit pair to the paths graph
             if (oldindex>-1 && oldindex!=index) {
-                //Point p1(x[nhits-1],y[nhits-1],z[nhits-1]);
-                //Point p2(x[nhits],y[nhits],z[nhits]);
-                //double recall = Tracker::recall2(p1, p2)[0];
-                //if (recall > THRESHOLD2)
-                Tracker::paths.add(oldindex,index,1.0);
+                Tracker::paths.add(oldindex,index,1.0,true); // incremental mode
             }
-            //if (verbose) cout << "{" << index << ","  << l << "," << mod << "},";
-            oldl = l;
             oldindex = index;
-            nhits++;
         }
+        tracknumber++;
         Tracker::paths.add(oldindex,-1);
         if (verbose) {
             //cout << "-1}" << endl;
         }
     }
-/*
-    if (verbose) {
-        auto modpath = serialize(Tracker::paths);
-        cout << "modpath:" << endl;
-        for (auto &it : modpath) Tracker::print(it.second);
-        for (int i=1;i<n;i++) cout << "Track " << i << ": " << start[i] << "-" << end[i] << endl;
-        cout << endl;
-    }
-*/
+
     // Write path data to file
+    //if (verbose) Tracker::paths.print();
     Tracker::writeGraph("paths.csv",Tracker::paths);
     
     if (nhits > MAXHITS) nhits = MAXHITS;
     cout << "Hits: " << nhits << endl;
+    cout << "maxparticles: " << maxparticles << " maxpairs: " << maxpairs << endl;
     
     cout << endl << "Running Tracker:" << endl;
     long nt = Tracker::findTracks((int)nhits,x,y,z,cx,cy,cz,volume,layer,module,hitid,trackid,label);
@@ -210,16 +195,16 @@ int main(int argc, char**argv) {
     }
     
     cout << endl << "Number of tracks: " << nt << endl;
-    int i = 0;
     for (auto it : tracks) {
+        if (it.first ==0) continue; // Holds unassigned points
         auto track = it.second;
         if (track.size() == 0) continue;
-        if (i<MAXTRACK || i>nt-MAXTRACK) {
+        if (it.first<MAXTRACK || it.first>nt-MAXTRACK) {
             cout << "Track " << it.first << ": ";
-            for (auto it : track) cout << it << " ";
+            for (auto it : track) cout << it << "(" << Tracker::truth_assignment[it] << ") ";
             cout << endl;
         }
-        if (i++ == MAXTRACK) cout << endl << "..." << endl;
+        if (it.first == MAXTRACK) cout << endl << "..." << endl;
     }
     
     // Check the results
@@ -239,14 +224,12 @@ long checkTracks(map<int,vector<int> >  &tracks) {
     int n = 0;
     for (auto it : tracks) {
         if (it.first==0) continue; // track 0 holds the unassigned hits
-        if (!verbose && n++>MAXTRACK) break;
+        if (!verbose && n++>MAXPAIRS) break;
         if (it.second.size()==0) continue;
         auto t = it.second;
-        long id = t[0];
         long errorid = 0;
         for (auto index : t) {
-            if (index != id++) {
-                id = index;
+            if (!samepart(t[0],index)) {
                 if (errorid == 0) errorid = index;
                 error++;
             }
@@ -255,10 +238,11 @@ long checkTracks(map<int,vector<int> >  &tracks) {
         if (errorid != 0) {
             cout << "Track " << it.first << ": ";
             for (auto index : t) {
+                int tracknumber = Tracker::truth_assignment[index];
                 if (index == errorid)
-                    cout << ">" << index << "< ";
+                    cout << ">" << index << "(" << tracknumber << ")< ";
                 else
-                    cout << index << " ";
+                    cout << index << "(" << tracknumber << ") ";
             }
             cout << endl;
         }
