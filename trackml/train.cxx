@@ -206,35 +206,8 @@ void makeTrainTriples()
         for (int i=0;i<track.hits-2;i++) {
 
             int id1 = t[i];
-            auto it1 = Tracker::track_hits.find(id1);
-            if (it1==Tracker::track_hits.end()) continue;
-            point &pp1= it1->second;
-            point geo = Tracker::meta[id1];
-            int vol = geo.x;
-            int lay = geo.y;
-            int mod = geo.z;
-            float l1 = Tracker::getLayer(vol,lay);
-        
             int id2 = t[i+1];
-            auto it2 = Tracker::track_hits.find(id2);
-            if (it2==Tracker::track_hits.end()) continue;
-            point &pp2= it2->second;
-            geo = Tracker::meta[id2];
-            vol = geo.x;
-            lay = geo.y;
-            mod = geo.z;
-            float l2 = Tracker::getLayer(vol,lay);
-            
             int id3 = t[i+2];
-            auto it3 = Tracker::track_hits.find(id3);
-            if (it3==Tracker::track_hits.end()) continue;
-            point &pp3= it3->second;
-            geo = Tracker::meta[id3];
-            vol = geo.x;
-            lay = geo.y;
-            mod = geo.z;
-            float l3 = Tracker::getLayer(vol,lay);
-
             int good = samepart(id1,id2) && samepart(id2,id3);
             if (good==0) continue;
         
@@ -256,17 +229,21 @@ void makeTrainTriples()
             }
 
             point v = Tracker::truth_pos[id1];
-            Point p1(pp1.x,pp1.y,pp1.z);
-            Point p2(pp2.x,pp2.y,pp2.z);
-            Point p3(pp3.x,pp3.y,pp3.z);
+            treePoint &p1 = Tracker::points[Tracker::hitIDmap[id1]];
+            treePoint &p2 = Tracker::points[Tracker::hitIDmap[id2]];
+            treePoint &p3 = Tracker::points[Tracker::hitIDmap[id3]];
+            float l1 = p1.layer();
+            float l2 = p2.layer();
+            float l3 = p3.layer();
 
             float x[23]={p1.rz(),p1.phi(),p1.z(),p2.rz(),p2.phi(),p2.z(),p3.rz(),p3.phi(),p3.z(),f[0],f[1],f[2],f[3],f[4],f[5],f[6],l1,l2,l3,(float)v.x,(float)v.y,(float)v.z,1.0};
             ntuple4->Fill(x); //wright combination
             wright++;
 
-            int index = MODULES*lay + mod;
+            int index = MODULES*p3.layer() + p3.module();
             for (auto i : Tracker::module[index]) {
-                Point &p3 = Tracker::points[i];
+                if (r.Rndm()>1.5*wright/wrong) continue;
+                treePoint &p3 = Tracker::points[i];
                 int idr = p3.hitid();
                 if (idr==id1 || idr==id2 || idr==id3) continue; // Do not take the same hit
                 L[3] = exp(scoreTripleLogRadius_and_HitDir(id1,id2,id3,L));

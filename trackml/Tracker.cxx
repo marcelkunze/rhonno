@@ -57,6 +57,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
         p.setmodule(module[i]);
         p.settrackid(trackid[i]);
         points.push_back(p);
+        hitIDmap[hitid[i]] = i; // Note the new index
     }
     
     // Sort the hits into the detector layers
@@ -135,7 +136,10 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     vector<triple> straight_triples = findTriples(toppairs, mod, 1,0.5);
     for (auto&t : straight_triples) {
         triples.push_back(t);
-        tracking.add(t.y,t.z,t.r);
+        int id1 = hitIDmap[t.x];
+        int id2 = hitIDmap[t.y];
+        int id3 = hitIDmap[t.z];
+        tracking.add(id2,id3,t.r);
     }
     
 #endif

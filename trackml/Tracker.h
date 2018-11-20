@@ -171,6 +171,7 @@ public:
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
     static std::vector<Particle> particles; //true tracks
     static std::map<long long,int> partIDmap; // create particle ID->index map
+    static std::map<int,int> hitIDmap; // create particle ID->index map
     static std::map<long long, std::vector<int> > truth_tracks; //truth hit ids in each track
     static std::map<long long, point> track_hits; // Find points in hits
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
