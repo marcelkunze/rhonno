@@ -17,6 +17,7 @@ map<int,vector<int> > Tracker::swimmer() {
     
     // Transfer the results from the weighted directed graph into hits
     for (auto &ip : points) {
+        if (ip.id()==0) continue; // skip index 0
         int a = ip.id();
         int n = 0;
         map<int,float> const &path = tracking.edges(a);
@@ -33,7 +34,7 @@ map<int,vector<int> > Tracker::swimmer() {
     }
     
     if (verbose) {
-        for (int i=1;i<=nhits;i++) {
+        for (int i=1;i<nhits;i++) {
             auto adj = points[i].neighbours();
             cout << points[i].id() << " {" ;
             for (auto it : adj) cout << it << "," ;
@@ -44,6 +45,7 @@ map<int,vector<int> > Tracker::swimmer() {
     
     // fill the hitmap
     for (auto &p : points) {
+        if (p.id()==0) continue; // skip index 0
         int id = p.id();
         hitmap[id] = &p;
     }
@@ -62,7 +64,7 @@ map<int,vector<int> > Tracker::swimmer() {
         while (it != hitmap.end()) { // Follow the path until there are no more neighbours
             neighbour = p0->neighbour(n);
             if (verbose) cout << p0->id() << "->" << neighbour << endl;
-            if (neighbour < 0 || neighbour >= nhits) break;
+            if (neighbour < 0 || neighbour > nhits) break;
             auto it = hitmap.find(neighbour);
             if (it==hitmap.end()) { // hit is already assigned
                 if (verbose) cout <<  "->" << neighbour << endl;

@@ -167,7 +167,7 @@ double* Tracker::recallTriple(treePoint &p1, treePoint &p2, treePoint &p3)
     static XMLP net(NETFILE4);
     static float x[13]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.}, y[4]={0.,0.,0.,0.};
     
-    y[3]=scoreTripleLogRadius_and_HitDir(p1,p2,p3,y);
+    y[3]=scoreTripleLogRadius_and_HitDirPoints(p1,p2,p3,y);
     
     x[0]    = p1.rz()*0.001;   // rz1 [m]
     x[1]    = p1.phi();        // phi1
@@ -473,11 +473,11 @@ long Tracker::findTriples() {
     return triples.size();
 }
 
+double scoreTriple(int ai, int bi, int ci);
 
 // Generate tracklets of 3 points wrt. the first point in seed
 long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
 {
-    
     triple t;
     t.x = p0;
     t.y = p1;
@@ -499,6 +499,8 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
         if (nextmodule<0 || nextmodule>3192) break;
         if (verbose) cout << "{" << nextindex << "," << nextlayer << "," << nextmodule << "},";
         auto &seed1 = module[nextindex];
+        
+        vector<pair<double, int> > v;
         for (auto &it1 : seed1)
         {
             if (verbose) cout << it1 << " ";
@@ -507,33 +509,52 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             treePoint &a = points[p0];
             treePoint &b = points[p1];
             treePoint &c = points[it1];
+            double x = scoreTriplePoints(a,b,c); // Check helix propagation
 
-            double recall = 1.0 - scoreTriple(a,b,c)/100.0; // Check helix propagation
-            if (recall<THRESHOLD3) {
-                if (verbose) cout << endl << "/" << p0 << " " << p1 << " " << it1 << ": Score NOK " << recall << ", ";
-                continue;
-            }
-            
-            recall = checkTracklet(p0,p1,it1); // Point is a candidate on the next layer
-
-            if (recall > THRESHOLD3) {
-                t.z = it1;
-                t.r = recall;
-                triples.push_back(t);
-                assignment[it1] = assignment[p0];
-                if (verbose) cout << endl << t.x << " " << t.y << " " << it1 << ": R3 OK " << recall << ", ";
-                found +=  addHits(p1,it1,nextindex,triples);
-            }
-            else
-                if (verbose) cout << endl << t.x << " " << t.y << " " << it1 << ": R3 NOK " << recall << ", ";
+            double s = scoreTriple(p0,p1,it1); // Check helix propagation
+            v.push_back(make_pair(s, it1));
         }
+
+        if (verbose) {
+            cout << "addHits " << p0 << " " << p1 <<": " << v.size() << " matches" << endl;
+            for (auto it : v) cout << "{" << it.first << "," << it.second << "},";
+            cout << endl;
+        }
+        
+        //Take only best ones
+        sort(v.begin(), v.end());
+        
+        v.resize(5); // Take only the best solutions
+        
+        vector<pair<double, int> > r;
+        for (int i = 0; i < v.size(); i++) {
+            int p2 = v[i].second;
+            double recall = checkTracklet(p0,p1,p2); // Point is a candidate on the next layer
+            if (recall>THRESHOLD3) { //Prune most triples
+                r.push_back(make_pair(recall,p2));
+            }
+        }
+        
+        if (r.size()==0) continue;
+
+        //Take only best one
+        sort(r.begin(), r.end(), greater<pair<double,int> >()); // Descending order
+
+        int pbest = r.begin()->second;
+        double rbest = r.begin()->first;
+
+        t.z = pbest;
+        t.r = rbest;
+        if (verbose) cout << "push_back {" << t.x << "," << t.y << "," << t.z << "," << t.r << "},";
+        triples.push_back(t);
+        found +=  addHits(p1,pbest,nextindex,triples);
     }
     
     return found;
 }
 
 //Score triple based on the deviation from a perfect helix, no prior that it should be straight
-double Tracker::scoreTriple(treePoint &ai, treePoint &bi, treePoint &ci) {
+double Tracker::scoreTriplePoints(treePoint &ai, treePoint &bi, treePoint &ci) {
     Point center;
     double radius;
     Point::circle(ai, bi, ci, center, radius);
@@ -570,7 +591,7 @@ double getDensity3(point&dp, point&xp, double tt, int li);
 
 
 //How many outliers do we expect to fit better than "ci" in the triple "ai", "bi", "ci"?
-double Tracker::scoreTripleDensity(treePoint &a, treePoint &b, treePoint &c) {
+double Tracker::scoreTripleDensityPoints(treePoint &a, treePoint &b, treePoint &c) {
     int ai = a.id();
     int bi = b.id();
     int ci = c.id();

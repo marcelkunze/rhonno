@@ -19,7 +19,7 @@ void transform(Particle &particle, std::vector<treePoint> &points) {
     
     trackid++;
     
-    for (int i=1;i<=nhits;i++) {
+    for (int i=0;i<nhits;i++) {
         vector<int> &h = particle.hit;
         int id = h[i];
         point h1 = Tracker::hits[id]; // in mm

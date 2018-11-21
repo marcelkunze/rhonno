@@ -85,11 +85,12 @@ int main(int argc, char**argv) {
     
     // Use 1 indexing to be compatible to trackml hit index
     long nhits = Tracker::hits.size();
-    float x[nhits+1],y[nhits+1],z[nhits+1],cx[nhits+1],cy[nhits+1],cz[nhits+1];
-    int label[nhits+1],volume[nhits+1],layer[nhits+1],module[nhits+1],hitid[nhits+1];
-    long long trackid[nhits+1];
+    float x[nhits],y[nhits],z[nhits],cx[nhits],cy[nhits],cz[nhits];
+    float x_track[nhits],y_track[nhits],z_track[nhits];
+    int label[nhits],volume[nhits],layer[nhits],module[nhits],hitid[nhits];
+    long long trackid[nhits];
     
-    for (int i=1;i<=nhits;i++) {
+    for (int i=0;i<nhits-1;i++) {
         int hit_id = i+1;
         point &hit = Tracker::hits[hit_id];
         x[i] = hit.x; // in mm
@@ -114,6 +115,7 @@ int main(int argc, char**argv) {
     // Prepare the trackml data to run the track finder
     // Geberate a graph to represent the track hits in the modules
     
+    long nhits_track = 0;
     int tracknumber = 1;
     for (auto &track : Tracker::particles) {
         vector<int> t = track.hit;
@@ -127,6 +129,10 @@ int main(int argc, char**argv) {
         if (verbose) cout << "Track " << tracknumber << ", size " << t.size() << endl;
         int oldindex = -1;
         for (auto &hit_id : t) {
+            x_track[nhits_track] = x[hit_id-1];
+            y_track[nhits_track] = y[hit_id-1];
+            z_track[nhits_track] = z[hit_id-1];
+            nhits_track++;
             Tracker::truth_assignment[hit_id] = tracknumber;
             point geo = Tracker::meta[hit_id];
             int vol = geo.x;
@@ -162,14 +168,14 @@ int main(int argc, char**argv) {
     
     // Show the results
     cout << "Labels: ";
-    for (int i=1;i<=nhits;i++) {
+    for (int i=1;i<nhits;i++) {
         if (i<MAXLABEL || i>nhits-MAXLABEL) cout << label[i] << " ";
         if (i == MAXLABEL) cout << endl << "..." << endl;
     }
     cout << endl;
     
     cout << "Assig.: ";
-    for (int i=1;i<=nhits;i++) {
+    for (int i=1;i<nhits;i++) {
         if (i<MAXLABEL || i>nhits-MAXLABEL) cout << Tracker::assignment[i] << " ";
         if (i == MAXLABEL) cout << endl << "..." << endl;
     }
@@ -181,7 +187,7 @@ int main(int argc, char**argv) {
         cout<<"Can not open output file"<<endl;
         exit(0);
     }
-    for (int ih=1; ih<=nhits; ih++ ){
+    for (int ih=1; ih<nhits; ih++ ){
         out<<filenum<<","<<ih+1<<","<<label[ih]<<endl;
     }
     out.close();
@@ -193,7 +199,7 @@ int main(int argc, char**argv) {
     int is = verbose ? 0 : 1; // track 0 holds the unassigned points
     for(int track=is; track<=nt; track++) {
         vector<int> t;
-        for (int j=1;j<=nhits;j++) {
+        for (int j=1;j<nhits;j++) {
             if (track != label[j]) continue;
             t.push_back(j); // Save the results
         }
@@ -220,7 +226,7 @@ int main(int argc, char**argv) {
     if (TRAINFILE) trainNetworks(base_path,filenum);
     
     // Show the results in a canvas
-    if (DRAW) draw(nhits,x,y,z,tracks);
+    if (DRAW) draw(nhits_track,x_track,y_track,z_track,tracks);
 }
 
 // Check the track hits (evaluation has ascending order)
@@ -280,7 +286,7 @@ void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks)
         rulers.Draw();
         // draw hits as PolyMarker3D
         TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
-        for (int i=1;i<=nhits;i++) {
+        for (int i=1;i<nhits;i++) {
             hitmarker->SetPoint(i,x[i],y[i],z[i]);
         }
         // set marker size, color & style

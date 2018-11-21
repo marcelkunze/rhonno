@@ -45,12 +45,13 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     _trackid = trackid;
 
     points.reserve(nhits);
+    points.push_back(treePoint(0.,0.,0.)); // For one indexing
     
     // Set up a cache for the point coordinates
     cout << "Reading hits..." << endl;
-    for (int i=1;i<=nhits;i++) {
-        assignment[i] = 0;
-        label[i] = 0;
+    for (int i=0;i<nhits-1;i++) {
+        assignment[i+1] = 0;
+        label[i+1] = 0;
         treePoint point = treePoint(x[i],y[i],z[i],cx[i],cy[i],cz[i],hitid[i],label[i]);
         point.setvolume(volume[i]);
         point.setlayer(layer[i]);
@@ -359,7 +360,7 @@ void Tracker::readTubes() {
     cout << "Reading tubes..." << endl;
     
     long nhits = points.size();
-    for (int i=1; i<=nhits; i++) {
+    for (int i=1; i<nhits; i++) {
         treePoint &point = points[i];
         int l = point.layer();
         if (l<0 || l>=LAYERS) continue;
@@ -371,7 +372,7 @@ void Tracker::readTubes() {
         int the  = THEFACTOR*(M_PI+t);
         if (phi>=PHIDIM) phi = PHIDIM-1;
         if (the>=THEDIM) the = THEDIM-1;
-        tube[l][phi][the].push_back(i);
+        tube[l][phi][the].push_back(point.id());
         //if (_verbose) cout << "Point " << i << " phi:" << phi << " theta:" << the << " layer:" << l << " module: " << m << endl;
     }
     
@@ -433,14 +434,15 @@ void Tracker::readTubes() {
     
     // Prepare the hits in modules
 
-    for (int i = 1; i <= nhits; i++) {
+    for (int i=1; i<nhits; i++) {
         //if (assignment[i] > 0) continue; // Skip double hits
-        int l = points[i].layer();
+        treePoint &point = points[i];
+        int l = point.layer();
         if (l<0 || l>=LAYERS) continue;
-        int m = points[i].module();
+        int m = point.module();
         if (m<0 || m>=MODULES) continue;
         int index = MODULES*l + m;
-        module[index].push_back(i);
+        module[index].push_back(point.id());
         modules[l].insert(index);
         //if (_verbose) cout << i << " " << l << " " << m << " " << index << endl;
     }

@@ -34,7 +34,7 @@
 #define THEDIM 13
 #define THEFACTOR 2
 
-#define SCORE true
+#define SCORE false
 
 #include "Graph.h"
 #include "Point.h"
@@ -284,9 +284,9 @@ public:
     static void scorePaths(std::map<int,std::vector<int> > &paths);
     static void scoreAssignment(std::map<int, int>& assignment);
     static void investigateAssignment(std::map<int,std::vector<int> > &solution_paths);
-    static double scoreTriple(treePoint &a, treePoint &b, treePoint &c);
-    static double scoreTripleLogRadius_and_HitDir(treePoint &a,treePoint &b,treePoint &c,float* L);
-    static double scoreTripleDensity(treePoint &a,treePoint &b,treePoint &c);
+    static double scoreTriplePoints(treePoint &a, treePoint &b, treePoint &c);
+    static double scoreTripleLogRadius_and_HitDirPoints(treePoint &a,treePoint &b,treePoint &c,float* L);
+    static double scoreTripleDensityPoints(treePoint &a,treePoint &b,treePoint &c);
     static void print(std::vector<int> const &input);
 private:
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );

@@ -300,6 +300,7 @@ void Tracker::readHits(string base_path, int filenum) {
             volume_id -= 10;
         
         int mi = itopo[metai_list[volume_id][layer_id/2-1]];
+	if (mi<0 || mi>=LAYERS) cerr << "readHits: " << hit_id << " mi: " << mi << endl;
         
         hits.push_back(point(tx, ty, tz));
         track_hits[hit_id] = point(tx, ty, tz);
@@ -429,6 +430,7 @@ void Tracker::readCells(string base_path,int filenum) {
 //Calculate direction of each hit with cell's data
 void Tracker::initHitDir() {
     for (auto &p : points) {
+        if (p.id()==0) continue; // skip index 0
         int hit_id = p.id();
         point m = meta[hit_id];
         Detector &d = detectors[int(m.x)*10000000+int(m.y)*10000+int(m.z)];
@@ -496,7 +498,7 @@ void Tracker::initHitDir() {
 // Logistic regression model
 
 //Return features for logistic regression of a triple. L has cell's data angle errors, return logarithm of inverse radius of helix
-double Tracker::scoreTripleLogRadius_and_HitDir(treePoint &a,treePoint &b,treePoint &c,float *L) {
+double Tracker::scoreTripleLogRadius_and_HitDirPoints(treePoint &a,treePoint &b,treePoint &c,float *L) {
 
     //Find circle with center p, radius r, going through a, b, and c (in xy plane)
     
