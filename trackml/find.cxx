@@ -241,7 +241,7 @@ long Tracker::findSeeds()
                 if (verbose) cout << "-> Layer " << l2 << " module " << m2 << endl;
                 for (auto a : module[start]) { // all hits in module
                     
-                    if (assignment[a] > 0) continue;
+                    if (assignment[a] != 0) continue;
                     
                     // Recalculate the vertex
                     long n = pairs.size();
@@ -270,7 +270,7 @@ long Tracker::findSeeds()
                     vector<pair<int,float> > seed;
                     for (auto b:p)
                     {
-                        if (assignment[b] > 0) continue;
+                        if (assignment[b] != 0) continue;
                         
                         float d = Point::distance3(vertex,points[a],points[b]); // distance of it from line a-b
                         if (d>DISTANCE) {
@@ -336,7 +336,7 @@ long Tracker::findSeedsPhiTheta()
                 int tube1 = start_list[i][0];
                 
                 for (auto a : tube[tube1][j][k]) {
-                    if (assignment[a] > 0) continue;
+                    if (assignment[a] != 0) continue;
                     int tube2 = start_list[i][1];
                     auto b = tube[tube2][j][k];
                     if (b.size() == 0) continue;
@@ -344,7 +344,7 @@ long Tracker::findSeedsPhiTheta()
                     vector<pair<int,float> > seed;
                     for (auto it:b)
                     {
-                        if (assignment[it] > 0) continue;
+                        if (assignment[it] != 0) continue;
                         double recall = checkTracklet(a,it); // Search for hit pairs
                         seed.push_back(make_pair(it,(float)recall));
                     }
@@ -393,7 +393,7 @@ long Tracker::findPairs() {
         for (int j = 0; j <PHIDIM; j++) {
             for (int k=0;k<THEDIM;k++) {
                 for (auto a : tube[start_list[i].first][j][k]) {
-                    if (assignment[a] > 0) continue;
+                    if (assignment[a] != 0) continue;
                     for (auto b : tube[start_list[i].second][j][k]) {
                         if (assignment[b] != 0) continue;
                         double recall = checkTracklet(a,b);
@@ -450,8 +450,6 @@ long Tracker::findTriples() {
 
     triples.clear();
 
-    for (int i=0;i<MAXDIM;i++) assignment[i] = 0;
-    
     static int ntrack = 1;
     for (auto &it : pairs) {
         if (assignment[it.first]>0) continue;
@@ -503,8 +501,8 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
         vector<pair<double, int> > v;
         for (auto &it1 : seed1)
         {
+            if (assignment[it1] != 0) continue; // Point has benn already used
             if (verbose) cout << it1 << " ";
-            if (assignment[it1] > 0) continue; // Point has benn already used
             //if (!checkTheta(p1,it1)) continue;
             treePoint &a = points[p0];
             treePoint &b = points[p1];
@@ -514,6 +512,8 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             double s = scoreTriple(p0,p1,it1); // Check helix propagation
             v.push_back(make_pair(s, it1));
         }
+        
+        if (v.size()==0) continue;
 
         if (verbose) {
             cout << "addHits " << p0 << " " << p1 <<": " << v.size() << " matches" << endl;
@@ -524,7 +524,7 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
         //Take only best ones
         sort(v.begin(), v.end());
         
-        v.resize(5); // Take only the best solutions
+        if (v.size()>5) v.resize(5); // Take only the best solutions
         
         vector<pair<double, int> > r;
         for (int i = 0; i < v.size(); i++) {

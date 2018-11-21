@@ -50,15 +50,19 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     // Set up a cache for the point coordinates
     cout << "Reading hits..." << endl;
     for (int i=0;i<nhits-1;i++) {
-        assignment[i+1] = 0;
-        label[i+1] = 0;
-        treePoint point = treePoint(x[i],y[i],z[i],cx[i],cy[i],cz[i],hitid[i],label[i]);
+        assignment[i] = -1;
+        if (label[i] != 0) {
+            assignment[i] = 0; // Whitelist track hits
+        }
+        label[i] = 0;
+        treePoint point = treePoint(x[i],y[i],z[i],cx[i],cy[i],cz[i],hitid[i],label[i],trackid[i]);
         point.setvolume(volume[i]);
         point.setlayer(layer[i]);
         point.setmodule(module[i]);
-        point.settrackid(trackid[i]);
         points.push_back(point);
+        //if (trackid[i] != 0) assignment[i+1] = 0; // Whitelist track hits
     }
+    assignment[nhits-1] = -1;
     
     // Sort the hits into the detector layers
     cout << "Setting up..." << endl;
@@ -202,10 +206,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
             na++;
             label[j] = it.first;
             points[j].setlabel(it.first);
-            if (j == id++)
-                nc ++;
-            else
-                id = j++;
+            if (!tracklet.count(points[j].id())) nc ++;
         }
     }
     
@@ -435,7 +436,7 @@ void Tracker::readTubes() {
     // Prepare the hits in modules
 
     for (int i=1; i<nhits; i++) {
-        //if (assignment[i] > 0) continue; // Skip double hits
+        if (assignment[i] != 0) continue; // Skip hits
         treePoint &point = points[i];
         int l = point.layer();
         if (l<0 || l>=LAYERS) continue;
@@ -444,7 +445,7 @@ void Tracker::readTubes() {
         int index = MODULES*l + m;
         module[index].push_back(point.id());
         modules[l].insert(index);
-        //if (_verbose) cout << i << " " << l << " " << m << " " << index << endl;
+        if (verbose) cout << i << " " << l << " " << m << " " << index << endl;
     }
     
     for (int l =0;l<LAYERS;l++) {

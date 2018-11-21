@@ -71,6 +71,7 @@ int main(int argc, char**argv) {
     Tracker::debug(verbose);
     
     if (EVALUATION) {
+        Tracker::readBlacklist(base_path,filenum);
         //Tracker::readGraph("paths.csv",Tracker::paths);
         Tracker::readParticles(base_path,filenum);
         Tracker::readTruth(base_path,filenum);
@@ -89,13 +90,16 @@ int main(int argc, char**argv) {
     float x_track[nhits],y_track[nhits],z_track[nhits];
     int label[nhits],volume[nhits],layer[nhits],module[nhits],hitid[nhits];
     long long trackid[nhits];
-    
+
     for (int i=0;i<nhits-1;i++) {
         int hit_id = i+1;
         point &hit = Tracker::hits[hit_id];
         x[i] = hit.x; // in mm
         y[i] = hit.y; // in mm
         z[i] = hit.z; // in mm
+        cx[i] = Tracker::hit_dir[hit_id][0].x;
+        cy[i] = Tracker::hit_dir[hit_id][0].y;
+        cz[i] = Tracker::hit_dir[hit_id][0].z;
         label[i] = 0;
         trackid[i] = Tracker::truth_part[hit_id]; // true track assignment
         hitid[i] = hit_id;
@@ -107,15 +111,12 @@ int main(int argc, char**argv) {
         volume[i] = vol;
         layer[i] = l;
         module[i] = mod;
-        cx[i] = Tracker::hit_dir[hit_id][0].x;
-        cy[i] = Tracker::hit_dir[hit_id][0].y;
-        cz[i] = Tracker::hit_dir[hit_id][0].z;
     }
     
     // Prepare the trackml data to run the track finder
     // Geberate a graph to represent the track hits in the modules
     
-    long nhits_track = 0;
+    long n = 0;
     int tracknumber = 1;
     for (auto &track : Tracker::particles) {
         vector<int> t = track.hit;
@@ -125,14 +126,10 @@ int main(int argc, char**argv) {
         int vol = geo.x;
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
-        //if (first!=0 && first!=4 && first!=11) continue;
+        if (first!=0 && first!=4 && first!=11) continue;
         if (verbose) cout << "Track " << tracknumber << ", size " << t.size() << endl;
         int oldindex = -1;
         for (auto &hit_id : t) {
-            x_track[nhits_track] = x[hit_id-1];
-            y_track[nhits_track] = y[hit_id-1];
-            z_track[nhits_track] = z[hit_id-1];
-            nhits_track++;
             Tracker::truth_assignment[hit_id] = tracknumber;
             point geo = Tracker::meta[hit_id];
             int vol = geo.x;
@@ -145,7 +142,13 @@ int main(int argc, char**argv) {
                 Tracker::paths.add(oldindex,index,1.0,true); // incremental mode
             }
             oldindex = index;
-            if (verbose) cout << hit_id << " {" << index << ","  << l << "," << mod << "},";
+            if (verbose) cout << hit_id << "={" << index << ","  << l << "," << mod << "},";
+            // Fill the track arrays to work on track data only
+            x_track[n] = x[hit_id-1];
+            y_track[n] = y[hit_id-1];
+            z_track[n] = z[hit_id-1];
+            label[hit_id] = tracknumber; // Whitelist track hits
+            n++;
         }
         Tracker::paths.add(oldindex,-1);
         if (verbose) {
@@ -154,18 +157,20 @@ int main(int argc, char**argv) {
         tracknumber++;
         if (tracknumber>Tracker::maxparticles) break;
     }
+    long nhits_track = n;
 
     // Write path data to file
     if (verbose) Tracker::paths.print();
     Tracker::writeGraph("paths.csv",Tracker::paths);
     
     if (nhits > MAXHITS) nhits = MAXHITS;
-    cout << "Hits: " << nhits << endl;
+    cout << "Hits     : " << nhits << endl;
+    cout << "Trackhits: " << nhits_track << endl;
     cout << "maxparticles: " << Tracker::maxparticles << " maxpairs: " << Tracker::maxpairs << endl;
     
     cout << endl << "Running Tracker:" << endl;
     long nt = Tracker::findTracks((int)nhits,x,y,z,cx,cy,cz,volume,layer,module,hitid,trackid,label);
-    
+
     // Show the results
     cout << "Labels: ";
     for (int i=1;i<nhits;i++) {
@@ -200,6 +205,7 @@ int main(int argc, char**argv) {
     for(int track=is; track<=nt; track++) {
         vector<int> t;
         for (int j=1;j<nhits;j++) {
+            if (track==0 && label[j]==0 && Tracker::assignment[j]!=0) continue;
             if (track != label[j]) continue;
             t.push_back(j); // Save the results
         }
@@ -208,7 +214,7 @@ int main(int argc, char**argv) {
     
     cout << endl << "Number of tracks: " << nt << endl;
     for (auto it : tracks) {
-        if (it.first ==0) continue; // Holds unassigned points
+        //if (it.first==0) continue; // Holds unassigned points
         auto track = it.second;
         if (track.size() == 0) continue;
         if (it.first<MAXTRACK || it.first>nt-MAXTRACK) {
@@ -286,7 +292,7 @@ void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks)
         rulers.Draw();
         // draw hits as PolyMarker3D
         TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
-        for (int i=1;i<nhits;i++) {
+        for (int i=0;i<nhits;i++) {
             hitmarker->SetPoint(i,x[i],y[i],z[i]);
         }
         // set marker size, color & style
@@ -300,11 +306,13 @@ void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks)
         for (int i=1;i<nt;i++) {
             //cout << endl << "Drawing track " << i+1 << ": ";
             vector<int> track = tracks[i];
+            vector<treePoint> p;
+            for (auto it : track) p.push_back(Tracker::points[it]);
+            sort(p.begin(),p.end(),Point::sortByRadius);
             int n = 0;
             TPolyLine3D *connector = new TPolyLine3D((int)track.size());
-            for (auto &it : track)    {
-                Point hit = Tracker::points[it];
-                connector->SetPoint(n++, hit.x(), hit.y(), hit.z());
+            for (auto &it : p)    {
+                connector->SetPoint(n++, it.x(), it.y(), it.z());
             }
             connector->SetLineWidth(1);
             connector->SetLineColor(kRed);
