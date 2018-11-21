@@ -457,7 +457,7 @@ long Tracker::findTriples() {
         int l = points[it.second].layer();
         int m = points[it.second].module();
         int index = MODULES*l + m;
-        if (verbose) cout << endl << "findTripes " <<  "{" << index << ","  << l << "," << m << "/" << it.first << "," << it.second << "}" << endl;
+        if (verbose) cout << endl << "findTripes " <<  "{" << index << ","  << l << "," << m << "/" << shortid(it.first) << "," << shortid(it.second) << "}" << endl;
         vector<triple> trip;
         addHits(it.first,it.second,index,trip);
         for (auto t: trip) {
@@ -516,8 +516,8 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
         if (v.size()==0) continue;
 
         if (verbose) {
-            cout << "addHits " << p0 << " " << p1 <<": " << v.size() << " matches" << endl;
-            for (auto it : v) cout << "{" << it.first << "," << it.second << "},";
+            cout << "addHits " << shortid(p0) << " " << shortid(p1) <<": " << v.size() << " matches" << endl;
+            for (auto it : v) cout << "{" << it.first << "," << shortid(it.second) << "},";
             cout << endl;
         }
         

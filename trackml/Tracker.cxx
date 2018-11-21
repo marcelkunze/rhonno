@@ -103,11 +103,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
         for (auto p : pairs) {
             int hit_id1 = p.first;
             int hit_id2 = p.second;
-            long long part1 = Tracker::truth_part[hit_id1];
-            long long part2 = Tracker::truth_part[hit_id2];
-            int track1 = Tracker::truth_assignment[hit_id1];
-            int track2 = Tracker::truth_assignment[hit_id2];
-            cout << "{" << p.first << "(" << track1 << ")," << p.second << "(" << track2 << ")}, ";
+            cout << "{" << hit_id1 << "/" << shortid(hit_id1) << "," << hit_id2 << "/" << shortid(hit_id2) << "}, ";
         }
         cout << endl;
     }
@@ -125,10 +121,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
 #ifdef TRIPLEFINDER
     long ntriples = findTriples();
     cout << ntriples << " triples" << endl;
-    if (verbose) {
-        for (auto t: triples) cout << t.x << " " << t.y << " " << t.z << "(" << t.r << ") ";
-        cout << endl;
-    }
 #endif
 
 #ifdef TOPQUARKFINDER
@@ -157,6 +149,11 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     
 #endif
 
+    if (verbose) {
+        for (auto t: triples) cout << shortid(t.x) << " " << shortid(t.y) << " " << shortid(t.z) << "(" << t.r << ") ";
+        cout << endl;
+    }
+
     if (SCORE) scoreTriples(triples);
 
     c_end = std::clock();
@@ -178,7 +175,6 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     
     // Exvaluate the results
     cout << endl << "Number of tracklets   : " << tracklet.size() << endl;
-    //cout << "Number of short tracks: " << shortpath.size() << endl;
     if (tracklet.size() == 0) exit(0);
 
     if (SCORE) scorePaths(tracklet);
@@ -302,6 +298,16 @@ void Tracker::print(vector<int> const &input)
 {
     for (unsigned int i = 0; i < input.size(); i++) {
         cout << input.at(i) << ' ';
+    }
+    cout << endl;
+}
+
+
+// Print an integer short hit id track vector
+void Tracker::printshort(vector<int> const &input)
+{
+    for (unsigned int i = 0; i < input.size(); i++) {
+        cout << shortid(input.at(i)) << ' ';
     }
     cout << endl;
 }
@@ -445,7 +451,7 @@ void Tracker::readTubes() {
         int index = MODULES*l + m;
         module[index].push_back(point.id());
         modules[l].insert(index);
-        if (verbose) cout << i << " " << l << " " << m << " " << index << endl;
+        //if (verbose) cout << i << " " << l << " " << m << " " << index << endl;
     }
     
     for (int l =0;l<LAYERS;l++) {

@@ -36,7 +36,7 @@ unsigned long Tracker::n1(0),Tracker::n2(0),Tracker::n3(0),Tracker::n4(0),Tracke
 vector<point> Tracker::hits; //hit position
 vector<Particle> Tracker::particles; //true tracks
 map<long long,int> Tracker::partIDmap; // create particle ID->index map
-//vector<int> Tracker::knn[MAXDIM][MODULES];
+map<int,int> Tracker::hitIDmap; // create hit ID->index map
 vector<int> Tracker::module[LAYERS*MODULES]; // List of hits in each layer
 set<int> Tracker::modules[LAYERS]; // List of modules in each layer
 vector<int> Tracker::tube[LAYERS][PHIDIM][THEDIM]; // List of hits in each layer

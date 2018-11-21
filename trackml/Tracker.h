@@ -34,7 +34,7 @@
 #define THEDIM 13
 #define THEFACTOR 2
 
-#define SCORE false
+#define SCORE true
 
 #include "Graph.h"
 #include "Point.h"
@@ -171,6 +171,7 @@ public:
     static std::vector<point> polar; //hit position in polar / cylindrical coordinates
     static std::vector<Particle> particles; //true tracks
     static std::map<long long,int> partIDmap; // create particle ID->index map
+    static std::map<int,int> hitIDmap; // create hit ID->index map
     static std::map<long long, std::vector<int> > truth_tracks; //truth hit ids in each track
     static std::map<long long, point> track_hits; // Find points in hits
     static std::vector<int> metai, metaz; //ordered layer id in [0,48), and classification of z for disc layers in [0,4)
@@ -288,6 +289,8 @@ public:
     static double scoreTripleLogRadius_and_HitDirPoints(treePoint &a,treePoint &b,treePoint &c,float* L);
     static double scoreTripleDensityPoints(treePoint &a,treePoint &b,treePoint &c);
     static void print(std::vector<int> const &input);
+    static void printshort(std::vector<int> const &input);
+    static int shortid(int hitid) { return hitIDmap.find(hitid)==hitIDmap.end() ? hitid : hitIDmap[hitid]; }
 private:
     static bool sortFunc( const std::vector<int>& p1,const std::vector<int>& p2 );
 //    static bool sortByDistance(const int a,const int b);

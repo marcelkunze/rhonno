@@ -142,13 +142,14 @@ int main(int argc, char**argv) {
                 Tracker::paths.add(oldindex,index,1.0,true); // incremental mode
             }
             oldindex = index;
-            if (verbose) cout << hit_id << "={" << index << ","  << l << "," << mod << "},";
+            if (verbose) cout << hit_id << "/" << Tracker::shortid(hit_id) << "={" << index << ","  << l << "," << mod << "},";
             // Fill the track arrays to work on track data only
             x_track[n] = x[hit_id-1];
             y_track[n] = y[hit_id-1];
             z_track[n] = z[hit_id-1];
             label[hit_id] = tracknumber; // Whitelist track hits
             n++;
+            Tracker::hitIDmap[hit_id] = (int) n;  // Short hit id
         }
         Tracker::paths.add(oldindex,-1);
         if (verbose) {
@@ -219,7 +220,7 @@ int main(int argc, char**argv) {
         if (track.size() == 0) continue;
         if (it.first<MAXTRACK || it.first>nt-MAXTRACK) {
             cout << "Track " << it.first << ": ";
-            for (auto it : track) cout << it << "(" << Tracker::truth_assignment[it] << ") ";
+            for (auto it : track) cout << Tracker::shortid(it) << "(" << Tracker::truth_assignment[it] << ") ";
             cout << endl;
         }
         if (it.first == MAXTRACK) cout << endl << "..." << endl;
@@ -258,9 +259,9 @@ long checkTracks(map<int,vector<int> >  &tracks) {
             for (auto index : t) {
                 int tracknumber = Tracker::truth_assignment[index];
                 if (index == errorid)
-                    cout << ">" << index << "(" << tracknumber << ")< ";
+                    cout << ">" << Tracker::shortid(index) << "(" << tracknumber << ")< ";
                 else
-                    cout << index << "(" << tracknumber << ") ";
+                    cout << Tracker::shortid(index) << "(" << tracknumber << ") ";
             }
             cout << endl;
         }
