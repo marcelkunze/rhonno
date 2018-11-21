@@ -7,8 +7,8 @@
 #define TRUTHFINDER
 //#define SEEDFINDER
 //#define PAIRFINDER
-//#define TRIPLEFINDER
-#define TOPQUARKFINDER
+#define TRIPLEFINDER
+//#define TOPQUARKFINDER
 //#define SWIMMERFINDER
 #define GRAPHFINDER
 
@@ -181,6 +181,10 @@ public:
     static double truth_weight[MAXDIM]; //weighting of each hit
     static long long truth_part[MAXDIM]; //particle this hit belongs to (particle id)
     static int truth_assignment[MAXDIM]; //particle this hit belongs to (track number)
+    static bool verbose;
+    static int maxpairs, maxparticles;
+    
+
 private:
     //static std::vector<int> knn[MAXDIM][MODULES];
     static std::set<long long> blacklist;
@@ -196,7 +200,6 @@ private:
     static std::map<int, Detector> detectors;
 
     static unsigned long nd, np, nt, n1, n2, n3, n4, ntwins;
-    static bool _verbose;
     static long long *_trackid;
     static int *_hitid;
     static int *_volume;
@@ -219,7 +222,7 @@ public:
     }
     inline
     static float radius(const int &a) { return sqrt(_x[a]*_x[a]+_y[a]*_y[a]+_z[a]*_z[a]); }
-    static void verbose(bool verbose=true) {_verbose = verbose;}
+    static void debug(bool deb=true) {verbose = deb;}
     static int findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy,float *cz,int* volume,int *layer,int *module,int *hitid,long long *trackid,int *label);
     static std::map<int,std::vector<int> > swimmer();
     static std::map<int,std::vector<int> >  getTracks(Graph<int> &g);

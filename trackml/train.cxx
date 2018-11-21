@@ -19,7 +19,7 @@ void transform(Particle &particle, std::vector<treePoint> &points) {
     
     trackid++;
     
-    for (int i=0;i<nhits;i++) {
+    for (int i=1;i<=nhits;i++) {
         vector<int> &h = particle.hit;
         int id = h[i];
         point h1 = Tracker::hits[id]; // in mm
@@ -280,7 +280,7 @@ void makeTrain3PhiTheta()
         // Combine 3 hits
         int nhits = (int)hits.size();
         if (nhits < 3) return;
-        for (int i=0; i<nhits-2; i++)    {
+        for (int i=1; i<=nhits-2; i++)    {
             treePoint &hit1 = hits[i];
             treePoint &hit2 = hits[i+1];
             treePoint &hit3 = hits[i+2];

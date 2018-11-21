@@ -22,8 +22,6 @@
 #include <map>
 #include <algorithm>
 
-extern int maxpairs, maxparticles;
-
 using namespace std;
 
 void loadAdjacent(string,string);
@@ -96,7 +94,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     pairs.resize(maxpairs); // Set maximum number of pairs
 
     cout << npairs << " pairs" << endl;
-    if (_verbose) {
+    if (verbose) {
         for (auto p : pairs) {
             int hit_id1 = p.first;
             int hit_id2 = p.second;
@@ -122,7 +120,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
 #ifdef TRIPLEFINDER
     long ntriples = findTriples();
     cout << ntriples << " triples" << endl;
-    if (_verbose) {
+    if (verbose) {
         for (auto t: triples) cout << t.x << " " << t.y << " " << t.z << "(" << t.r << ") ";
         cout << endl;
     }
@@ -188,7 +186,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     //sort(tracklet.begin(), tracklet.end(), sortFunc);
     
     // Print out the tracks vector
-    if (_verbose) {
+    if (verbose) {
         cout << "Tracklets:" << endl;
         for (auto &it : tracklet) print(it.second);
     }
@@ -361,7 +359,7 @@ void Tracker::readTubes() {
     cout << "Reading tubes..." << endl;
     
     long nhits = points.size();
-    for (int i = 0; i < nhits; i++) {
+    for (int i=1; i<=nhits; i++) {
         treePoint &point = points[i];
         int l = point.layer();
         if (l<0 || l>=LAYERS) continue;
@@ -433,9 +431,9 @@ void Tracker::readTubes() {
         }
     }
     
-    // Prepare rhe hits in modules
+    // Prepare the hits in modules
 
-    for (int i = 0; i < nhits; i++) {
+    for (int i = 1; i <= nhits; i++) {
         //if (assignment[i] > 0) continue; // Skip double hits
         int l = points[i].layer();
         if (l<0 || l>=LAYERS) continue;
@@ -455,7 +453,7 @@ void Tracker::readTubes() {
             else
                 sort(module[m].begin(), module[m].end(), r_cmp);
             
-            if (_verbose) {
+            if (verbose) {
                 //cout << "Module " << m << ":";
                 //print(module[m]);
             }

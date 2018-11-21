@@ -35,7 +35,6 @@ const std::string base_path = "/Users/marcel/workspace/train_sample/";
 
 //Which event to run, this may be overwritten by main()'s arguments
 int filenum = 21100;
-int maxpairs = MAXPAIRS, maxparticles = MAXPARTICLES;
 bool verbose = VERBOSE;
 
 using namespace std;
@@ -49,22 +48,27 @@ int main(int argc, char**argv) {
     //Read which event to run from arguments, default is event # 1000
     //Supports events 0-124 for test, or 1000-1099 for validation (small dataset)
     
+    Tracker::maxparticles = MAXPARTICLES;
+    Tracker::maxpairs = MAXPAIRS;
+
+    cout << "Neural Network Tracker" << endl;
     if (argc >= 2) {
         filenum = atoi(argv[1]);
         cout << "Running on event #" << filenum << endl;
     }
     if (argc >= 3) {
-        maxparticles = atoi(argv[2]);
-        cout << "Running on event #" << filenum << endl;
+        Tracker::maxparticles = atoi(argv[2]);
+        Tracker::maxpairs = Tracker::maxparticles;
+        cout << "Number of particles " << Tracker::maxparticles << endl;
     }
     if (argc >= 4) {
         verbose = atoi(argv[3])!=0;
-        cout << "Running on event #" << filenum << endl;
+        cout << "Debug mode " << verbose << endl;
     }
     ios::sync_with_stdio(false);
     cout << fixed;
     
-    Tracker::verbose(verbose);
+    Tracker::debug(verbose);
     
     if (EVALUATION) {
         //Tracker::readGraph("paths.csv",Tracker::paths);
@@ -76,7 +80,7 @@ int main(int argc, char**argv) {
     Tracker::readCells(base_path,filenum);
     
     long nParticles = Tracker::truth_tracks.size();
-    if (nParticles>maxparticles) nParticles = maxparticles;
+    if (nParticles>Tracker::maxparticles) nParticles = Tracker::maxparticles;
     cout << "Particles: " << nParticles << endl;
     
     // Use 1 indexing to be compatible to trackml hit index
@@ -120,7 +124,7 @@ int main(int argc, char**argv) {
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
         //if (first!=0 && first!=4 && first!=11) continue;
-        
+        if (verbose) cout << "Track " << tracknumber << ", size " << t.size() << endl;
         int oldindex = -1;
         for (auto &hit_id : t) {
             Tracker::truth_assignment[hit_id] = tracknumber;
@@ -135,35 +139,37 @@ int main(int argc, char**argv) {
                 Tracker::paths.add(oldindex,index,1.0,true); // incremental mode
             }
             oldindex = index;
+            if (verbose) cout << hit_id << " {" << index << ","  << l << "," << mod << "},";
         }
-        tracknumber++;
         Tracker::paths.add(oldindex,-1);
         if (verbose) {
-            //cout << "-1}" << endl;
+            cout << "-1}" << endl;
         }
+        tracknumber++;
+        if (tracknumber>Tracker::maxparticles) break;
     }
 
     // Write path data to file
-    //if (verbose) Tracker::paths.print();
+    if (verbose) Tracker::paths.print();
     Tracker::writeGraph("paths.csv",Tracker::paths);
     
     if (nhits > MAXHITS) nhits = MAXHITS;
     cout << "Hits: " << nhits << endl;
-    cout << "maxparticles: " << maxparticles << " maxpairs: " << maxpairs << endl;
+    cout << "maxparticles: " << Tracker::maxparticles << " maxpairs: " << Tracker::maxpairs << endl;
     
     cout << endl << "Running Tracker:" << endl;
     long nt = Tracker::findTracks((int)nhits,x,y,z,cx,cy,cz,volume,layer,module,hitid,trackid,label);
     
     // Show the results
     cout << "Labels: ";
-    for (int i=0;i<nhits;i++) {
+    for (int i=1;i<=nhits;i++) {
         if (i<MAXLABEL || i>nhits-MAXLABEL) cout << label[i] << " ";
         if (i == MAXLABEL) cout << endl << "..." << endl;
     }
     cout << endl;
     
     cout << "Assig.: ";
-    for (int i=0;i<nhits;i++) {
+    for (int i=1;i<=nhits;i++) {
         if (i<MAXLABEL || i>nhits-MAXLABEL) cout << Tracker::assignment[i] << " ";
         if (i == MAXLABEL) cout << endl << "..." << endl;
     }
@@ -175,7 +181,7 @@ int main(int argc, char**argv) {
         cout<<"Can not open output file"<<endl;
         exit(0);
     }
-    for (int ih=0; ih<nhits; ih++ ){
+    for (int ih=1; ih<=nhits; ih++ ){
         out<<filenum<<","<<ih+1<<","<<label[ih]<<endl;
     }
     out.close();
@@ -187,7 +193,7 @@ int main(int argc, char**argv) {
     int is = verbose ? 0 : 1; // track 0 holds the unassigned points
     for(int track=is; track<=nt; track++) {
         vector<int> t;
-        for (int j=0;j<nhits;j++) {
+        for (int j=1;j<=nhits;j++) {
             if (track != label[j]) continue;
             t.push_back(j); // Save the results
         }
@@ -274,7 +280,7 @@ void draw(long nhits,float *x,float *y,float *z,map<int,vector<int> > tracks)
         rulers.Draw();
         // draw hits as PolyMarker3D
         TPolyMarker3D *hitmarker = new TPolyMarker3D((unsigned int) nhits);
-        for (int i=0;i<nhits;i++) {
+        for (int i=1;i<=nhits;i++) {
             hitmarker->SetPoint(i,x[i],y[i],z[i]);
         }
         // set marker size, color & style

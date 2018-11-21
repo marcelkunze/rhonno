@@ -6,8 +6,6 @@
 #include "Tracker.h"
 #include "PolarModule.h"
 
-extern bool verbose;
-
 using namespace std;
 
 // functions to read trackml data (taken from topquark)
@@ -1223,7 +1221,7 @@ double extendTripleLine(vector<triple>&triples, int ai, int bi, point&a, point&b
     }
     //Take only best ones
     sort(v.begin(), v.end());
-    if (verbose) {
+    if (Tracker::verbose) {
         cout << "extendTripleLine " << ai << " " << bi <<": " << v.size() << " matches" << endl;
         for (auto it : v) cout << "{" << it.first << "," << it.second << "},";
         cout << endl;
@@ -1233,11 +1231,11 @@ double extendTripleLine(vector<triple>&triples, int ai, int bi, point&a, point&b
         triple t(ai, bi, v[i].second);
         if (rev) swap(t.x,t.z);
         if (acceptTriple(t)) { //Prune most triples
-            if (verbose) cout << "{" << t.x << "," << t.y << "," << t.z << "},";
+            if (Tracker::verbose) cout << "{" << t.x << "," << t.y << "," << t.z << "},";
             triples.push_back(t);
         }
     }
-    if (verbose) cout << endl;
+    if (Tracker::verbose) cout << endl;
     return 1;
     //cout << added << endl;
 }

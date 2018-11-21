@@ -32,8 +32,8 @@ map<int,vector<int> > Tracker::swimmer() {
         }
     }
     
-    if (_verbose) {
-        for (int i=0;i<nhits;i++) {
+    if (verbose) {
+        for (int i=1;i<=nhits;i++) {
             auto adj = points[i].neighbours();
             cout << points[i].id() << " {" ;
             for (auto it : adj) cout << it << "," ;
@@ -61,11 +61,11 @@ map<int,vector<int> > Tracker::swimmer() {
         hitmap.erase(it++);
         while (it != hitmap.end()) { // Follow the path until there are no more neighbours
             neighbour = p0->neighbour(n);
-            if (_verbose) cout << p0->id() << "->" << neighbour << endl;
+            if (verbose) cout << p0->id() << "->" << neighbour << endl;
             if (neighbour < 0 || neighbour >= nhits) break;
             auto it = hitmap.find(neighbour);
             if (it==hitmap.end()) { // hit is already assigned
-                if (_verbose) cout <<  "->" << neighbour << endl;
+                if (verbose) cout <<  "->" << neighbour << endl;
                 n++;  // try an alternative neighbour
                 continue;
             }
@@ -80,7 +80,7 @@ map<int,vector<int> > Tracker::swimmer() {
         sort(pvec.begin(), pvec.end(), Point::sortById); // Sort the hits acording to the Id
         vector<int> tmpvec;
         for (auto &ip : pvec) tmpvec.push_back(ip.id()); // Note the hit indices
-        if (_verbose) print(tmpvec);
+        if (verbose) print(tmpvec);
         if (pvec.size() >= TRACKLET) {
             tracklet[ntrack++] = tmpvec;
             trackletstotal += pvec.size();
@@ -88,7 +88,7 @@ map<int,vector<int> > Tracker::swimmer() {
         }
         else
             shortpath[nshort++] = tmpvec;
-        if (_verbose) cout << "---" << endl;
+        if (verbose) cout << "---" << endl;
     }
     
     return tracklet;

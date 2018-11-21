@@ -232,13 +232,13 @@ long Tracker::findSeeds()
             if (edgelist.size() == 0) continue;
             int l1 = start/MODULES;
             int m1 = start%MODULES;
-            if (_verbose) cout << "Start layer " << l1 << " module " << m1 << endl;
+            if (verbose) cout << "Start layer " << l1 << " module " << m1 << endl;
             for (auto edge : edgelist) {
                 int nextindex = edge.first;
                 if (nextindex<0) break;
                 int l2 = nextindex/MODULES;
                 int m2 = nextindex%MODULES;
-                if (_verbose) cout << "-> Layer " << l2 << " module " << m2 << endl;
+                if (verbose) cout << "-> Layer " << l2 << " module " << m2 << endl;
                 for (auto a : module[start]) { // all hits in module
                     
                     if (assignment[a] > 0) continue;
@@ -251,7 +251,7 @@ long Tracker::findSeeds()
                         int c = pairs[n-2].first;
                         int d = pairs[n-2].second;
                         vertex = Point::distBetweenLines(points[a], points[b], points[c], points[d]);
-                        if (_verbose) cout << "vertex(" << a << "," << b << "," << c << "," << d <<"): " << vertex.x() << " " << vertex.y() << " " << vertex.z() << " " << endl;
+                        if (verbose) cout << "vertex(" << a << "," << b << "," << c << "," << d <<"): " << vertex.x() << " " << vertex.y() << " " << vertex.z() << " " << endl;
                     }
                     
                     int twin = points[a].twin();
@@ -260,7 +260,7 @@ long Tracker::findSeeds()
                         tracking.add(a,twin,1.0);
                         assignment[a] = ntrack;
                         assignment[twin] = ntrack;
-                        if (_verbose) cout << "-> Add twin " << a << " " << twin << endl;
+                        if (verbose) cout << "-> Add twin " << a << " " << twin << endl;
                         continue;
                     }
                     
@@ -274,13 +274,13 @@ long Tracker::findSeeds()
                         
                         float d = Point::distance3(vertex,points[a],points[b]); // distance of it from line a-b
                         if (d>DISTANCE) {
-                            if (_verbose) cout << a << " " << b << " <- distance " << d << endl;
+                            if (verbose) cout << a << " " << b << " <- distance " << d << endl;
                             nd++; continue;
                         }
 
                         double recall = checkTracklet(a,b); // Search for hit pairs
                         if (recall < THRESHOLD2) {
-                            if (_verbose) cout << a << " " << b << ": R2 NOK " << recall << endl;
+                            if (verbose) cout << a << " " << b << ": R2 NOK " << recall << endl;
                             continue;
                         }
                         
@@ -300,7 +300,7 @@ long Tracker::findSeeds()
                     
                     //if (!checkTheta(a,id)) continue;
                     //if (!checkPhi(a,id)) continue;
-                    if (_verbose) cout << a << " " << id << ": R2 OK " << recall << " d " << d << endl;
+                    if (verbose) cout << a << " " << id << ": R2 OK " << recall << " d " << d << endl;
                     pairs.push_back(make_pair(a,id));
                     tracking.add(a,id,d);
                     assignment[a] = ntrack++;
@@ -313,7 +313,7 @@ long Tracker::findSeeds()
     }
     
     // Print the tracking graph
-    if (_verbose) tracking.print();
+    if (verbose) tracking.print();
     
     sort(pairs.begin(),pairs.end());
          
@@ -360,7 +360,7 @@ long Tracker::findSeedsPhiTheta()
                     if (!checkTheta(a,id)) continue;
                     if (!checkPhi(a,id)) continue;
                     double d = distance(a,id);
-                    if (_verbose) cout << a << " " << id << ": R2 OK " << recall << " d " << d << endl;
+                    if (verbose) cout << a << " " << id << ": R2 OK " << recall << " d " << d << endl;
                     pairs.push_back(make_pair(a,id));
                     assignment[id] = ntrack;
                     assignment[a] = ntrack++;
@@ -370,7 +370,7 @@ long Tracker::findSeedsPhiTheta()
         }
     }
     
-    if (_verbose) {
+    if (verbose) {
         tracking.print();
     }
     
@@ -433,10 +433,10 @@ long Tracker::findTriples(int p0, int p1, std::vector<int> &pairs)
             t.z = it;
             t.r = recall;
             triples.push_back(t);
-            if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 OK" << recall << ", ";
+            if (verbose) cout << t.x << " " << t.y << " " << it << ": R3 OK" << recall << ", ";
         }
         else
-            if (_verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK" << recall << ", ";
+            if (verbose) cout << t.x << " " << t.y << " " << it << ": R3 NOK" << recall << ", ";
     }
     
     //if (_verbose) { cout << "triples " << p0.id() << ":"; for (auto &it:triples) cout << " (" << it.x << "," << it.y << "," << it.z << ":" << it.r << ")"; cout << endl; }
@@ -459,7 +459,7 @@ long Tracker::findTriples() {
         int l = points[it.second].layer();
         int m = points[it.second].module();
         int index = MODULES*l + m;
-        if (_verbose) cout << endl << "findTripes " <<  "{" << index << ","  << l << "," << m << "/" << it.first << "," << it.second << "}" << endl;
+        if (verbose) cout << endl << "findTripes " <<  "{" << index << ","  << l << "," << m << "/" << it.first << "," << it.second << "}" << endl;
         vector<triple> trip;
         addHits(it.first,it.second,index,trip);
         for (auto t: trip) {
@@ -469,7 +469,7 @@ long Tracker::findTriples() {
         }
         triples.insert(triples.end(),trip.begin(),trip.end()); // append the candidates
     }
-    if (_verbose) tracking.print();
+    if (verbose) tracking.print();
     return triples.size();
 }
 
@@ -487,18 +487,21 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
     if (edgelist.size() == 0) return 0;
     int l = start/MODULES;
     int m = start%MODULES;
-    if (_verbose) cout << "{" << start << ","  << l << "," << m << "} -> ";
+    if (verbose) cout << "{" << start << ","  << l << "," << m << "} -> ";
     
     long found(0);
     for (auto edge : edgelist) {
+        float value = edge.second;
+        //if (value<10.0) continue;
         int nextindex = edge.first;
         int nextlayer = nextindex/MODULES;
         int nextmodule = nextindex%MODULES;
-        if (nextmodule<0 || nextmodule>MODULES*LAYERS) break;
-        if (_verbose) cout << "{" << nextindex << "," << nextlayer << "," << nextmodule << "},";
+        if (nextmodule<0 || nextmodule>3192) break;
+        if (verbose) cout << "{" << nextindex << "," << nextlayer << "," << nextmodule << "},";
         auto &seed1 = module[nextindex];
         for (auto &it1 : seed1)
         {
+            if (verbose) cout << it1 << " ";
             if (assignment[it1] > 0) continue; // Point has benn already used
             //if (!checkTheta(p1,it1)) continue;
             treePoint &a = points[p0];
@@ -507,7 +510,7 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
 
             double recall = 1.0 - scoreTriple(a,b,c)/100.0; // Check helix propagation
             if (recall<THRESHOLD3) {
-                 if (_verbose) cout << endl << p0 << " " << p1 << " " << it1 << ": Score NOK " << recall << ", ";
+                if (verbose) cout << endl << "/" << p0 << " " << p1 << " " << it1 << ": Score NOK " << recall << ", ";
                 continue;
             }
             
@@ -518,11 +521,11 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
                 t.r = recall;
                 triples.push_back(t);
                 assignment[it1] = assignment[p0];
+                if (verbose) cout << endl << t.x << " " << t.y << " " << it1 << ": R3 OK " << recall << ", ";
                 found +=  addHits(p1,it1,nextindex,triples);
-                if (_verbose) cout << endl << t.x << " " << t.y << " " << it1 << ": R3 OK " << recall << ", ";
             }
             else
-                if (_verbose) cout << endl << t.x << " " << t.y << " " << it1 << ": R3 NOK " << recall << ", ";
+                if (verbose) cout << endl << t.x << " " << t.y << " " << it1 << ": R3 NOK " << recall << ", ";
         }
     }
     

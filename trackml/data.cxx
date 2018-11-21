@@ -20,7 +20,9 @@ int* Tracker::_layer;
 int* Tracker::_module;
 int* Tracker::_hitid;
 long long *Tracker::_trackid;
-bool Tracker::_verbose(false);
+bool Tracker::verbose(false);
+int Tracker::maxpairs;
+int Tracker::maxparticles;
 Point Tracker::vertex;
 vector<treePoint> Tracker::points; // hit Points
 vector<pair<int, int> > Tracker::pairs; // hit pair combinations
