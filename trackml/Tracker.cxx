@@ -177,20 +177,17 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
     cout << endl << "Number of tracklets   : " << tracklet.size() << endl;
     if (tracklet.size() == 0) exit(0);
 
-    if (SCORE) scorePaths(tracklet);
-
-    c_end = std::clock();
-    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
-    
-    // Sort the tracklet vector according to the tracklet length
-    //sort(tracklet.begin(), tracklet.end(), sortFunc);
-    
     // Print out the tracks vector
     if (verbose) {
         cout << "Tracklets:" << endl;
         for (auto &it : tracklet) print(it.second);
     }
+    
+    if (SCORE) scorePaths(tracklet);
+
+    c_end = std::clock();
+    time_elapsed_ms = 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms << " ms\n" <<endl;
     
     // Assign labels
     int na = 0;
@@ -205,7 +202,7 @@ int Tracker::findTracks(int nhits,float *x,float *y,float *z,float *cx,float *cy
             if (!tracklet.count(points[j].id())) nc ++;
         }
     }
-    
+
     // Check the assignment
     
     if (SCORE) {

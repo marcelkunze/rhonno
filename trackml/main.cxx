@@ -121,13 +121,13 @@ int main(int argc, char**argv) {
     for (auto &track : Tracker::particles) {
         vector<int> t = track.hit;
         if (t.size()==0) continue;
-        Tracker::truepairs.push_back(make_pair(t[0],t[1]));
         point geo = Tracker::meta[t[0]]; // Check the first layer of a hit
         int vol = geo.x;
         int lay = geo.y;
         int first = Tracker::getLayer(vol,lay);
         if (first!=0 && first!=4 && first!=11) continue;
-        if (verbose) cout << "Track " << tracknumber << ", size " << t.size() << endl;
+        if (verbose) cout << "Track " << tracknumber << ", size " << t.size() << " {" << t[0] << "," << t[1] << "}" << endl;
+        Tracker::truepairs.push_back(make_pair(t[0],t[1]));
         int oldindex = -1;
         for (auto &hit_id : t) {
             Tracker::truth_assignment[hit_id] = tracknumber;
@@ -142,7 +142,7 @@ int main(int argc, char**argv) {
                 Tracker::paths.add(oldindex,index,1.0,true); // incremental mode
             }
             oldindex = index;
-            if (verbose) cout << hit_id << "/" << Tracker::shortid(hit_id) << "={" << index << ","  << l << "," << mod << "},";
+            if (verbose) cout << hit_id << "={" << index << ","  << l << "," << mod << "},";
             // Fill the track arrays to work on track data only
             x_track[n] = x[hit_id-1];
             y_track[n] = y[hit_id-1];
@@ -168,6 +168,10 @@ int main(int argc, char**argv) {
     cout << "Hits     : " << nhits << endl;
     cout << "Trackhits: " << nhits_track << endl;
     cout << "maxparticles: " << Tracker::maxparticles << " maxpairs: " << Tracker::maxpairs << endl;
+    if (verbose) {
+        cout << "truepairs: ";
+        for (auto p : Tracker::truepairs) cout << " {" << p.first << "," << p.second << "}, ";
+    }
     
     cout << endl << "Running Tracker:" << endl;
     long nt = Tracker::findTracks((int)nhits,x,y,z,cx,cy,cz,volume,layer,module,hitid,trackid,label);
@@ -220,7 +224,7 @@ int main(int argc, char**argv) {
         if (track.size() == 0) continue;
         if (it.first<MAXTRACK || it.first>nt-MAXTRACK) {
             cout << "Track " << it.first << ": ";
-            for (auto it : track) cout << Tracker::shortid(it) << "(" << Tracker::truth_assignment[it] << ") ";
+            for (auto it : track) cout << it << "/" << Tracker::shortid(it) << "(" << Tracker::truth_assignment[it] << ") ";
             cout << endl;
         }
         if (it.first == MAXTRACK) cout << endl << "..." << endl;

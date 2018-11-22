@@ -24,13 +24,13 @@ LIBRARY=libtrackml.so
 all: $(SOURCES) $(LIBRARY) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS) $(LIBRARY)
-	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
+	$(CC) -Wl,-stack_size -Wl,0x1000000 $(LDFLAGS) $(OBJECTS) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
 ReadEvent: $(OBJECTS1) $(LIBRARY)
 	$(CC) $(LDFLAGS) $(OBJECTS1) $(LIBRARY) $(ROOTLIBS) $(LIBS) -o $@
 
 $(LIBRARY): Tracker.o data.o topquark.o PolarModule.o Point.o find.o swimmer.o XMLP.o XMLP.h Point.h Tracker.h
-	clang++ -std=c++11 -fPIC -shared -o $(LIBRARY) XMLP.cxx Point.cxx Tracker.cxx data.cxx topquark.cxx PolarModule.cxx find.cxx swimmer.cxx
+	clang++ -std=c++11 -fPIC -shared -o $(LIBRARY) $(SHLIB)
 
 %.o: %.cxx $(HEADERS) Makefile
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ 

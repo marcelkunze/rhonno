@@ -7,8 +7,8 @@
 #define TRUTHFINDER
 //#define SEEDFINDER
 //#define PAIRFINDER
-#define TRIPLEFINDER
-//#define TOPQUARKFINDER
+//#define TRIPLEFINDER
+#define TOPQUARKFINDER
 //#define SWIMMERFINDER
 #define GRAPHFINDER
 
@@ -26,7 +26,7 @@
 #define DISTANCE 11.0
 #define DELTANN  0.08
 
-#define MAXDIM 150000
+#define MAXDIM 120000
 #define LAYERS 48
 #define MODULES 10000
 #define PHIDIM 13
@@ -34,7 +34,7 @@
 #define THEDIM 13
 #define THEFACTOR 2
 
-#define SCORE true
+#define SCORE false
 
 #include "Graph.h"
 #include "Point.h"

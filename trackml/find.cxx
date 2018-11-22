@@ -457,7 +457,7 @@ long Tracker::findTriples() {
         int l = points[it.second].layer();
         int m = points[it.second].module();
         int index = MODULES*l + m;
-        if (verbose) cout << endl << "findTripes " <<  "{" << index << ","  << l << "," << m << "/" << shortid(it.first) << "," << shortid(it.second) << "}" << endl;
+        if (verbose) cout << endl << "pair {" << it.first << "," << it.second << "} findTripes " <<  "{" << index << ","  << l << "," << m << "/" << shortid(it.first) << "," << shortid(it.second) << "}" << endl;
         vector<triple> trip;
         addHits(it.first,it.second,index,trip);
         for (auto t: trip) {
@@ -470,8 +470,6 @@ long Tracker::findTriples() {
     if (verbose) tracking.print();
     return triples.size();
 }
-
-double scoreTriple(int ai, int bi, int ci);
 
 // Generate tracklets of 3 points wrt. the first point in seed
 long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
@@ -507,9 +505,7 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             treePoint &a = points[p0];
             treePoint &b = points[p1];
             treePoint &c = points[it1];
-            double x = scoreTriplePoints(a,b,c); // Check helix propagation
-
-            double s = scoreTriple(p0,p1,it1); // Check helix propagation
+            double s = scoreTriplePoints(a,b,c); // Check helix propagation
             v.push_back(make_pair(s, it1));
         }
         
@@ -533,6 +529,7 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
             if (recall>THRESHOLD3) { //Prune most triples
                 r.push_back(make_pair(recall,p2));
             }
+            if (verbose) cout << shortid(p2) << " R3: " << recall << endl;
         }
         
         if (r.size()==0) continue;
@@ -545,7 +542,7 @@ long Tracker::addHits(int p0,int p1,int start,std::vector<triple> &triples)
 
         t.z = pbest;
         t.r = rbest;
-        if (verbose) cout << "push_back {" << t.x << "," << t.y << "," << t.z << "," << t.r << "},";
+        if (verbose) cout << "push_back {" << shortid(t.x) << "," << shortid(t.y) << "," << shortid(t.z) << "," << t.r << "},";
         triples.push_back(t);
         found +=  addHits(p1,pbest,nextindex,triples);
     }
