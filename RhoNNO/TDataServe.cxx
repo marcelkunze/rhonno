@@ -34,6 +34,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include "load.h"
+
 using namespace std;
 
 ClassImp(TDataServe)
@@ -285,7 +287,9 @@ void TDataServe::DataRead(string name,
     len/=fInvecLen;
     BlastAr2DD(fInvecAr, fNumvecs, fNumvecs+len, fInvecLen);
     BlastAr2DD(fOutvecAr, fNumvecs, fNumvecs+len, fOutvecLen);
+    string label("DataRead "+name);
     for (i=0; i<len; i++){
+        load(i,label.c_str());
         for (j=0; j<fInvecLen; j++) fInvecAr[i+fNumvecs][j]=fvec[i*fInvecLen+j];
         for (j=0; j<fOutvecLen; j++) fOutvecAr[i+fNumvecs][j]=out[j];
     }
@@ -322,6 +326,7 @@ void TDataServe::TNtupleXDataRead(TNtuple& tup,
     for (i=0; i<inlen; i++) assert(inselect[i]<j && inselect[i]>0);
     for (i=0; i<outlen; i++) assert(outselect[i]<j && outselect[i]>0);
     for (i=0; i<len; i++){
+        load(i,"TNtupleDataRead");
         tup.GetEvent(start+i,1);
         val=tup.GetArgs();
         for (j=0; j<inlen; j++) fInvecAr[i+fNumvecs][j]=val[inselect[j]];
