@@ -13,8 +13,8 @@ stop 200
 #define the data source
 datapath /Users/marcel/workspace/train_sample
 networkpath ../Networks
-file event000021100.root
-#file event000021101.root
+#file event000021100.root
+file event000021101.root
 #file event000021102.root
 #file event000021103.root
 #file event000021104.root
@@ -25,7 +25,7 @@ file event000021100.root
 #file event000021109.root
 
 #set up the input layer (use branch names)
-tree triples
+tree tracks3
 input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:0.001*rz3:phi3:0.001*z3:f0:f1:f2:f3:f4:f5:f6
 #input f0:f1:f2:f3:f4:f5:f6
 #autoscale true
