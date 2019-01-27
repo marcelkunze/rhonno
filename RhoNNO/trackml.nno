@@ -1,10 +1,10 @@
 # Training of tracks with NNO
 
 #define the network topology
-xmlp 8 20 10 1
+xmlp 8 20 5 1
 transfer TR_FERMI
 momentum 0.2
-#balance true
+balance true
 plots true
 test 10000
 start 1
@@ -17,9 +17,9 @@ networkpath ../Networks
 file event000021101.root
 file event000021102.root
 file event000021103.root
-#file event000021104.root
-#file event000021105.root
-#file event000021106.root
+file event000021104.root
+file event000021105.root
+file event000021106.root
 #file event000021107.root
 #file event000021108.root
 #file event000021109.root
