@@ -15,8 +15,8 @@ datapath /Users/marcel/workspace/train_sample
 networkpath ../Networks
 #file event000021100.root
 file event000021101.root
-#file event000021102.root
-#file event000021103.root
+file event000021102.root
+file event000021103.root
 #file event000021104.root
 #file event000021105.root
 #file event000021106.root
