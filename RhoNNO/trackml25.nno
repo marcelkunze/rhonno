@@ -56,7 +56,7 @@ file event000021139.root
 file event000021140.root
 
 #set up the input layer (use branch names)
-tree tracks27
+tree tracks25
 input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*f2:0.001*f5
 #input rz1:phi1:r1*cos(theta1):rz2:phi2:r2*cos(theta2)
 #input r1:phi1:theta1:r2:phi2:theta2
