@@ -32,19 +32,19 @@ class NetworkTrainer : public TObject
 private:
     TDataServe *fPidDataServer, // input data set
     *fTrainingServer;           // training data set
-    int	fStartEpoch;	    // first epoch and
-    int	fStopEpoch;	        // last epoch to be trained
-    int	fVectorsEpoch;	    // number of vectors per epoch
+    int	fStartEpoch;	        // first epoch and
+    int	fStopEpoch;	            // last epoch to be trained
+    int	fVectorsEpoch;	        // number of vectors per epoch
     TFile      *fFile;		    // input file
     std::string	fNetworkFile;	// name of the newtork file
     std::string	fDataPath;	    // path to data directory
     std::string	fNetworkPath;	// path to network directory
     VNeuralNet *fNet;		    // pointer to actual network
-    double	fMomentum;	    // momentum term
-    int	fTrnMax,	        // number of training vectors
+    double	fMomentum;	        // momentum term
+    int	fTrnMax,	            // number of training vectors
     fTstMax;	                // number of test vectors
     std::string	fModel;		    // name of network model
-    int	fInNodes,	        // size of input layer
+    int	fInNodes,	            // size of input layer
     fHid1Nodes,	                // size of first hidden layer
     fHid2Nodes,	                // size of second hidden layer
     fOutNodes,	                // size of output layer
@@ -53,10 +53,10 @@ private:
     fOutBranch[NNODIMENSION];   // names of output branches
     bool	fBalance;	        // take equal number of pro and con samples
     bool	fPlots;		        // produce plots
-    std::string	fTree;		        // name of tree
+    std::string	fTree;		    // name of tree
     std::string	fInput;		    // name of input file
     std::string	fOutput;	    // name of output file
-    double	fScale;		    // global input scale
+    double	fScale;		        // global input scale
     bool	fAutoScale;	        // determine scale
     double	fInMean[NNODIMENSION],	// mean of inputs
     fOutMean[NNODIMENSION];	    // mean of outputs
@@ -69,6 +69,7 @@ private:
     TList	fPro;		        // list of input files (pro)
     TList	fCon;		        // list of input files (con)
     TNeuralNetParameters::TRANSFER fTransfer; // transfer function
+    double  fTarget;             // training target in percent
     
 public:
     NetworkTrainer() {}

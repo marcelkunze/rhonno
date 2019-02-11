@@ -63,7 +63,7 @@ NetworkTrainer::NetworkTrainer(string file,int se,int ee)
 : fPidDataServer(0), fTrainingServer(0), fVectorsEpoch(0), fNet(0), fMomentum(0.0), 
 fTrnMax(0), fTstMax(1000), fInNodes(NNODIMENSION), fHid1Nodes(10), fHid2Nodes(1), fOutNodes(1),
 fCells(1000), fBalance(false), fPlots(false), fScale(1.0), fAutoScale(false),
-fTransfer(TNeuralNetParameters::TR_FERMI)
+fTransfer(TNeuralNetParameters::TR_FERMI), fTarget(0)
 {
     fStartEpoch = se;
     fStopEpoch = ee;
@@ -342,6 +342,7 @@ double NetworkTrainer::Train()
             network =  Makename(0 , fNetworkPath, fNetworkFile);
             cout << "Saving as best network " << network << " with error " << error << "%" << endl;
             fNet->Save(network);
+            if (errbest<fTarget) break; // limit reached
         }
         
         // Adapt the learning rate, freeze network upon convergence
@@ -416,6 +417,11 @@ bool NetworkTrainer::ReadSteeringFile(string filename)
         s >> key;  // Get key
         
         if (key == "") { s.getline(skip,len); } // empty line
+        
+        else if (key == "target") {
+            s >> fTarget;
+            cout << "+Training target " << fTarget << endl;
+        }
         
         else if (key == "start") {
             s >> fStartEpoch;
