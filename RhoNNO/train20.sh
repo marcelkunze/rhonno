@@ -1,16 +1,24 @@
 for i in 20 21 22 23 24 25 26 27; do
 cat <<EOF > trackml$i.nno
-xmlp 8 30 5 1
+xmlp 9 15 5 1
 transfer TR_FERMI
 momentum 0.2
 #balance true
 plots false
 test 10000
 start 1
-stop 500
+stop 200
+target 6.5
+tree tracks$i
+#input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5
+input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*f4
+#input f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5
+output truth==2
+
 #define the data source
-datapath /Users/marcel/workspace/train_sample
+datapath /Users/marcel/workspace/training_xmlp
 networkpath ../Networks$i
+
 #file event000021100.root
 file event000021101.root
 file event000021102.root
@@ -61,14 +69,33 @@ file event000021146.root
 file event000021147.root
 file event000021148.root
 file event000021149.root
-
-tree tracks$i
-input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*f2:0.001*f5
-output truth>0
+file event000021150.root
+file event000021151.root
+file event000021152.root
+file event000021153.root
+file event000021154.root
+file event000021155.root
+file event000021156.root
+file event000021157.root
+file event000021158.root
+file event000021159.root
+file event000021160.root
+file event000021161.root
+file event000021162.root
+file event000021163.root
+file event000021164.root
+file event000021165.root
+file event000021166.root
+file event000021167.root
+file event000021168.root
+file event000021169.root
 EOF
 
 ../bin/NetworkTrainer trackml$i.nno >trackml$i.out
 cp ../Networks$i/NNO0000.TXMLP XMLP$i.net
+
+tail trackml$i.out | mail -s trackml$i.out marcel@cloudkitchen.info
+
 done
 
 
