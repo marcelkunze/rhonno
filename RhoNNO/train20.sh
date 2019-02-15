@@ -7,11 +7,11 @@ momentum 0.2
 plots false
 test 10000
 start 1
-stop 200
-target 6.5
+stop 350
+target 5.0
 tree tracks$i
 #input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5
-input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*f4
+input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*score
 #input f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5
 output truth==2
 
