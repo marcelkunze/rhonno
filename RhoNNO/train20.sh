@@ -1,17 +1,17 @@
 for i in 20 21 22 23 24 25 26 27; do
 cat <<EOF > trackml$i.nno
-xmlp 9 15 5 1
+xmlp 9 30 5 1
 transfer TR_FERMI
 momentum 0.2
 #balance true
 plots false
 test 10000
 start 1
-stop 350
-target 5.0
+stop 500
+target 6.0
 tree tracks$i
-#input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5
-input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*score
+#input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*score
+input 0.001*rz1:abs(abs(phi1)-1.57079632679):0.001*z1:0.001*rz2:abs(abs(phi2)-1.57079632679):0.001*z2:f0:f1:0.001*score
 #input f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5
 output truth==2
 

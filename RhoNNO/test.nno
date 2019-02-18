@@ -1,28 +1,29 @@
 # Training of tracks with NNO
 
 #define the network topology
-xmlp 9 20 5 1
+xmlp 9 30 5 1
 transfer TR_FERMI
 momentum 0.2
 #balance true
 plots false
 test 10000
 start 1
-stop 350
-target 0.1
+stop 500
+target 6.0
 
 #set up the input layer (use branch names)
 tree tracks2
-input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*score
+input 0.001*rz1:abs(abs(phi1)-1.57079632679):0.001*z1:0.001*rz2:abs(abs(phi2)-1.57079632679):0.001*z2:f0:f1:0.001*score
 #input 0.001*rz1:phi1:0.001*z1:0.001*rz2:phi2:0.001*z2:f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5
 #input f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5:0.001*abs(vz)
 #input f0:f1:0.001*f2:0.001*f3:0.001*f4:0.001*f5:0.001*score
 
 #set up the output layer (use branch names)
 #output truth>0&&l1!=l2
-output truth>0
-
-#cut l1!=l2
+output truth==2
+#cut (l1<4)||(l1>17)
+#cut (l1>3)&&(l1<18)
+#cut l1<l2
 
 #define the data source
 datapath /Users/marcel/workspace/train_sample
@@ -35,10 +36,10 @@ file event000021103.root
 file event000021104.root
 file event000021105.root
 file event000021106.root
-#file event000021107.root
-#file event000021108.root
-#file event000021109.root
-#file event000021110.root
+file event000021107.root
+file event000021108.root
+file event000021109.root
+file event000021110.root
 #file event000021111.root
 #file event000021112.root
 #file event000021113.root
