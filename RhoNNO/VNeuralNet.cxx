@@ -269,7 +269,8 @@ double VNeuralNet::TrainEpoch(TDataServe *server, int nEpoch)
             float *inv  = (float *) server->GetInvecTrn(trnind);
             float *outv = (float *) server->GetOutvecTrn(trnind);
             
-            error += Train(inv,outv);
+            double de = Train(inv,outv);
+	    if (!isnan(de)) error += de;
             n++;
         }
         
