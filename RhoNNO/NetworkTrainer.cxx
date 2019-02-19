@@ -63,7 +63,7 @@ NetworkTrainer::NetworkTrainer(string file,int se,int ee)
 : fPidDataServer(0), fTrainingServer(0), fVectorsEpoch(0), fNet(0), fMomentum(0.0), 
 fTrnMax(0), fTstMax(1000), fInNodes(NNODIMENSION), fHid1Nodes(10), fHid2Nodes(1), fOutNodes(1),
 fCells(1000), fBalance(false), fPlots(false), fScale(1.0), fAutoScale(false),
-fTransfer(TNeuralNetParameters::TR_FERMI), fTarget(0)
+fTransfer(TNeuralNetParameters::TR_FERMI), fTarget(0), fThreshold(0.5)
 {
     fStartEpoch = se;
     fStopEpoch = ee;
@@ -308,7 +308,7 @@ void NetworkTrainer::SetupNetworks()
         }
     }
     
-    fNet->SetThreshold(0.5);
+    fNet->SetThreshold(fThreshold);
     fNet->SetMomentumTerm(fMomentum);
     fNet->BalanceSamples(fBalance);
 }
@@ -417,6 +417,11 @@ bool NetworkTrainer::ReadSteeringFile(string filename)
         s >> key;  // Get key
         
         if (key == "") { s.getline(skip,len); } // empty line
+        
+        else if (key == "threshold") {
+            s >> fThreshold;
+            cout << "+Recall threshold " << fThreshold << endl;
+        }
         
         else if (key == "target") {
             s >> fTarget;

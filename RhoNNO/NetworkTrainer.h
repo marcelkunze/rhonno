@@ -69,8 +69,9 @@ private:
     TList	fPro;		        // list of input files (pro)
     TList	fCon;		        // list of input files (con)
     TNeuralNetParameters::TRANSFER fTransfer; // transfer function
-    double  fTarget;             // training target in percent
-    
+    double  fTarget;            // training target in percent
+    double  fThreshold;         // recall threshold on output
+
 public:
     NetworkTrainer() {}
     NetworkTrainer(std::string file,int start=1,int end=100);
