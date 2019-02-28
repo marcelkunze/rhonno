@@ -161,28 +161,28 @@ void TSimpleNeuralNetPlotter::ShowPlots()
         fCanvas->cd(1);
         fTrnHistFalse->Draw();
         fTrnHistTrue->Draw("same");
-        DrawT((char *)"Training",0.1f, 0.8f, 0.f, 3);
+        DrawT((char *)"Training",0.2f, 0.8f, 0.f, 3);
     }
     
     if (fTstHistTrue!=0) {
         fCanvas->cd(2);
         fTstHistFalse->Draw();
         fTstHistTrue->Draw("same");
-        DrawT((char *)"Validation",0.1f,0.8f,0.f,5);
+        DrawT((char *)"Validation",0.2f,0.8f,0.f,5);
     }
     
     if (fTrnCurve!=0 && fNtrn%NPMAX>0) {
         fCanvas->cd(3);
         gPad->Clear();
         fTrnCurve->DrawGraph(fNtrn%NPMAX,fXtrn,fYtrn,"ALP");
-        DrawT((char *)"Training",0.1f, 0.8f, 0.f, 3);
+        DrawT((char *)"Training",0.2f, 0.8f, 0.f, 3);
     }
     
     if (fTstCurve!=0 && fNtst%NPMAX>0) {
         fCanvas->cd(4);
         gPad->Clear();
         fTstCurve->DrawGraph(fNtst%NPMAX,fXtst,fYtst,"ALP");
-        DrawT((char *)"Validation",0.1f,0.8f,0.f,5);
+        DrawT((char *)"Validation",0.2f,0.8f,0.f,5);
     }
     
     fCanvas->Modified();
