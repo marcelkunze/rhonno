@@ -89,7 +89,7 @@ void TSimpleNeuralNetPlotter::Initialize()
     histname = fTrnPlot + "-";
     fTrnHistFalse = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
     fTrnHistFalse->SetFillColor(kRed);
-    string tstLabel("Recall");
+    string tstLabel("Test");
     fTstPlot = tstLabel + GetName();
     histname = fTstPlot + "+";
     fTstHistTrue = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
@@ -130,7 +130,7 @@ void TSimpleNeuralNetPlotter::AddTrainGraph(double trn)
         fTrnCurve->SetLineWidth(1);
         fTrnCurve->SetMarkerColor(3);
         fTrnCurve->SetMarkerStyle(20);
-        string histname = fTstPlot + ": Error on training data";
+        string histname = fTstPlot + ": Loss function"+";Loss;Epoch";
         fTrnCurve->SetTitle(histname.data());
     }
 }
@@ -148,7 +148,7 @@ void TSimpleNeuralNetPlotter::AddTestGraph(double tst)
         fTstCurve->SetLineWidth(1);
         fTstCurve->SetMarkerColor(5);
         fTstCurve->SetMarkerStyle(20);
-        string histname = fTstPlot + ": Error on test data";
+        string histname = fTstPlot + ": Loss";
         fTstCurve->SetTitle(histname.data());
     }
 }
