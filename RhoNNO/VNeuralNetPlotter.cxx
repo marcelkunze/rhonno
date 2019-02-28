@@ -18,7 +18,7 @@
 
 #include "VNeuralNetPlotter.h"
 
-#define NPMAX 500
+#define NPMAX 1000
 
 using namespace std;
 
@@ -148,7 +148,7 @@ void TSimpleNeuralNetPlotter::AddTestGraph(double tst)
         fTstCurve->SetLineWidth(1);
         fTstCurve->SetMarkerColor(5);
         fTstCurve->SetMarkerStyle(20);
-        string histname = fTstPlot + ": Loss";
+        string histname = fTstPlot + ": Loss function"+";Loss;Epoch";
         fTstCurve->SetTitle(histname.data());
     }
 }
