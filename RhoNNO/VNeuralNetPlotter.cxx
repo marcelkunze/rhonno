@@ -132,6 +132,7 @@ void TSimpleNeuralNetPlotter::AddTrainGraph(double trn)
         fTrnCurve->SetMarkerStyle(20);
         string histname = fTstPlot + ": Loss function"+";Loss;Epoch";
         fTrnCurve->SetTitle(histname.data());
+        fTrnCurve->SetName(histname.data());
     }
 }
 
@@ -150,6 +151,7 @@ void TSimpleNeuralNetPlotter::AddTestGraph(double tst)
         fTstCurve->SetMarkerStyle(20);
         string histname = fTstPlot + ": Loss function"+";Loss;Epoch";
         fTstCurve->SetTitle(histname.data());
+        fTstCurve->SetName(histname.data());
     }
 }
 
