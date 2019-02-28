@@ -120,7 +120,7 @@ void TSimpleNeuralNetPlotter::AddTestSample(double tst, bool good)
 void TSimpleNeuralNetPlotter::AddTrainGraph(double trn) 
 {
     int n = fNtrn%NPMAX;
-    fXtrn[n] = (double) fNtrn;
+    fXtrn[n] = (double) fNtrn + 1;
     fYtrn[n] = trn;
     fNtrn++;
     if (fTrnCurve==0) {
@@ -138,7 +138,7 @@ void TSimpleNeuralNetPlotter::AddTrainGraph(double trn)
 void TSimpleNeuralNetPlotter::AddTestGraph(double tst) 
 {
     int n = fNtst%NPMAX;
-    fXtst[n] = (double) fNtst;
+    fXtst[n] = (double) fNtst + 1;
     fYtst[n] = tst;
     fNtst++;
     if (fTstCurve==0) {
