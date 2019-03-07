@@ -34,14 +34,14 @@ private:
     *fTrainingServer;           // training data set
     int	fStartEpoch;	        // first epoch and
     int	fStopEpoch;	            // last epoch to be trained
-    int	fVectorsEpoch;	        // number of vectors per epoch
+    unsigned long fVectorsEpoch; // number of vectors per epoch
     TFile      *fFile;		    // input file
     std::string	fNetworkFile;	// name of the newtork file
     std::string	fDataPath;	    // path to data directory
     std::string	fNetworkPath;	// path to network directory
     VNeuralNet *fNet;		    // pointer to actual network
     double	fMomentum;	        // momentum term
-    int	fTrnMax,	            // number of training vectors
+    unsigned long fTrnMax,	    // number of training vectors
     fTstMax;	                // number of test vectors
     std::string	fModel;		    // name of network model
     int	fInNodes,	            // size of input layer
