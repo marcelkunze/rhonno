@@ -18,7 +18,7 @@
 
 #include "VNeuralNetPlotter.h"
 
-#define NPMAX 500
+#define NPMAX 1000
 
 using namespace std;
 
@@ -84,18 +84,18 @@ void TSimpleNeuralNetPlotter::Initialize()
     string trnLabel("Train");
     fTrnPlot = trnLabel + GetName();
     string histname = fTrnPlot + "+";
-    fTrnHistTrue = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
+    fTrnHistTrue = new TH1D(histname.data(),histname.data(),201,-1.1,1.1);
     fTrnHistTrue->SetFillColor(kGreen);
     histname = fTrnPlot + "-";
-    fTrnHistFalse = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
+    fTrnHistFalse = new TH1D(histname.data(),histname.data(),201,-1.1,1.1);
     fTrnHistFalse->SetFillColor(kRed);
-    string tstLabel("Recall");
+    string tstLabel("Test");
     fTstPlot = tstLabel + GetName();
     histname = fTstPlot + "+";
-    fTstHistTrue = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
+    fTstHistTrue = new TH1D(histname.data(),histname.data(),201,-1.1,1.1);
     fTstHistTrue->SetFillColor(kGreen);
     histname = fTstPlot + "-";
-    fTstHistFalse = new TH1D(histname.data(),histname.data(),100,-1.1,1.1);
+    fTstHistFalse = new TH1D(histname.data(),histname.data(),201,-1.1,1.1);
     fTstHistFalse->SetFillColor(kRed);
     
     fPlots = true;
@@ -120,7 +120,7 @@ void TSimpleNeuralNetPlotter::AddTestSample(double tst, bool good)
 void TSimpleNeuralNetPlotter::AddTrainGraph(double trn) 
 {
     int n = fNtrn%NPMAX;
-    fXtrn[n] = (double) fNtrn;
+    fXtrn[n] = (double) fNtrn + 1;
     fYtrn[n] = trn;
     fNtrn++;
     if (fTrnCurve==0) {
@@ -130,15 +130,16 @@ void TSimpleNeuralNetPlotter::AddTrainGraph(double trn)
         fTrnCurve->SetLineWidth(1);
         fTrnCurve->SetMarkerColor(3);
         fTrnCurve->SetMarkerStyle(20);
-        string histname = fTstPlot + ": Error on training data";
+        string histname = fTstPlot + ": Loss function"+";Loss;Epoch";
         fTrnCurve->SetTitle(histname.data());
+        fTrnCurve->SetName(histname.data());
     }
 }
 
 void TSimpleNeuralNetPlotter::AddTestGraph(double tst) 
 {
     int n = fNtst%NPMAX;
-    fXtst[n] = (double) fNtst;
+    fXtst[n] = (double) fNtst + 1;
     fYtst[n] = tst;
     fNtst++;
     if (fTstCurve==0) {
@@ -148,8 +149,9 @@ void TSimpleNeuralNetPlotter::AddTestGraph(double tst)
         fTstCurve->SetLineWidth(1);
         fTstCurve->SetMarkerColor(5);
         fTstCurve->SetMarkerStyle(20);
-        string histname = fTstPlot + ": Error on test data";
+        string histname = fTstPlot + ": Loss function"+";Loss;Epoch";
         fTstCurve->SetTitle(histname.data());
+        fTstCurve->SetName(histname.data());
     }
 }
 
@@ -161,28 +163,28 @@ void TSimpleNeuralNetPlotter::ShowPlots()
         fCanvas->cd(1);
         fTrnHistFalse->Draw();
         fTrnHistTrue->Draw("same");
-        DrawT((char *)"Training",0.7f, 0.8f, 0.f, 3);
+        DrawT((char *)"Training",0.2f, 0.8f, 0.f, 3);
     }
     
     if (fTstHistTrue!=0) {
         fCanvas->cd(2);
         fTstHistFalse->Draw();
         fTstHistTrue->Draw("same");
-        DrawT((char *)"Validation",0.7f,0.8f,0.f,5);
+        DrawT((char *)"Validation",0.2f,0.8f,0.f,5);
     }
     
     if (fTrnCurve!=0 && fNtrn%NPMAX>0) {
         fCanvas->cd(3);
         gPad->Clear();
         fTrnCurve->DrawGraph(fNtrn%NPMAX,fXtrn,fYtrn,"ALP");
-        DrawT((char *)"Training",0.7f, 0.8f, 0.f, 3);
+        DrawT((char *)"Training",0.2f, 0.8f, 0.f, 3);
     }
     
     if (fTstCurve!=0 && fNtst%NPMAX>0) {
         fCanvas->cd(4);
         gPad->Clear();
         fTstCurve->DrawGraph(fNtst%NPMAX,fXtst,fYtst,"ALP");
-        DrawT((char *)"Validation",0.7f,0.8f,0.f,5);
+        DrawT((char *)"Validation",0.2f,0.8f,0.f,5);
     }
     
     fCanvas->Modified();
