@@ -1,4 +1,4 @@
-The Neural Network Objects
+# The Neural Network Objects
 
 Johannes Steffens, Marcel Kunze, Helmut Schmücker
 
@@ -19,7 +19,6 @@ Architecture
 
 At the time being the package comprises
 
----------------------------------------------------------
 | **Supervised Training Models**    | Multi-Layer Perceptron (TMLP,     |
 |                                   | TXMLP)                            |
 |                                   |                                   |
@@ -35,7 +34,6 @@ At the time being the package comprises
 |                                   | (TLVQ)\                           |
 |                                   | Growing Cell Structure (TGCS)\    |
 |                                   | Growing Neural Gas (TGNG)         |
----------------------------------------------------------
 
 The design foresees that all models are derived from the same abstract
 base class ***VNeuralNet***. The common base class enforces a unique
@@ -55,7 +53,7 @@ The ***VNeuralNet*** abstract interface defines the following contract
 for the implementation of specific neural network models:
 
   ------------------------------------------------------------------------
-  // Abstract interface for all networks
+  ## Abstract interface for all networks
   
   virtual void AllocNet() = 0;
   
@@ -72,6 +70,7 @@ for the implementation of specific neural network models:
   virtual Double\_t\* Recall(NNO\_INTYPE\* in,NNO\_OUTTYPE\* out=0) = 0;
   
   virtual Double\_t Train(NNO\_INTYPE\* in,NNO\_OUTTYPE\* out=0) = 0;
+  
   ------------------------------------------------------------------------
 
 *AllocNet* acquires resources and is executed during network
@@ -90,7 +89,8 @@ to support the execution of training cycles and to set training
 parameters:
 
   -------------------------------------------------------------
-  // Training and testing
+  
+  ## Training and testing
   
   Double\_t TrainEpoch(TDataServe \*server, Int\_t nEpoch=1);
   
@@ -101,6 +101,7 @@ parameters:
   virtual void SetMomentumTerm(Double\_t f);
   
   virtual void SetFlatSpotElimination(Double\_t f);
+  
   -------------------------------------------------------------
 
 **TDataServe** is a mini database to support management of input/output
@@ -151,6 +152,7 @@ launches (a GUI is in preparation). The steering file knows the
 following directives:
 
 ---------------------------------------------------------
+
 +-----------------------+-----------------------+-----------------------+
 | ### *Parameter*       | ***Type***            | #### Description      |
 |                       |                       |                       |
@@ -267,6 +269,7 @@ following directives:
 |                       |                       | of equal number of    |
 |                       |                       | good and bad samples  |
 +-----------------------+-----------------------+-----------------------+
+
 ---------------------------------------------------------
 
 A sample steering file for training of a selector to separate different
@@ -274,6 +277,7 @@ charged particles in a typical HEP experiment could look like the
 following:
 
   ---------------------------------------------------------
+  
   \# Training of PIDSelectors with NNO
   
   \#define the network topology
@@ -321,6 +325,7 @@ following:
   output abs(pid)==3
   
   \#end of file
+  
   ---------------------------------------------------------
 
 The example above reads two input files, assembles a data server using
@@ -334,6 +339,7 @@ of a network. For the above example the file RecallTXMLP.cpp looks like
 is shown below for illustration purposes:
 
   -----------------------------------------------------------------------
+  
   // TXMLP network trained with NNO NetworkTrainer at Fri Apr 27
   
   // Input parameters mom:acos(theta):svt:emc:drc:dch:ifr:ifrExp:ifrAdd
@@ -373,6 +379,7 @@ is shown below for illustration purposes:
   return net.Recall(x);
   
   }
+  
   -----------------------------------------------------------------------
 
 How to get and build RhoNNO
