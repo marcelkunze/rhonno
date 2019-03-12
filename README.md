@@ -19,21 +19,19 @@ Architecture
 
 At the time being the package comprises
 
-| **Supervised Training Models**    | Multi-Layer Perceptron (TMLP,     |
-|                                   | TXMLP)                            |
-|                                   |                                   |
-|                                   | Fisher Discriminant (TFD)\        |
-|                                   | Supervised Growing Cell Structure |
-|                                   | (TSGCS)\                          |
-|                                   | Supervised Growing Neural Gas     |
-|                                   | (TSGNG)                           |
-|                                   |                                   |
-|                                   | Neural Network Kernel (TNNK)      |
-|-----------------------------------|-----------------------------------|
-| **Unsupervised Training Models**  | Learning Vector Quantisation      |
-|                                   | (TLVQ)\                           |
-|                                   | Growing Cell Structure (TGCS)\    |
-|                                   | Growing Neural Gas (TGNG)         |
+| **Supervised Training Models**  |
+| ------------- | 
+|  Multi-Layer Perceptron (TMLP,TXMLP)  |
+| Fisher Discriminant (TFD)  |
+| Supervised Growing Cell Structure (TSGCS) |
+| Supervised Growing Neural Gas (TSGNG)     |
+|  Neural Network Kernel (TNNK)             |
+
+| **Unsupervised Training Models**  |
+| ------------- | 
+| Learning Vector Quantisation (TLVQ)    |
+| Growing Cell Structure (TGCS)          |
+| Growing Neural Gas (TGNG)              |
 
 The design foresees that all models are derived from the same abstract
 base class ***VNeuralNet***. The common base class enforces a unique
