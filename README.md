@@ -151,122 +151,91 @@ following directives:
 
 ---------------------------------------------------------
 
-+-----------------------+-----------------------+-----------------------+
-| ### *Parameter*       | ***Type***            | #### Description      |
+| *Parameter*           | ***Type***            | Description           |
+| --------------------- | --------------------- | --------------------- |
 |                       |                       |                       |
-|                       | ***I = input\         |                       |
-|                       | O = output***         |                       |
+|                       | ***I = input***       |                       |
+|                       | ***O = output***      |                       |
 |                       |                       |                       |
 |                       | ***H = hidden***      |                       |
 |                       |                       |                       |
 |                       | ***C = cells***       |                       |
-+-----------------------+-----------------------+-----------------------+
-| ***fisher***          | vector\               | Multi-layer           |
+| ***fisher***          | vector                | Multi-layer           |
 |                       | (I O)                 | perceptron (0 hidden  |
 |                       |                       | layer)                |
-+-----------------------+-----------------------+-----------------------+
-| ***mlp***             | vector\               | Multi-layer           |
+| ***mlp***             | vector                | Multi-layer           |
 |                       | (I H O)               | perceptron (1 hidden  |
 |                       |                       | layer)                |
-+-----------------------+-----------------------+-----------------------+
-| ***xmlp***            | vector\               | Multi-layer           |
+| ***xmlp***            | vector                | Multi-layer           |
 |                       | (I H H O)             | perceptron (2 hidden  |
 |                       |                       | layers)               |
-+-----------------------+-----------------------+-----------------------+
-| ***tnnk***            | vector\               | Multi-layer           |
+| ***tnnk***            | vector                | Multi-layer           |
 |                       | (I H H O)             | perceptron (Neural    |
 |                       |                       | Network Kernel)       |
-+-----------------------+-----------------------+-----------------------+
-| ***sgng***            | vector\               | Supervised growing    |
+| ***sgng***            | vector                | Supervised growing    |
 |                       | (I C O)               | neural gas            |
-+-----------------------+-----------------------+-----------------------+
-| ***sgcs***            | vector\               | Supervised growing    |
+| ***sgcs***            | vector                | Supervised growing    |
 |                       | (I C O)               | cell structures       |
-+-----------------------+-----------------------+-----------------------+
-| ***gng***             | vector\               | Growing neural gas    |
+| ***gng***             | vector                | Growing neural gas    |
 |                       | (I C)                 |                       |
-+-----------------------+-----------------------+-----------------------+
-| ***gcs***             | vector\               | Growing cell          |
+| ***gcs***             | vectorv               | Growing cell          |
 |                       | (I C)                 | structures            |
-+-----------------------+-----------------------+-----------------------+
-| ***lvq***             | vector\               | Learning vector       |
+| ***lvq***             | vector                | Learning vector       |
 |                       | (I C)                 | quantization          |
-+-----------------------+-----------------------+-----------------------+
 | ***start***           | int                   | First training epoch  |
-+-----------------------+-----------------------+-----------------------+
 | ***stop***            | int                   | Last training epoch   |
-+-----------------------+-----------------------+-----------------------+
 | ***epoch***           | int                   | Number of training    |
 |                       |                       | samples per epoch     |
-+-----------------------+-----------------------+-----------------------+
 | ***test***            | int                   | Number of test        |
 |                       |                       | samples per epoch     |
-+-----------------------+-----------------------+-----------------------+
 | ***networkpath***     | string                | Directory to save the |
 |                       |                       | trained networks      |
-+-----------------------+-----------------------+-----------------------+
 | ***datapath***        | string                | Directory to look up  |
 |                       |                       | data files            |
-+-----------------------+-----------------------+-----------------------+
 | ***file***            | string                | ROOT training file    |
 |                       |                       | containing good and   |
 |                       |                       | bad samples           |
-+-----------------------+-----------------------+-----------------------+
 | ***pro***             | string                | ROOT training file    |
 |                       |                       | containing good       |
 |                       |                       | samples (1D output    |
 |                       |                       | only)                 |
-+-----------------------+-----------------------+-----------------------+
 | ***con***             | string                | ROOT training file    |
 |                       |                       | containing bad        |
 |                       |                       | samples (1D output    |
 |                       |                       | only)                 |
-+-----------------------+-----------------------+-----------------------+
 | ***tree***            | string                | ROOT tree that acts   |
 |                       |                       | as source to assemble |
 |                       |                       | the vectors           |
-+-----------------------+-----------------------+-----------------------+
 | ***cut***             | string                | ROOT TFormula for     |
 |                       |                       | preselection of       |
 |                       |                       | samples               |
-+-----------------------+-----------------------+-----------------------+
 | ***input***           | string                | Input vector, ROOT    |
 |                       |                       | TFormulae (separated  |
 |                       |                       | by colon)             |
-+-----------------------+-----------------------+-----------------------+
 | ***output***          | string                | Output vector, ROOT   |
 |                       |                       | TFormulae (separated  |
 |                       |                       | by colon)             |
-+-----------------------+-----------------------+-----------------------+
 | ***transfer***        | string                | Transfer function     |
-|                       |                       | (TR\_FERMI,TR\_LINEAR |
-|                       |                       | ,TR\_LINEAR\_BEND,TR\ |
-|                       |                       | _SIGMOID)             |
-+-----------------------+-----------------------+-----------------------+
+|                       |                       | (TR_FERMI,TR_LINEAR   |
+|                       |                       | ,TR_LINEAR_BEND,      |
+|                       |                       | TR_SIGMOID)           |
 | ***momentum***        | float                 | Momentum term         |
-+-----------------------+-----------------------+-----------------------+
 | ***scale***           | float                 | Global scale factor   |
 |                       |                       | to apply to input     |
 |                       |                       | layer                 |
-+-----------------------+-----------------------+-----------------------+
 | ***inscale***         | vector                | Scale factors to      |
 |                       |                       | apply to input layer  |
-+-----------------------+-----------------------+-----------------------+
 | ***outscale***        | vector                | Scale factors to      |
 |                       |                       | apply to output layer |
-+-----------------------+-----------------------+-----------------------+
 | ***autoscale***       | bool                  | Determine scale       |
 |                       |                       | factors to apply to   |
 |                       |                       | input layer           |
-+-----------------------+-----------------------+-----------------------+
 | ***plot***            | bool                  | Produce graphics      |
 |                       |                       | output (1D output     |
 |                       |                       | only)                 |
-+-----------------------+-----------------------+-----------------------+
 | ***balance***         | bool                  | Enforce presentation  |
 |                       |                       | of equal number of    |
 |                       |                       | good and bad samples  |
-+-----------------------+-----------------------+-----------------------+
 
 ---------------------------------------------------------
 
