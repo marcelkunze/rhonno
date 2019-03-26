@@ -24,6 +24,7 @@
 #include "TGNG.h"
 #include "TGCS.h"
 #include "TLVQ.h"
+#include "load.h"
 
 #include <iostream>
 #include <fstream>
@@ -173,13 +174,15 @@ void NetworkTrainer::SetupDataServer(string file)
     fTrainingServer = new TDataServe("NetworkData","Network training data",fInNodes,fOutNodes);
     
     // Read the original vectors
-    for (i=0;i<fVectorsEpoch+fTstMax;i++) {
+    int n = fVectorsEpoch+fTstMax;
+    for (i=0;i<n;i++) {
+        load(n,"vectors");
         float *inv  = (float *)fPidDataServer->GetInvecTrn(i);
         float *outv = (float *)fPidDataServer->GetOutvecTrn(i);
         for (j=0;j<fInNodes;j++) if (!isnan(inv[j])) fInVector[j] = (float) fInScale[j]*inv[j]; else fInVector[j] = 0.0;
         for (j=0;j<fOutNodes;j++) if (!isnan(outv[j])) fOutVector[j] = (float) fOutScale[j]*outv[j]; else fOutVector[j] = 0.0;
         fTrainingServer->Putvec(fInVector,fOutVector);
-        if (i>0&&i%10000==0) cout << i << endl;
+        //if (i>0&&i%10000==0) cout << i << endl;
     }
     
     // Reserve test vecs
