@@ -1,4 +1,5 @@
 // Minimal header library for progress bars
+// The code has been adopted from Johan Sokrates Wind's award winning trackml Kaggle contribution
 // Usage:
 // for (int i = 0; i < 234; i++) {
 //   load(234);
@@ -45,4 +46,4 @@ void load_internal(long long a, long long b, const char*title = NULL, int keep_t
 }
 
 #define GET_FIRST_ARG(n,...) n
-#define load(...) {static int cc = 0; load_internal(++cc, __VA_ARGS__); if (cc == GET_FIRST_ARG(__VA_ARGS__)) cc = 0;}
+#define load(...) {static unsigned int cc = 0; load_internal(++cc, __VA_ARGS__); if (cc == GET_FIRST_ARG(__VA_ARGS__)) cc = 0;}

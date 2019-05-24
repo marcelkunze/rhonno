@@ -254,9 +254,11 @@ double TPerceptron::Train(NNO_INTYPE*,NNO_OUTTYPE*)
         double* v = up->fVector;
         double* m = up->fDelta;
         for (I=0;I<fParm.fInNodes;++I) {
+            if (isnan(*ds)) *ds = 1.0;
+            if (isnan(*i)) *i = 1.0;
             double delta = *i++ * *ds;
             if (isnan(delta)) {
-                std::cout << "TPerceptron::Train error" << std::endl;
+                std::cout << "TPerceptron::Train error 0" << std::endl;
                 continue;
             }
             *v++ += (delta + (*m * fParm.fMu)) * fParm.fLearnStep;
@@ -264,7 +266,7 @@ double TPerceptron::Train(NNO_INTYPE*,NNO_OUTTYPE*)
         }
         double delta = *ds * fParm.fLearnStep;
         if (isnan(delta)) {
-            std::cout << "TPerceptron::Train error" << std::endl;
+            std::cout << "TPerceptron::Train error 1" << std::endl;
             continue;
         }
         up->fThreshold -= delta;
@@ -279,9 +281,11 @@ double TPerceptron::Train(NNO_INTYPE*,NNO_OUTTYPE*)
             diff = 0.0;
             ds = fDiffSrc;
             for(up=fU;up<fUbound;++up) {
+                if (isnan(*ds)) *ds = 1.0;
+                if (isnan(up->fVector[I])) up->fVector[I] = 1.0;
                 double delta = up->fVector[I] * *ds++;
                 if (isnan(delta)) {
-                    std::cout << "TPerceptron::Train error" << std::endl;
+                    std::cout << "TPerceptron::Train error 2" << std::endl;
                     continue;
                 }
                 diff += delta;
