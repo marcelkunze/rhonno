@@ -6,7 +6,7 @@ ObjSuf        = obj
 SrcSuf        = cxx
 ExeSuf        = .exe
 DllSuf        = dll
-OutPutOpt     = /out:
+OutPutOpt     = /o
  
 # Win32 system with Microsoft Visual C/C++
 #!include <win32.mak>
@@ -16,12 +16,11 @@ CXXDEBUG      = -Fd$*.pdb
 CXXFLAGS      = $(cvarsdll) -EHsc -nologo -GR -DWIN32 -DANSISTREAM \
                 -DVISUAL_CPLUSPLUS -DWINDOWS -D_USE_MATH_DEFINES -I.. -I$(ROOTSYS)/include
 
-LD            = link
-#LD = cl 
+LD = cl 
 LDFLAGS = $(LDOPT) $(conlflags)
 SOFLAGS      =  $(dlllflags:-pdb:none=)
 ROOTLIBS     = 	$(ROOTSYS)\lib\libCore.lib \
-		$(ROOTSYS)\lib\libCint.lib $(ROOTSYS)\lib\libHist.lib \
+		$(ROOTSYS)\lib\libHist.lib \
 		$(ROOTSYS)\lib\libGraf.lib $(ROOTSYS)\lib\libGraf3d.lib \
 		$(ROOTSYS)\lib\libGpad.lib $(ROOTSYS)\lib\libTree.lib $(ROOTSYS)\lib\libTreePlayer.lib \
 		$(ROOTSYS)\lib\libRint.lib $(ROOTSYS)\lib\libPostscript.lib \
@@ -58,6 +57,7 @@ HEADERS	=	\
 			TRadon.h
    
 OBJECTS	=	$(PACKAGE)Cint.$(ObjSuf) \
+			Graph.$(ObjSuf) \
 			VNeuralNet.$(ObjSuf) \
 			VNeuralNetPlotter.$(ObjSuf) \
 			VSupervisedNet.$(ObjSuf) \
@@ -105,13 +105,13 @@ all: $(SHLIB) $(PROGRAMS)
 
 lib: $(OBJECTS)
 	BINDEXPLIB  $(PACKAGE) $(OBJECTS) > $(PACKAGE).def
-	lib /nologo /MACHINE:X86 $(OBJECTS) /def:$(PACKAGE).def $(OutPutOpt)$(LIBRARY)	
+	lib /nologo /MACHINE:X86 $(OBJECTS) /def:$(PACKAGE).def $(OutPutOpt) $(LIBRARY)	
 	copy $(LIBRARY) ..\lib
  
 $(SHLIB): $(OBJECTS)
 	BINDEXPLIB  $* $(OBJECTS) > $*.def
 	lib /nologo /MACHINE:X86 $(OBJECTS) /def:$*.def      $(OutPutOpt)$(LIBRARY)
-	$(LD) $(SOFLAGS) $(OBJECTS) $*.exp $(LIBS) $(OutPutOpt)$(SHLIB)
+	$(LD) /LD $(SOFLAGS) $(OBJECTS) $*.exp $(LIBS) $(OutPutOpt)$(SHLIB)
 #                mt.exe -manifest $(SHLIB).manifest -outputresource:$(SHLIB);2
 	copy $(LIBRARY) ..\lib
 	copy $(SHLIB) ..\lib
@@ -155,6 +155,9 @@ $(NNOTRACKER): $(LIBRARY) $(NNOTRACKERO)
 
 $(PACKAGE)Cint.$(ObjSuf): $(PACKAGE)Cint.$(SrcSuf)
 	$(CXX) $(CXXFLAGS) -c $(PACKAGE)Cint.$(SrcSuf)
+
+Graph.$(ObjSuf): Graph.$(SrcSuf) Graph.h
+	$(CXX) $(CXXFLAGS) -c Graph.$(SrcSuf)
 
 VNeuralNet.$(ObjSuf): VNeuralNet.$(SrcSuf) VNeuralNet.h
 	$(CXX) $(CXXFLAGS) -c VNeuralNet.$(SrcSuf)
