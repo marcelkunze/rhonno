@@ -8,7 +8,8 @@
 // M.Kunze, Bochum University, 1995
 
 #include <iostream>
-#include "TMath.h"
+#include <math.h>
+//#include "TMath.h"
 #include "TPerceptron.h"
 
 ClassImp(TPerceptron)

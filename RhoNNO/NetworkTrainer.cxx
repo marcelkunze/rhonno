@@ -12,6 +12,7 @@
 #include "TROOT.h"
 #include "TApplication.h"
 #include "TFile.h"
+#include "TObjString.h"
 
 #include "NetworkTrainer.h"
 #include "TDataServe.h"
