@@ -8,6 +8,7 @@
 // M.Kunze, Bochum University, 1995
 
 #include "TNNK.h"
+#include "TMath.h"
 #include "VNeuralNetPlotter.h"
 
 #include <iostream>

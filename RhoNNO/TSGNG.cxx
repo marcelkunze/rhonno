@@ -10,6 +10,7 @@
 #include "TSGNG.h"
 #include "VNeuralNetPlotter.h"
 
+#include <cmath>
 #include <cfloat>
 #include <string>
 using namespace std;

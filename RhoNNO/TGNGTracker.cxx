@@ -13,6 +13,7 @@
 #include "VNeuralNetPlotter.h"
 #include "Graph.h"
 
+#include <cmath>
 #include <cfloat>
 #include <iostream>
 using namespace std;

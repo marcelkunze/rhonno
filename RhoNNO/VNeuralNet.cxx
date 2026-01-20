@@ -15,6 +15,7 @@ static const char* NNO_VERSION="2.0ROOT";
 
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 using namespace std;
 
 ClassImp(TNeuralNetParameters)
