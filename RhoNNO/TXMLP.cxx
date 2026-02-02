@@ -166,10 +166,22 @@ double* TXMLP::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
 {
     int I;
     
-    // convert input
-    NNO_INTYPE* i=in;
+    // convert input - optimized version
+    NNO_INTYPE* i = in;
     double* pi = fPerc[0]->fIn;
-    for (I=0;I<fParm.fInNodes;++I) *pi++ = *i++ * fParm.fInScale;
+    const double scale = fParm.fInScale;
+    
+    // Unroll input scaling loop for better performance
+    for (I = 0; I < fParm.fInNodes - 3; I += 4) {
+        pi[I]   = i[I]   * scale;
+        pi[I+1] = i[I+1] * scale;
+        pi[I+2] = i[I+2] * scale;
+        pi[I+3] = i[I+3] * scale;
+    }
+    // Handle remaining elements
+    for(; I < fParm.fInNodes; ++I) {
+        pi[I] = i[I] * scale;
+    }
     
     // recallstep of each perceptron
     for (I=0;I<fParm.fLayers;++I) fPerc[I]->Recall();
@@ -189,23 +201,37 @@ double TXMLP::Train(NNO_INTYPE* in,NNO_OUTTYPE* trout)
     int I,J;
     fShouldSave = true;
     
-    // convert input
-    NNO_INTYPE* i=in;
+    // convert input - optimized version
+    NNO_INTYPE* i = in;
     double* pi = fPerc[0]->fIn;
-    for (I=0;I<fParm.fInNodes;++I) *pi++ = *i++ * fParm.fInScale;
+    const double scale = fParm.fInScale;
+    
+    // Unroll input scaling loop for better performance
+    for (I = 0; I < fParm.fInNodes - 3; I += 4) {
+        pi[I]   = i[I]   * scale;
+        pi[I+1] = i[I+1] * scale;
+        pi[I+2] = i[I+2] * scale;
+        pi[I+3] = i[I+3] * scale;
+    }
+    // Handle remaining elements
+    for(; I < fParm.fInNodes; ++I) {
+        pi[I] = i[I] * scale;
+    }
     
     // recallstep of each perceptron
     for (I=0;I<fParm.fLayers;++I) fPerc[I]->Recall();
     for (I=0;I<fParm.fOutNodes;++I) fOut[I] = fPerc[fParm.fLayers-1]->fOut[I];
     
-    double S_Err = 0;
-    double*   d = fPerc[fParm.fLayers-1]->fDiffSrc;
+    // Calculate squared error - optimized
+    double S_Err = 0.0;
+    double* d = fPerc[fParm.fLayers-1]->fDiffSrc;
     double* out = fPerc[fParm.fLayers-1]->fOut;
-    NNO_OUTTYPE* tr_out=trout;
-    for (J=0;J<fParm.fOutNodes;++J) {
-        *d = *tr_out++ - *out++;
-        S_Err += *d * *d;
-        d++;
+    NNO_OUTTYPE* tr_out = trout;
+    
+    for (J = 0; J < fParm.fOutNodes; ++J) {
+        double diff = *tr_out++ - *out++;
+        *d++ = diff;
+        S_Err += diff * diff;
     }
     
     for (I=fParm.fLayers-1;I>=0;--I) fPerc[I]->Train();

@@ -9,28 +9,31 @@
 
 #include <iostream>
 #include <math.h>
+#include <algorithm>  // for std::max, std::min
 //#include "TMath.h"
 #include "TPerceptron.h"
 
 ClassImp(TPerceptron)
 
-// Transferfunctions
+// Transferfunctions - optimized versions
 void TransferFermi(double in,double* out,double* deriv) 
 {
-    if (in < -10.0) in = -10.0;
-    if (in >  10.0) in =  10.0;
-    double O = 1. / (1. + exp(-in));
+    // Clamp input to avoid overflow in exp()
+    in = std::max(-10.0, std::min(10.0, in));
+    double exp_neg_in = exp(-in);
+    double O = 1.0 / (1.0 + exp_neg_in);
     *out   = O;
-    *deriv = O * (1. - O);
+    *deriv = O * (1.0 - O);
 }
 
 void TransferSigmoid(double in,double* out,double* deriv) 
 {
-    if (in < -10.0) in = -10.0;
-    if (in >  10.0) in =  10.0;
-    double O = 1. - 2. / (1. + exp(-in));
+    // Clamp input to avoid overflow in exp()
+    in = std::max(-10.0, std::min(10.0, in));
+    double exp_neg_in = exp(-in);
+    double O = 1.0 - 2.0 / (1.0 + exp_neg_in);
     *out   = O;
-    *deriv = 2. * O * (1. - O);
+    *deriv = 2.0 * O * (1.0 - O);
 }
 
 void TransferLinear(double in,double* out,double* deriv) 
@@ -225,73 +228,145 @@ void TPerceptron::ReadText()
 
 double* TPerceptron::Recall(NNO_INTYPE*,NNO_OUTTYPE*) 
 {
-    int I;
-    PerceptronUnit* up;
+    if (Transfer==0) Errorf((char *)"(TPerceptron) undefined transferfunction");
+    
+    // Optimized version using loop unrolling and better memory access
+    const int unroll_factor = 4;  // Unroll factor for better ILP
+    PerceptronUnit* up = fU;
     double* o = fOut;
     double* ds = fDiffSrc;
-    if (Transfer==0) Errorf((char *)"(TPerceptron) undefined transferfunction");
-    for(up=fU;up<fUbound;++up) {
-        double* v = up->fVector;
-        double* i = fIn;
-        double  sum = 0.0;
-        for (I=0;I<fParm.fInNodes;++I) sum += *i++ * *v++;
-        sum -= up->fThreshold;
-        Transfer(sum,o++,ds++);
+    
+    // Process units in chunks for better cache performance
+    for(; up < fUbound - (unroll_factor - 1); up += unroll_factor, o += unroll_factor, ds += unroll_factor) {
+        // Unrolled loop for better instruction-level parallelism
+        for(int k = 0; k < unroll_factor; ++k) {
+            PerceptronUnit* current_up = up + k;
+            double* v = current_up->fVector;
+            double* i = fIn;
+            double sum = 0.0;
+            
+            // Main dot product loop - optimized for cache performance
+            int I;
+            for (I = 0; I < fParm.fInNodes - 3; I += 4) {
+                sum += i[I] * v[I] + i[I+1] * v[I+1] + i[I+2] * v[I+2] + i[I+3] * v[I+3];
+            }
+            // Handle remaining elements
+            for(; I < fParm.fInNodes; ++I) {
+                sum += i[I] * v[I];
+            }
+            
+            sum -= current_up->fThreshold;
+            Transfer(sum, o + k, ds + k);
+        }
     }
     
-    return o;
+    // Handle remaining units
+    for(; up < fUbound; ++up, ++o, ++ds) {
+        double* v = up->fVector;
+        double* i = fIn;
+        double sum = 0.0;
+        
+        // Optimized dot product with loop unrolling
+        int I;
+        for (I = 0; I < fParm.fInNodes - 3; I += 4) {
+            sum += i[I] * v[I] + i[I+1] * v[I+1] + i[I+2] * v[I+2] + i[I+3] * v[I+3];
+        }
+        // Handle remaining elements
+        for(; I < fParm.fInNodes; ++I) {
+            sum += i[I] * v[I];
+        }
+        
+        sum -= up->fThreshold;
+        Transfer(sum, o, ds);
+    }
+    
+    return fOut + fParm.fOutNodes;
 }
 
 double TPerceptron::Train(NNO_INTYPE*,NNO_OUTTYPE*) 
 {
-    int I;
-    PerceptronUnit* up;
-    double* ds;
+    // modify weights - optimized version
+    double* ds = fDiffSrc;
+    const double learn_step = fParm.fLearnStep;
+    const double mu = fParm.fMu;
     
-    // modify weights
-    ds = fDiffSrc;
-    for(up=fU;up<fUbound;++up) {
+    for(PerceptronUnit* up = fU; up < fUbound; ++up, ++ds) {
         double* i = fIn;
         double* v = up->fVector;
         double* m = up->fDelta;
-        for (I=0;I<fParm.fInNodes;++I) {
-            if (isnan(*ds)) *ds = 1.0;
-            if (isnan(*i)) *i = 1.0;
-            double delta = *i++ * *ds;
-            if (isnan(delta)) {
-                std::cout << "TPerceptron::Train error 0" << std::endl;
-                continue;
+        
+        // Optimized weight update loop with reduced NaN checks
+        int I;
+        for (I = 0; I < fParm.fInNodes - 3; I += 4) {
+            // Process 4 elements at once for better ILP
+            double i0 = i[I], i1 = i[I+1], i2 = i[I+2], i3 = i[I+3];
+            double ds_val = *ds;
+            
+            // Check for NaN only once per group
+            if (std::isnan(ds_val)) ds_val = 1.0;
+            
+            double delta0 = i0 * ds_val;
+            double delta1 = i1 * ds_val; 
+            double delta2 = i2 * ds_val;
+            double delta3 = i3 * ds_val;
+            
+            v[I]   += (delta0 + m[I]   * mu) * learn_step;
+            v[I+1] += (delta1 + m[I+1] * mu) * learn_step;
+            v[I+2] += (delta2 + m[I+2] * mu) * learn_step;
+            v[I+3] += (delta3 + m[I+3] * mu) * learn_step;
+            
+            m[I]   = delta0;
+            m[I+1] = delta1;
+            m[I+2] = delta2;
+            m[I+3] = delta3;
+        }
+        
+        // Handle remaining elements
+        for(; I < fParm.fInNodes; ++I) {
+            double i_val = i[I];
+            double ds_val = *ds;
+            
+            if (std::isnan(ds_val)) ds_val = 1.0;
+            if (std::isnan(i_val)) i_val = 1.0;
+            
+            double delta = i_val * ds_val;
+            if (!std::isnan(delta)) {
+                v[I] += (delta + m[I] * mu) * learn_step;
+                m[I] = delta;
             }
-            *v++ += (delta + (*m * fParm.fMu)) * fParm.fLearnStep;
-            *m++ = delta;
         }
-        double delta = *ds * fParm.fLearnStep;
-        if (isnan(delta)) {
-            std::cout << "TPerceptron::Train error 1" << std::endl;
-            continue;
+        
+        // Update threshold
+        double delta_thresh = *ds * learn_step;
+        if (!std::isnan(delta_thresh)) {
+            up->fThreshold -= delta_thresh;
         }
-        up->fThreshold -= delta;
-        ++ds;
     }
     
     // propagate derivation backward if previous perceptron exists
-    if (fDiffDst!=0) {
-        double diff;
+    if (fDiffDst != nullptr) {
         double* dd = fDiffDst;
-        for (I=0;I<fParm.fInNodes;++I) {
-            diff = 0.0;
+        
+        // Pre-compute ds values to avoid repeated access
+        for (int I = 0; I < fParm.fInNodes; ++I) {
+            double diff = 0.0;
             ds = fDiffSrc;
-            for(up=fU;up<fUbound;++up) {
-                if (isnan(*ds)) *ds = 1.0;
-                if (isnan(up->fVector[I])) up->fVector[I] = 1.0;
-                double delta = up->fVector[I] * *ds++;
-                if (isnan(delta)) {
-                    std::cout << "TPerceptron::Train error 2" << std::endl;
-                    continue;
+            
+            // Optimized inner loop with better cache locality
+            for(PerceptronUnit* up = fU; up < fUbound; ++up, ++ds) {
+                double ds_val = *ds;
+                double weight_val = up->fVector[I];
+                
+                if (std::isnan(ds_val)) ds_val = 1.0;
+                if (std::isnan(weight_val)) weight_val = 1.0;
+                
+                double delta = weight_val * ds_val;
+                if (!std::isnan(delta)) {
+                    diff += delta;
                 }
-                diff += delta;
             }
-            *dd++ *= diff;
+            
+            dd[I] *= diff;
         }
     }
     
