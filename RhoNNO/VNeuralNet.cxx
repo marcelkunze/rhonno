@@ -168,7 +168,7 @@ void VNeuralNet::Errorf(char* format,...)
     va_list ap;
     va_start(ap, format);
     char MainFormat[256];
-    sprintf(MainFormat,"NNO ERROR: %s\n",format);
+    snprintf(MainFormat, sizeof(MainFormat), "NNO ERROR: %s\n", format);
     vfprintf(stderr,MainFormat,ap);
     exit(1);
 }
@@ -178,7 +178,7 @@ void VNeuralNet::Warningf(FILE* f,char* format,...)
     va_list ap;
     va_start(ap, format);
     char MainFormat[256];
-    sprintf(MainFormat,"NNO WARNING: %s\n",format);
+    snprintf(MainFormat, sizeof(MainFormat), "NNO WARNING: %s\n", format);
     vfprintf(f,MainFormat,ap);
 }
 
@@ -187,7 +187,7 @@ void VNeuralNet::Messagef(FILE* f,char* format,...)
     va_list ap;
     va_start(ap, format);
     char MainFormat[256];
-    sprintf(MainFormat,"NNO INFO: %s\n",format);
+    snprintf(MainFormat, sizeof(MainFormat), "NNO INFO: %s\n", format);
     vfprintf(f,MainFormat,ap);
 }
 
