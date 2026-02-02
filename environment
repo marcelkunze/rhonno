@@ -1,0 +1,4 @@
+export ROOTSYS=/Applications/root_v6.16.00
+export PATH=$PATH:$ROOTSYS/bin
+export DYLD_LIBRARY_PATH=$ROOTSYS/lib:$DYLD_LIBRARY_PATH
+#export RHO=/Users/marcel/workspace/rhonno

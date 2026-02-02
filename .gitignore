@@ -1,0 +1,30 @@
+# Build artifacts
+build/
+CMakeCache.txt
+CMakeFiles/
+*.o
+RhoNNOCint.cxx
+RhoNNOCint_rdict.pcm
+
+# Generated files
+*.root
+*.net
+*.trn
+*.tst
+*.nno
+*.dat
+
+# IDE files
+*.xcodeproj/
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Binaries
+bin/
+lib/
+
+# Network files
+Networks/

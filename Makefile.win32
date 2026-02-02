@@ -1,0 +1,227 @@
+# Makefile for WIN32
+PACKAGE = RhoNNO
+COMPILER = cl
+
+ObjSuf        = obj
+SrcSuf        = cxx
+ExeSuf        = .exe
+DllSuf        = dll
+OutPutOpt     = /o
+ 
+# Win32 system with Microsoft Visual C/C++
+#!include <win32.mak>
+CC            = $(COMPILER)
+CXX           = $(COMPILER)
+CXXDEBUG      = -Fd$*.pdb
+CXXFLAGS      = $(cvarsdll) -EHsc -nologo -GR -DWIN32 -DANSISTREAM \
+                -DVISUAL_CPLUSPLUS -DWINDOWS -D_USE_MATH_DEFINES -I.. -I$(ROOTSYS)/include
+
+LD = cl 
+LDFLAGS = $(LDOPT) $(conlflags)
+SOFLAGS      =  $(dlllflags:-pdb:none=)
+ROOTLIBS     = 	$(ROOTSYS)\lib\libCore.lib \
+		$(ROOTSYS)\lib\libHist.lib \
+		$(ROOTSYS)\lib\libGraf.lib $(ROOTSYS)\lib\libGraf3d.lib \
+		$(ROOTSYS)\lib\libGpad.lib $(ROOTSYS)\lib\libTree.lib $(ROOTSYS)\lib\libTreePlayer.lib \
+		$(ROOTSYS)\lib\libRint.lib $(ROOTSYS)\lib\libPostscript.lib \
+		$(ROOTSYS)\lib\libMatrix.lib $(ROOTSYS)\lib\libPhysics.lib \
+		$(ROOTSYS)\lib\libNet.lib $(ROOTSYS)\lib\libRIO.lib \
+		$(ROOTSYS)\lib\libMathCore.lib
+LIBS          = 	$(ROOTLIBS)  $(guilibsdll)
+GLIBS       = 	$(LIBS) $(ROOTSYS)\lib\libGui.lib $(ROOTSYS)\lib\libGraf.lib \
+                	$(ROOTSYS)\lib\libGpad.lib
+
+LIBSALL    = $(ROOTLIBS)
+LIBRARY   = $(PACKAGE).lib
+ 
+#------------------------------------------------------------------------------
+ 
+HEADERS	=	\
+			VNeuralNet.h \
+			VNeuralNetPlotter.h \
+			VSupervisedNet.h \
+			VUnsupervisedNet.h \
+			TNeuralNetCell.h \
+			TPerceptron.h \
+			TFD.h \
+			TMLP.h \
+			TXMLP.h \
+			TSGCS.h \
+			TSGNG.h \
+			TGCS.h \
+			TGNG.h \
+			TGNGTracker.h \
+			TLVQ.h \
+			TDataServe.h \
+			TNNK.h \
+			TRadon.h
+   
+OBJECTS	=	$(PACKAGE)Cint.$(ObjSuf) \
+			Graph.$(ObjSuf) \
+			VNeuralNet.$(ObjSuf) \
+			VNeuralNetPlotter.$(ObjSuf) \
+			VSupervisedNet.$(ObjSuf) \
+			VUnsupervisedNet.$(ObjSuf) \
+			TNeuralNetCell.$(ObjSuf) \
+			TPerceptron.$(ObjSuf) \
+			TFD.$(ObjSuf) \
+			TMLP.$(ObjSuf) \
+			TXMLP.$(ObjSuf) \
+			TSGCS.$(ObjSuf) \
+			TSGNG.$(ObjSuf) \
+			TGCS.$(ObjSuf) \
+			TGNG.$(ObjSuf) \
+			TGNGTracker.$(ObjSuf) \
+			TLVQ.$(ObjSuf) \
+			TDataServe.$(ObjSuf) \
+			TNNK.$(ObjSuf) \
+			TRadon.$(ObjSuf)
+   
+STRAINS = strain.$(SrcSuf)
+STRAINO = strain.$(ObjSuf)
+STRAIN  = strain$(ExeSuf)
+ 
+UTRAINS = utrain.$(SrcSuf)
+UTRAINO = utrain.$(ObjSuf)
+UTRAIN  = utrain$(ExeSuf)
+ 
+NETWORKTRAINERS = NetworkTrainer.$(SrcSuf)
+NETWORKTRAINERO = NetworkTrainer.$(ObjSuf)
+NETWORKTRAINER  = NetworkTrainer$(ExeSuf)
+
+RADONTRACKERS = RadonTracker.$(SrcSuf)
+RADONTRACKERO = RadonTracker.$(ObjSuf)
+RADONTRACKER  = RadonTracker$(ExeSuf)
+
+NNOTRACKERS = NNOTracker.$(SrcSuf)
+NNOTRACKERO = NNOTracker.$(ObjSuf)
+NNOTRACKER  = NNOTracker$(ExeSuf)
+
+SHLIB	=	$(PACKAGE).$(DllSuf)
+
+PROGRAMS = 
+
+all: $(SHLIB) $(PROGRAMS)
+
+lib: $(OBJECTS)
+	BINDEXPLIB  $(PACKAGE) $(OBJECTS) > $(PACKAGE).def
+	lib /nologo /MACHINE:X86 $(OBJECTS) /def:$(PACKAGE).def $(OutPutOpt) $(LIBRARY)	
+	copy $(LIBRARY) ..\lib
+ 
+$(SHLIB): $(OBJECTS)
+	BINDEXPLIB  $* $(OBJECTS) > $*.def
+	lib /nologo /MACHINE:X86 $(OBJECTS) /def:$*.def      $(OutPutOpt)$(LIBRARY)
+	$(LD) /LD $(SOFLAGS) $(OBJECTS) $*.exp $(LIBS) $(OutPutOpt)$(SHLIB)
+#                mt.exe -manifest $(SHLIB).manifest -outputresource:$(SHLIB);2
+	copy $(LIBRARY) ..\lib
+	copy $(SHLIB) ..\lib
+#	copy $(PACKAGE).pdb ..\lib
+ 
+clean:
+	@del /q $(OBJECTS) *.pdb $(PACKAGE)Cint.* $(PACKAGE).lib $(PACKAGE).dll $(PACKAGE).def $(PACKAGE).exp $(PACKAGE).pdb
+ 
+###
+
+$(PACKAGE)Cint.$(SrcSuf): $(HEADERS) $(PACKAGE)_LinkDef.h
+	@echo "Generating dictionary ..."
+	@$(ROOTSYS)\bin\rootcint -f $(PACKAGE)Cint.$(SrcSuf) -c -I.. $(HEADERS) $(PACKAGE)_LinkDef.h
+ 
+.$(SrcSuf).$(ObjSuf):
+	$(CXX) $(CXXFLAGS) -c $<
+
+###
+
+$(STRAIN): $(LIBRARY) $(STRAINO)
+                $(LD) $(STRAINO)  $(LDFLAGS) $(LIBRARY) $(LIBS)
+		@echo "$(STRAIN) done"
+ 
+$(UTRAIN): $(LIBRARY) $(UTRAINO)
+		$(LD) $(LDFLAGS) $(UTRAINO) $(LIBRARY) $(LIBS) $(OutPutOpt)$(UTRAIN)
+		@echo "$(UTRAIN) done"
+ 
+$(NETWORKTRAINER): $(LIBRARY) $(NETWORKTRAINERO)
+                $(LD)  $(LDFLAGS) $(NETWORKTRAINERO) $(LIBRARY) $(LIBS) $(OutPutOpt)$(NETWORKTRAINER)
+		@echo "$(NETWORKTRAINER) done"
+
+$(RADONTRACKER): $(LIBRARY) $(RADONTRACKERO)
+                $(LD)  $(LDFLAGS) $(RADONTRACKERO) $(LIBRARY) $(LIBS) $(OutPutOpt)$(RADONTRACKER)
+		@echo "$(RADONTRACKER) done"
+
+$(NNOTRACKER): $(LIBRARY) $(NNOTRACKERO)
+                $(LD)  $(LDFLAGS) $(NNOTRACKERO) $(LIBRARY) $(LIBS) $(OutPutOpt)$(NNOTRACKER)
+		@echo "$(NNOTRACKER) done"
+
+# Dependencies
+
+$(PACKAGE)Cint.$(ObjSuf): $(PACKAGE)Cint.$(SrcSuf)
+	$(CXX) $(CXXFLAGS) -c $(PACKAGE)Cint.$(SrcSuf)
+
+Graph.$(ObjSuf): Graph.$(SrcSuf) Graph.h
+	$(CXX) $(CXXFLAGS) -c Graph.$(SrcSuf)
+
+VNeuralNet.$(ObjSuf): VNeuralNet.$(SrcSuf) VNeuralNet.h
+	$(CXX) $(CXXFLAGS) -c VNeuralNet.$(SrcSuf)
+
+VNeuralNetPlotter.$(ObjSuf): VNeuralNetPlotter.$(SrcSuf) VNeuralNetPlotter.h
+	$(CXX) $(CXXFLAGS) -c VNeuralNetPlotter.$(SrcSuf)
+
+VSupervisedNet.$(ObjSuf): VSupervisedNet.$(SrcSuf) VSupervisedNet.h
+	$(CXX) $(CXXFLAGS) -c VSupervisedNet.$(SrcSuf)
+
+VUnsupervisedNet.$(ObjSuf): VUnsupervisedNet.$(SrcSuf) VUnsupervisedNet.h
+	$(CXX) $(CXXFLAGS) -c VUnsupervisedNet.$(SrcSuf)
+
+TPerceptron.$(ObjSuf): TPerceptron.$(SrcSuf) TPerceptron.h
+	$(CXX) $(CXXFLAGS) -c TPerceptron.$(SrcSuf)
+
+TFD.$(ObjSuf): TFD.$(SrcSuf) TFD.h
+	$(CXX) $(CXXFLAGS) -c TFD.$(SrcSuf)
+
+TMLP.$(ObjSuf): TMLP.$(SrcSuf) TMLP.h
+	$(CXX) $(CXXFLAGS) -c TMLP.$(SrcSuf)
+
+TXMLP.$(ObjSuf): TXMLP.$(SrcSuf) TXMLP.h
+	$(CXX) $(CXXFLAGS) -c TXMLP.$(SrcSuf)
+
+TNeuralNetCell.$(ObjSuf): TNeuralNetCell.$(SrcSuf) TNeuralNetCell.h
+	$(CXX) $(CXXFLAGS) -c TNeuralNetCell.$(SrcSuf)
+
+TSGCS.$(ObjSuf): TSGCS.$(SrcSuf) TSGCS.h
+	$(CXX) $(CXXFLAGS) -c TSGCS.$(SrcSuf)
+
+TSGNG.$(ObjSuf): TSGNG.$(SrcSuf) TSGNG.h
+	$(CXX) $(CXXFLAGS) -c TSGNG.$(SrcSuf)
+
+TGCS.$(ObjSuf): TGCS.$(SrcSuf) TGCS.h
+	$(CXX) $(CXXFLAGS) -c TGCS.$(SrcSuf)
+
+TGNG.$(ObjSuf): TGNG.$(SrcSuf) TGNG.h
+	$(CXX) $(CXXFLAGS) -c TGNG.$(SrcSuf)
+
+TGNGTracker.$(ObjSuf): TGNGTracker.$(SrcSuf) TGNGTracker.h
+	$(CXX) $(CXXFLAGS) -c TGNGTracker.$(SrcSuf)
+
+TLVQ.$(ObjSuf): TLVQ.$(SrcSuf) TLVQ.h
+	$(CXX) $(CXXFLAGS) -c TLVQ.$(SrcSuf)
+
+TDataServe.$(ObjSuf): TDataServe.$(SrcSuf) TDataServe.h
+	$(CXX) $(CXXFLAGS) -c TDataServe.$(SrcSuf)
+
+TNNK.$(ObjSuf): TNNK.$(SrcSuf) TNNK.h
+	$(CXX) $(CXXFLAGS) -c TNNK.$(SrcSuf)
+
+TRadon.$(ObjSuf): TRadon.$(SrcSuf) TRadon.h
+	$(CXX) $(CXXFLAGS) -c TRadon.$(SrcSuf)
+
+strain.$(ObjSuf): strain.$(SrcSuf)
+	$(CXX) $(CXXFLAGS) -c strain.$(SrcSuf)
+
+utrain.$(ObjSuf): utrain.$(SrcSuf)
+	$(CXX) $(CXXFLAGS) -c utrain.$(SrcSuf)
+
+NetworkTrainer.$(ObjSuf): NetworkTrainer.$(SrcSuf)
+	$(CXX) $(CXXFLAGS) -c NetworkTrainer.$(SrcSuf)
+
+RadonTracker.$(ObjSuf): RadonTracker.$(SrcSuf)
+	$(CXX) $(CXXFLAGS) -c RadonTracker.$(SrcSuf)
+
