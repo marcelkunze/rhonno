@@ -29,7 +29,7 @@ public:
     TNNK(std::string netFile);
     virtual ~TNNK();                          //destructor of network  (File will be saved)
     double Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    double* Inference(NNO_INTYPE* in,NNO_OUTTYPE* out);
     
     ClassDef(TNNK,1)	    // Interface to TNNKernel
 };

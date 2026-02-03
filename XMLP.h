@@ -54,11 +54,11 @@ public:
     virtual void WriteBinary() = 0;
     virtual void ReadText() = 0;
     virtual void ReadBinary() = 0;
-    virtual double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out=0) = 0;
+    virtual double* Inference(NNO_INTYPE* in,NNO_OUTTYPE* out=0) = 0;
     virtual double Train(NNO_INTYPE* in,NNO_OUTTYPE* out=0) = 0;    // returns squared error
     
     // For backwards compatibility
-    double*    Recallstep(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { return Recall(in,out); }
+    double*    Inferencestep(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { return Inference(in,out); }
     double    Learnstep(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { return Train(in,out); }
     
     // Training and testing
@@ -196,8 +196,8 @@ public:
     virtual void ReadText();
     virtual void ReadBinary();
     
-    double Train(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);  // calling Learnstep, Recallstep must have been performed already
-    double* Recall(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);
+    double Train(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);  // calling Learnstep, Inferencestep must have been performed already
+    double* Inference(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);
     //void CopyData(const TPerceptron& PERC); // copies data from another perceptron
 };
 
@@ -217,7 +217,7 @@ public:
     XMLP(std::string netFile) : VSupervisedNet(netFile) {ReadNet("XMLP");};
     virtual ~XMLP();
     double Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    double* Inference(NNO_INTYPE* in,NNO_OUTTYPE* out);
     TPerceptron* GetPerceptron(int i) { return fPerc[i]; }
     virtual void SetMomentumTerm(double f);
     

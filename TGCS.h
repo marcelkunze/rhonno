@@ -35,7 +35,7 @@ private:
     
 public:
     virtual double  Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    virtual double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin->fVector; }
+    virtual double* Inference(NNO_INTYPE* in,NNO_OUTTYPE* =0) { GetWinnerCell(in); return fUwin->fVector; }
     virtual int GetWinnerCell(NNO_INTYPE* in);
     
     void Deviation(void); // calculates s_dev of all cells

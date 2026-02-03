@@ -57,7 +57,7 @@ public:
     TNeuralNetCellParameters &GetParameters() { return fXB; }
     int GetNumberOfCells() const { return fXB.fCells; }
     double Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    double* Inference(NNO_INTYPE* in,NNO_OUTTYPE* out);
     void   CopyData(const TSGNG& SGNG); // copies data from another sgng network
     
     int Insert(void);  // this function will be called automatically if insert_step>0

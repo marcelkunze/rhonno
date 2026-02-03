@@ -162,7 +162,7 @@ void  TXMLP::WriteText(void)
 }
 
 
-double* TXMLP::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out) 
+double* TXMLP::Inference(NNO_INTYPE* in,NNO_OUTTYPE* out) 
 {
     int I;
     
@@ -183,8 +183,8 @@ double* TXMLP::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
         pi[I] = i[I] * scale;
     }
     
-    // recallstep of each perceptron
-    for (I=0;I<fParm.fLayers;++I) fPerc[I]->Recall();
+    // inferencestep of each perceptron
+    for (I=0;I<fParm.fLayers;++I) fPerc[I]->Inference();
     for (I=0;I<fParm.fOutNodes;++I) fOut[I] = fPerc[fParm.fLayers-1]->fOut[I];
     
     if (fPlotter) {
@@ -218,8 +218,8 @@ double TXMLP::Train(NNO_INTYPE* in,NNO_OUTTYPE* trout)
         pi[I] = i[I] * scale;
     }
     
-    // recallstep of each perceptron
-    for (I=0;I<fParm.fLayers;++I) fPerc[I]->Recall();
+    // inferencestep of each perceptron
+    for (I=0;I<fParm.fLayers;++I) fPerc[I]->Inference();
     for (I=0;I<fParm.fOutNodes;++I) fOut[I] = fPerc[fParm.fLayers-1]->fOut[I];
     
     // Calculate squared error - optimized

@@ -227,7 +227,7 @@ int TGCS::GetWinnerCell(NNO_INTYPE* in)
 double TGCS::Train(NNO_INTYPE* in,NNO_OUTTYPE*) 
 {
     int I,J;
-    Recall(in);  //make output of all cells and neurons find the winner
+    Inference(in);  //make output of all cells and neurons find the winner
     TNeuralNetCell* unei;
     TNeuralNetCell* up;
     double* vwin = fUwin->fVector;

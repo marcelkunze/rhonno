@@ -289,7 +289,7 @@ void TSGNG::UpdateConnector(TNeuralNetCell* up1,TNeuralNetCell* up2)
     up2->fAge[J]=up1->fAge[I];
 }
 
-double* TSGNG::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out) 
+double* TSGNG::Inference(NNO_INTYPE* in,NNO_OUTTYPE* out) 
 {
     int I,J;
     double s_dist;

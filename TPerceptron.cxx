@@ -57,6 +57,17 @@ void TransferLinearBend(double in,double* out,double* deriv)
         }
 }
 
+void TransferReLU(double in,double* out,double* deriv) 
+{
+    if (in > 0.0) {
+        *out = in;
+        *deriv = 1.0;
+    } else {
+        *out = 0.0;
+        *deriv = 0.0;
+    }
+}
+
 TPerceptron::TPerceptron(int inNodes,
                          int outNodes,
                          double learnStep,
@@ -130,6 +141,7 @@ void TPerceptron::AllocNet(void)
         case TNeuralNetParameters::TR_SIGMOID:      Transfer=TransferSigmoid;      break;
         case TNeuralNetParameters::TR_LINEAR :      Transfer=TransferLinear;     break;
         case TNeuralNetParameters::TR_LINEAR_BEND:  Transfer=TransferLinearBend; break;
+        case TNeuralNetParameters::TR_RELU   :      Transfer=TransferReLU;       break;
         default:             Transfer=0;
     }
 }
@@ -226,7 +238,7 @@ void TPerceptron::ReadText()
     }
 }
 
-double* TPerceptron::Recall(NNO_INTYPE*,NNO_OUTTYPE*) 
+double* TPerceptron::Inference(NNO_INTYPE*,NNO_OUTTYPE*) 
 {
     if (Transfer==0) Errorf((char *)"(TPerceptron) undefined transferfunction");
     

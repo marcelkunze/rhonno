@@ -187,7 +187,7 @@ int  TLVQ::GetWinnerCell(NNO_INTYPE* in)
 double  TLVQ::Train(NNO_INTYPE* in,NNO_OUTTYPE*) 
 {
     int J;
-    Recall(in);  //make output of all cells and neurons find the winner
+    Inference(in);  //make output of all cells and neurons find the winner
     double* vwin = fUwin->fVector;
     double* dwin = fUwin->fDiff;
     for (J=0;J<fParm.fInNodes;++J) *vwin++ += *dwin++ * fXB.fWinStep;

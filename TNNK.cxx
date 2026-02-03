@@ -96,7 +96,7 @@ double TNNK::Train(NNO_INTYPE* in,NNO_OUTTYPE* out)
     return error;
 }
 
-double* TNNK::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out)
+double* TNNK::Inference(NNO_INTYPE* in,NNO_OUTTYPE* out)
 {
     int i;
     

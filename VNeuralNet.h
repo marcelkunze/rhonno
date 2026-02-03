@@ -27,7 +27,7 @@ class TCanvas;
 class TNeuralNetParameters : public TObject {
 public:
     // ID of transferfunction
-    enum TRANSFER {TR_USER,TR_FERMI,TR_LINEAR,TR_LINEAR_BEND,TR_SIGMOID};
+    enum TRANSFER {TR_USER,TR_FERMI,TR_LINEAR,TR_LINEAR_BEND,TR_SIGMOID,TR_RELU};
     
     char fNetId[9];
     int    fLayers;	    // number of perceptron layers
@@ -58,11 +58,11 @@ public:
     virtual void WriteBinary() = 0;
     virtual void ReadText() = 0;
     virtual void ReadBinary() = 0;
-    virtual double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out=0) = 0;
+    virtual double* Inference(NNO_INTYPE* in,NNO_OUTTYPE* out=0) = 0;
     virtual double Train(NNO_INTYPE* in,NNO_OUTTYPE* out=0) = 0;    // returns squared error
     
     // For backwards compatibility
-    double*	Recallstep(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { return Recall(in,out); }
+    double*	Inferencestep(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { return Inference(in,out); }
     double	Learnstep(NNO_INTYPE* in,NNO_OUTTYPE* out=0) { return Train(in,out); }
     
     // Training and testing

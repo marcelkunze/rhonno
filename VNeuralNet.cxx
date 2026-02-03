@@ -286,7 +286,7 @@ double VNeuralNet::TrainEpoch(TDataServe *server, int nEpoch)
         ", classError " << classError <<
         " (" << (int)percentage << "%)" << endl;
         
-        // Fill the plots (for a random recall)
+        // Fill the plots (for a random inference)
         if (fPlotter!=0) {
             fPlotter->AddTrainGraph(error);
             fPlotter->AddTestGraph(classError);
@@ -318,8 +318,8 @@ double VNeuralNet::TestEpoch(TDataServe *server)
         float *inv  = server->GetInvecTst(tstind);
         float *outv = server->GetOutvecTst(tstind);
         
-        // compare network recall with server
-        Recall(inv,outv);
+        // compare network inference with server
+        Inference(inv,outv);
         
         for (int ii=0;ii<parm.fOutNodes;++ii) {
             double answer = GetOutput()[ii];
@@ -335,7 +335,7 @@ double VNeuralNet::TestEpoch(TDataServe *server)
 
 double  VNeuralNet::Test(NNO_INTYPE* in,NNO_OUTTYPE* out) 
 {
-    Recall(in,out);
+    Inference(in,out);
     int I;
     double* o = fOut;
     double diff,totalError = 0.0;
@@ -422,8 +422,8 @@ double VNeuralNet::TestEpoch(string file)
     while ( fread(in,sizeof(NNO_INTYPE),fParm.fInNodes,ftst) ) {   // read inputvector
         fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftst);		    // read outputvector
         
-        // compare network recall with file
-        double *net = Recall(in,out);
+        // compare network inference with file
+        double *net = Inference(in,out);
         for (int I=0;I<fParm.fOutNodes;++I) {
             if ((net[I]>fParm.fThreshold && out[I]<=fParm.fThreshold) ||
                 (net[I]<=fParm.fThreshold && out[I]>fParm.fThreshold) )

@@ -28,7 +28,7 @@ public:
     TXMLP(std::string netFile) : VSupervisedNet(netFile) {ReadNet("XMLP");};
     virtual ~TXMLP();
     double Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    double* Inference(NNO_INTYPE* in,NNO_OUTTYPE* out);
     TPerceptron* GetPerceptron(int i) { return fPerc[i]; }
     virtual void SetMomentumTerm(double f);
     

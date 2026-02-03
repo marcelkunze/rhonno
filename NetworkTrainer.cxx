@@ -501,6 +501,8 @@ bool NetworkTrainer::ReadSteeringFile(string filename)
                 fTransfer = TNeuralNetParameters::TR_LINEAR;
             else if (trans=="TR_LINEAR_BEND")
                 fTransfer = TNeuralNetParameters::TR_LINEAR_BEND;
+            else if (trans=="TR_RELU")
+                fTransfer = TNeuralNetParameters::TR_RELU;
             else if (trans=="TR_USER")
                 fTransfer = TNeuralNetParameters::TR_USER;
             else

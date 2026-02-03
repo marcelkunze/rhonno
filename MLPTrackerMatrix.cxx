@@ -32,7 +32,7 @@ std::vector<int> tracks[100];
 
 #define signum(x) (x > 0) ? 1 : ((x < 0) ? -1 : 0)
 
-double* Recall(double *invec);
+double* Inference(double *invec);
 int bestMatchingHit(size_t nhits, int **m, int row);
 int bestHitPair(size_t nhits, int **m, int &row, int &col);
 int findTracks(int nhits, float *x, float *y, float *z, int* labels);
@@ -224,14 +224,14 @@ int findTracks(int nhits, float *x, float *y, float *z, int* labels)
             d[j][i] = 1000.*dist;
             d[j][j] = 0;
             m[j][j] = 0;
-            m[i][j] = (int) 100. * Recall(in1)[0]; // Recall the hit pair matching quality
-            m[j][i] = (int) 100. * Recall(in2)[0];
+            m[i][j] = (int) 100. * Inference(in1)[0]; // Inference the hit pair matching quality
+            m[j][i] = (int) 100. * Inference(in2)[0];
             if (m[i][j]< THRESHOLD) m[i][j] = 0; // Apply a cut on the quality
             if (m[j][i]< THRESHOLD) m[j][i] = 0;
         }
     }
     
-    // Search neighbouring hits, the neural network recall identifies the hit belonging to a tracklet
+    // Search neighbouring hits, the neural network inference identifies the hit belonging to a tracklet
     vector<vector<int>> tracklet;
     for(int i=0; i<nhits-1; i++)    {
         vector<int> tmpvec;
@@ -406,8 +406,8 @@ int bestHitPair(size_t nhits, int **m, int &row, int &col)
     return row;
 }
 
-// Recall function on normalised network input
-double* Recall(double *invec)
+// Inference function on normalised network input
+double* Inference(double *invec)
 {
     static TXMLP net("/Users/marcel/workspace/rhonno/RhoNNO/NNO0069.TXMLP");
     float x[7],y[1];
@@ -418,6 +418,6 @@ double* Recall(double *invec)
     x[4]     = 383.788    *    invec[4];    // y2
     x[5]     = 490.839    *    invec[5];    // z2
     x[6]     = 126.061    *    invec[6];    // dot
-    return net.Recall(x,y);
+    return net.Inference(x,y);
 }
 

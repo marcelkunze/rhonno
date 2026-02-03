@@ -235,7 +235,7 @@ void TSGCS::CopyData(const TSGCS& sgcs)
     }
 }
 
-double* TSGCS::Recall(NNO_INTYPE* in,NNO_OUTTYPE* out) 
+double* TSGCS::Inference(NNO_INTYPE* in,NNO_OUTTYPE* out) 
 {
     int I,J;
     //get distance of all cells: performed in the learnstep before

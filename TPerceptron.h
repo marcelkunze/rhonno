@@ -64,8 +64,8 @@ public:
     virtual void ReadText();
     virtual void ReadBinary();
     
-    double Train(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);  // calling Learnstep, Recallstep must have been performed already
-    double* Recall(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);
+    double Train(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);  // calling Learnstep, Inferencestep must have been performed already
+    double* Inference(NNO_INTYPE* in=0,NNO_OUTTYPE* out=0);
     //void CopyData(const TPerceptron& PERC); // copies data from another perceptron
     
     ClassDef(TPerceptron,1)	// Multilayer Perceptron

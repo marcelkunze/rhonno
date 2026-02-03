@@ -52,7 +52,7 @@ public:
     TNeuralNetCellParameters &GetParameters() { return fXB; }
     int GetNumberOfCells() const { return fXB.fCells; }
     double Train(NNO_INTYPE* in,NNO_OUTTYPE* out);
-    double* Recall(NNO_INTYPE* in,NNO_OUTTYPE* out);
+    double* Inference(NNO_INTYPE* in,NNO_OUTTYPE* out);
     
     void CopyData(const TSGCS& sgcs); // copies data from another sgcs network
     

@@ -1,6 +1,6 @@
 // Example for supervised training
 //
-// This sample file comprises supervised network training and recall
+// This sample file comprises supervised network training and inference
 // examples for TMLP, TXMLP, TSGCS and TSGNG of the Neural Network
 // Objects package (NNO).
 // The program produces a simple training file in order to run the
@@ -161,7 +161,7 @@ int main() {
     
     
     // Check network performance:
-    // Read in the files and perform a recall
+    // Read in the files and perform inference
     
     cout << endl << "Test phase..." << endl;
     
@@ -191,7 +191,7 @@ int main() {
         NNO_INTYPE in[INNODES];
         int testData = trainer.MakeData(in,true);
         NetworkTrainer::PARITY parity = trainer.Parity(in);
-        double *answer = testNet->Recall(in);
+        double *answer = testNet->Inference(in);
         if (parity == NetworkTrainer::EVEN)
             cout <<  testData << "\t(parity=EVEN) is classified " << answer[0] << endl;
         else
