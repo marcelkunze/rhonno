@@ -54,8 +54,8 @@ int main(int argc,char* argv[])
     trainer->Train();
     trainer->PrintOn();
     
-    string file("Recall");
-    file =  file + trainer->GetModel() + ".cpp";
+    string file("RhoNNO_Inference");
+    file =  file + trainer->GetModel() + ".cxx";
     trainer->WriteSourceCode(file);
     
     return EXIT_SUCCESS;
@@ -692,7 +692,7 @@ void NetworkTrainer::WriteSourceCode(string filename)
     }
     f << endl;
     f << "#include \"RhoNNO/" << fModel << ".h\"" << endl << endl;
-    f << "double* Recall(double *invec)" << endl;
+    f << "double* Inference(double *invec)" << endl;
     f << "{" << endl;
     f << "\tstatic " << fModel << " net(\"" << fModel << ".net\");" << endl;
     f << "\tfloat x[" << fInNodes << "];" << endl;
@@ -702,7 +702,7 @@ void NetworkTrainer::WriteSourceCode(string filename)
         inStream >> token;
         f << "\t// " << token << endl;
     }
-    f << "\treturn net.Recall(x);" << endl;
+    f << "\treturn net.Inference(x);" << endl;
     f << "}" << endl;
 }
 
