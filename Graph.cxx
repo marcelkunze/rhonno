@@ -2,17 +2,17 @@
 // M.Kunze, Heidelberg University, 2018
 
 #include <iostream>
+#include <vector>
 #include "Graph.h"
 using namespace std;
   
 Graph::Graph(int V)
+: V(V), adj(V)
 {
-    this->V = V;
-    adj = new list<int>[V];
 }
  
 // A recursive function to print DFS starting from v
-void Graph::DFSUtil(int v, bool visited[])
+void Graph::DFSUtil(int v, std::vector<bool> &visited)
 {
     // Mark the current node as visited and print it
     visited[v] = true;
@@ -30,11 +30,9 @@ Graph Graph::getTranspose()
     Graph g(V);
     for (int v = 0; v < V; v++)
     {
-        // Recur for all the vertices adjacent to this vertex
-        list<int>::iterator i;
-        for(i = adj[v].begin(); i != adj[v].end(); ++i)
+        for (const int w : adj[v])
         {
-            g.adj[*i].push_back(v);
+            g.adj[w].push_back(v);
         }
     }
     return g;
@@ -45,16 +43,15 @@ void Graph::addEdge(int v, int w)
     adj[v].push_back(w); // Add w to v’s list.
 }
  
-void Graph::fillOrder(int v, bool visited[], stack<int> &Stack)
+void Graph::fillOrder(int v, std::vector<bool> &visited, stack<int> &Stack)
 {
     // Mark the current node as visited and print it
     visited[v] = true;
  
     // Recur for all the vertices adjacent to this vertex
-    list<int>::iterator i;
-    for(i = adj[v].begin(); i != adj[v].end(); ++i)
-        if(!visited[*i])
-            fillOrder(*i, visited, Stack);
+    for (const int w : adj[v])
+        if (!visited[w])
+            fillOrder(w, visited, Stack);
  
     // All vertices reachable from v are processed by now, push v 
     Stack.push(v);
@@ -68,9 +65,7 @@ int Graph::printSCCs()
     int n = 0;
  
     // Mark all the vertices as not visited (For first DFS)
-    bool *visited = new bool[V];
-    for(int i = 0; i < V; i++)
-        visited[i] = false;
+    std::vector<bool> visited(V, false);
  
     // Fill vertices in stack according to their finishing times
     for(int i = 0; i < V; i++)
@@ -81,8 +76,7 @@ int Graph::printSCCs()
     Graph gr = getTranspose();
  
     // Mark all the vertices as not visited (For second DFS)
-    for(int i = 0; i < V; i++)
-        visited[i] = false;
+    std::fill(visited.begin(), visited.end(), false);
  
     // Now process all vertices in order defined by Stack
     while (Stack.empty() == false)

@@ -12,9 +12,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set compiler flags similar to the Makefile
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -pthread -m64 -Wunused-parameter -Wshadow")
-# Suppress ROOT-related warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-shadow -Wno-#warnings")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pthread -m64")
+add_compile_options(-Wall -Wunused-parameter -Wshadow -Wno-shadow)
 
 # Add optimization flags for better performance
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -ffast-math -funroll-loops")
@@ -90,6 +89,17 @@ target_link_libraries(NNOTracker RhoNNO ${ROOT_LIBRARIES})
 
 add_executable(RadonTracker RadonTracker.cxx)
 target_link_libraries(RadonTracker RhoNNO ${ROOT_LIBRARIES})
+
+# Unit tests
+enable_testing()
+add_executable(TestCore tests/TestCore.cpp)
+target_link_libraries(TestCore RhoNNO ${ROOT_LIBRARIES})
+add_test(NAME TestCore COMMAND TestCore)
+add_test(NAME BuildStrain COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target strain)
+add_test(NAME BuildUtrain COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target utrain)
+add_test(NAME RunStrain COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/tests/run_strain.sh)
+add_test(NAME RunUtrain COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/tests/run_utrain.sh)
+add_test(NAME RunStrainUtrainSmoke COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/tests/run_strain_utrain.sh all)
 
 # RadonOptimizer requires Geneva library which may not be available
 # add_executable(RadonOptimizer RadonOptimizer.cxx)
