@@ -239,8 +239,8 @@ void TDataServe::Init(const unsigned int tst)
     if (fIndexTst!=0) { delete [] fIndexTst; fIndexTst=0; }
     if (fInvecMean!=0) { delete [] fInvecMean; fInvecMean=0; }
     if (fOutvecMean!=0) { delete [] fOutvecMean; fOutvecMean=0; }
-    if (fInvecMean) { fInvecMean=new float [fInvecLen]; assert(fInvecMean!=0); }
-    if (fOutvecMean) { fOutvecMean=new float [fOutvecLen]; assert(fOutvecMean!=0); }
+    if (fInvecLen) { fInvecMean=new float [fInvecLen]; assert(fInvecMean!=0); }
+    if (fOutvecLen) { fOutvecMean=new float [fOutvecLen]; assert(fOutvecMean!=0); }
     fNumTstvecs=tst;
     fNumTrnvecs=fNumvecs-tst;
     if (fNumTstvecs) { fIndexTst=new unsigned int [fNumTstvecs]; assert(fIndexTst!=0); }

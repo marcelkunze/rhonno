@@ -95,13 +95,13 @@ protected:
     FILE*        fFile;        //!File pointer
     
     // Help functions
-    void freadvar(NNO_INTYPE Var) { fread(&Var,sizeof(Var),1,fFile); }
-    void fwritevar(NNO_OUTTYPE Var) { fwrite(&Var,sizeof(Var),1,fFile); }
+    template<typename T> void freadvar(T &Var) { fread(&Var,sizeof(Var),1,fFile); }
+    template<typename T> void fwritevar(const T &Var) { fwrite(&Var,sizeof(Var),1,fFile); }
     void ReadNet(const char* netID);
     void TestPointer(void* ptr);
-    void Errorf(char* format,...);
-    void Warningf(FILE* f,char* format,...);
-    void Messagef(FILE* f,char* format,...);
+    void Errorf(const char* format,...);
+    void Warningf(FILE* f,const char* format,...);
+    void Messagef(FILE* f,const char* format,...);
     
 public:
     VNeuralNet();

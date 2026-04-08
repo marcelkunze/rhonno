@@ -163,7 +163,7 @@ void VNeuralNet::ReadNetBinary()
     fread(&fParm,sizeof(TNeuralNetParameters),1,fFile);
 }
 
-void VNeuralNet::Errorf(char* format,...) 
+void VNeuralNet::Errorf(const char* format,...) 
 {
     va_list ap;
     va_start(ap, format);
@@ -173,7 +173,7 @@ void VNeuralNet::Errorf(char* format,...)
     exit(1);
 }
 
-void VNeuralNet::Warningf(FILE* f,char* format,...) 
+void VNeuralNet::Warningf(FILE* f,const char* format,...) 
 {
     va_list ap;
     va_start(ap, format);
@@ -182,7 +182,7 @@ void VNeuralNet::Warningf(FILE* f,char* format,...)
     vfprintf(f,MainFormat,ap);
 }
 
-void VNeuralNet::Messagef(FILE* f,char* format,...) 
+void VNeuralNet::Messagef(FILE* f,const char* format,...) 
 {
     va_list ap;
     va_start(ap, format);

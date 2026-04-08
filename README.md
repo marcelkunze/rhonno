@@ -369,7 +369,23 @@ Prior to start you should install the most recent production version of
 ROOT from root.cern.ch and set the ROOTSYS environment variable
 correspondingly. In addition you have to add \$ROOTSYS/lib and \$RHO/lib
 to your LD\_LIBRARY\_PATH in order to resolve the shared libs.
+Testing
+=======
 
+The project now includes CTest targets to verify both unit and runtime
+smoke tests.
+
+To run the full test suite from the build directory:
+
+> cmake -S . -B build
+> cmake --build build --target TestCore
+> cd build
+> ctest --verbose
+
+To run only the new smoke tests:
+
+> cd build
+> ctest -R "RunStrain|RunUtrain|RunStrainUtrainSmoke" --output-on-failure
 References
 ==========
 
