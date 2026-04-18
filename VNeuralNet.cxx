@@ -16,6 +16,7 @@ static const char* NNO_VERSION="2.0ROOT";
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <stdexcept>
 using namespace std;
 
 ClassImp(TNeuralNetParameters)
@@ -92,7 +93,8 @@ void VNeuralNet::Save(string file)
 void VNeuralNet::WriteNet() 
 {
     char ftype[16];
-    if (fFiletype==FILE_BINARY) strcpy(ftype,"binary"); else strcpy(ftype,"text");
+    if (fFiletype==FILE_BINARY) strncpy(ftype,"binary",sizeof(ftype)-1); else strncpy(ftype,"text",sizeof(ftype)-1);
+    ftype[sizeof(ftype)-1] = '\0';
     if (fFile==0) { cerr << "VNeuralNet::WriteNet:: Could not open for writing " << fFilename << endl; return; }
     fprintf(fFile,"C++  NEURAL NETWORK OBJECTS   VERSION %s\nFiletype %s\n",NNO_VERSION,ftype);
     if (fFiletype==FILE_BINARY) WriteNetBinary(); else WriteNetText();
@@ -118,7 +120,7 @@ void VNeuralNet::ReadNet(const char* netID)
     if (fFile==0) Errorf((char *)"file %s not found",(char *)fFilename.data());
     char ftype[16];
     char Version[16];
-    fscanf(fFile,"C++  NEURAL NETWORK OBJECTS   VERSION %s\nFiletype %s\n",Version,ftype);
+    fscanf(fFile,"C++  NEURAL NETWORK OBJECTS   VERSION %15s\nFiletype %15s\n",Version,ftype);
     if      (!strcmp(ftype,"binary")) fFiletype = FILE_BINARY;
     else if (!strcmp(ftype,"text"))   fFiletype = FILE_TEXT;
     else Errorf((char *)"illegal fileformat: %s",(char *)fFilename.data());
@@ -144,6 +146,7 @@ void VNeuralNet::ReadNet(const char* netID)
     else
         ReadText();
     
+    delete[] fOut;
     fOut = new double[fParm.fOutNodes];
     
     TestPointer(fOut);
@@ -153,7 +156,7 @@ void VNeuralNet::ReadNet(const char* netID)
 
 void VNeuralNet::ReadNetText() 
 {
-    fscanf(fFile,"\nnetwork id  %s\n",fParm.fNetId);
+    fscanf(fFile,"\nnetwork id  %8s\n",fParm.fNetId);
     fscanf(fFile,"innodes     %i\n",&fParm.fInNodes);
     fscanf(fFile,"outnodes    %i\n",&fParm.fOutNodes);
 }
@@ -167,10 +170,11 @@ void VNeuralNet::Errorf(const char* format,...)
 {
     va_list ap;
     va_start(ap, format);
-    char MainFormat[256];
-    snprintf(MainFormat, sizeof(MainFormat), "NNO ERROR: %s\n", format);
-    vfprintf(stderr,MainFormat,ap);
-    exit(1);
+    char buf[512];
+    vsnprintf(buf, sizeof(buf), format, ap);
+    va_end(ap);
+    fprintf(stderr,"NNO ERROR: %s\n", buf);
+    throw std::runtime_error(buf);
 }
 
 void VNeuralNet::Warningf(FILE* f,const char* format,...) 
@@ -271,7 +275,11 @@ double VNeuralNet::TrainEpoch(TDataServe *server, int nEpoch)
             float *outv = (float *) server->GetOutvecTrn(trnind);
             
             double de = Train(inv,outv);
-	    if (!isnan(de)) error += de;
+            if (!isnan(de)) {
+                error += de;
+            } else {
+                Warningf(stderr, "NaN returned by Train() at sample %d in epoch %d - skipping", i, epo);
+            }
             n++;
         }
         

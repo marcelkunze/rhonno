@@ -196,6 +196,11 @@ void TNeuralNetCell::ReadUnitText(FILE* file,TNeuralNetCell* unit,TNeuralNetPara
      fscanf(file,f_vector);
      for (I=0;I<B->fInNodes;++I) fscanf(file,"%le",&unit->fVector[I]);
      fscanf(file,f_connections,&unit->fNc);
+     if (unit->fNc < 0 || unit->fNc > B->fOutNodes) {
+         fprintf(stderr,"NNO ERROR: invalid connection count %d in ReadUnitText\n",unit->fNc);
+         unit->fNc = 0;
+         return;
+     }
      fscanf(file,f_con_list);
      for (I=0;I<unit->fNc;++I) fscanf(file,"%i",&unit->fC[I].fID);
 }
@@ -221,6 +226,11 @@ void TNeuralNetCell::ReadUnitBinary(FILE* file,TNeuralNetCell* unit,TNeuralNetPa
      fread(&unit->fCount,sizeof(unit->fCount),1,file);
      fread(unit->fVector,sizeof(double),B->fInNodes,file);
      fread(&unit->fNc,sizeof(unit->fNc),1,file);
+     if (unit->fNc < 0 || unit->fNc > B->fOutNodes) {
+         fprintf(stderr,"NNO ERROR: invalid connection count %d in ReadUnitBinary\n",unit->fNc);
+         unit->fNc = 0;
+         return;
+     }
      fread(unit->fC,sizeof(connector),unit->fNc,file);
 }
 

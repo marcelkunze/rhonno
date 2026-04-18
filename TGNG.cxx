@@ -70,6 +70,7 @@ TGNG::~TGNG()
         for (I=0;I<fParm.fOutNodes;++I) {
             delete[] up->fVector;
             delete[] up->fDiff;
+            delete[] up->fWeight;
             delete[] up->fC;
             delete[] up->fAge;
             ++up;
@@ -89,7 +90,14 @@ void TGNG::ReadBinary(void)
         TNeuralNetCell::ReadUnitBinary(fFile,(TNeuralNetCell*)up,&fParm);
         fread(up->fAge,sizeof(double),fXB.fConnectors,fFile);
         freadvar(up->fClass);
-        for (I=0;I<up->fNc;++I) up->fC[I].fPtr = &fU[up->fC[I].fID];
+        for (I=0;I<up->fNc;++I) {
+            if (up->fC[I].fID < 0 || up->fC[I].fID >= fXB.fCells) {
+                fprintf(stderr,"NNO ERROR: connection ID %d out of range [0,%d) in ReadBinary\n",up->fC[I].fID,fXB.fCells);
+                up->fC[I].fPtr = nullptr;
+            } else {
+                up->fC[I].fPtr = &fU[up->fC[I].fID];
+            }
+        }
     }
 }
 
@@ -119,7 +127,14 @@ void TGNG::ReadText(void)
         fscanf(fFile,"\nedge count ");
         for (I=0;I<up->fNc;++I) fscanf(fFile,"%le ",&up->fAge[I]);
         fscanf(fFile,"\nclass            %i\n",&up->fClass);
-        for (I=0;I<up->fNc;++I) up->fC[I].fPtr=&fU[up->fC[I].fID];
+        for (I=0;I<up->fNc;++I) {
+            if (up->fC[I].fID < 0 || up->fC[I].fID >= fXB.fCells) {
+                fprintf(stderr,"NNO ERROR: connection ID %d out of range [0,%d) in ReadText\n",up->fC[I].fID,fXB.fCells);
+                up->fC[I].fPtr = nullptr;
+            } else {
+                up->fC[I].fPtr = &fU[up->fC[I].fID];
+            }
+        }
     }
 }
 

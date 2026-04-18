@@ -304,6 +304,7 @@ void NetworkTrainer::MakeFile(const char* filename,int Records, bool randomize)
     
     int I;
     FILE* file = fopen(filename,"wb");
+    if (file==0) { fprintf(stderr,"NetworkTrainer::MakeFile: could not open %s for writing\n",filename); return; }
     for (I=0;I<Records;++I) {
         MakeData(Data, randomize);
         if (Parity(Data)==EVEN) Out = 1.0; else Out = -1.0;

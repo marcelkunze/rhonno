@@ -103,7 +103,7 @@ protected:
     template<typename T> void fwritevar(const T &Var) { fwrite(&Var,sizeof(Var),1,fFile); }
     void ReadNet(const char* netID);
     void TestPointer(void* ptr);
-    void Errorf(const char* format,...);
+    [[noreturn]] void Errorf(const char* format,...) __attribute__((format(printf,2,3)));
     void Warningf(FILE* f,const char* format,...);
     void Messagef(FILE* f,const char* format,...);
     
