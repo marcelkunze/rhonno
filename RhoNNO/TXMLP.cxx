@@ -236,7 +236,8 @@ double TXMLP::Train(NNO_INTYPE* in,NNO_OUTTYPE* trout)
     
     for (I=fParm.fLayers-1;I>=0;--I) fPerc[I]->Train();
     
-    if (fPlotter) fPlotter->AddTrainSample(trout[0],trout[0]>fParm.fThreshold);
+    // Classic NNO train pad: fill TARGET labels (0 or 1) → sharp peaks at 0 and 1
+    if (fPlotter) fPlotter->AddTrainSample(trout[0], trout[0]>fParm.fThreshold);
     
     return S_Err;
 }

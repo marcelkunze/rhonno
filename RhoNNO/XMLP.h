@@ -25,7 +25,7 @@ class TCanvas;
 class TNeuralNetParameters {
 public:
     // ID of transferfunction
-    enum TRANSFER {TR_USER,TR_FERMI,TR_LINEAR,TR_LINEAR_BEND,TR_SIGMOID};
+    enum TRANSFER {TR_USER,TR_FERMI,TR_LINEAR,TR_LINEAR_BEND,TR_SIGMOID,TR_RELU};
     
     char fNetId[9];
     int    fLayers;        // number of perceptron layers

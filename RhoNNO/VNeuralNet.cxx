@@ -260,6 +260,11 @@ double VNeuralNet::TrainEpoch(TDataServe *server, int nEpoch)
         classError = 0;
         n = 0;
         
+        // Clear score/label hists at the START of the epoch, before filling.
+        // Never Reset() after ShowPlots(): ROOT keeps live TH1 pointers on the
+        // canvas, so Reset() immediately wipes the drawn peaks ("peaks wash out").
+        if (fPlotter!=0) fPlotter->Reset();
+
         server->MixTrn(); // Shuffle the dataset
         
         for (int i=0; i<samples; i++){
@@ -291,7 +296,7 @@ double VNeuralNet::TrainEpoch(TDataServe *server, int nEpoch)
             fPlotter->AddTrainGraph(error);
             fPlotter->AddTestGraph(classError);
             fPlotter->ShowPlots();
-            fPlotter->Reset();
+            // leave hist content intact so the canvas keeps showing this epoch
         }
     }
     
@@ -365,6 +370,9 @@ double VNeuralNet::TrainEpoch(string file, int nEpoch)
     do {
         error      = 0.0;
         classError = 0;
+
+        // Same rule as TDataServe TrainEpoch: Reset before fill, never after ShowPlots
+        if (fPlotter!=0) fPlotter->Reset();
         
         while ( fread(in,sizeof(NNO_INTYPE),fParm.fInNodes,ftrn) ) {  // read inputvector
             fread(out,sizeof(NNO_OUTTYPE),fParm.fOutNodes,ftrn);      // read outputvector
@@ -393,7 +401,7 @@ double VNeuralNet::TrainEpoch(string file, int nEpoch)
             fPlotter->AddTrainGraph(error);
             fPlotter->AddTestGraph(classError);
             fPlotter->ShowPlots();
-            fPlotter->Reset();
+            // leave hist content intact for the canvas
         }
         
     } while (classError>0 && epoch<nEpoch);

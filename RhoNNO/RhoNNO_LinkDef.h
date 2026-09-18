@@ -22,6 +22,8 @@
 #pragma link C++ class TFD;
 #pragma link C++ class TMLP;
 #pragma link C++ class TXMLP;
+#pragma link C++ class TXMLPInt16Layer+;
+#pragma link C++ class TXMLPInt16+;
 #pragma link C++ class TSGCS;
 #pragma link C++ class TSGNG;
 #pragma link C++ class TNNK;

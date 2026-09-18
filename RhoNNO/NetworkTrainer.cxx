@@ -20,6 +20,8 @@
 #include "TFD.h"
 #include "TMLP.h"
 #include "TXMLP.h"
+#include "TXMLPInt8.h"
+#include "TXMLPInt16.h"
 #include "TSGNG.h"
 #include "TSGCS.h"
 #include "TGNG.h"
@@ -212,6 +214,18 @@ void NetworkTrainer::SetupNetworks()
         else if (fModel == "TXMLP") {
             fNet = new TXMLP(3,fScale,fNetworkFile,fInNodes,fHid1Nodes,fHid2Nodes,fOutNodes,0.1,0.02,0.01,TNeuralNetParameters::TR_FERMI,TNeuralNetParameters::TR_FERMI,fTransfer);
         }
+        else if (fModel == "TXMLPInt8") {
+            // Int8 MLP: ReLU hidden layers, linear output; train float then Quantize on save/recall
+            fNet = new TXMLPInt8(3, fScale, fNetworkFile, fInNodes,
+                                 fHid1Nodes, fHid2Nodes, fOutNodes,
+                                 0.1, 0.02, 0.01, /*reluOutput=*/false);
+        }
+        else if (fModel == "TXMLPInt16") {
+            // ReLU hidden + FERMI output; LRs match classic TXMLP FERMI stack
+            fNet = new TXMLPInt16(3, fScale, fNetworkFile, fInNodes,
+                                  fHid1Nodes, fHid2Nodes, fOutNodes,
+                                  0.1, 0.02, 0.01, /*reluOutput=*/kFALSE);
+        }
         else if (fModel == "TNNK") {
             string hidden;
             hidden += fHid1Nodes;
@@ -287,6 +301,12 @@ void NetworkTrainer::SetupNetworks()
         }
         else if (fModel == "TXMLP"){
             fNet = new TXMLP(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+        }
+        else if (fModel == "TXMLPInt8"){
+            fNet = new TXMLPInt8(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+        }
+        else if (fModel == "TXMLPInt16"){
+            fNet = new TXMLPInt16(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TNNK"){
             fNet = new TNNK(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
@@ -370,7 +390,12 @@ double NetworkTrainer::Train()
 
 double NetworkTrainer::Test()
 {
+    // Metric-only pass: do not let Recall() fill the plotter again after
+    // TrainEpoch already ShowPlots()'d this epoch (would double-fill / confuse canvas).
+    VNeuralNetPlotter* plotter = fNet->GetPlotterPtr();
+    if (plotter) fNet->SetPlotter(nullptr);
     double tst = 100. * fNet->TestEpoch(fTrainingServer) / fTstMax; // ok in percent
+    if (plotter) fNet->SetPlotter(plotter);
     return tst;
 }
 
@@ -503,6 +528,8 @@ bool NetworkTrainer::ReadSteeringFile(string filename)
                 fTransfer = TNeuralNetParameters::TR_LINEAR_BEND;
             else if (trans=="TR_USER")
                 fTransfer = TNeuralNetParameters::TR_USER;
+            else if (trans=="TR_RELU")
+                fTransfer = TNeuralNetParameters::TR_RELU;
             else
                 cerr << "Do not know how to set ";
             
@@ -600,6 +627,22 @@ bool NetworkTrainer::ReadSteeringFile(string filename)
         
         else if (key == "xmlp") {
             fModel = "TXMLP";
+            s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
+            cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
+        }
+
+        else if (key == "xmlpint8") {
+            fModel = "TXMLPInt8";
+            s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
+            cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
+        }
+
+        else if (key == "xmlpint16") {
+            fModel = "TXMLPInt16";
             s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
             if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }

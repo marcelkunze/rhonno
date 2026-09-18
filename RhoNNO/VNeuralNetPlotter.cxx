@@ -15,8 +15,14 @@
 #include "TText.h"
 #include "TTree.h"
 #include "TBranch.h"
+#include "TStyle.h"
+#include "TROOT.h"
+#include "TString.h"
 
 #include "VNeuralNetPlotter.h"
+
+#include <algorithm>
+#include <cstdio>
 
 #define NPMAX 1000
 
@@ -48,6 +54,10 @@ fTrnCurve(0), fNtrn(0), fTstCurve(0), fNtst(0)
     fYtrn = new double[NPMAX];
     fXtst = new double[NPMAX];
     fYtst = new double[NPMAX];
+    fTrnHistTrue = nullptr;
+    fTrnHistFalse = nullptr;
+    fTstHistTrue = nullptr;
+    fTstHistFalse = nullptr;
 }
 
 TSimpleNeuralNetPlotter::~TSimpleNeuralNetPlotter() 
@@ -65,6 +75,22 @@ TSimpleNeuralNetPlotter::~TSimpleNeuralNetPlotter()
     if (fCanvas!=nullptr) { fCanvas->Close(); /*delete fCanvas; fCanvas=nullptr;*/}
 }
 
+static TH1D* MakeScoreHist(const string& name, Color_t color)
+{
+    // Unique name avoids ROOT gDirectory collisions between runs/models
+    string uname = name + Form("_%p", (void*)gROOT);
+    // Classification scores live in [0,1]; keep small margin for linear nets
+    TH1D* h = new TH1D(uname.data(), name.data(), 50, -0.05, 1.05);
+    h->SetDirectory(nullptr); // not owned by gDirectory
+    h->SetFillColor(color);
+    h->SetLineColor(color);
+    h->SetLineWidth(2);
+    // Hollow-ish hatch: solid fill of two overlapping classes looks like a "box"
+    h->SetFillStyle(3004);
+    h->SetMarkerColor(color);
+    return h;
+}
+
 void TSimpleNeuralNetPlotter::Initialize() 
 {
     if (fPlots) return; // Nothing to do
@@ -72,7 +98,7 @@ void TSimpleNeuralNetPlotter::Initialize()
     // Make sure a canvas exists
     
     if (fCanvas==0) {
-        fCanvas = new TCanvas("fCanvas",GetName(),0,0,800,800);
+        fCanvas = new TCanvas(Form("nno_canvas_%s", GetName()), GetName(), 0, 0, 900, 800);
         fCanvas->SetFillColor(41);
         fCanvas->SetGridx();
         fCanvas->SetGridy();
@@ -81,28 +107,24 @@ void TSimpleNeuralNetPlotter::Initialize()
         fCanvas->Divide(2,2);
     }
     
-    string trnLabel("Train");
+    string trnLabel("Train ");
     fTrnPlot = trnLabel + GetName();
-    string histname = fTrnPlot + "+";
-    fTrnHistTrue = new TH1D(histname.data(),histname.data(),201,-1.1,1.1);
-    fTrnHistTrue->SetFillColor(kGreen);
-    histname = fTrnPlot + "-";
-    fTrnHistFalse = new TH1D(histname.data(),histname.data(),201,-1.1,1.1);
-    fTrnHistFalse->SetFillColor(kRed);
-    string tstLabel("Test");
+    fTrnHistTrue  = MakeScoreHist(fTrnPlot + " signal", kGreen+2);
+    fTrnHistFalse = MakeScoreHist(fTrnPlot + " background", kRed+1);
+    fTrnHistFalse->SetFillStyle(3005);
+
+    string tstLabel("Test ");
     fTstPlot = tstLabel + GetName();
-    histname = fTstPlot + "+";
-    fTstHistTrue = new TH1D(histname.data(),histname.data(),201,-1.1,1.1);
-    fTstHistTrue->SetFillColor(kGreen);
-    histname = fTstPlot + "-";
-    fTstHistFalse = new TH1D(histname.data(),histname.data(),201,-1.1,1.1);
-    fTstHistFalse->SetFillColor(kRed);
+    fTstHistTrue  = MakeScoreHist(fTstPlot + " signal", kGreen+2);
+    fTstHistFalse = MakeScoreHist(fTstPlot + " background", kRed+1);
+    fTstHistFalse->SetFillStyle(3005);
     
     fPlots = true;
 }
 
 void TSimpleNeuralNetPlotter::AddTrainSample(double trn, bool good)
 {
+    if (!fTrnHistTrue || !fTrnHistFalse) return;
     if (good)
         fTrnHistTrue->Fill(trn);
     else
@@ -111,6 +133,7 @@ void TSimpleNeuralNetPlotter::AddTrainSample(double trn, bool good)
 
 void TSimpleNeuralNetPlotter::AddTestSample(double tst, bool good)
 {
+    if (!fTstHistTrue || !fTstHistFalse) return;
     if (good)
         fTstHistTrue->Fill(tst);
     else
@@ -155,36 +178,56 @@ void TSimpleNeuralNetPlotter::AddTestGraph(double tst)
     }
 }
 
+static void DrawScorePair(TH1D* bg, TH1D* sig, const char* title)
+{
+    if (!bg || !sig) return;
+    if (gPad) gPad->Clear();
+    bg->SetTitle(title);
+    sig->SetTitle(title);
+    bg->GetXaxis()->SetTitle("network output");
+    bg->GetYaxis()->SetTitle("entries");
+    // Common y-scale so both classes stay visible
+    const double ymax = std::max(bg->GetMaximum(), sig->GetMaximum()) * 1.15;
+    bg->SetMaximum(ymax > 0 ? ymax : 1.0);
+    sig->SetMaximum(ymax > 0 ? ymax : 1.0);
+    // DrawCopy: pad owns a snapshot; later Reset()/extra TestEpoch fills
+    // must not blank the peaks the user is looking at.
+    bg->DrawCopy("hist");
+    sig->DrawCopy("hist same");
+}
+
 void TSimpleNeuralNetPlotter::ShowPlots() 
 {
     if (fCanvas==0) return;
     
     if (fTrnHistTrue!=0) {
         fCanvas->cd(1);
-        fTrnHistFalse->Draw();
-        fTrnHistTrue->Draw("same");
-        DrawT((char *)"Training",0.2f, 0.8f, 0.f, 3);
+        gPad->SetLogy(0);
+        DrawScorePair(fTrnHistFalse, fTrnHistTrue, "Training: output score");
+        DrawT((char *)"Training",0.12f, 0.92f, 0.f, kBlack);
+        DrawT((char *)"red=bg  green=signal",0.12f, 0.87f, 0.f, kBlack);
     }
     
     if (fTstHistTrue!=0) {
         fCanvas->cd(2);
-        fTstHistFalse->Draw();
-        fTstHistTrue->Draw("same");
-        DrawT((char *)"Validation",0.2f,0.8f,0.f,5);
+        gPad->SetLogy(0);
+        DrawScorePair(fTstHistFalse, fTstHistTrue, "Validation: output score");
+        DrawT((char *)"Validation",0.12f,0.92f,0.f, kBlack);
+        DrawT((char *)"red=bg  green=signal",0.12f, 0.87f, 0.f, kBlack);
     }
     
     if (fTrnCurve!=0 && fNtrn%NPMAX>0) {
         fCanvas->cd(3);
         gPad->Clear();
         fTrnCurve->DrawGraph(fNtrn%NPMAX,fXtrn,fYtrn,"ALP");
-        DrawT((char *)"Training",0.2f, 0.8f, 0.f, 3);
+        DrawT((char *)"Training loss",0.2f, 0.8f, 0.f, 3);
     }
     
     if (fTstCurve!=0 && fNtst%NPMAX>0) {
         fCanvas->cd(4);
         gPad->Clear();
         fTstCurve->DrawGraph(fNtst%NPMAX,fXtst,fYtst,"ALP");
-        DrawT((char *)"Validation",0.2f,0.8f,0.f,5);
+        DrawT((char *)"Validation classError",0.2f,0.8f,0.f,5);
     }
     
     fCanvas->Modified();
@@ -209,4 +252,3 @@ void TSimpleNeuralNetPlotter::Reset()
         fTstHistFalse->Reset();
     }
 }
-

@@ -57,6 +57,18 @@ void TransferLinearBend(double in,double* out,double* deriv)
         }
 }
 
+// ReLU: max(0, x). Derivative is 1 for x>0, 0 otherwise (0 at exactly 0).
+void TransferReLU(double in,double* out,double* deriv)
+{
+    if (in > 0.0) {
+        *out = in;
+        *deriv = 1.0;
+    } else {
+        *out = 0.0;
+        *deriv = 0.0;
+    }
+}
+
 TPerceptron::TPerceptron(int inNodes,
                          int outNodes,
                          double learnStep,
@@ -127,9 +139,10 @@ void TPerceptron::AllocNet(void)
     }
     switch (fParm.fTransferId) {
         case TNeuralNetParameters::TR_FERMI  :      Transfer=TransferFermi;      break;
-        case TNeuralNetParameters::TR_SIGMOID:      Transfer=TransferSigmoid;      break;
+        case TNeuralNetParameters::TR_SIGMOID:      Transfer=TransferSigmoid;    break;
         case TNeuralNetParameters::TR_LINEAR :      Transfer=TransferLinear;     break;
         case TNeuralNetParameters::TR_LINEAR_BEND:  Transfer=TransferLinearBend; break;
+        case TNeuralNetParameters::TR_RELU   :      Transfer=TransferReLU;       break;
         default:             Transfer=0;
     }
 }
@@ -138,12 +151,19 @@ void TPerceptron::InitNet(void)
 {
     PerceptronUnit* up;
     int J;
+    // He-scale for ReLU; smaller for saturating activations
+    const double scale =
+        (fParm.fTransferId == TNeuralNetParameters::TR_RELU)
+            ? std::sqrt(2.0 / std::max(1, fParm.fInNodes))
+            : 1.0;
     for(up=fU;up<fUbound;++up) {
         for (J=0;J<fParm.fInNodes;++J) {
-            up->fVector[J] = Random();
+            up->fVector[J] = Random() * scale;
             up->fDelta[J]  = 0.0;
         }
-        up->fThreshold = Random();
+        up->fThreshold = (fParm.fTransferId == TNeuralNetParameters::TR_RELU)
+                             ? 0.0
+                             : Random() * scale;
     }
 }
 

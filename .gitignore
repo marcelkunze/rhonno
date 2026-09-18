@@ -1,0 +1,26 @@
+# Build trees and install mirrors
+/build/
+/bin/
+/lib/
+
+# Compiled / generated
+*.o
+*.so
+*.so.*
+*_rdict.pcm
+*.rootmap
+RhoNNO_Cint.cxx
+RhoNNO_Cint.h
+
+# Runtime nets / trainer dumps
+*.net
+*.root
+NNO*.TXMLP*
+Networks/NNO*
+parity.trn
+parity.tst
+
+# Editor / OS
+*~
+*.swp
+.DS_Store

@@ -1,106 +1,66 @@
-# Create a library called "RhoNNO" which includes the source files given in
-# the array .
-# The extension is already found.  Any number of sources could be listed here.
-#add_subdirectory(DecayTreeFitter)
-#add_subdirectory(RhoFitter)
+# RhoNNO top-level (standalone ROOT build)
+# FairROOT-style GENERATE_LIBRARY() is not used here.
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+project(rhonno LANGUAGES CXX)
 
-Set(SYSTEM_INCLUDE_DIRECTORIES
-  ${SYSTEM_INCLUDE_DIRECTORIES} 
-  ${BASE_INCLUDE_DIRECTORIES} 
-)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-Set(INCLUDE_DIRECTORIES
-  ${CMAKE_SOURCE_DIR}/rhonno
-)
+# Default to Release if user did not pass -DCMAKE_BUILD_TYPE=...
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
 
-Include_Directories(${INCLUDE_DIRECTORIES})
-Include_Directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
+# ROOT_GENERATE_DICTIONARY installs pcm/rootmap when CMAKE_LIBRARY_OUTPUT_DIRECTORY
+# is set; GNUInstallDirs must be loaded first so DESTINATION is not empty.
+include(GNUInstallDirs)
 
-set(LINK_DIRECTORIES
-${ROOT_LIBRARY_DIR}
-${FAIRROOT_LIBRARY_DIR}
-)
- 
-link_directories( ${LINK_DIRECTORIES})
+# Keep artifacts under the build tree in bin/ and lib/
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(SRCS 
-RhoNNO/VNeuralNetPlotter.cxx
-RhoNNO/VNeuralNet.cxx
-RhoNNO/VSupervisedNet.cxx
-RhoNNO/VUnsupervisedNet.cxx 
-RhoNNO/TFD.cxx 
-RhoNNO/TSGCS.cxx 
-RhoNNO/TSGNG.cxx 
-RhoNNO/TPerceptron.cxx 
-RhoNNO/TMLP.cxx 
-RhoNNO/TXMLP.cxx
-RhoNNO/TNeuralNetCell.cxx 
-RhoNNO/TGCS.cxx 
-RhoNNO/TGNG.cxx 
-RhoNNO/TGNGTracker.cxx
-RhoNNO/TLVQ.cxx 
-RhoNNO/TDataServe.cxx 
-RhoNNO/TNNK.cxx
-RhoNNO/TRadon.cxx
-)
+# Also mirror into the source tree bin/ and lib/ (legacy layout)
+set(RHONNO_SOURCE_BIN ${CMAKE_SOURCE_DIR}/bin CACHE PATH "Legacy bin dir")
+set(RHONNO_SOURCE_LIB ${CMAKE_SOURCE_DIR}/lib CACHE PATH "Legacy lib dir")
 
-set(LINKDEF  RhoNNO/RhoNNO_LinkDef.h)
-set(LIBRARY_NAME RhoNNO)
-
-set(DEPENDENCIES Base )
-
-GENERATE_LIBRARY()
-
-# add test programs
-add_executable (strain RhoNNO/strain.cxx)
-target_link_libraries (strain  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
-
-add_executable (utrain RhoNNO/utrain.cxx)
-target_link_libraries (utrain  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
-
-add_executable (NetworkTrainer RhoNNO/NetworkTrainer.cxx)
-target_link_libraries (NetworkTrainer  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
-
-add_executable (NNOTracker RhoNNO/NNOTracker.cxx)
-target_link_libraries (NNOTracker  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
-
-add_executable (RadonTracker RhoNNO/RadonTracker.cxx)
-target_link_libraries (RadonTracker  RhoNNO ${ROOT_LIBRARIES} TreePlayer)
+add_subdirectory(RhoNNO)
 
 include(CTest)
-
-# Run Tests
-add_test (Teststrain ${CMAKE_BINARY_DIR}/bin/strain)
-add_test (Testutrain ${CMAKE_BINARY_DIR}/bin/utrain ${CMAKE_SOURCE_DIR}/rhonno/Data/ppe.dat)
-add_test (Testtrainer ${CMAKE_BINARY_DIR}/bin/NetworkTrainer ${CMAKE_BINARY_DIR}/pid.nno)
-add_test (Testtracker ${CMAKE_BINARY_DIR}/bin/NNOTracker ${CMAKE_SOURCE_DIR}/rhonno/Data/event2)
-add_test (Testradon ${CMAKE_BINARY_DIR}/bin/RadonTracker)
-file(WRITE ${CMAKE_BINARY_DIR}/pid.nno "
-# Training of PIDSelectors with NNO
-
-#define the network topology
+if(BUILD_TESTING)
+  # strain needs no args; utrain expects a data file
+  add_test(NAME Teststrain COMMAND $<TARGET_FILE:strain>)
+  add_test(
+    NAME Testutrain
+    COMMAND $<TARGET_FILE:utrain> ${CMAKE_SOURCE_DIR}/Data/ppe.dat
+  )
+  # NetworkTrainer steering file generated next to the binary tree
+  set(_pid_nno ${CMAKE_BINARY_DIR}/pid.nno)
+  file(WRITE ${_pid_nno}
+"# Training of PIDSelectors with NNO
 xmlp 7 15 10 1
 transfer TR_FERMI
 momentum 0.2
 balance true
-plots true
+plots false
 test 10000
 start 1
-stop 10
-
-#define the data source
-datapath ${CMAKE_SOURCE_DIR}/rhonno/Data
-networkpath ${CMAKE_SOURCE_DIR}/rhonno/Networks
+stop 2
+datapath ${CMAKE_SOURCE_DIR}/Data
+networkpath ${CMAKE_SOURCE_DIR}/Networks
 file PidTuple.root
-
-#set up the input layer (use branch names)
 tree PidTuple
 input mom:acos(theta):svt:emc:drc:dch:ifr:ifrExp:ifrAdd
 autoscale true
-
-#set up the output layer (use branch names)
-#Particles pid = {electron=1,muon,pion,kaon,proton}
 output abs(pid)==1
-
-#end of file
 ")
+  add_test(NAME Testtrainer COMMAND $<TARGET_FILE:NetworkTrainer> ${_pid_nno})
+  add_test(
+    NAME Testtracker
+    COMMAND $<TARGET_FILE:NNOTracker> ${CMAKE_SOURCE_DIR}/Data/event2
+  )
+  add_test(NAME Testradon COMMAND $<TARGET_FILE:RadonTracker>)
+  add_test(NAME Testxmlpint8 COMMAND $<TARGET_FILE:test_xmlpint8>)
+  add_test(NAME Testxmlpint16 COMMAND $<TARGET_FILE:test_xmlpint16>)
+endif()

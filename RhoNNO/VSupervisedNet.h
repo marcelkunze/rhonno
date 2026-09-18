@@ -16,17 +16,17 @@
 
 class VSupervisedNet : public VNeuralNet {
 protected:
-    TNtuple *fTuple;  // Training data
+    TNtuple *fTuple;  //! Transient training data (not streamed)
 public:
-    VSupervisedNet() : VNeuralNet() {};
+    VSupervisedNet() : VNeuralNet(), fTuple(nullptr) {};
     VSupervisedNet(std::string netID,int innodes,int outnodes,std::string netFile) :
-    VNeuralNet(netID,innodes,outnodes,netFile) {}
+    VNeuralNet(netID,innodes,outnodes,netFile), fTuple(nullptr) {}
     VSupervisedNet(std::string netFile) :
-    VNeuralNet(netFile) {}
+    VNeuralNet(netFile), fTuple(nullptr) {}
     virtual ~VSupervisedNet() {};
     virtual long TrainEpoch (TNtuple *tuple, bool random=true);    // learn the hits from the ntuple
     
-    ClassDef(VSupervisedNet,1) // Supervised training
+    ClassDef(VSupervisedNet,2) // Supervised training
 };
 
 #endif

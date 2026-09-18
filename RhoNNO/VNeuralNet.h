@@ -27,7 +27,7 @@ class TCanvas;
 class TNeuralNetParameters : public TObject {
 public:
     // ID of transferfunction
-    enum TRANSFER {TR_USER,TR_FERMI,TR_LINEAR,TR_LINEAR_BEND,TR_SIGMOID};
+    enum TRANSFER {TR_USER,TR_FERMI,TR_LINEAR,TR_LINEAR_BEND,TR_SIGMOID,TR_RELU};
     
     char fNetId[9];
     int    fLayers;	    // number of perceptron layers
@@ -118,6 +118,7 @@ public:
     // Getter functions
     TNeuralNetParameters& GetParameters() { return fParm; }
     VNeuralNetPlotter& GetPlotter() const { return *fPlotter; }
+    VNeuralNetPlotter* GetPlotterPtr() const { return fPlotter; }
     std::string     GetFilename() const { return fFilename; }
     double*	    GetOutput() const { return fOut; }
     double	    GetThreshold() const { return fParm.fThreshold; }
