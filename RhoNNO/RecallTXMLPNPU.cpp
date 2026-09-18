@@ -1,14 +1,14 @@
-// TXMLP network trained with NNO NetworkTrainer at Fri Sep 18 23:29:25 2026
+// TXMLPNPU network trained with NNO NetworkTrainer at Sat Sep 19 00:09:20 2026
 // Input parameters  mom:acos(theta):svt:emc:drc:dch:ifr:ifrExp:ifrAdd
 // Output parameters abs(pid)==1
 // Training files:
-///home/marcel/workspace/rhonno/Data/PidTuple.root
+//../Data/PidTuple.root
 
-#include "RhoNNO/TXMLP.h"
+#include "RhoNNO/TXMLPNPU.h"
 
 double* Recall(double *invec)
 {
-	static TXMLP net("TXMLP.net");
+	static TXMLPNPU net("TXMLPNPU.net");
 	float x[7];
 	x[0] 	= 1.02292	*	invec[0];	// mom
 	x[1] 	= 2.84358	*	invec[1];	// acos(theta)

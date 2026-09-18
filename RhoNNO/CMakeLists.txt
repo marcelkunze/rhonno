@@ -45,6 +45,7 @@ set(LIB_SOURCES
   TXMLP.cxx
   TXMLPInt8.cxx
   TXMLPInt16.cxx
+  TXMLPNPU.cxx
   TNeuralNetCell.cxx
   TGCS.cxx
   TGNG.cxx
@@ -79,6 +80,19 @@ set(LIB_HEADERS
   Graph.h
 )
 
+# Optional ONNX Runtime / AMD Ryzen NPU support for TXMLPNPU.
+# Point RHONNO_ORT_ROOT at the Ryzen AI C++ install (contains onnxruntime/{include,lib}).
+option(RHONNO_WITH_NPU "Build TXMLPNPU against ONNX Runtime + VitisAI EP" ON)
+set(RHONNO_ORT_ROOT "$ENV{HOME}/ryzen-ai-cpp/onnxruntime" CACHE PATH
+    "Root of the ONNX Runtime SDK shipped with Ryzen AI (has include/ and lib/)")
+set(RHONNO_VAIP_CONFIG "$ENV{HOME}/ryzen-ai-cpp/voe-4.0-linux_x86_64/vaip_config.json" CACHE FILEPATH
+    "Path to vaip_config.json for the VitisAI EP")
+if(NOT RHONNO_WITH_NPU OR NOT EXISTS "${RHONNO_ORT_ROOT}/include/onnxruntime_cxx_api.h")
+  # Without ORT the source cannot compile. Drop it before add_library happens.
+  list(REMOVE_ITEM LIB_SOURCES TXMLPNPU.cxx)
+  message(WARNING "NPU support disabled — TXMLPNPU.cxx excluded from RhoNNO.")
+endif()
+
 # ROOT dictionary (produces RhoNNO_Cint.cxx + libRhoNNO_Cint_rdict.pcm + rootmap)
 # Do not pass MODULE here: with some ROOT builds it injects install() without DESTINATION.
 ROOT_GENERATE_DICTIONARY(RhoNNO_Cint ${LIB_HEADERS} LINKDEF RhoNNO_LinkDef.h)
@@ -90,6 +104,15 @@ target_include_directories(RhoNNO
     $<INSTALL_INTERFACE:include/RhoNNO>
 )
 target_link_libraries(RhoNNO PUBLIC ${ROOT_LIBRARIES})
+
+if(RHONNO_WITH_NPU AND EXISTS "${RHONNO_ORT_ROOT}/include/onnxruntime_cxx_api.h")
+  target_include_directories(RhoNNO PRIVATE "${RHONNO_ORT_ROOT}/include")
+  target_compile_definitions(RhoNNO PRIVATE RHONNO_WITH_NPU=1
+    RHONNO_VAIP_CONFIG_PATH="${RHONNO_VAIP_CONFIG}")
+  target_link_directories(RhoNNO PUBLIC "${RHONNO_ORT_ROOT}/lib")
+  target_link_libraries(RhoNNO PUBLIC onnxruntime)
+  message(STATUS "NPU support: using ONNX Runtime at ${RHONNO_ORT_ROOT}")
+endif()
 set_target_properties(RhoNNO PROPERTIES
   OUTPUT_NAME RhoNNO
   VERSION 1.0.0
@@ -97,7 +120,10 @@ set_target_properties(RhoNNO PROPERTIES
 )
 
 # Executables
-foreach(_exe strain utrain NetworkTrainer NNOTracker RadonTracker test_xmlpint8 test_xmlpint16)
+foreach(_exe strain utrain NetworkTrainer NNOTracker RadonTracker test_xmlpint8 test_xmlpint16 test_xmlpnpu)
+  if(NOT RHONNO_WITH_NPU AND _exe STREQUAL "test_xmlpnpu")
+    continue()
+  endif()
   add_executable(${_exe} ${_exe}.cxx)
   target_link_libraries(${_exe} PRIVATE RhoNNO ${ROOT_LIBRARIES})
 endforeach()
