@@ -46,6 +46,7 @@ set(LIB_SOURCES
   TXMLPInt8.cxx
   TXMLPInt16.cxx
   TXMLPNPU.cxx
+  TXMLPGPU.cxx
   TNeuralNetCell.cxx
   TGCS.cxx
   TGNG.cxx
@@ -93,6 +94,25 @@ if(NOT RHONNO_WITH_NPU OR NOT EXISTS "${RHONNO_ORT_ROOT}/include/onnxruntime_cxx
   message(WARNING "NPU support disabled — TXMLPNPU.cxx excluded from RhoNNO.")
 endif()
 
+# Optional HIP/hisBLAS GPU support for TXMLPGPU (AMD ROCm)
+option(RHONNO_WITH_GPU "Build TXMLPGPU against HIP + hipBLAS (ROCm)" ON)
+if(RHONNO_WITH_GPU)
+  find_program(HIPCC hipcc)
+  find_path(HIP_INCLUDE_DIR hip/hip_runtime.h HINTS /usr/include /opt/rocm/include)
+  find_library(HIP_LIB amdhip64 HINTS /usr/lib/x86_64-linux-gnu /opt/rocm/lib)
+  if(HIP_INCLUDE_DIR AND HIP_LIB)
+    message(STATUS "GPU support: HIP=${HIP_LIB} (no hipBLAS — custom kernel)")
+    set(RHONNO_HAS_GPU TRUE)
+  else()
+    message(WARNING "GPU support disabled — HIP not found.")
+    set(RHONNO_HAS_GPU FALSE)
+    list(REMOVE_ITEM LIB_SOURCES TXMLPGPU.cxx)
+  endif()
+else()
+  set(RHONNO_HAS_GPU FALSE)
+  list(REMOVE_ITEM LIB_SOURCES TXMLPGPU.cxx)
+endif()
+
 # ROOT dictionary (produces RhoNNO_Cint.cxx + libRhoNNO_Cint_rdict.pcm + rootmap)
 # Do not pass MODULE here: with some ROOT builds it injects install() without DESTINATION.
 ROOT_GENERATE_DICTIONARY(RhoNNO_Cint ${LIB_HEADERS} LINKDEF RhoNNO_LinkDef.h)
@@ -113,6 +133,18 @@ if(RHONNO_WITH_NPU AND EXISTS "${RHONNO_ORT_ROOT}/include/onnxruntime_cxx_api.h"
   target_link_libraries(RhoNNO PUBLIC onnxruntime)
   message(STATUS "NPU support: using ONNX Runtime at ${RHONNO_ORT_ROOT}")
 endif()
+
+if(RHONNO_HAS_GPU)
+  # TXMLPGPU.cxx uses __global__ kernels → needs HIP language, not plain CXX
+  enable_language(HIP)
+  # Radeon 890M (Strix Point / RDNA3.5) = gfx1150
+  set(CMAKE_HIP_ARCHITECTURES "gfx1150" CACHE STRING "HIP target architecture" FORCE)
+  set_source_files_properties(TXMLPGPU.cxx PROPERTIES LANGUAGE HIP)
+  target_compile_definitions(RhoNNO PRIVATE RHONNO_WITH_GPU=1)
+  target_include_directories(RhoNNO PRIVATE "${HIP_INCLUDE_DIR}")
+  target_link_libraries(RhoNNO PUBLIC ${HIP_LIB})
+endif()
+
 set_target_properties(RhoNNO PROPERTIES
   OUTPUT_NAME RhoNNO
   VERSION 1.0.0
@@ -120,8 +152,11 @@ set_target_properties(RhoNNO PROPERTIES
 )
 
 # Executables
-foreach(_exe strain utrain NetworkTrainer NNOTracker RadonTracker test_xmlpint8 test_xmlpint16 test_xmlpnpu)
+foreach(_exe strain utrain NetworkTrainer NNOTracker RadonTracker test_xmlpint8 test_xmlpint16 test_xmlpnpu test_xmlpgpu)
   if(NOT RHONNO_WITH_NPU AND _exe STREQUAL "test_xmlpnpu")
+    continue()
+  endif()
+  if(NOT RHONNO_HAS_GPU AND _exe STREQUAL "test_xmlpgpu")
     continue()
   endif()
   add_executable(${_exe} ${_exe}.cxx)

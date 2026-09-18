@@ -23,6 +23,7 @@
 #include "TXMLPInt8.h"
 #include "TXMLPInt16.h"
 #include "TXMLPNPU.h"
+#include "TXMLPGPU.h"
 #include "TSGNG.h"
 #include "TSGCS.h"
 #include "TGNG.h"
@@ -233,6 +234,12 @@ void NetworkTrainer::SetupNetworks()
                                 fHid1Nodes, fHid2Nodes, fOutNodes,
                                 0.1, 0.02, 0.01, /*reluOutput=*/false);
         }
+        else if (fModel == "TXMLPGPU") {
+            // Float shadow + HIP/AMD GPU Recall
+            fNet = new TXMLPGPU(3, fScale, fNetworkFile, fInNodes,
+                                fHid1Nodes, fHid2Nodes, fOutNodes,
+                                0.1, 0.02, 0.01, /*reluOutput=*/false);
+        }
         else if (fModel == "TNNK") {
             string hidden;
             hidden += fHid1Nodes;
@@ -317,6 +324,9 @@ void NetworkTrainer::SetupNetworks()
         }
         else if (fModel == "TXMLPNPU"){
             fNet = new TXMLPNPU(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
+        }
+        else if (fModel == "TXMLPGPU"){
+            fNet = new TXMLPGPU(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
         }
         else if (fModel == "TNNK"){
             fNet = new TNNK(Makename(fStartEpoch , fNetworkPath, fNetworkFile));
@@ -661,6 +671,14 @@ bool NetworkTrainer::ReadSteeringFile(string filename)
 
         else if (key == "xmlpnpu") {
             fModel = "TXMLPNPU";
+            s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
+            if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
+            if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
+            cout << fModel << " " << fInNodes << "-" << fHid1Nodes << "-" << fHid2Nodes << "-" << fOutNodes << endl;
+        }
+
+        else if (key == "xmlpgpu") {
+            fModel = "TXMLPGPU";
             s >> fInNodes >> fHid1Nodes >> fHid2Nodes >> fOutNodes;
             if (fInNodes>NNODIMENSION) { cerr << "Too much input nodes:" << fInNodes << endl; return false; }
             if (fOutNodes>NNODIMENSION) { cerr << "Too much output nodes:" << fOutNodes << endl; return false; }
